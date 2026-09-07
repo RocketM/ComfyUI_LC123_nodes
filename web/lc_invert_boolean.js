@@ -1,6 +1,10 @@
 /**
- * LC Invert Boolean — socket-only + small true/false readout
- * No toggle on the face; output is NOT of the linked input.
+ * LC Invert Boolean — socket-only face (true / false), Flip-style live signal.
+ *
+ * LC Bypasser / Mute resolve BOOLEAN by reading a widget named
+ * value|boolean|… on the origin, then invert if the origin looks like Flip/Invert.
+ * This node has no visible widget, so we keep a hidden `boolean` widget that
+ * stores the *upstream* (pre-invert) value — same contract as LC Boolean Flip.
  */
 
 import { app } from "../../scripts/app.js";
@@ -11,6 +15,7 @@ function coerceBool(v) {
   if (v === true || v === false) return v;
   if (v === 1 || v === "1" || v === "true" || v === "yes" || v === "on") return true;
   if (v === 0 || v === "0" || v === "false" || v === "no" || v === "off") return false;
+  if (typeof v === "number") return v !== 0;
   return null;
 }
 
@@ -46,9 +51,7 @@ function resolveBoolean(graph, input, depth = 0) {
   const origin = graph.getNodeById?.(link.origin_id);
   if (!origin) return null;
 
-  // Don't invert when reading *through* ourselves as origin of a chain
-  // — only when the origin node itself is an invert type
-  const invert = isInvertNode(origin) && origin !== input; // origin is upstream node
+  const invert = isInvertNode(origin);
 
   const boolIns = (origin.inputs || []).filter(
     (i) =>
@@ -76,13 +79,40 @@ function resolveBoolean(graph, input, depth = 0) {
   return null;
 }
 
-/** Input value on this invert node, then inverted for display. */
-function outputState(node) {
-  const inp = node.inputs?.[0];
+function rawUpstream(node) {
+  const inp = (node.inputs || []).find((i) => i && i.name === "value") || node.inputs?.[0];
   if (!inp || inp.link == null) return null;
-  const raw = resolveBoolean(app.graph, inp);
-  if (raw === null) return null;
-  return !raw; // this node inverts
+  return resolveBoolean(app.graph, inp);
+}
+
+function hideWidget(w) {
+  if (!w) return;
+  w.computeSize = () => [0, -4];
+  w.draw = () => {};
+  w.type = "hidden";
+}
+
+function ensureHiddenBoolean(node) {
+  if (!node.widgets) node.widgets = [];
+  let w = node.widgets.find((x) => x && x.name === "boolean");
+  if (!w) {
+    w = node.addWidget("toggle", "boolean", false, () => {}, { serialize: false });
+    hideWidget(w);
+  } else {
+    hideWidget(w);
+  }
+  return w;
+}
+
+function syncLive(node) {
+  const raw = rawUpstream(node);
+  const w = ensureHiddenBoolean(node);
+  if (raw !== null && w.value !== raw) {
+    w.value = raw;
+  }
+  node._lcRaw = raw;
+  node._lcBool = raw === null ? null : !raw;
+  return node._lcBool;
 }
 
 app.registerExtension({
@@ -96,19 +126,14 @@ app.registerExtension({
       const r = onCreated?.apply(this, arguments);
       this.color = "#28281E";
       this.bgcolor = "#28281E";
-      // Hide any residual boolean widget Comfy may still create
       for (const w of this.widgets || []) {
-        if (w.name === "value") {
-          w.computeSize = () => [0, -4];
-          w.draw = () => {};
-          w.type = "hidden";
-        }
+        if (w.name === "value" || w.name === "boolean") hideWidget(w);
       }
-      this._lcBool = null;
-      // Compact default size
+      ensureHiddenBoolean(this);
       this.size = this.size || [270, 50];
-      this.size[0] = 270;
-      this.size[1] = 50;
+      this.size[0] = Math.max(this.size[0] || 0, 180);
+      if ((this.size[1] || 0) < 50) this.size[1] = 50;
+      syncLive(this);
       return r;
     };
 
@@ -117,13 +142,9 @@ app.registerExtension({
       const r = onDrawFG?.apply(this, arguments);
       if (this.flags?.collapsed) return r;
 
-      const out = outputState(this);
-      this._lcBool = out;
-
-      const label =
-        out === null ? "—" : out ? "true" : "false";
-      const color =
-        out === null ? "#888" : out ? "#6c6" : "#c66";
+      const out = syncLive(this);
+      const label = out === null ? "—" : out ? "true" : "false";
+      const color = out === null ? "#888" : out ? "#6c6" : "#c66";
 
       const w = this.size?.[0] || 140;
       const h = this.size?.[1] || 50;
@@ -132,34 +153,33 @@ app.registerExtension({
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillStyle = color;
-      // Center in body below title
       ctx.fillText(label, w * 0.5, h * 0.55);
       ctx.restore();
-
       return r;
     };
 
-    // Refresh readout when links change
     const onConn = nodeType.prototype.onConnectionsChange;
     nodeType.prototype.onConnectionsChange = function () {
       const r = onConn?.apply(this, arguments);
+      syncLive(this);
       this.setDirtyCanvas?.(true, true);
       return r;
     };
   },
 
   async setup() {
-    // Periodically refresh invert readouts so upstream toggle changes show live
     setInterval(() => {
       const graph = app.graph;
       if (!graph?._nodes) return;
       for (const n of graph._nodes) {
         if (n.type === NODE_CLASS || n.comfyClass === NODE_CLASS) {
-          n.setDirtyCanvas?.(true, false);
+          const prev = n._lcBool;
+          syncLive(n);
+          if (prev !== n._lcBool) n.setDirtyCanvas?.(true, true);
         }
       }
     }, 200);
   },
 });
 
-console.log("[LC123.InvertBoolean] socket-only + readout");
+console.log("[LC123.InvertBoolean] hidden boolean widget + true/false face");

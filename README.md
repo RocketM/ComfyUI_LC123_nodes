@@ -6,7 +6,7 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 - **Civitai:** [lonecatone23](https://civitai.com/user/lonecatone23)
 - **Instagram:** [synth.studio.models](https://www.instagram.com/synth.studio.models/)
 - **Support:** [Buy me a ☕](https://ko-fi.com/lonecatone)
-- **Version:** 1.25.3 · **102 Python nodes** · **4 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel)
+- **Version:** 1.25.4 · **103 Python nodes** · **4 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel)
 
 > Small tools that remove friction — less wire mess, fewer clicks, clearer workflows.
 
@@ -234,7 +234,8 @@ Hover the node to wipe vs the original. Lighten UI load under **LC123 Performanc
 | **LC Custom Combo** | `inputcount` options → STRING + INDEX + OPT_CONNECTION. |
 | **LC Custom Combo Panel** | Compact remote for a combo hub. |
 | **LC Combo Selector** | Dropdown that mirrors another node’s combo. |
-| **LC Boolean** / **Invert Boolean** | Coerce to true/false. |
+| **LC Boolean** / **Invert Boolean** | Coerce to true/false. Invert has no face widget; shows **true** / **false**. Hidden `boolean` widget so Bypasser / Mute see a live signal without Queue (same contract as Flip). |
+| **LC Widget To String** | KJ WidgetToString. `any_input` unwired + `id` 0 + empty title → **dormant** (`""`). Wire `any_input` or set id/title to read widgets. Comma-separated names, `return_all`, float decimals. Utility green `#324B4B`. |
 | **LC Boolean Switch** / **Flip** / **Value** | Pick / emit booleans. |
 | **LC Int Compare** / **LC Float Compare** | Largest or smallest of two. |
 | **LC Any Empty Bool** | Autogrow `any_*`. Only plugged wires count. True if any plugged source is empty, muted, or bypassed. |

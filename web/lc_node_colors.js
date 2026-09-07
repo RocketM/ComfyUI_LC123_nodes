@@ -66,6 +66,7 @@ const COLORS = {
     LCTextReplace: { color: "#28281E", bgcolor: "#28281E" },
     LCTextRemove: { color: "#28281E", bgcolor: "#28281E" },
     LCShowText: { color: "#28281E", bgcolor: "#28281E" },
+    LCWidgetToString: { color: "#324B4B", bgcolor: "#324B4B" },
     LCJoinStrings: { color: "#28281E", bgcolor: "#28281E" },
     LCPromptToConditioning: { color: "#28281E", bgcolor: "#28281E", size: [270, 50] },
     LCPromptToConditioningZero: { color: "#28281E", bgcolor: "#28281E", size: [270, 60] },
