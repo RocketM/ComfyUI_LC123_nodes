@@ -3,3 +3,8 @@ __pycache__/
 .DS_Store
 Thumbs.db
 .git_WRONG_NESTED/
+
+node.zip
+*.zip
+__pycache__/
+.DS_Store
