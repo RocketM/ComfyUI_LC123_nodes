@@ -299,7 +299,11 @@ class LCImageMaskResize:
                 device=out_image.device,
             )
 
-        return (out_image, out_mask, int(out_w), int(out_h))
+        ow, oh = int(out_w), int(out_h)
+        return {
+            "ui": {"lc_size": [f"{ow}x{oh}"]},
+            "result": (out_image, out_mask, ow, oh),
+        }
 
 
 NODE_CLASS_MAPPINGS = {

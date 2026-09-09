@@ -29,6 +29,7 @@ const NODE_CLASSES = new Set([
   "LCLensProfile",
   "LCChromaticAberration",
   "LCSkinBeauty",
+  "LCSkinUpscale",
   "LCPhoneLook",
 ]);
 

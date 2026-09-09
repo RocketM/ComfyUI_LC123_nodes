@@ -6,7 +6,7 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 - **Civitai:** [lonecatone23](https://civitai.com/user/lonecatone23)
 - **Instagram:** [synth.studio.models](https://www.instagram.com/synth.studio.models/)
 - **Support:** [Buy me a ☕](https://ko-fi.com/lonecatone)
-- **Version:** 1.25.4 · **103 Python nodes** · **4 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel)
+- **Version:** 1.26.0 · **104 Python nodes** · **4 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel)
 
 > Small tools that remove friction — less wire mess, fewer clicks, clearer workflows.
 
@@ -94,6 +94,26 @@ Mask-aware skin cooling and brightening in **CIELAB**. Grades **skin**, not the 
 
 ---
 
+
+## ✨ LC Skin Upscale
+
+One **UPSCALE_MODEL** + an optional **MASK**. Crop to the matte, run the CNN, feather composite. Not a stack and not Ultimate SD Upscale.
+
+![Skin Contrast High before / after](assets/readme/lc_skin_upscale_before_after.png)
+
+- **mode `detail 1x`** — paste back at the source size (use this for 1× SkinContrast / ITF).
+- **mode `scale`** — keep the model’s native factor. Unmasked area is bilinear.
+- Optional **MASK** (PersonMaskUltra `face` + `body` recommended). `mask_source`: **input** / **chroma** / **input+chroma**.
+- **blend** 0 = original, 1 = full patch under the matte. Daily: **0.75**.
+- On-node before/after wipe. Outputs **image** + **skin_mask**.
+- Do not load a 4× model in `detail 1x` — you pay 4× time and throw the pixels away.
+
+Daily: `1xSkinContrast-High-SuperUltraCompact` · `detail 1x` · blend `0.75` · Ultra `face+body` · `mask_source: input` · tile `256` / overlap `16`.
+
+Example: [`workflows/Skin Upscaler Module.json`](workflows/Skin%20Upscaler%20Module.json)
+
+---
+
 ## 📷 LC Photo Style
 
 Camera / phone **finish** (not lens geometry). Presets drive the sliders; most controls **0 = no change**. **Strength** blends with the original.
@@ -146,7 +166,7 @@ Subjects + Scene + Camera + Lighting + Style + Palette
 | **LC Aspect Ratio Pipe Out** | Unpacks aspect pipe → image, mask, width, height, latent, batch, resolution. |
 | **LC Get Image 📐** | Megapixels, width, height, batch, aspect, longer-side resolution. |
 | **LC Dimension Resize 📐** | One value, add / sub / mul / div both sides; rounded outs. |
-| **LC Image-Mask Resize 📐** | Image + mask only (no latent / batch). **match_aspect_ratio** keeps the input ratio on the longer settings side. **upscale_by:** none / multiplier (0.25) / megapixels (0.01). |
+| **LC Image-Mask Resize 📐** | Image + mask only (no latent / batch). **match_aspect_ratio** keeps the input ratio on the longer settings side. **upscale_by:** none / multiplier (0.25) / megapixels (0.01). After a run, **WxH** (e.g. `1024x1390`) is drawn in a reserved footer. |
 | **LC Batch Image 🖼️** | Autogrow IMAGE slots → one batch. Muted / empty sockets are skipped. Different sizes follow the first live image. |
 | **LC Image Compare 🔎** | Batch A/B, one slider per pair. |
 | **LC Image Split 🖼️** | Saveable A\|B wipe (**slider only**). Output is the baked split. |
@@ -180,6 +200,7 @@ Hover the node to wipe vs the original. Lighten UI load under **LC123 Performanc
 | **LC Tone Match** | Frequency lock: **image** = detail (Krea2 / Klein / Qwen), **reference** = lighting/color/size. **tone_match** + **refinement_strength** + **detail_radius**. Optional **mask** (white = lock, black = keep image). Wipe vs reference. |
 | **LC Image Desaturate** | Desaturate. |
 | **LC Skin Beauty ✨** / **LC Photo Style 📷** | See above. |
+| **LC Skin Upscale** | One CNN + matte. `detail 1x` or `scale`. Wipe preview. See above. |
 | **LC Apply LUT** | `.cube` from **`ComfyUI/models/luts/`**. Samples copy from `assets/luts/` on load, never overwrite. |
 | **LC Text Overlay** | Text on image; align left/center/right; drag + widgets. |
 
@@ -276,6 +297,7 @@ Manual node sizes stick across reload (auto-fit only on first create or when `in
 | [`workflows/LC Lighting Control (BETA).json`](workflows/LC%20Lighting%20Control%20(BETA).json) | Image → normals / depth / mask → Lighting Control |
 | [`workflows/LC Skin Beauty.json`](workflows/LC%20Skin%20Beauty.json) | Skin Beauty with optional mask |
 | [`workflows/LC Skin Beauty basic (no deps).json`](workflows/LC%20Skin%20Beauty%20basic%20(no%20deps).json) | Skin Beauty only |
+| [`workflows/Skin Upscaler Module.json`](workflows/Skin%20Upscaler%20Module.json) | Skin Upscale + PersonMaskUltra V2 + split compare |
 | [`workflows/Photo style test.json`](workflows/Photo%20style%20test.json) | Photo Style |
 | [`workflows/Sharpen Pro test v2.json`](workflows/Sharpen%20Pro%20test%20v2.json) | Sharpen Pro |
 | [`workflows/Lonecats Prompt Builder .json`](workflows/Lonecats%20Prompt%20Builder%20.json) | Prompt Builder stack |
@@ -311,6 +333,7 @@ Workflow → Open, or drag onto the canvas.
 - **Lighting:** intensity ~1.0–1.3, ambient ~0.25–0.4, shadow strength ~0.4. Mask off if you see a grey fringe.
 - **Performance:** heavy graphs → half-res + clamp, or hide FX previews.
 - **Skin Beauty:** check **skin_mask**; lower sensitivity if fabric leaks.
+- **Skin Upscale:** 1× SkinContrast-High, `detail 1x`, blend 0.75, Ultra `face+body`, `mask_source: input`. Not Nomos in this node.
 - **Image Split:** set wipe, queue, save the **split** output.
 - **Prompt Builder:** `prompt` → CLIP; `json` → regional builders only.
 - **Reference Latent:** all slots empty = pass-through (bypasser-safe).
@@ -338,7 +361,7 @@ ComfyUI/custom_nodes/ComfyUI_LC123_nodes/__init__.py
 
 `__init__.py` must sit **directly** in that folder — not in `ComfyUI_LC123_nodes/ComfyUI_LC123_nodes/`. If you unzip a pack zip *inside* an existing clone, move the inner files up one level.
 
-Restart ComfyUI. Console should print the LC123 load line (~102 Python mappings). There is **no LC Math** node — use Comfy Math Expression. Optional workflows in `workflows/`. Hard-refresh the browser after a `web/` JS update.
+Restart ComfyUI. Console should print the LC123 load line (~104 Python mappings). There is **no LC Math** node — use Comfy Math Expression. Optional workflows in `workflows/`. Hard-refresh the browser after a `web/` JS update.
 
 **Requirements:** ComfyUI’s Python env (`torch`, `numpy`). No extra pip packages. Depth Anything / SAM / remBG for lighting & masks are separate installs.
 

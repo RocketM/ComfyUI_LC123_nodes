@@ -9,6 +9,7 @@ import { lcApplyLaunchColor } from "./lc_color.js";
 const TYPE = "LCImageMaskResize";
 const COLOR = "#324B4B";
 const DEFAULT_W = 280; // same as Aspect Ratio Simplifier in LC Node examples
+const FOOTER = 20; // "1024x1390" lives inside the node, not under the last widget
 
 function widgetByName(node, name) {
   return (node.widgets || []).find((w) => w.name === name);
@@ -21,7 +22,10 @@ function paint(node) {
 function sizeLaunch(node) {
   if (node._lcUserSized || node.properties?.lc_w) {
     const w = node.properties?.lc_w;
-    const h = node.properties?.lc_h;
+    let h = node.properties?.lc_h;
+    const minH =
+      typeof node.computeSize === "function" ? node.computeSize()?.[1] : 0;
+    if (h && minH && h < minH) h = minH;
     if (w && h) {
       node.size = [w, h];
       node._lcUserSized = true;
@@ -104,10 +108,37 @@ function applyUpscaleBy(node) {
   node.setDirtyCanvas?.(true, true);
 }
 
+
+function drawSizeLabel(node, ctx) {
+  const label = node._lcSizeLabel;
+  if (!label || node.flags?.collapsed) return;
+  const w = node.size?.[0] || DEFAULT_W;
+  const h = node.size?.[1] || 0;
+  ctx.save();
+  ctx.font = "11px sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#c8d4d4";
+  ctx.fillText(label, w * 0.5, h - 8);
+  ctx.restore();
+}
+
 function hook(node) {
   if (node._lcImgMaskResizeHooked) return;
   node._lcImgMaskResizeHooked = true;
   paint(node);
+  const prevCompute = node.computeSize;
+  node.computeSize = function (out) {
+    const sz = prevCompute ? prevCompute.apply(this, arguments) : [DEFAULT_W, 180];
+    const w = Array.isArray(sz) ? sz[0] : DEFAULT_W;
+    const h = Array.isArray(sz) ? sz[1] : 180;
+    const minH = h + FOOTER;
+    if (out) {
+      out[0] = w;
+      out[1] = minH;
+      return out;
+    }
+    return [w, minH];
+  };
   sizeLaunch(node);
   const modeW = widgetByName(node, "upscale_by");
   if (modeW) {
@@ -123,7 +154,22 @@ function hook(node) {
     if (typeof prevResize === "function") return prevResize.apply(this, arguments);
   };
   applyUpscaleBy(node);
+  const prevDraw = node.onDrawForeground;
+  node.onDrawForeground = function (ctx) {
+    if (typeof prevDraw === "function") prevDraw.apply(this, arguments);
+    drawSizeLabel(this, ctx);
+  };
+  const prevExec = node.onExecuted;
+  node.onExecuted = function (message) {
+    const r = prevExec?.apply(this, arguments);
+    const raw = message?.lc_size;
+    const s = Array.isArray(raw) ? raw[0] : raw;
+    if (s) this._lcSizeLabel = String(s);
+    this.setDirtyCanvas?.(true, true);
+    return r;
+  };
 }
+
 
 app.registerExtension({
   name: "LC123.ImageMaskResize",

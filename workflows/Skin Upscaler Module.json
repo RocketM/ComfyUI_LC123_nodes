@@ -1,0 +1,1074 @@
+{
+  "id": "43c9befd-8532-4acc-8e8e-bdaa180e0d62",
+  "revision": 0,
+  "last_node_id": 98,
+  "last_link_id": 170,
+  "nodes": [
+    {
+      "id": 92,
+      "type": "LCTextOverlay",
+      "pos": [
+        1590,
+        1770
+      ],
+      "size": [
+        300,
+        640
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 154
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            157
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "2965616a343ef7c117c204dfabaf6ffa692ae982",
+        "Node name for S&R": "LCTextOverlay",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        },
+        "lc_overlay_text": "Skin Upscaler\n",
+        "lc_preview_meta": [
+          {
+            "filename": "lc_before_temp_egjoa_00009_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ]
+      },
+      "widgets_values": [
+        "Skin Upscaler\n",
+        "Arial Bold",
+        50,
+        255,
+        255,
+        255,
+        92,
+        92,
+        "right"
+      ],
+      "widgets_values_named": {
+        "text": "Skin Upscaler\n",
+        "font": "Arial Bold",
+        "font_size": 50,
+        "color_r": 255,
+        "color_g": 255,
+        "color_b": 255,
+        "x_percent": 92,
+        "y_percent": 92,
+        "alignment": "right"
+      },
+      "color": "#324B4B",
+      "bgcolor": "#324B4B"
+    },
+    {
+      "id": 93,
+      "type": "LCImageSplit",
+      "pos": [
+        1900,
+        1770
+      ],
+      "size": [
+        300,
+        450
+      ],
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image_a",
+          "type": "IMAGE",
+          "link": 156
+        },
+        {
+          "name": "image_b",
+          "type": "IMAGE",
+          "link": 157
+        }
+      ],
+      "outputs": [
+        {
+          "name": "split 🖼️",
+          "type": "IMAGE",
+          "links": [
+            158
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "2965616a343ef7c117c204dfabaf6ffa692ae982",
+        "Node name for S&R": "LCImageSplit",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        0.49,
+        true
+      ],
+      "widgets_values_named": {
+        "split_position": 0.49,
+        "show_divider": true
+      },
+      "color": "#324B4B",
+      "bgcolor": "#324B4B"
+    },
+    {
+      "id": 94,
+      "type": "Label (rgthree)",
+      "pos": [
+        -330,
+        1440
+      ],
+      "size": [
+        637.4267578125,
+        150
+      ],
+      "flags": {
+        "allow_interaction": true
+      },
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "Lonecat's",
+      "properties": {
+        "fontSize": 150,
+        "fontFamily": "Arial",
+        "fontColor": "#00ff00",
+        "textAlign": "left",
+        "backgroundColor": "transparent",
+        "padding": 0,
+        "borderRadius": 0,
+        "angle": 0,
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.2"
+        },
+        "enableTabs": false,
+        "tabWidth": 65,
+        "tabXOffset": 10,
+        "hasSecondTab": false,
+        "secondTabText": "Send Back",
+        "secondTabOffset": 80,
+        "secondTabWidth": 65
+      },
+      "color": "#fff0",
+      "bgcolor": "#fff0"
+    },
+    {
+      "id": 91,
+      "type": "LCTextOverlay",
+      "pos": [
+        1270,
+        1770
+      ],
+      "size": [
+        300,
+        640
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 155
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            156
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "2965616a343ef7c117c204dfabaf6ffa692ae982",
+        "Node name for S&R": "LCTextOverlay",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        },
+        "lc_overlay_text": "Original",
+        "lc_preview_meta": [
+          {
+            "filename": "lc_before_temp_spytu_00006_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ]
+      },
+      "widgets_values": [
+        "Original",
+        "Arial Bold",
+        50,
+        255,
+        255,
+        255,
+        8,
+        92,
+        "left"
+      ],
+      "widgets_values_named": {
+        "text": "Original",
+        "font": "Arial Bold",
+        "font_size": 50,
+        "color_r": 255,
+        "color_g": 255,
+        "color_b": 255,
+        "x_percent": 8,
+        "y_percent": 92,
+        "alignment": "left"
+      },
+      "color": "#324B4B",
+      "bgcolor": "#324B4B"
+    },
+    {
+      "id": 86,
+      "type": "MaskPreview",
+      "pos": [
+        620,
+        1770
+      ],
+      "size": [
+        260,
+        340
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "mask",
+          "type": "MASK",
+          "link": 124
+        }
+      ],
+      "outputs": [
+        {
+          "name": "mask",
+          "type": "MASK",
+          "links": [
+            123
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.22.0",
+        "Node name for S&R": "MaskPreview",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [],
+      "widgets_values_named": {},
+      "color": "#222",
+      "bgcolor": "#000"
+    },
+    {
+      "id": 2,
+      "type": "UpscaleModelLoader",
+      "pos": [
+        -530,
+        1770
+      ],
+      "size": [
+        420,
+        60
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "UPSCALE_MODEL",
+          "type": "UPSCALE_MODEL",
+          "links": [
+            126
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.34.0",
+        "Node name for S&R": "UpscaleModelLoader",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        "1xSkinContrast-High-SuperUltraCompact.pth"
+      ],
+      "widgets_values_named": {
+        "model_name": "1xSkinContrast-High-SuperUltraCompact.pth"
+      },
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 95,
+      "type": "Label (rgthree)",
+      "pos": [
+        350,
+        1450
+      ],
+      "size": [
+        1215.8203125,
+        125
+      ],
+      "flags": {
+        "allow_interaction": true
+      },
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "Skin Upscaler Module",
+      "properties": {
+        "fontSize": 125,
+        "fontFamily": "Arial",
+        "fontColor": "#ffffff",
+        "textAlign": "left",
+        "backgroundColor": "transparent",
+        "padding": 0,
+        "borderRadius": 0,
+        "angle": 0,
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.5.2"
+        },
+        "enableTabs": false,
+        "tabWidth": 65,
+        "tabXOffset": 10,
+        "hasSecondTab": false,
+        "secondTabText": "Send Back",
+        "secondTabOffset": 80,
+        "secondTabWidth": 65
+      },
+      "color": "#fff0",
+      "bgcolor": "#fff0"
+    },
+    {
+      "id": 98,
+      "type": "MarkdownNote",
+      "pos": [
+        -1150,
+        1770
+      ],
+      "size": [
+        600,
+        790
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "## LC Skin Upscale\n\n\n---\n### Follow me on CivitAi [HERE](https://civitai.com/user/lonecatone23)\n\n### Instagram: [synth.studio.models](https://www.instagram.com/synth.studio.models/)\n\n### This represents many of hours of work. If you enjoy it, please 👍like, 💬 comment , and feel free to ⚡tip 😉\n\n## [Buy me a☕](https://ko-fi.com/lonecatone)\n---\n\n**Daily settings**\n- Model: `1xSkinContrast-High-SuperUltraCompact`\n- mode: `detail 1x`\n- blend: `0.75` (drop to `0.55–0.65` on already-sharp Krea plates)\n- mask: PersonMaskUltra `face` + `body`\n- mask_source: `input`\n- mask_feather: `0.45`\n- tile: `256` · overlap: `16`\n- Do not load a 4× model in this node\n\n**Widgets**\n- **mode `detail 1x`** — run the model, paste back at the original size. Use this for every 1× skin file.\n- **mode `scale`** — keep the model’s native factor (4× Nomos = 4× canvas). Only when you actually want more pixels.\n- **blend 0–1** — 0 = original, 1 = full patch under the mask, 0.75 = default mix.\n- **mask_source `input`** — use the wired Ultra mask only.\n- **mask_source `chroma`** — auto skin, no Ultra.\n- **mask_source `input+chroma`** — AND. Skip unless clothes leak into Ultra.\n- **mask_feather** — soft edge on the composite.\n- **tile / overlap** — CNN chunks. 256/16 on large plates; 512 is slower for little gain.\n\n**Mask**\n- Skin Get/Set = Ultra `face` + `body`\n- Face only if you do not want the chest treated\n- Not RMBG, not a 4× model, not stacked passes\n\n---\n\n## 1× skin CNN models\n\nFolder: `ComfyUI/models/upscale_models`\n\n| Model | Use | Visible | Link |\n|---|---|---|---|\n| **1x-ITF-SkinDiffDetail-Lite-v1** | Quiet grit after a real 2×/4× | Weak on purpose | https://openmodeldb.info/models/1x-ITF-SkinDiffDetail-Lite-v1 |\n| **1xSkinContrast-High-SuperUltraCompact** | Local contrast on skin (this node) | Visible on Krea at blend 0.75 | https://openmodeldb.info/models/1x-SkinContrast-SuperUltraCompact · High: https://www.mediafire.com/file/py46fnq12hhs5sz/1xSkinContrast-High-SuperUltraCompact.pth/file · HF: https://huggingface.co/notkenski/upscalers/blob/main/1xSkinContrast-High-SuperUltraCompact.pth |\n| **1x PureVision** | Cleanup before a 4× | Not a beauty pass | https://github.com/daredevilstudio/AI-upscaling-models |\n\n---\n\n---\n\n\n## LC 皮肤放大（Skin Upscale）\n\n---\n### 在 CivitAi 上关注我 [HERE](https://civitai.com/user/lonecatone23)\n### Instagram: [synth.studio.models](https://www.instagram.com/synth.studio.models/)\n### 这代表数百小时的工作成果。如果你喜欢，请 👍点赞、💬留言，并欢迎随时 ⚡打赏 😉\n\n## [Buy me a☕](https://ko-fi.com/lonecatone)\n\n---\n\n**日常设置**\n- 模型：`1xSkinContrast-High-SuperUltraCompact`\n- mode：`detail 1x`\n- blend：`0.75`（Krea 成品已经很锐时降到 `0.55–0.65`）\n- 遮罩：PersonMaskUltra 勾选 `face` + `body`\n- mask_source：`input`\n- mask_feather：`0.45`\n- tile：`256` · overlap：`16`\n- 不要在这个节点里加载 4× 模型\n\n**控件说明**\n- **mode `detail 1x`**：跑模型后贴回原尺寸。所有 1× 皮肤模型都用这个。\n- **mode `scale`**：保留模型原生倍率（Nomos 4× = 画布真的变 4 倍）。只有真要加像素时才用。\n- **blend 0–1**：0 = 原图，1 = 遮罩内完全替换，0.75 = 默认混合。\n- **mask_source `input`**：只用接进来的 Ultra 遮罩。\n- **mask_source `chroma`**：自动肤色，不用 Ultra。\n- **mask_source `input+chroma`**：两者求交。Ultra 没漏衣服就不要开。\n- **mask_feather**：合成边缘的羽化。\n- **tile / overlap**：CNN 分块。大图用 256/16；512 更慢，收益很小。\n\n**遮罩**\n- 皮肤 Get/Set = Ultra `face` + `body`\n- 只要脸、不要胸，就只勾 `face`\n- 不要用 RMBG、不要用 4×、不要叠第二遍\n\n---\n\n## 1× 皮肤 CNN 模型\n\n目录：`ComfyUI/models/upscale_models`\n\n| 模型 | 用途 | 观感 | 链接 |\n|---|---|---|---|\n| **1x-ITF-SkinDiffDetail-Lite-v1** | 真正 2×/4× 之后的轻度纹理 | 刻意很弱 | https://openmodeldb.info/models/1x-ITF-SkinDiffDetail-Lite-v1 |\n| **1xSkinContrast-High-SuperUltraCompact** | 皮肤局部对比度（本节点） | Krea 上 blend 0.75 能看出 | https://openmodeldb.info/models/1x-SkinContrast-SuperUltraCompact · High：https://www.mediafire.com/file/py46fnq12hhs5sz/1xSkinContrast-High-SuperUltraCompact.pth/file · HF：https://huggingface.co/notkenski/upscalers/blob/main/1xSkinContrast-High-SuperUltraCompact.pth |\n| **1x PureVision** | 4× 之前的压缩清理 | 不是美肤 | https://github.com/daredevilstudio/AI-upscaling-models |"
+      ],
+      "widgets_values_named": {
+        "text": "## LC Skin Upscale\n\n\n---\n### Follow me on CivitAi [HERE](https://civitai.com/user/lonecatone23)\n\n### Instagram: [synth.studio.models](https://www.instagram.com/synth.studio.models/)\n\n### This represents many of hours of work. If you enjoy it, please 👍like, 💬 comment , and feel free to ⚡tip 😉\n\n## [Buy me a☕](https://ko-fi.com/lonecatone)\n---\n\n**Daily settings**\n- Model: `1xSkinContrast-High-SuperUltraCompact`\n- mode: `detail 1x`\n- blend: `0.75` (drop to `0.55–0.65` on already-sharp Krea plates)\n- mask: PersonMaskUltra `face` + `body`\n- mask_source: `input`\n- mask_feather: `0.45`\n- tile: `256` · overlap: `16`\n- Do not load a 4× model in this node\n\n**Widgets**\n- **mode `detail 1x`** — run the model, paste back at the original size. Use this for every 1× skin file.\n- **mode `scale`** — keep the model’s native factor (4× Nomos = 4× canvas). Only when you actually want more pixels.\n- **blend 0–1** — 0 = original, 1 = full patch under the mask, 0.75 = default mix.\n- **mask_source `input`** — use the wired Ultra mask only.\n- **mask_source `chroma`** — auto skin, no Ultra.\n- **mask_source `input+chroma`** — AND. Skip unless clothes leak into Ultra.\n- **mask_feather** — soft edge on the composite.\n- **tile / overlap** — CNN chunks. 256/16 on large plates; 512 is slower for little gain.\n\n**Mask**\n- Skin Get/Set = Ultra `face` + `body`\n- Face only if you do not want the chest treated\n- Not RMBG, not a 4× model, not stacked passes\n\n---\n\n## 1× skin CNN models\n\nFolder: `ComfyUI/models/upscale_models`\n\n| Model | Use | Visible | Link |\n|---|---|---|---|\n| **1x-ITF-SkinDiffDetail-Lite-v1** | Quiet grit after a real 2×/4× | Weak on purpose | https://openmodeldb.info/models/1x-ITF-SkinDiffDetail-Lite-v1 |\n| **1xSkinContrast-High-SuperUltraCompact** | Local contrast on skin (this node) | Visible on Krea at blend 0.75 | https://openmodeldb.info/models/1x-SkinContrast-SuperUltraCompact · High: https://www.mediafire.com/file/py46fnq12hhs5sz/1xSkinContrast-High-SuperUltraCompact.pth/file · HF: https://huggingface.co/notkenski/upscalers/blob/main/1xSkinContrast-High-SuperUltraCompact.pth |\n| **1x PureVision** | Cleanup before a 4× | Not a beauty pass | https://github.com/daredevilstudio/AI-upscaling-models |\n\n---\n\n---\n\n\n## LC 皮肤放大（Skin Upscale）\n\n---\n### 在 CivitAi 上关注我 [HERE](https://civitai.com/user/lonecatone23)\n### Instagram: [synth.studio.models](https://www.instagram.com/synth.studio.models/)\n### 这代表数百小时的工作成果。如果你喜欢，请 👍点赞、💬留言，并欢迎随时 ⚡打赏 😉\n\n## [Buy me a☕](https://ko-fi.com/lonecatone)\n\n---\n\n**日常设置**\n- 模型：`1xSkinContrast-High-SuperUltraCompact`\n- mode：`detail 1x`\n- blend：`0.75`（Krea 成品已经很锐时降到 `0.55–0.65`）\n- 遮罩：PersonMaskUltra 勾选 `face` + `body`\n- mask_source：`input`\n- mask_feather：`0.45`\n- tile：`256` · overlap：`16`\n- 不要在这个节点里加载 4× 模型\n\n**控件说明**\n- **mode `detail 1x`**：跑模型后贴回原尺寸。所有 1× 皮肤模型都用这个。\n- **mode `scale`**：保留模型原生倍率（Nomos 4× = 画布真的变 4 倍）。只有真要加像素时才用。\n- **blend 0–1**：0 = 原图，1 = 遮罩内完全替换，0.75 = 默认混合。\n- **mask_source `input`**：只用接进来的 Ultra 遮罩。\n- **mask_source `chroma`**：自动肤色，不用 Ultra。\n- **mask_source `input+chroma`**：两者求交。Ultra 没漏衣服就不要开。\n- **mask_feather**：合成边缘的羽化。\n- **tile / overlap**：CNN 分块。大图用 256/16；512 更慢，收益很小。\n\n**遮罩**\n- 皮肤 Get/Set = Ultra `face` + `body`\n- 只要脸、不要胸，就只勾 `face`\n- 不要用 RMBG、不要用 4×、不要叠第二遍\n\n---\n\n## 1× 皮肤 CNN 模型\n\n目录：`ComfyUI/models/upscale_models`\n\n| 模型 | 用途 | 观感 | 链接 |\n|---|---|---|---|\n| **1x-ITF-SkinDiffDetail-Lite-v1** | 真正 2×/4× 之后的轻度纹理 | 刻意很弱 | https://openmodeldb.info/models/1x-ITF-SkinDiffDetail-Lite-v1 |\n| **1xSkinContrast-High-SuperUltraCompact** | 皮肤局部对比度（本节点） | Krea 上 blend 0.75 能看出 | https://openmodeldb.info/models/1x-SkinContrast-SuperUltraCompact · High：https://www.mediafire.com/file/py46fnq12hhs5sz/1xSkinContrast-High-SuperUltraCompact.pth/file · HF：https://huggingface.co/notkenski/upscalers/blob/main/1xSkinContrast-High-SuperUltraCompact.pth |\n| **1x PureVision** | 4× 之前的压缩清理 | 不是美肤 | https://github.com/daredevilstudio/AI-upscaling-models |"
+      },
+      "color": "#222",
+      "bgcolor": "#000"
+    },
+    {
+      "id": 90,
+      "type": "LCEasyFolder",
+      "pos": [
+        2210,
+        1770
+      ],
+      "size": [
+        300,
+        160
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "filename_prefix",
+          "type": "STRING",
+          "links": [
+            153
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "2965616a343ef7c117c204dfabaf6ffa692ae982",
+        "Node name for S&R": "LCEasyFolder",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        "LC123 Node Test",
+        "Skin Upscaler",
+        "",
+        "none",
+        "auto"
+      ],
+      "widgets_values_named": {
+        "folder": "LC123 Node Test",
+        "prefix": "Skin Upscaler",
+        "suffix": "",
+        "timestamp": "none",
+        "path_separator": "auto"
+      },
+      "color": "#325A5A",
+      "bgcolor": "#325A5A"
+    },
+    {
+      "id": 89,
+      "type": "SaveImage",
+      "pos": [
+        2520,
+        1770
+      ],
+      "size": [
+        340,
+        450
+      ],
+      "flags": {},
+      "order": 15,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 158
+        },
+        {
+          "name": "filename_prefix",
+          "type": "STRING",
+          "widget": {
+            "name": "filename_prefix"
+          },
+          "link": 153
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.34.0",
+        "Node name for S&R": "SaveImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        "ComfyUI"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "ComfyUI"
+      },
+      "color": "#233",
+      "bgcolor": "#355"
+    },
+    {
+      "id": 3,
+      "type": "LoadImage",
+      "pos": [
+        -530,
+        1870
+      ],
+      "size": [
+        420,
+        480
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            166
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.34.0",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        "Krea 2_You r filename here_00003_.png",
+        "image"
+      ],
+      "widgets_values_named": {
+        "image": "Krea 2_You r filename here_00003_.png",
+        "upload": "image"
+      },
+      "color": "#233",
+      "bgcolor": "#355"
+    },
+    {
+      "id": 74,
+      "type": "LayerMask: PersonMaskUltra V2",
+      "pos": [
+        210,
+        1770
+      ],
+      "size": [
+        390,
+        420
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 170
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": []
+        },
+        {
+          "name": "mask",
+          "type": "MASK",
+          "links": [
+            124
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LayerStyle_Advance",
+        "ver": "7b678b401a38307a4a7e99ef6630bd48f9cecedb",
+        "Node name for S&R": "LayerMask: PersonMaskUltra V2",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        true,
+        false,
+        true,
+        false,
+        false,
+        false,
+        0.4,
+        "VITMatte",
+        6,
+        6,
+        0.01,
+        0.99,
+        true,
+        "cuda",
+        2
+      ],
+      "widgets_values_named": {
+        "face": true,
+        "hair": false,
+        "body": true,
+        "clothes": false,
+        "accessories": false,
+        "background": false,
+        "confidence": 0.4,
+        "detail_method": "VITMatte",
+        "detail_erode": 6,
+        "detail_dilate": 6,
+        "black_point": 0.01,
+        "white_point": 0.99,
+        "process_detail": true,
+        "device": "cuda",
+        "max_megapixels": 2
+      },
+      "color": "rgba(27, 80, 119, 0.7)"
+    },
+    {
+      "id": 64,
+      "type": "LCImageMaskResize",
+      "pos": [
+        -90,
+        1770
+      ],
+      "size": [
+        280,
+        354
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 169
+        },
+        {
+          "name": "mask",
+          "shape": 7,
+          "type": "MASK",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            127,
+            155,
+            170
+          ]
+        },
+        {
+          "name": "mask",
+          "type": "MASK",
+          "links": null
+        },
+        {
+          "name": "width",
+          "type": "INT",
+          "links": null
+        },
+        {
+          "name": "height",
+          "type": "INT",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "2965616a343ef7c117c204dfabaf6ffa692ae982",
+        "lc_w": 280,
+        "lc_h": 354,
+        "Node name for S&R": "LCImageMaskResize",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        true,
+        "custom",
+        1024,
+        1024,
+        "megapixels",
+        1,
+        3,
+        "lanczos",
+        "total_pixels",
+        "center",
+        8
+      ],
+      "widgets_values_named": {
+        "match_aspect_ratio": true,
+        "aspect_ratio": "custom",
+        "custom_width": 1024,
+        "custom_height": 1024,
+        "upscale_by": "megapixels",
+        "multiplier": 1,
+        "megapixels": 3,
+        "upscale_method": "lanczos",
+        "proportion": "total_pixels",
+        "crop_location": "center",
+        "divisible_by": 8
+      },
+      "color": "#324B4B",
+      "bgcolor": "#324B4B"
+    },
+    {
+      "id": 85,
+      "type": "LCSkinUpscale",
+      "pos": [
+        900,
+        1770
+      ],
+      "size": [
+        300,
+        630
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 127
+        },
+        {
+          "name": "upscale_model",
+          "type": "UPSCALE_MODEL",
+          "link": 126
+        },
+        {
+          "name": "mask",
+          "shape": 7,
+          "type": "MASK",
+          "link": 123
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            154,
+            163
+          ]
+        },
+        {
+          "name": "skin_mask",
+          "type": "MASK",
+          "links": []
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "2965616a343ef7c117c204dfabaf6ffa692ae982",
+        "Node name for S&R": "LCSkinUpscale",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        },
+        "lc_preview_meta": [
+          {
+            "filename": "lc_after_temp_tnyet_00009_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ],
+        "lc_before_meta": [
+          {
+            "filename": "lc_before_temp_tnyet_00009_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ]
+      },
+      "widgets_values": [
+        "detail 1x",
+        1,
+        "input",
+        0.55,
+        0.45,
+        512,
+        32
+      ],
+      "widgets_values_named": {
+        "mode": "detail 1x",
+        "blend": 1,
+        "mask_source": "input",
+        "mask_sensitivity": 0.55,
+        "mask_feather": 0.45,
+        "tile": 512,
+        "overlap": 32
+      },
+      "color": "#324B4B",
+      "bgcolor": "#324B4B"
+    },
+    {
+      "id": 96,
+      "type": "Reroute",
+      "pos": [
+        -200,
+        1670
+      ],
+      "size": [
+        100,
+        30
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "image in",
+          "name": "",
+          "type": "*",
+          "link": 166
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "IMAGE",
+          "links": [
+            169
+          ]
+        }
+      ],
+      "properties": {
+        "showOutputText": false,
+        "horizontal": false,
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "color": "#233",
+      "bgcolor": "#355"
+    },
+    {
+      "id": 97,
+      "type": "Reroute",
+      "pos": [
+        1160,
+        1670
+      ],
+      "size": [
+        75,
+        26
+      ],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "",
+          "type": "*",
+          "link": 163
+        }
+      ],
+      "outputs": [
+        {
+          "label": "Image Out",
+          "name": "",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "showOutputText": false,
+        "horizontal": false,
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "color": "#233",
+      "bgcolor": "#355"
+    }
+  ],
+  "links": [
+    [
+      123,
+      86,
+      0,
+      85,
+      2,
+      "MASK"
+    ],
+    [
+      124,
+      74,
+      1,
+      86,
+      0,
+      "MASK"
+    ],
+    [
+      126,
+      2,
+      0,
+      85,
+      1,
+      "UPSCALE_MODEL"
+    ],
+    [
+      127,
+      64,
+      0,
+      85,
+      0,
+      "IMAGE"
+    ],
+    [
+      153,
+      90,
+      0,
+      89,
+      1,
+      "STRING"
+    ],
+    [
+      154,
+      85,
+      0,
+      92,
+      0,
+      "IMAGE"
+    ],
+    [
+      155,
+      64,
+      0,
+      91,
+      0,
+      "IMAGE"
+    ],
+    [
+      156,
+      91,
+      0,
+      93,
+      0,
+      "IMAGE"
+    ],
+    [
+      157,
+      92,
+      0,
+      93,
+      1,
+      "IMAGE"
+    ],
+    [
+      158,
+      93,
+      0,
+      89,
+      0,
+      "IMAGE"
+    ],
+    [
+      163,
+      85,
+      0,
+      97,
+      0,
+      "IMAGE"
+    ],
+    [
+      166,
+      3,
+      0,
+      96,
+      0,
+      "IMAGE"
+    ],
+    [
+      169,
+      96,
+      0,
+      64,
+      0,
+      "IMAGE"
+    ],
+    [
+      170,
+      64,
+      0,
+      74,
+      0,
+      "IMAGE"
+    ]
+  ],
+  "groups": [
+    {
+      "id": 1,
+      "title": "testing Only",
+      "bounding": [
+        1260,
+        1700,
+        1610,
+        720
+      ],
+      "color": "#3f789e",
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ue_links": [],
+    "ds": {
+      "scale": 0.5559917313492343,
+      "offset": [
+        1595.2421522714567,
+        -992.1043959414058
+      ]
+    },
+    "links_added_by_ue": [],
+    "k2cf_state_id": "k2cf_1788917718939_7nzksrzlk8o",
+    "frontendVersion": "1.51.9",
+    "VHS_latentpreview": false,
+    "VHS_latentpreviewrate": 0,
+    "VHS_MetadataImage": true,
+    "VHS_KeepIntermediate": true
+  },
+  "version": 0.4,
+  "seed_widgets": {}
+}
