@@ -24,7 +24,7 @@ class Krea2RegionalCanvasInline:
     RETURN_TYPES = ("IMAGE", "CONDITIONING", "CONDITIONING", "STRING", "MASK")
     RETURN_NAMES = ("IMAGE", "POSITIVE", "NEGATIVE", "JSON", "MASK")
     FUNCTION = "execute"
-    CATEGORY = "Krea2/Regional"
+    CATEGORY = "LC123/Regional Canvas/Krea2"
 
     @classmethod
     def IS_CHANGED(cls, unique_id=None, canvas_data="", **kwargs):
@@ -49,7 +49,7 @@ class Krea2RegionalCanvasInline:
         **kwargs,
     ):
         return _run_inline_canvas(
-            node_name="Krea2 Regional Inline Canvas",
+            node_name="LC Krea2 Regional Inline Canvas",
             clip=clip,
             width=width,
             height=height,
@@ -71,5 +71,5 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "Krea2RegionalCanvasInline": "Krea2 Regional Inline Canvas",
+    "Krea2RegionalCanvasInline": "LC Krea2 Regional Inline Canvas",
 }

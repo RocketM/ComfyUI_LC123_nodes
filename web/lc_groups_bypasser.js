@@ -451,7 +451,7 @@ app.registerExtension({
         }
 
         const minH = 60 + Math.max(groups.length, 1) * 30;
-        if (!this.size) this.size = [260, minH];
+        if (!this.size) this.size = [270, minH];
         if (this.size[1] < minH) this.size[1] = minH;
 
         this.setDirtyCanvas?.(true, true);

@@ -70,13 +70,7 @@ _load("lc_node_snapshot")
 _load("lc_notify")
 _load("lc_civitai_strip")
 
-# Save text (prefer lowercase module name; fall back to LC_*)
-try:
-    _load("lc_save_text")
-except Exception:
-    pass
-if "LC123SaveText" not in NODE_CLASS_MAPPINGS:
-    _load("LC_save_text")
+_load("lc_save_text")
 
 # Image tools
 _load("lc_batch_image")

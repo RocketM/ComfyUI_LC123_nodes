@@ -4,12 +4,14 @@
 import { app } from "../../scripts/app.js";
 
 const COLORS = {
+    // NOTE: LCAspectRatioPipe, LCSamplerConfigure(+PipeOut/Pipe), LCPipeOut,
+    // LCPipeEdit, LCDetailPipeOut are NOT listed here — they're painted #707070
+    // by lc_pipe_sampler_chrome.js, which is the single source of truth for the
+    // pipe/sampler-configure family. Do not re-add them here; a stale duplicate
+    // entry here previously conflicted with that file's color (both fired, one
+    // silently overrode the other depending on load order).
     AspectRatioSimplifier: { color: "#324b4b", bgcolor: "#324b4b" },
     LCAspectRatioPipeOut: { color: "#324b4b", bgcolor: "#324b4b" },
-    LCAspectRatioPipe: { color: "#324b4b", bgcolor: "#324b4b" },
-    LCSamplerConfigure: { color: "#324b4b", bgcolor: "#324b4b" },
-    LCSamplerConfigurePipeOut: { color: "#324b4b", bgcolor: "#324b4b" },
-    LCSamplerConfigurePipe: { color: "#324b4b", bgcolor: "#324b4b" },
     LCSplitSigmaScheduler: { color: "#324b4b", bgcolor: "#324b4b" },
     LCBasicScheduler: { color: "#324b4b", bgcolor: "#324b4b" },
     LCSplitSigmasAdvanced: { color: "#324b4b", bgcolor: "#324b4b" },
@@ -17,10 +19,8 @@ const COLORS = {
     LCSigmaResample: { color: "#1c6d6d", bgcolor: "#1c6d6d" },
     LCSigmaCurve: { color: "#1c6d6d", bgcolor: "#1c6d6d" },
     LCVRAMCacheClear: { color: "#28281E", bgcolor: "#28281E", size: [270, 30] },
-    LCPipeIn: { color: "#324b4b", bgcolor: "#324b4b" },
-    LCPipeOut: { color: "#324b4b", bgcolor: "#324b4b" },
-    LCPipeEdit: { color: "#324b4b", bgcolor: "#324b4b" },
-    LCDetailPipeOut: { color: "#324b4b", bgcolor: "#324b4b" },
+    // LCPipeIn is now painted #707070 by lc_pipe_sampler_chrome.js, same as
+    // LCPipeOut/LCPipeEdit — do not re-add an entry for it here.
     LCDynamicOverlay: { color: "#324b4b", bgcolor: "#324b4b" },
     LCGetImage: { color: "#324b4b", bgcolor: "#324b4b" },
     LCSkinBeauty: { color: "#324B4B", bgcolor: "#324B4B" },
@@ -81,6 +81,36 @@ const COLORS = {
     LCImagePass: { color: "#28281E", bgcolor: "#28281E" },
     LCMaskPass: { color: "#28281E", bgcolor: "#28281E" },
 
+    // --- Gap-fill pass: nodes with no prior color source anywhere ---
+    // Utility (#28281E)
+    LCBooleanFlip: { color: "#28281E", bgcolor: "#28281E" },
+    LCBooleanSwitch: { color: "#28281E", bgcolor: "#28281E" },
+    LCBooleanValue: { color: "#28281E", bgcolor: "#28281E" },
+    LCCustomCombo: { color: "#28281E", bgcolor: "#28281E" },
+    LCCustomComboPanel: { color: "#28281E", bgcolor: "#28281E" },
+    LCIndexSwitch: { color: "#28281E", bgcolor: "#28281E" },
+    LCNodeSnapshot: { color: "#28281E", bgcolor: "#28281E" },
+    LCSeed: { color: "#28281E", bgcolor: "#28281E" },
+
+    // Image / catch-all (#324B4B)
+    LCBatchImageComparer: { color: "#324B4B", bgcolor: "#324B4B" },
+    LCImageGrid: { color: "#324B4B", bgcolor: "#324B4B" },
+    LCImageMaskResize: { color: "#324B4B", bgcolor: "#324B4B" },
+    LCImageSplit: { color: "#324B4B", bgcolor: "#324B4B" },
+    LCPhoneLook: { color: "#324B4B", bgcolor: "#324B4B" },
+    LCRelight: { color: "#324B4B", bgcolor: "#324B4B" },
+    LCToneMatch: { color: "#324B4B", bgcolor: "#324B4B" },
+    LCWatermark: { color: "#324B4B", bgcolor: "#324B4B" },
+    AnimaRegionalCanvasInline: { color: "#324B4B", bgcolor: "#324B4B" },
+    Krea2RegionalCanvasInline: { color: "#324B4B", bgcolor: "#324B4B" },
+
+    // Sampler-related (#1C6D6D)
+    LCDenoise: { color: "#1C6D6D", bgcolor: "#1C6D6D" },
+
+    // Exceptions — dedicated colors, not part of the base palette
+    LCStop: { color: "#963232", bgcolor: "#963232" },
+    LCPositive: { color: "#326432", bgcolor: "#326432" },
+    LCNegative: { color: "#643232", bgcolor: "#643232" },
 };
 
 app.registerExtension({

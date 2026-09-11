@@ -182,7 +182,7 @@ class LCImageMaskResize:
     RETURN_TYPES = ("IMAGE", "MASK", "INT", "INT")
     RETURN_NAMES = ("image", "mask", "width", "height")
     FUNCTION = "resize"
-    CATEGORY = "LC123"
+    CATEGORY = "LC123/image"
     DESCRIPTION = (
         "Resize an image and/or mask to a preset or custom W×H. "
         "match_aspect_ratio uses the larger settings side and keeps the input ratio. "

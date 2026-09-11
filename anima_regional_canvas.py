@@ -152,7 +152,7 @@ class AnimaRegionalCanvasInline:
         "MASK",
     )
     FUNCTION = "execute"
-    CATEGORY = "Anima/Regional"
+    CATEGORY = "LC123/Regional Canvas/Anima"
 
     @classmethod
     def IS_CHANGED(cls, unique_id=None, canvas_data="", **kwargs):
@@ -251,7 +251,7 @@ class AnimaRegionalCanvasInline:
         union = _mask_output(masks)
 
         metadata = _build_metadata(
-            "Anima Regional Inline Canvas",
+            "LC Anima Regional Inline Canvas",
             "inline",
             prompts,
             width,
@@ -283,5 +283,5 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "AnimaRegionalCanvasInline": "Anima Regional Inline Canvas",
+    "AnimaRegionalCanvasInline": "LC Anima Regional Inline Canvas",
 }

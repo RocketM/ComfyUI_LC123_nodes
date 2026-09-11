@@ -427,7 +427,7 @@ class LCRelight:
     RETURN_TYPES = ("IMAGE", "MASK")
     RETURN_NAMES = ("image", "debug_mask")
     FUNCTION = "relight"
-    CATEGORY = "LC123"
+    CATEGORY = "LC123/image"
 
     def relight(
         self,

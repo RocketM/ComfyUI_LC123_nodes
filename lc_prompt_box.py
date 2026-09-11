@@ -56,6 +56,6 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "LCPositive": "Positive",
-    "LCNegative": "Negative",
+    "LCPositive": "LC Positive",
+    "LCNegative": "LC Negative",
 }

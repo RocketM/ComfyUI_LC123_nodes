@@ -354,7 +354,7 @@ class AspectRatioSimplifier:
     RETURN_TYPES = ("IMAGE", "MASK", "INT", "INT", "LATENT", "INT", "INT")
     RETURN_NAMES = ("image", "mask", "width", "height", "latent", "batch", "resolution")
     FUNCTION = "run"
-    CATEGORY = "LC123"
+    CATEGORY = "LC123/image"
 
     @classmethod
     def VALIDATE_INPUTS(cls, aspect_ratio=None, **kwargs):
@@ -509,7 +509,7 @@ class LCAspectRatioPipeOut:
     RETURN_TYPES = ("LC_PIPE", "IMAGE", "MASK", "INT", "INT", "LATENT", "INT", "INT")
     RETURN_NAMES = ("pipe", "image", "mask", "width", "height", "latent", "batch", "resolution")
     FUNCTION = "run"
-    CATEGORY = "LC123"
+    CATEGORY = "LC123/image"
 
     @classmethod
     def VALIDATE_INPUTS(cls, aspect_ratio=None, **kwargs):
@@ -555,7 +555,7 @@ class LCAspectRatioPipe:
     RETURN_TYPES = ("LC_PIPE", "IMAGE", "MASK", "INT", "INT", "LATENT", "INT", "INT")
     RETURN_NAMES = ("pipe", "image", "mask", "width", "height", "latent", "batch", "resolution")
     FUNCTION = "unpack"
-    CATEGORY = "LC123"
+    CATEGORY = "LC123/image"
     DESCRIPTION = (
         "Unpacks aspect fields from an LC_PIPE into individual sockets. "
         "Pipe is passed through for further Get/Set chaining."
@@ -586,7 +586,7 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "AspectRatioSimplifier": "📐 Aspect Ratio Simplifier",
-    "LCAspectRatioPipeOut": "📐 Aspect Ratio Simplifier (pipe)",
-    "LCAspectRatioPipe": "LC Aspect Ratio Pipe Out",
+    "AspectRatioSimplifier": "📐 LC Aspect Ratio Simplifier",
+    "LCAspectRatioPipeOut": "📐 LC Aspect Ratio Simplifier (pipe)",
+    "LCAspectRatioPipe": "LC Aspect Ratio Pipe (In/Edit)",
 }

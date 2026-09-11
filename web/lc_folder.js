@@ -1,11 +1,11 @@
 /**
- * LC Easy / Advanced Folder — default color #325A5A + default sizes
+ * LC Easy / Advanced Folder — default color #324B4B (image bucket) + default sizes
  */
 import { app } from "../../scripts/app.js";
 
 const DEFAULTS = {
-    LCEasyFolder: { color: "#325A5A", bgcolor: "#325A5A", size: [300, 160] },
-    LCAdvancedFolder: { color: "#325A5A", bgcolor: "#325A5A", size: [300, 200] },
+    LCEasyFolder: { color: "#324B4B", bgcolor: "#324B4B", size: [300, 160] },
+    LCAdvancedFolder: { color: "#324B4B", bgcolor: "#324B4B", size: [300, 200] },
 };
 
 app.registerExtension({

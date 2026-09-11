@@ -316,7 +316,7 @@ app.registerExtension({
           }
         }
         const minH = 70 + filled * 30;
-        if (!this.size) this.size = [240, minH];
+        if (!this.size) this.size = [270, minH];
         if (this.size[1] < minH) this.size[1] = minH;
       }
 
@@ -535,7 +535,7 @@ app.registerExtension({
         this.addInput("hub", "*");
         this.addOutput("OPT_CONNECTION", "*");
         lcApplyLaunchColor(this, "#28281E");
-        this.size = [260, 48];
+        this.size = [270, 48];
         this._lcTimer = null;
         this._lcKind = null; // "node" | "group"
         this.description = LCBypasserPanel.desc || this.description;

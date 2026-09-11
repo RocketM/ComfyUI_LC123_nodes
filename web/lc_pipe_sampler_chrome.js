@@ -11,6 +11,7 @@ const COLOR = "#707070";
 const SAMPLER_WIDTH = 300;
 
 const COLOR_TYPES = new Set([
+  "LCPipeIn",
   "LCPipeOut",
   "LCPipeEdit",
   "LCDetailPipeOut",
