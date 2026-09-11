@@ -76,6 +76,10 @@ const COLORS = {
     "LC Mute": { color: "#28281E", bgcolor: "#28281E" },
     "LC Groups Bypasser": { color: "#28281E", bgcolor: "#28281E" },
     "LC Bypasser Panel": { color: "#28281E", bgcolor: "#28281E" },
+    LCBypassRelay: { color: "#28281E", bgcolor: "#28281E" },
+    "LC Bypass Relay": { color: "#28281E", bgcolor: "#28281E" },
+    LCImagePass: { color: "#28281E", bgcolor: "#28281E" },
+    LCMaskPass: { color: "#28281E", bgcolor: "#28281E" },
 
 };
 

@@ -6,7 +6,7 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 - **Civitai:** [lonecatone23](https://civitai.com/user/lonecatone23)
 - **Instagram:** [synth.studio.models](https://www.instagram.com/synth.studio.models/)
 - **Support:** [Buy me a ☕](https://ko-fi.com/lonecatone)
-- **Version:** 1.26.0 · **104 Python nodes** · **4 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel)
+- **Version:** 1.27.0 · **107 Python nodes** · **4 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel)
 
 > Small tools that remove friction — less wire mess, fewer clicks, clearer workflows.
 
@@ -173,6 +173,8 @@ Subjects + Scene + Camera + Lighting + Style + Palette
 | **LC Image Grid 🖼️** | Contact sheet (columns, gap, pad, outline). |
 | **LC Last Image Holder** | Holds last image; clear without re-run. |
 | **LC Dynamic Overlay** | Overlay B on A; opacity after one queue. **blended Image** out. |
+| **LC Image Pass** | Identity IMAGE. `enable` off mutes this tap so optional downstream sockets see no feed. Side wire only — do not put the main IMAGE series through it. |
+| **LC Mask Pass** | Identity MASK for a mask bank. `enable` off mutes this tap; Color / Tone Match then run `mask=None` (full frame). Leave PersonMaskUltra live. |
 | **LC Watermark 💧** | Image watermark; size, opacity, drag place. |
 
 ---
@@ -269,6 +271,7 @@ Hover the node to wipe vs the original. Lighten UI load under **LC123 Performanc
 | **LC Node Snapshot 📋** | Read another node’s widgets → value / dump / JSON. |
 | **LC Notify 🔊** | Play a sound from `assets/sounds/` on run. Mode: always / on empty queue / **never**. ▶ preview still works when silent. |
 | **LC Bypasser** / **LC Mute** / **Groups Bypasser** / **Bypasser Panel** | Remote **bypass** (pass-through) or **mute** (never run). Same toggles, boolean lock, collapse. Panel `hub` accepts all three. Constructor: string title only; off-mode is class `lcOffMode`. |
+| **LC Bypass Relay** | Autogrow left `*` targets. `OPT_CONNECTION` into **LC Bypasser** or **LC Mute**. When the hub turns the Relay off, every left-hand node gets the same bypass/mute. One node — no Repeater / Fanout. |
 | **LC Stop 🛑** | Pause until button. |
 | **LC VRAM Cache Clear** | Clear VRAM / cache; pass-through. |
 
@@ -350,6 +353,8 @@ Workflow → Open, or drag onto the canvas.
 - **Int Split:** `split_point` is 0–1 only.
 - **Batch Image:** autogrow; muted/empty slots skipped. Node height follows slot count.
 - **Bypass vs mute:** Bypasser = pass-through (mode 4). Mute = never run (mode 2). Panel `hub` works with Bypasser, Mute, and Groups Bypasser. Keep `web/lc_color.js` — other chrome files import it.
+- **Bypass Relay:** A/B/C into Relay left; Relay OPT into Bypasser/Mute. Hub off → Relay + A/B/C off.
+- **Image / Mask Pass:** `enable` off mutes that tap only. Keep Ultra live; mute the Pass in front of Color Match if you want a full-frame match.
 
 ---
 
@@ -361,7 +366,7 @@ ComfyUI/custom_nodes/ComfyUI_LC123_nodes/__init__.py
 
 `__init__.py` must sit **directly** in that folder — not in `ComfyUI_LC123_nodes/ComfyUI_LC123_nodes/`. If you unzip a pack zip *inside* an existing clone, move the inner files up one level.
 
-Restart ComfyUI. Console should print the LC123 load line (~104 Python mappings). There is **no LC Math** node — use Comfy Math Expression. Optional workflows in `workflows/`. Hard-refresh the browser after a `web/` JS update.
+Restart ComfyUI. Console should print the LC123 load line (~107 Python mappings). There is **no LC Math** node — use Comfy Math Expression. Optional workflows in `workflows/`. Hard-refresh the browser after a `web/` JS update.
 
 **Requirements:** ComfyUI’s Python env (`torch`, `numpy`). No extra pip packages. Depth Anything / SAM / remBG for lighting & masks are separate installs.
 

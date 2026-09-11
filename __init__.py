@@ -114,6 +114,8 @@ _load("lc_any_empty")
 _load("lc_int_split")
 _load("lc_change_step_count")
 _load("lc_sigma_curve")
+_load("lc_pass")
+_load("lc_bypass_relay")
 
 WEB_DIRECTORY = "./web"
 
