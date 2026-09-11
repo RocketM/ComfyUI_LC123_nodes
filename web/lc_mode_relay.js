@@ -3,9 +3,8 @@
  */
 import { app } from "../../scripts/app.js";
 
-const TYPE = "LC Bypass Relay";
-const TYPE_PY = "LCBypassRelay";
-const TYPES = new Set([TYPE, TYPE_PY]);
+const TYPE = "LCBypassRelay";
+const TYPES = new Set([TYPE]);
 const HUBS = new Set(["LC Bypasser", "LC Mute"]);
 const COLOR = "#28281E";
 const LIVE = 0;
@@ -63,16 +62,51 @@ function setMode(n, mode) {
   } catch (_) {}
 }
 
+function hug(node) {
+  const slots = (node.inputs || []).filter((i) => i && i.type !== "BOOLEAN").length;
+  const h = Math.max(52, 28 + slots * 24);
+  if (!node.size) node.size = [270, h];
+  node.size[0] = Math.max(node.size[0] || 270, 240);
+  node.size[1] = h;
+}
+
 function grow(node) {
   if (!node.inputs) node.inputs = [];
-  const last = node.inputs[node.inputs.length - 1];
-  if (!last || last.link != null) node.addInput("", "*");
+  const stars = node.inputs.filter((i) => i && i.type !== "BOOLEAN");
+  stars.forEach((inp, i) => {
+    inp.name = "any_" + (i + 1);
+    inp.type = "*";
+  });
+  if (!stars.length) node.addInput("any_1", "*");
+  const last = node.inputs.filter((i) => i && i.type !== "BOOLEAN").pop();
+  const filled = last && last.link != null;
+  const count = node.inputs.filter((i) => i && i.type !== "BOOLEAN").length;
+  if (filled && count < 16) node.addInput("any_" + (count + 1), "*");
   let empty = 0;
   for (let i = node.inputs.length - 1; i >= 0; i--) {
-    if (node.inputs[i]?.link == null) {
+    const inp = node.inputs[i];
+    if (!inp || inp.type === "BOOLEAN") continue;
+    if (inp.link == null) {
       empty++;
       if (empty > 1) node.removeInput(i);
     }
+  }
+  hug(node);
+}
+
+const OLD_TYPES = new Set([
+  "LC Bypass Relay",
+  "LC Mute Bypass Relay",
+  "LC Mute Bypass Repeater",
+  "LC Bypass Fanout",
+]);
+
+function remapType(node) {
+  if (!node) return;
+  if (OLD_TYPES.has(node.type)) {
+    node.type = TYPE;
+    node.comfyClass = TYPE;
+    node.constructor.comfyClass = TYPE;
   }
 }
 
@@ -96,14 +130,58 @@ function hubMode(relay, g) {
   return null;
 }
 
+function wrapHub(hub) {
+  if (!hub || hub._lcRelayWrap) return;
+  hub._lcRelayWrap = true;
+  const sync = hub.syncWidgets?.bind(hub);
+  if (sync) {
+    hub.syncWidgets = function () {
+      const keep = [];
+      const g = graph();
+      const pairs = Math.floor((this.inputs?.length || 0) / 2);
+      for (let p = 0; p < pairs; p++) {
+        const o = originOf(g, this.inputs?.[p * 2]);
+        const w = this.widgets?.[p];
+        if (isRelay(o) && w) keep.push([p, w.value]);
+      }
+      sync();
+      for (const [p, val] of keep) {
+        const o = originOf(g, this.inputs?.[p * 2]);
+        if (!isRelay(o) || !this.widgets?.[p]) continue;
+        const saved = o.properties?.lc_mode;
+        if (o._lcRestoring && (saved === MUTE || saved === BYPASS)) {
+          this.widgets[p].value = false;
+        } else if (val === false) {
+          this.widgets[p].value = false;
+        }
+      }
+    };
+  }
+}
+
 function stamp(relay) {
   const g = graph();
   if (!g || !relay) return;
+  relay.properties = relay.properties || {};
   let mode = hubMode(relay, g);
+  const saved = relay.properties.lc_mode;
+  if (
+    relay._lcRestoring &&
+    (saved === MUTE || saved === BYPASS) &&
+    (mode == null || mode === LIVE)
+  ) {
+    mode = saved;
+  }
   if (mode == null) {
-    mode = relay.mode === MUTE || relay.mode === BYPASS ? relay.mode : LIVE;
+    mode =
+      relay.mode === MUTE || relay.mode === BYPASS
+        ? relay.mode
+        : saved === MUTE || saved === BYPASS
+          ? saved
+          : LIVE;
   }
   relay._lcMode = mode;
+  relay.properties.lc_mode = mode;
   setMode(relay, mode);
   for (const inp of relay.inputs || []) {
     if (!inp || inp.link == null) continue;
@@ -121,53 +199,8 @@ function stamp(relay) {
 app.registerExtension({
   name: "LC123.BypassRelay",
 
-  registerCustomNodes() {
-    class LCBypassRelayNode extends LGraphNode {
-      constructor(title) {
-        const t =
-          typeof title === "string" && title.trim() && title !== "Unnamed"
-            ? title
-            : TYPE;
-        super(t);
-        this.isVirtualNode = true;
-        this.addInput("", "*");
-        this.addOutput("OPT_CONNECTION", "*");
-        this.color = COLOR;
-        this.bgcolor = COLOR;
-        this.size = [270, 64];
-        this._lcMode = LIVE;
-      }
-      onConnectionsChange() {
-        grow(this);
-        stamp(this);
-      }
-      onDrawForeground(ctx) {
-        if (this.flags?.collapsed) return;
-        const m = this._lcMode ?? LIVE;
-        ctx.save();
-        ctx.font = "bold 11px sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillStyle = m === LIVE ? "#6c6" : m === MUTE ? "#c66" : "#fc0";
-        ctx.fillText(
-          m === MUTE ? "MUTE" : m === BYPASS ? "BYPASS" : "ACTIVE",
-          (this.size?.[0] || 270) * 0.5,
-          (this.size?.[1] || 64) - 8
-        );
-        ctx.restore();
-      }
-    }
-
-    LCBypassRelayNode.title = TYPE;
-    LCBypassRelayNode.type = TYPE;
-    LCBypassRelayNode.category = "LC123/utils";
-    LCBypassRelayNode.comfyClass = TYPE;
-    LiteGraph.registerNodeType(TYPE, LCBypassRelayNode);
-    LiteGraph.registerNodeType(TYPE_PY, LCBypassRelayNode);
-    console.log("[LC123.BypassRelay] LiteGraph registered", TYPE);
-  },
-
   async beforeRegisterNodeDef(nodeType, nodeData) {
-    if (!TYPES.has(nodeData?.name)) return;
+    if (nodeData?.name !== TYPE) return;
     const onCreated = nodeType.prototype.onNodeCreated;
     nodeType.prototype.onNodeCreated = function () {
       const r = onCreated?.apply(this, arguments);
@@ -176,6 +209,23 @@ app.registerExtension({
       if (!this.inputs?.length) this.addInput("", "*");
       if (!this.outputs?.length) this.addOutput("OPT_CONNECTION", "*");
       grow(this);
+      this.properties = this.properties || {};
+      return r;
+    };
+    const onCfg = nodeType.prototype.onConfigure;
+    nodeType.prototype.onConfigure = function (info) {
+      const r = onCfg?.apply(this, arguments);
+      this.properties = this.properties || {};
+      const m = this.properties.lc_mode ?? info?.mode ?? this.mode;
+      if (m === MUTE || m === BYPASS) {
+        this.mode = m;
+        this.properties.lc_mode = m;
+      }
+      this._lcRestoring = true;
+      setTimeout(() => {
+        this._lcRestoring = false;
+        stamp(this);
+      }, 400);
       return r;
     };
     const onConn = nodeType.prototype.onConnectionsChange;
@@ -187,13 +237,25 @@ app.registerExtension({
     };
   },
 
+  loadedGraphNode(node) {
+    remapType(node);
+  },
+
   async setup() {
-    setInterval(() => {
+    const tick = () => {
       try {
-        for (const n of allNodes(graph())) {
+        const g = graph();
+        for (const n of allNodes(g)) {
+          if (HUBS.has(n.type)) wrapHub(n);
           if (isRelay(n)) stamp(n);
         }
       } catch (_) {}
-    }, 80);
+    };
+    setInterval(tick, 80);
+    setTimeout(tick, 50);
+    setTimeout(tick, 250);
+    setTimeout(tick, 800);
   },
 });
+
+console.log("[LC123.BypassRelay] chrome on LCBypassRelay");

@@ -6,7 +6,7 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 - **Civitai:** [lonecatone23](https://civitai.com/user/lonecatone23)
 - **Instagram:** [synth.studio.models](https://www.instagram.com/synth.studio.models/)
 - **Support:** [Buy me a ☕](https://ko-fi.com/lonecatone)
-- **Version:** 1.27.0 · **107 Python nodes** · **4 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel)
+- **Version:** 1.27.1 · **107 Python nodes** · **4 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel)
 
 > Small tools that remove friction — less wire mess, fewer clicks, clearer workflows.
 
@@ -353,7 +353,7 @@ Workflow → Open, or drag onto the canvas.
 - **Int Split:** `split_point` is 0–1 only.
 - **Batch Image:** autogrow; muted/empty slots skipped. Node height follows slot count.
 - **Bypass vs mute:** Bypasser = pass-through (mode 4). Mute = never run (mode 2). Panel `hub` works with Bypasser, Mute, and Groups Bypasser. Keep `web/lc_color.js` — other chrome files import it.
-- **Bypass Relay:** A/B/C into Relay left; Relay OPT into Bypasser/Mute. Hub off → Relay + A/B/C off.
+- **Bypass Relay:** A/B/C into Relay left (`any_1` grows). Relay OPT into Bypasser/Mute. Hub off → Relay + A/B/C off. Mode is stored in `lc_mode` so refresh keeps the hub state.
 - **Image / Mask Pass:** `enable` off mutes that tap only. Keep Ultra live; mute the Pass in front of Color Match if you want a full-frame match.
 
 ---
