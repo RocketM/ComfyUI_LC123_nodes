@@ -8,20 +8,17 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 - **Support:** [Buy me a ☕](https://ko-fi.com/lonecatone)
 - **Version:** 1.28.0 · **108 Python nodes** · **4 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel)
 
-> Small tools that remove friction — less wire mess, fewer clicks, clearer workflows.
+> Small tools that remove friction: less wire mess, fewer clicks, clearer workflows.
 
-> **"True, nothing is. Permitted, everything is"**  
-> — Yoda Auditore, *Assassin's Wars*
+For **Anima regional attention**, also grab [Sen-sou Anima Regional Conditioning](https://github.com/Sen-sou/Comfyui-Anima-Regional-Conditioning).
 
-For **Anima regional attention**, also install [Sen-sou Anima Regional Conditioning](https://github.com/Sen-sou/Comfyui-Anima-Regional-Conditioning).
-
-Release history lives in **git tags**. This page describes the pack **as it is now**.
+Release history lives in **git tags**. This page describes the pack **as it is right now**, not a changelog.
 
 ---
 
 ## LC Lighting Control 🔦
 
-Post-process **spotlight relight** from a **normal map** + **depth map** (optional subject mask). Same image, new light and shade — no re-generation.
+Relight an image after the fact. Feed it a **normal map** + **depth map** (and optionally a subject mask), and it repaints the light and shadow on the same pixels. No re-generation needed.
 
 ![LC Lighting Control example](assets/readme/LC%20Lighting%20Control%20example.png)
 
@@ -30,13 +27,13 @@ Post-process **spotlight relight** from a **normal map** + **depth map** (option
 | **image** | Photo / render to relight |
 | **normal_map** | Surface facing (BAE / DSINE recommended) |
 | **depth_map** | Near vs far (Depth Anything V2 recommended; invert if bright = near and lighting looks inside-out) |
-| **mask** (optional) | Subject matte. Used only when **mask_enabled**. High blend can fringe — ~0.2–0.45 or leave off |
+| **mask** (optional) | Subject matte. Used only when **mask_enabled**. High blend can fringe: ~0.2–0.45 or leave off |
 
-**Math (plain):** each pixel is multiplied by how much light hits it. Facing the key = brighter; turned away or blocked in depth = darker. Ambient is the floor so shadows don’t crush to black. No color tint.
+**The math, plainly:** every pixel gets multiplied by how much light actually hits it. Facing the key light = brighter. Turned away or blocked by depth = darker. Ambient is the floor so shadows don't crush to black, and there's no color tint
 
 - **XYZ** = aim. **`+X` = from the right** · **`+Y` = from above** · **Z 0…1** (1 = front)
 - **Size** = cone width (spot → flood)
-- **Intensity 0** = that light is off (no light, no shadow)
+- **Intensity 0** = light is off (no light, no shadow)
 - Two lights, each with its own aim and shadows
 - **Light stage** under the sliders: white = light 1, red = light 2. Drag XY; Shift+drag / wheel = Z
 
@@ -50,7 +47,7 @@ Example: [`workflows/LC Lighting Control (BETA).json`](workflows/LC%20Lighting%2
 
 ## ⚙️ LC123 Performance (Settings)
 
-**UI only** — smoother scrolling and lighter on-node previews. Does **not** change generation VRAM or socket output quality.
+This is a **UI-only** switch panel: smoother scrolling, lighter on-node previews. It does **not** touch generation VRAM or socket output quality, so don't expect it to save you from an OOM.
 
 **Settings → LC123 → Performance**
 
@@ -66,7 +63,7 @@ Example: [`workflows/LC Lighting Control (BETA).json`](workflows/LC%20Lighting%2
 | **Hide FX on-node previews** | Off | Hide all LC image FX on-node previews |
 | **Skin Beauty full preview override** | On | Skin Beauty stays full quality on-node |
 
-**Not affected:** LC Image Compare · LC Dynamic Overlay · LC Image Split
+**Doesn't touch:** LC Image Compare · LC Dynamic Overlay · LC Image Split
 
 Full directions: [`LC123_Performance_Settings_Note.md`](LC123_Performance_Settings_Note.md)
 
@@ -74,13 +71,13 @@ Full directions: [`LC123_Performance_Settings_Note.md`](LC123_Performance_Settin
 
 ## ✨ LC Skin Beauty
 
-Mask-aware skin cooling and brightening in **CIELAB**. Grades **skin**, not the whole frame.
+Mask-aware skin cooling and brightening, done in **CIELAB**. It grades the skin, not your whole frame.
 
 ![Before / After](assets/readme/lc_skin_beauty_before_after.png)
 
-- Auto skin mask (eyes/lips protected; busy fabric suppressed)
-- Optional **external MASK** (e.g. SAM person) intersects with auto skin
-- Presets load the sliders; then **what you see is what runs**
+- Auto skin mask (eyes and lips protected, busy fabric suppressed so it doesn't get graded by mistake)
+- Feed it an **external MASK** (SAM person, say) and it intersects with the auto skin mask
+- Presets load the sliders, and from there **what you see is what runs**
 - On-node wipe preview; outputs **image** + **skin_mask**
 
 ![Example workflow](assets/readme/lc_skin_beauty_workflow.png)
@@ -90,33 +87,32 @@ Mask-aware skin cooling and brightening in **CIELAB**. Grades **skin**, not the 
 | Natural cleanup | Preset **Natural** or **Warm keep**, strength ~0.7–1.0 |
 | Less plastic | Lower **smooth**, raise **texture_preserve** |
 | Fabric leaks | Lower **mask_sensitivity**, or feed a person/skin **MASK** |
-| Check targeting | Inspect **skin_mask** output |
+| Check targeting | Inspect the **skin_mask** output |
 
 ---
 
-
 ## ✨ LC Skin Upscale
 
-One **UPSCALE_MODEL** + an optional **MASK**. Crop to the matte, run the CNN, feather composite. Not a stack and not Ultimate SD Upscale.
+One **UPSCALE_MODEL** + an optional **MASK**. It crops to the matte, runs the CNN, feathers it back in. That's it. It is not a stack, and it is not Ultimate SD Upscale wearing a disguise.
 
 ![Skin Contrast High before / after](assets/readme/lc_skin_upscale_before_after.png)
 
-- **mode `detail 1x`** — paste back at the source size (use this for 1× SkinContrast / ITF).
-- **mode `scale`** — keep the model’s native factor. Unmasked area is bilinear.
-- Optional **MASK** (PersonMaskUltra `face` + `body` recommended). `mask_source`: **input** / **chroma** / **input+chroma**.
-- **blend** 0 = original, 1 = full patch under the matte. Daily: **0.75**.
+- **mode `detail 1x`**: pastes back at the source size. Use this for 1× SkinContrast / ITF.
+- **mode `scale`**: keeps the model's native factor. Everything outside the mask stays bilinear.
+- Optional **MASK** (PersonMaskUltra `face` + `body` is the good combo). `mask_source`: **input** / **chroma** / **input+chroma**.
+- **blend** 0 = original, 1 = full patch under the matte. Daily driver: **0.75**.
 - On-node before/after wipe. Outputs **image** + **skin_mask**.
-- Do not load a 4× model in `detail 1x` — you pay 4× time and throw the pixels away.
+- Don't load a 4× model in `detail 1x`. You pay for 4× the processing time and throw all those extra pixels straight in the trash.
 
-Daily: `1xSkinContrast-High-SuperUltraCompact` · `detail 1x` · blend `0.75` · Ultra `face+body` · `mask_source: input` · tile `256` / overlap `16`.
+Daily setup: `1xSkinContrast-High-SuperUltraCompact` · `detail 1x` · blend `0.75` · Ultra `face+body` · `mask_source: input` · tile `256` / overlap `16`.
 
 Example: [`workflows/Skin Upscaler Module.json`](workflows/Skin%20Upscaler%20Module.json)
 
 ---
 
-## 📷 LC Photo Style
+## 📷 LC Photo Style (Still BETA)
 
-Camera / phone **finish** (not lens geometry). Presets drive the sliders; most controls **0 = no change**. **Strength** blends with the original.
+This is a camera/phone **finish**, not lens geometry, so don't expect it to fix your composition. Presets drive the sliders, and most controls sit at **0 = no change** until you touch them. **Strength** blends against the original so you can always pull it back.
 
 Presets: Standard, Natural, Dramatic, Quiet, Muted, Amateur, Cool day, Warm evening, Bright open, iPhone, **Nikon Z7 II**, **Canon R5**.
 
@@ -126,19 +122,19 @@ Full list: [`LC_Photo_Style_Note.md`](LC_Photo_Style_Note.md)
 
 ## 🔪 LC Sharpen Pro
 
-Photorealism-first clarity + edge. Guided + box hybrid high-pass, auto halo, skin protect.
+Built for photorealism first: clarity + edge work, a guided + box hybrid high-pass, automatic halo control, and skin protection so faces don't turn crispy.
 
-Presets: **Natural, Subtle, Portrait, Product, Landscape, Crisp** + art **Lineart, Anime sharp**. Move a slider after a preset → **Custom**.
+Presets: **Natural, Subtle, Portrait, Product, Landscape, Crisp** plus the art-side pair, **Lineart, Anime sharp**. Touch any slider after picking a preset and it flips to **Custom**.
 
-- Realism / portraits: **Natural** or **Portrait**. Raise **clarity** before **sharpen**. Keep **halo** and **skin_protect** up on faces.
-- **Crisp:** photo snap, not ink outlines.
-- **strength** 1.0 = full effect; bypasser for a hard off.
+- Realism / portraits: start with **Natural** or **Portrait**. Raise **clarity** before you touch **sharpen**. Keep **halo** and **skin_protect** up on faces. That's what keeps skin from looking like plastic.
+- **Crisp** is meant to read as photo snap, not ink outlines. If it looks like a comic, back off.
+- **strength** 1.0 = full effect. Use the bypasser if you want a hard off, not strength 0.
 
 ---
 
 ## 🗒️ Prompt Builder
 
-Modular stack → **🧩LC Prompt Assembler**.
+A modular stack that funnels into **🧩LC Prompt Assembler**.
 
 ```
 Subjects + Scene + Camera + Lighting + Style + Palette
@@ -151,9 +147,9 @@ Subjects + Scene + Camera + Lighting + Style + Palette
 |------|------|
 | 🗒️LC Subject / Subject Array | Character + placement (bbox trailers for JSON) |
 | 🗒️LC Scene / Camera / Lighting / Style | Environment & look |
-| 🎨LC Color Palette | Preset or sample from image |
-| 🎲LC Wildcard | Random line from `assets/wildcards/` |
-| 🧩LC Prompt Assembler | `include_scene_bboxes` default off (subject boxes only) |
+| 🎨LC Color Palette | Preset or sample straight from an image |
+| 🎲LC Wildcard | Random line pulled from `assets/wildcards/` |
+| 🧩LC Prompt Assembler | `include_scene_bboxes` defaults off: subject boxes only unless you turn it on |
 
 ---
 
@@ -161,50 +157,50 @@ Subjects + Scene + Camera + Lighting + Style + Palette
 
 | Node | What it does |
 |------|----------------|
-| **📐 Aspect Ratio Simplifier** | Size from image, mask, or preset. Resize image + mask. Crop / stretch / pad / total pixels. Empty latent. Default upscale: **lanczos**. |
-| **📐 Aspect Ratio Simplifier (pipe)** | Same + pipe out for Get/Set. |
-| **LC Aspect Ratio Pipe Out** | Unpacks aspect pipe → image, mask, width, height, latent, batch, resolution. |
+| **📐 Aspect Ratio Simplifier** | Size from image, mask, or preset. Resizes both image and mask together. Crop / stretch / pad / total pixels. Spits out an empty latent too. Default upscale is **lanczos**. |
+| **📐 Aspect Ratio Simplifier (pipe)** | Same node, plus a pipe out for Get/Set chaining. |
+| **LC Aspect Ratio Pipe (In/Edit)** | Unpacks the aspect pipe → image, mask, width, height, latent, batch, resolution. |
 | **LC Get Image 📐** | Megapixels, width, height, batch, aspect, longer-side resolution. |
-| **LC Dimension Resize 📐** | One value, add / sub / mul / div both sides; rounded outs. |
-| **LC Image-Mask Resize 📐** | Image + mask only (no latent / batch). **match_aspect_ratio** keeps the input ratio on the longer settings side. **upscale_by:** none / multiplier (0.25) / megapixels (0.01). After a run, **WxH** (e.g. `1024x1390`) is drawn in a reserved footer. |
-| **LC Batch Image 🖼️** | Autogrow IMAGE slots → one batch. Muted / empty sockets are skipped. Different sizes follow the first live image. |
-| **LC Image Compare 🔎** | Batch A/B, one slider per pair. |
-| **LC Image Split 🖼️** | Saveable A\|B wipe (**slider only**). Output is the baked split. |
-| **LC Image Grid 🖼️** | Contact sheet (columns, gap, pad, outline). |
-| **LC Last Image Holder** | Holds last image; clear without re-run. |
-| **LC Dynamic Overlay** | Overlay B on A; opacity after one queue. **blended Image** out. |
-| **LC Image Pass** | Identity IMAGE. `enable` off mutes this tap so optional downstream sockets see no feed. Side wire only — do not put the main IMAGE series through it. |
-| **LC Mask Pass** | Identity MASK for a mask bank. `enable` off mutes this tap; Color / Tone Match then run `mask=None` (full frame). Leave PersonMaskUltra live. |
-| **LC Watermark 💧** | Image watermark; size, opacity, drag place. |
+| **LC Dimension Resize 📐** | One value in, add / sub / mul / div both sides from it; rounded outputs. |
+| **LC Image-Mask Resize 📐** | Image + mask only: no latent, no batch. **match_aspect_ratio** keeps the input ratio pinned to the longer settings side. **upscale_by:** none / multiplier (0.25) / megapixels (0.01). After a run, the actual **WxH** (e.g. `1024x1390`) gets drawn right on the node in a reserved footer, so you don't have to go hunting for it. |
+| **LC Batch Image 🖼️** | Autogrow IMAGE slots into one batch. Muted or empty sockets get skipped, not counted. Mixed sizes follow whatever the first live image is. |
+| **LC Image Compare 🔎** | Batch A/B with one slider per pair. |
+| **LC Image Split 🖼️** | Saveable A\|B wipe: slider only, no drag. The output is the baked split, not the two halves. |
+| **LC Image Grid 🖼️** | Contact sheet: columns, gap, pad, outline, all yours to set. |
+| **LC Last Image Holder** | Holds the last image so you can clear it without a re-run. |
+| **LC Dynamic Overlay** | Overlays B on A; opacity kicks in after one queue. Outputs the **blended Image**. |
+| **LC Image Pass** | An identity pass for IMAGE. `enable` off mutes just this tap, so anything downstream watching an optional socket sees nothing. |
+| **LC Mask Pass** | Same idea for MASK: a bank tap. `enable` off mutes this tap only; Color / Tone Match then run with `mask=None` (full frame). |
+| **LC Watermark 💧** | Image watermark with size, opacity, and drag-to-place. |
 
 ---
 
 ## 🎨 Image FX (on-node preview + wipe)
 
-Hover the node to wipe vs the original. Lighten UI load under **LC123 Performance**.
+Hover any of these to wipe against the original. If your graph's heavy, dial these back under **LC123 Performance**.
 
 | Node | What it does |
 |------|----------------|
 | **LC Image Adjust** | Brightness, contrast, saturation, hue. |
-| **LC Auto White Balance** | Auto WB. |
+| **LC Auto White Balance** | Auto WB, no fuss. |
 | **LC Sharpen Pro** | See above. |
 | **LC Lens Effects** / **LC Lens Profile** | Lens-style FX. |
 | **LC Lift Gamma Gain** | Color-wheel style lift / gamma / gain. |
-| **LC Image RGB** | Per-channel RGB. |
-| **LC Film Grain** | Grain overlay. |
-| **LC Film Stock (B&W)** / **(Color)** | Stock looks. |
-| **LC Vibrance** | Smart saturation. |
+| **LC Image RGB** | Per-channel RGB control. |
+| **LC Film Grain** | Grain overlay. A little goes a long way. |
+| **LC Film Stock (B&W)** / **(Color)** | Stock film looks. |
+| **LC Vibrance** | Smart saturation: won't blow out skin the way normal saturation does. |
 | **LC Vignette** | Edge darkening. |
 | **LC Bloom** | Soft glow. |
 | **LC Chromatic Aberration** | RGB fringe. |
-| **LC Image Denoise** | Detail-preserving denoise. |
-| **LC Color Match 🎨** | Match a reference (AdaIN / mean-std); **skin_protect**. Optional **mask**: white = match, black = keep image. No mask = full frame (old graphs unchanged). |
-| **LC Tone Match** | Frequency lock: **image** = detail (Krea2 / Klein / Qwen), **reference** = lighting/color/size. **tone_match** + **refinement_strength** + **detail_radius**. Optional **mask** (white = lock, black = keep image). Wipe vs reference. |
-| **LC Image Desaturate** | Desaturate. |
+| **LC Image Denoise** | Denoise that actually tries to preserve detail instead of smearing it. |
+| **LC Color Match 🎨** | Matches a reference via AdaIN / mean-std, with **skin_protect** so faces don't shift with everything else. Optional **mask**: white = match, black = keep the original pixel. No mask = full frame, same as your old graphs already expect. |
+| **LC Tone Match** | Frequency lock: **image** supplies the detail (Krea2 / Klein / Qwen), **reference** supplies the lighting/color/size. Dial it with **tone_match** + **refinement_strength** + **detail_radius**. Optional **mask** (white = lock, black = keep image). Wipes against the reference so you can actually see what moved. |
+| **LC Image Desaturate** | Desaturate, plain and simple. |
 | **LC Skin Beauty ✨** / **LC Photo Style 📷** | See above. |
-| **LC Skin Upscale** | One CNN + matte. `detail 1x` or `scale`. Wipe preview. See above. |
-| **LC Apply LUT** | `.cube` from **`ComfyUI/models/luts/`**. Samples copy from `assets/luts/` on load, never overwrite. |
-| **LC Text Overlay** | Text on image; align left/center/right; drag + widgets. |
+| **LC Skin Upscale** | One CNN + a matte. `detail 1x` or `scale`. Wipe preview included. See above. |
+| **LC Apply LUT** | Reads `.cube` files from **`ComfyUI/models/luts/`**. Sample LUTs copy over from `assets/luts/` on load and never overwrite what's already there. |
+| **LC Text Overlay** | Text on an image: align left/center/right, drag it or use the widgets, your call. |
 
 ---
 
@@ -212,23 +208,23 @@ Hover the node to wipe vs the original. Lighten UI load under **LC123 Performanc
 
 | Node | What it does |
 |------|----------------|
-| **LC Sampler Configure** | Dual-pass: steps, swap, detailer, denoise, CFG1/2, sampler, scheduler. |
-| **LC Sampler Configure (pipe)** | Same + optional pipe in / pipe out. |
-| **LC Sampler Configure Simple** | Single CFG (no step_swap / cfg_2). |
-| **LC Sampler Configure Simple (pipe)** | Simple + pipe in/out. |
-| **LC Sampler Configure Pipe Out** | Unpack LC_PIPE → sampler sockets. |
-| **LC Split Sigma Scheduler** | Split one schedule across two models. |
-| **LC Split Sigmas (Advanced)** | Two sigma curves + models; denoise; fallback to 1 if 2 missing. |
-| **LC Basic Scheduler** | Scheduler + steps → sigmas (no denoise). |
-| **LC Sigma Curve** | No MODEL. `sigma_max` is the fake top (Krea/Flux/WAN = 1.0). Preset list: **from_input** · named schedules (`simple`, `karras`, `beta57`, **`bong_tangent`** RES4LYF two-stage, `linear_quadratic`, `kl_optimal`, `ays` / `ays+` / `ays_30` / `gits`, …) · saved files · **Custom**. Drag a knot → Custom. Wired `total_steps` updates the plot after a queue. Graph sits under the widgets and grows if you stretch the node. **Save curve** arms the write — Queue yourself. Saves live in **`web/sigma_curves/`** only (served to the UI). |
-| **LC Sigma Resample** | Same σ path, new **real** step count. `new_steps = round(old * multiplier) + adder`. Ends stay. Put **after** a split, on the slice you want denser — not before the splitter. (`LCChangeStepCount` is an alias.) |
-| **LC Reference Latent** | Up to 8 optional ref latents → conditioning. Empty = pass-through. |
-| **LC Denoise 💉** | Latent inject: `noise_std = 1 − denoise`. |
-| **LC Pipe (in/edit)** / **Pipe Out** / **Detail Pipe Out** | Bundle / unpack models, clips, VAEs, prompts, seed, steps… |
-| **LC MiniMax H3 Pipe** | Pack / edit H3 refs. Top: **fl2va_model**, **fl2va_clip**, **ref2va_model**, **ref2va_clip**, video_vae, audio_vae, width, height, length, frame_rate, then ref_image_0… / ref_video_0… (fixed sockets, no autogrow). Pipe in accepts an H3 pipe (full merge) **or** Aspect Ratio Simplifier / LC Pipe (**width + height only**). |
-| **LC MiniMax H3 Pipe Out** | Same sockets out. `ref_image_0` = `<Picture 1>` = MiniMax `ref_image_0`. |
-| **Prompt to Conditioning** / **+ Zero** | String → conditioning. |
-| **Positive / Negative** | Prompt boxes (green / red). |
+| **LC Sampler Configure** | Dual-pass control: steps, swap point, detailer, denoise, CFG1/2, sampler, scheduler, all in one place. |
+| **LC Sampler Configure (pipe)** | Same node, with an optional pipe in / pipe out added. |
+| **LC Sampler Configure Simple** | Single CFG: no step_swap, no cfg_2, for when you don't need the complexity. |
+| **LC Sampler Configure Simple (pipe)** | Simple version + pipe in/out. |
+| **LC Sampler Configure Pipe Out** | Unpacks an LC_PIPE straight into sampler sockets. |
+| **LC Split Sigma Scheduler** | Splits one noise schedule across two models. |
+| **LC Split Sigmas (Advanced)** | Two sigma curves + two models + denoise; falls back to model 1 if model 2 is missing. |
+| **LC Basic Scheduler** | Scheduler + steps → sigmas. No denoise involved. |
+| **LC Sigma Curve** | No MODEL required. `sigma_max` is a stand-in top value (Krea/Flux/WAN = 1.0). Preset list covers **from_input**, named schedules (`simple`, `karras`, `beta57`, **`bong_tangent`** (the RES4LYF two-stage curve), `linear_quadratic`, `kl_optimal`, etc.), your saved files, and **Custom**. Drag a knot and it becomes Custom automatically. A wired `total_steps` updates the plot after you queue. The graph sits under the widgets and grows if you stretch the node. **Save curve** arms the write, you still have to queue it yourself to actually save. Saves live in **`web/sigma_curves/`** only, since that's what the UI actually serves. |
+| **LC Sigma Resample** | Same sigma path, new **real** step count. `new_steps = round(old * multiplier) + adder`. The endpoints don't move. Put it **after** a split, on whichever slice you want denser. Not before the splitter, or you're resampling the wrong thing. |
+| **LC Reference Latent** | Up to 8 optional reference latents → conditioning. Leave them all empty and it just passes through. |
+| **LC Denoise 💉** | Latent injection: `noise_std = 1 − denoise`. |
+| **LC Pipe (in/edit)** / **Pipe Out** / **Detail Pipe Out** | Bundle or unpack models, clips, VAEs, prompts, seed, steps, the works. |
+| **LC MiniMax H3 Pipe** | Packs / edits H3 refs. Up top: **fl2va_model**, **fl2va_clip**, **ref2va_model**, **ref2va_clip**, video_vae, audio_vae, width, height, length, frame_rate, then ref_image_0… / ref_video_0…, fixed sockets, no autogrow here. Pipe in accepts a full H3 pipe merge **or** an Aspect Ratio Simplifier / LC Pipe (in which case it only takes **width + height**). |
+| **LC MiniMax H3 Pipe Out** | Same sockets, unpacked. `ref_image_0` is `<Picture 1>`, which is MiniMax's `ref_image_0`. 💡Don't let the off-by-one naming trip you up. |
+| **Prompt to Conditioning** / **+ Zero** | Turns a string into conditioning. |
+| **LC Positive / LC Negative** | Pre-colored positive & negative boxes. |
 
 ---
 
@@ -236,15 +232,15 @@ Hover the node to wipe vs the original. Lighten UI load under **LC123 Performanc
 
 | Node | What it does |
 |------|----------------|
-| **LC Easy Folder 📂** | Combined prefix for native Save Image, or wire into LC Save Image `filename_prefix`. |
-| **LC Advanced Folder 📂** | Split filename + path. |
-| **LC Save Metadata 🏷️** | Optional **LC_PIPE in** (no pipe out). Pipe fills prompts, seed, steps (`total_steps`), CFG (`cfg_1`), sampler, scheduler, size, denoise. Widgets override when set (seed `-1`, steps/cfg `0` = use pipe). **models** = `Model 1, Model 2`. **civitai_air** = primary AIR or Civitai URL. Written as `civitaiResources` JSON. |
-| **LC Save Image 💾** | `filename` + `path` under Comfy output. PNG embeds workflow + `parameters` + `civitaiResources` + AutoV2 hashes. JPEG/WebP: short comment only. **hash files** from live loaders. Skips muted (2) / bypassed (4) and LoRAs with `on: false`. Re-drop old Save Image nodes after widget changes. |
-| **📝 LC Save Text** | Write text; sanitizes illegal path characters. |
-| **LC Join Strings 🔗** | Join N strings; empty slots skip the delimiter; `\n` allowed. |
-| **LC Show Text 🔤** | Display text on the node. |
-| **LC Text Replace ✂️** / **LC Text Remove 🔪** | Up to 20 pairs; grows with entry count. |
-| **Civitai 🚩🔪** | Strip from `assets/lists/civitai_compliance_remove.txt`. **Your** TOS responsibility. |
+| **LC Easy Folder 📂** | A combined prefix for the native Save Image node, or wire it straight into LC Save Image's `filename_prefix`. |
+| **LC Advanced Folder 📂** | Splits filename and path apart if you need that level of control. |
+| **LC Save Metadata 🏷️** | Optional **LC_PIPE in** (no pipe out, this is an endpoint). The pipe fills prompts, seed, steps (`total_steps`), CFG (`cfg_1`), sampler, scheduler, size, and denoise for you. Widgets override whenever they're set (seed `-1`, steps/cfg `0` = defer to the pipe). **models** is a plain `Model 1, Model 2` string. **civitai_air** takes the primary AIR tag or a Civitai URL, written out as `civitaiResources` JSON. |
+| **LC Save Image 💾** | Takes a `filename` + `path` under the Comfy output folder. PNG gets the workflow, `parameters`, `civitaiResources`, and AutoV2 hashes all embedded. JPEG/WebP only get a short comment. That's a format limitation, not a bug. Hash files come from your live loaders. Muted (2) and bypassed (4) nodes get skipped, same for any LoRA sitting at `on: false`. If you've changed widgets recently, re-drop old Save Image nodes rather than trust the stale copy. |
+| **📝 LC Save Text** | Writes text to a file; sanitizes illegal path characters so you don't get a cryptic OS error. |
+| **LC Join Strings 🔗** | Joins N strings together. Empty slots skip the delimiter instead of leaving a stray one in. `\n` is allowed. |
+| **LC Show Text 🔤** | Displays text right on the node. |
+| **LC Text Replace ✂️** / **LC Text Remove 🔪** | Up to 20 pairs, and the node grows as you add more. |
+| **Civitai 🚩🔪** | Strips terms from `assets/lists/civitai_compliance_remove.txt`. Compliance with **your** platform's TOS is on you, not this node. |
 
 ---
 
@@ -252,34 +248,32 @@ Hover the node to wipe vs the original. Lighten UI load under **LC123 Performanc
 
 | Node | What it does |
 |------|----------------|
-| **LC AnySwitch** | First connected wins; type-locks from first wire. |
-| **LC Any Index Switch** | Index widget (Convert to Input to wire INDEX) + dynamic `any_*` slots. Output length follows the selected slot only. |
-| **LC Custom Combo** | `inputcount` options → STRING + INDEX + OPT_CONNECTION. |
-| **LC Custom Combo Panel** | Compact remote for a combo hub. |
-| **LC Combo Selector** | Dropdown that mirrors another node’s combo. |
-| **LC Boolean** / **Invert Boolean** | Coerce to true/false. Invert has no face widget; shows **true** / **false**. Hidden `boolean` widget so Bypasser / Mute see a live signal without Queue (same contract as Flip). |
-| **LC Widget To String** | KJ WidgetToString. `any_input` unwired + `id` 0 + empty title → **dormant** (`""`). Wire `any_input` or set id/title to read widgets. Comma-separated names, `return_all`, float decimals. Utility green `#324B4B`. |
-| **LC Boolean Switch** / **Flip** / **Value** | Pick / emit booleans. |
-| **LC Int Compare** / **LC Float Compare** | Largest or smallest of two. |
-| **LC Any Empty Bool** | Autogrow `any_*`. Only plugged wires count. True if any plugged source is empty, muted, or bypassed. |
-| **LC Any Empty Int** | Same multi-socket test; returns `empty` / `not_empty` integers. |
-| **LC Any Empty Float** | Same multi-socket test; returns `empty` / `not_empty` floats (2 decimal places). |
-| **LC Int Split** | `total` → `a` + `b`. `split_point` is a fraction **0–1**. |
-| **LC Seed Jump 🌱** | One seed + jump → six stepped seeds. |
-| **🌱LC Seed** | Seed with seed_mode (fixed / randomize / increment / decrement). |
-| **LC Slider** | On-node slider (min/max/step/decimals in settings). |
-| **LC Node Snapshot 📋** | Read another node’s widgets → value / dump / JSON. |
-| **LC Notify 🔊** | Play a sound from `assets/sounds/` on run. Mode: always / on empty queue / **never**. ▶ preview still works when silent. |
-| **LC Bypasser** / **LC Mute** / **Groups Bypasser** / **Bypasser Panel** | Remote **bypass** (pass-through) or **mute** (never run). Same toggles, boolean lock, collapse. Panel `hub` accepts all three. Constructor: string title only; off-mode is class `lcOffMode`. |
-| **LC Bypass Relay** | Autogrow left `*` targets. `OPT_CONNECTION` into **LC Bypasser** or **LC Mute**. When the hub turns the Relay off, every left-hand node gets the same bypass/mute. One node — no Repeater / Fanout. |
-| **LC Stop 🛑** | Pause until button. |
-| **LC VRAM Cache Clear** | Clear VRAM / cache; pass-through. |
+| **LC AnySwitch** | First connected input wins, and the type locks in from whatever wired first. |
+| **LC Any Index Switch** | An index widget (Convert to Input if you want to wire INDEX) plus dynamic `any_*` slots. Output length only ever matches the selected slot. Nothing else gets dragged along. |
+| **LC Custom Combo** | `inputcount` sets the option count → STRING + INDEX + OPT_CONNECTION out. |
+| **LC Custom Combo Panel** | A compact remote for a combo hub elsewhere in the graph. |
+| **LC Combo Selector** | A dropdown that just mirrors another node's combo. |
+| **LC Boolean** / **Invert Boolean** | Coerces to true/false. Invert has no face widget. It just shows **true** / **false** plainly. Both carry a hidden `boolean` widget so Bypasser / Mute can read a live signal without you having to queue first (same contract as Flip). |
+| **LC Widget To String** | The KJ WidgetToString pattern. `any_input` unwired + `id` 0 + empty title = **dormant** (returns `""`). That's intentional, not broken. Wire `any_input`, or set an id/title, to actually read widgets. Supports comma-separated names, `return_all`, and float decimals. Utility green, `#324B4B`. |
+| **LC Boolean Switch** / **Flip** / **Value** | Pick or emit booleans. |
+| **LC Int Compare** / **LC Float Compare** | Largest or smallest of two values. |
+| **LC Any Empty Bool** | Autogrows `any_*`. Only plugged wires count toward the check. Returns true if any plugged source is empty, muted, or bypassed. |
+| **LC Any Empty Int** | Same multi-socket test, returns `empty` / `not_empty` as integers. |
+| **LC Any Empty Float** | Same test again, returns `empty` / `not_empty` as floats, 2 decimal places. |
+| **LC Int Split** | `total` splits into `a` + `b`. `split_point` is a fraction, **0–1**, not a raw count. |
+| **LC Seed Jump 🌱** | One seed + a jump value → six stepped seeds, no manual math. |
+| **🌱LC Seed** | A seed widget with seed_mode: fixed / randomize / increment / decrement. |
+| **LC Slider** | An on-node slider: min/max/step/decimals all live in the node's settings. |
+| **LC Node Snapshot 📋** | Reads another node's widgets → value / dump / JSON, whichever you need. |
+| **LC Notify 🔊** | Plays a sound from `assets/sounds/` when the run hits it. Mode: always / on empty queue / **never**. The ▶ preview still works even when it's set to silent. |
+| **LC Bypasser** / **LC Mute** / **Groups Bypasser** / **Bypasser Panel** | Remote **bypass** (pass-through) or **mute** (never runs). Same toggles, same boolean lock, same collapse behavior across all of them. Panel's `hub` accepts any of the three. Constructor takes a string title only. Off-mode lives in the `lcOffMode` class, not constructor args. |
+| **LC Bypass Relay** | Autogrows left-hand `*` targets. Its `OPT_CONNECTION` plugs into **LC Bypasser** or **LC Mute**. Flip the hub off and every left-hand node gets the same bypass/mute treatment, together. One node does this. No separate Repeater required. |
+| **LC Stop 🛑** | Pauses the graph until you hit the button. |
+| **LC VRAM Cache Clear** | Clears VRAM / cache, then passes through. |
 
 Canvas note: [`LC123_Save_Image_Note.md`](LC123_Save_Image_Note.md)
 
-**Size rule:** `computeSize` returns the **minimum** only. `this.size` may grow and shrink to that min. Do not return a saved `lc_h` from `computeSize`. Keep `web/lc_color.js`.
-
-Manual node sizes stick across reload (auto-fit only on first create or when `inputcount` changes). **Node colors** you set in Comfy also stick; pack chrome is applied only on first drop.
+Manual node sizes stick across a reload. Auto-fit only kicks in on first create, or when `inputcount` changes. **Node colors** you set yourself also stick; pack chrome only applies on the first drop.
 
 ---
 
@@ -287,8 +281,8 @@ Manual node sizes stick across reload (auto-fit only on first create or when `in
 
 | Node | What it does |
 |------|----------------|
-| **Anima Regional Inline Canvas** | RGB paint for Sen-sou Anima regional conditioning. |
-| **Krea2 Regional Inline Canvas** | Same idea for Krea2 CLIP regions (**beta**). |
+| **LC Anima Regional Inline Canvas** | RGB paint for Sen-sou Anima regional conditioning. |
+| **LC Krea2 Regional Inline Canvas** | Same idea, for Krea2 CLIP regions (**beta**). |
 
 ---
 
@@ -296,23 +290,23 @@ Manual node sizes stick across reload (auto-fit only on first create or when `in
 
 | File | Description |
 |------|-------------|
-| [`workflows/LC Node examples.json`](workflows/LC%20Node%20examples.json) | Tour of utility / image / prompt / **sigma curve** nodes (**updated**) |
+| [`workflows/LC Node examples.json`](workflows/LC%20Node%20examples.json) | A tour of the utility / image / prompt / **sigma curve** nodes (**updated**) |
 | [`workflows/LC Lighting Control (BETA).json`](workflows/LC%20Lighting%20Control%20(BETA).json) | Image → normals / depth / mask → Lighting Control |
-| [`workflows/LC Skin Beauty.json`](workflows/LC%20Skin%20Beauty.json) | Skin Beauty with optional mask |
-| [`workflows/LC Skin Beauty basic (no deps).json`](workflows/LC%20Skin%20Beauty%20basic%20(no%20deps).json) | Skin Beauty only |
+| [`workflows/LC Skin Beauty.json`](workflows/LC%20Skin%20Beauty.json) | Skin Beauty with an optional mask |
+| [`workflows/LC Skin Beauty basic (no deps).json`](workflows/LC%20Skin%20Beauty%20basic%20(no%20deps).json) | Skin Beauty on its own |
 | [`workflows/Skin Upscaler Module.json`](workflows/Skin%20Upscaler%20Module.json) | Skin Upscale + PersonMaskUltra V2 + split compare |
 | [`workflows/Photo style test.json`](workflows/Photo%20style%20test.json) | Photo Style |
 | [`workflows/Sharpen Pro test v2.json`](workflows/Sharpen%20Pro%20test%20v2.json) | Sharpen Pro |
-| [`workflows/Lonecats Prompt Builder .json`](workflows/Lonecats%20Prompt%20Builder%20.json) | Prompt Builder stack |
+| [`workflows/Lonecats Prompt Builder .json`](workflows/Lonecats%20Prompt%20Builder%20.json) | The full Prompt Builder stack |
 | [`workflows/LC Dual sigma workflow example.json`](workflows/LC%20Dual%20sigma%20workflow%20example.json) | Split sigma |
 | [`workflows/LC Dual Sigma Advanced workflow example.json`](workflows/LC%20Dual%20Sigma%20Advanced%20workflow%20example.json) | Advanced split sigmas |
 | [`workflows/Aspect_Ratio_Simplifier example.json`](workflows/Aspect_Ratio_Simplifier%20example.json) | Aspect Ratio Simplifier |
 | [`workflows/Anima Regional Conditioning WF.json`](workflows/Anima%20Regional%20Conditioning%20WF.json) | Anima regional |
 | [`workflows/Anima Inline Regional Canvas workflow.json`](workflows/Anima%20Inline%20Regional%20Canvas%20workflow.json) | Anima inline canvas |
 | [`workflows/Krea2 Inline Regional Canvas Example.json`](workflows/Krea2%20Inline%20Regional%20Canvas%20Example.json) | Krea2 inline canvas |
-| [`workflows/Post processing LC nodes v4.json`](workflows/Post%20processing%20LC%20nodes%20v4.json) | Image FX suite |
+| [`workflows/Post processing LC nodes v4.json`](workflows/Post%20processing%20LC%20nodes%20v4.json) | The full Image FX suite |
 
-Workflow → Open, or drag onto the canvas.
+Workflow → Open, or just drag it onto the canvas.
 
 ---
 
@@ -322,59 +316,58 @@ Workflow → Open, or drag onto the canvas.
 |------|-----|
 | `assets/readme/` | README screenshots |
 | `assets/sounds/` | LC Notify |
-| `assets/lists/` | e.g. Civitai compliance |
-| `assets/luts/` | Sample LUTs → `models/luts/` on load if missing |
+| `assets/lists/` | Civitai compliance, etc. |
+| `assets/luts/` | Sample LUTs, automatically copies to `models/luts/` on first load if missing |
 | `assets/wildcards/` | LC Wildcard |
 | `assets/prompt_builder/` | Prompt Builder presets |
-
-**Apply LUT path:** `ComfyUI/models/luts/` (not under custom_nodes).
 
 ---
 
 ## 💡 Quick tips
 
-- **Lighting:** intensity ~1.0–1.3, ambient ~0.25–0.4, shadow strength ~0.4. Mask off if you see a grey fringe.
-- **Performance:** heavy graphs → half-res + clamp, or hide FX previews.
-- **Skin Beauty:** check **skin_mask**; lower sensitivity if fabric leaks.
-- **Skin Upscale:** 1× SkinContrast-High, `detail 1x`, blend 0.75, Ultra `face+body`, `mask_source: input`. Not Nomos in this node.
-- **Image Split:** set wipe, queue, save the **split** output.
-- **Prompt Builder:** `prompt` → CLIP; `json` → regional builders only.
-- **Reference Latent:** all slots empty = pass-through (bypasser-safe).
-- **Denoise 💉:** same denoise number as the sampler; 1.0 = no inject.
-- **H3 pipe:** Aspect Ratio Simplifier pipe → H3 **pipe** socket copies size only. Length / fps still need their own wires. The pipe **forwards wires only** (no extra generation). MiniMax prompt tags are 1-based: `<Picture N>` = `ref_image_{N-1}` (`<Picture 1>` = `ref_image_0`). Native MiniMax **Ref2V** requires `ref_video` ≥ **5 frames**.
-- **Tone Match:** same crop only. Head-swap → mask off the new head (black). Not a color-match substitute.
-- **Color Match mask:** white = regrade, black = original pixels. Optional; unconnected = old behavior.
-- **Notify:** drop audio into `assets/sounds/`, restart once.
-- **Save Image:** `path` + `filename`. Metadata node optional. PNG embeds workflow + parameters. Leave **hash files** on so Civitai can list resources (it matches AutoV2 hashes, not names). First hash per file is slow; a `.sha256` sidecar is cached beside the model. JPEG/WebP will not carry full Comfy JSON. Seed on the metadata node is a plain INT (`seed_value`) — no randomize control.
-- **Index Switch:** output length is the selected slot only — other wired lists are not zipped to the longest.
-- **Sigma Curve:** saves only in `web/sigma_curves/`. The combo keeps built-ins + **Custom** and appends saved names (it does not wipe the list). `bong_tangent` is RES4LYF two-stage. Stretch the node to grow the plot. Save curve does not auto-queue.
-- **Sigma Resample:** after the split, on high and/or low. The sampler really runs the new step count. Same as changing density on that band only.
-- **Any Empty:** only plugged sockets; mute/bypass on the source = empty.
-- **Int Split:** `split_point` is 0–1 only.
-- **Batch Image:** autogrow; muted/empty slots skipped. Node height follows slot count.
-- **Bypass vs mute:** Bypasser = pass-through (mode 4). Mute = never run (mode 2). Panel `hub` works with Bypasser, Mute, and Groups Bypasser. Keep `web/lc_color.js` — other chrome files import it.
-- **Bypass Relay:** A/B/C into Relay left (`any_1` grows). Relay OPT into Bypasser/Mute. Hub off → Relay + A/B/C off. Mode is stored in `lc_mode` so refresh keeps the hub state.
-- **Image / Mask Pass:** `enable` off mutes that tap only. Keep Ultra live; mute the Pass in front of Color Match if you want a full-frame match.
+- **Lighting:** intensity ~1.0–1.3, ambient ~0.25–0.4, shadow strength ~0.4. Seeing a grey fringe? Turn the mask off.
+- **Performance:** heavy graph → half-res + clamp, or just hide the FX previews entirely.
+- **Skin Beauty:** check the **skin_mask** output first. Fabric leaking in? Lower the sensitivity.
+- **Skin Upscale:** 1× SkinContrast-High, `detail 1x`, blend 0.75, Ultra `face+body`, `mask_source: input`. This is not Nomos wearing a different name.
+- **Image Split:** set the wipe, queue, and save the **split** output, not the two source images.
+- **Prompt Builder:** `prompt` goes to CLIP. `json` is for the regional builders only. Don't cross the streams.
+- **Reference Latent:** all slots empty just means pass-through. Bypasser-safe.
+- **Denoise 💉:** match the sampler's denoise number. 1.0 = no injection happening.
+- **H3 pipe:** Aspect Ratio Simplifier's pipe into the H3 **pipe** socket only copies size. Length and fps still need their own wires. The pipe **forwards wires only**, it doesn't generate anything extra. MiniMax prompt tags are 1-based: `<Picture N>` = `ref_image_{N-1}` (so `<Picture 1>` = `ref_image_0`). Native MiniMax **Ref2V** needs `ref_video` to be at least **5 frames**.
+- **Tone Match:** same crop only. Doing a head-swap? Mask off the new head (black). This is not a color-match substitute.
+- **Color Match mask:** white = regrade, black = keep the original pixel. Optional: leave it unconnected and you get the old behavior back.
+- **Notify:** drop your own audio into `assets/sounds/`, restart once, done.
+- **Save Image:** needs `path` + `filename`. Metadata node is optional. PNG embeds the workflow + parameters. Leave **hash files** on so Civitai can actually list your resources. It matches by AutoV2 hash, not by filename. The first hash per file is slow; after that a `.sha256` sidecar sits next to the model and it's instant. JPEG/WebP won't carry the full Comfy JSON.
+- **Index Switch:** output length is whatever the selected slot is. Other wired lists don't get zipped to match the longest one.
+- **Sigma Curve:** only ever saves to `web/sigma_curves/`. The combo keeps the built-ins plus **Custom** and appends your saved names. It doesn't wipe anything. `bong_tangent` is the RES4LYF two-stage curve. Stretch the node to grow the plot. Save curve doesn't auto-queue for you.
+- **Sigma Resample:** put it after the split, on the high band, the low band, or both. The sampler genuinely runs the new step count. This isn't cosmetic, it changes density on that band only.
+- **Any Empty:** only plugged sockets count. Mute or bypass on the source reads as empty.
+- **Int Split:** `split_point` is 0–1 only, not a raw number.
+- **Batch Image:** autogrows, muted/empty slots get skipped. Node height follows however many slots are actually in use.
+- **Bypass vs mute:** Bypasser passes through (mode 4). Mute never runs (mode 2). Panel's `hub` works with Bypasser, Mute, and Groups Bypasser alike.
+- **Bypass Relay:** wire A/B/C into the Relay's left side (`any_1` grows to fit). Relay's OPT goes into a Bypasser or Mute. Hub off → Relay and A/B/C all go off together. The mode is stored, so a refresh keeps the hub's state instead of resetting it.
+- **Image / Mask Pass:** `enable` off only mutes that one tap. Keep Ultra live regardless; mute the Pass sitting in front of Color Match if you want a full-frame match instead.
 
 ---
 
 ## Install
 
-```text
-ComfyUI/custom_nodes/ComfyUI_LC123_nodes/__init__.py
-```
-
-`__init__.py` must sit **directly** in that folder — not in `ComfyUI_LC123_nodes/ComfyUI_LC123_nodes/`. If you unzip a pack zip *inside* an existing clone, move the inner files up one level.
-
-Restart ComfyUI. Console should print the LC123 load line (~107 Python mappings). There is **no LC Math** node — use Comfy Math Expression. Optional workflows in `workflows/`. Hard-refresh the browser after a `web/` JS update.
-
-**Requirements:** ComfyUI’s Python env (`torch`, `numpy`). No extra pip packages. Depth Anything / SAM / remBG for lighting & masks are separate installs.
+1. **Get the files.** Clone it into `ComfyUI/custom_nodes/`:
+   ```bash
+   git clone https://github.com/lonecatone23/ComfyUI_LC123_nodes.git
+   ```
+   Or grab the zip from the repo page and unzip it there instead.
+2. **Check the folder.** `__init__.py` needs to sit **directly** in `ComfyUI/custom_nodes/ComfyUI_LC123_nodes/`, not nested one level down in `ComfyUI_LC123_nodes/ComfyUI_LC123_nodes/`. If your zip unpacked with that extra nesting, move the inner files up a level before you do anything else.
+3. 💡**There is no `requirements.txt` to run.** LC123 only needs what ComfyUI already ships with (`torch`, `numpy`), so there's no pip install step here. Skip straight to restarting.
+4. **Restart ComfyUI.** The console should print the LC123 load line (~108 Python mappings). If it doesn't show up, the folder structure is off. Go back to step 2.
+5. **Install missing custom nodes.** Open ComfyUI Manager → Install Missing Custom Nodes for anything the example workflows call for that you don't already have (Depth Anything / SAM / remBG for lighting and masks, for example, are separate installs).
+6. 💡Hard-refresh your browser after any `web/` JS update going forward. It won't pick up changes on its own.
 
 ---
 
 ## License
 
-MIT — see `LICENSE`.
+MIT. See `LICENSE`.
 
-**"True, nothing is. Permitted, everything is"**  
+**"True, nothing is. Permitted, everything is"**
 _Yoda Auditore. *Assassin's Wars*_
