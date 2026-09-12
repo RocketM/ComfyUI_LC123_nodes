@@ -114,9 +114,28 @@ function isRelay(n) {
   return n && TYPES.has(n.type);
 }
 
+function patchHubSettle() {
+  for (const hubType of HUBS) {
+    const cls = LiteGraph.registered_node_types?.[hubType];
+    if (!cls || cls.prototype._lcSettlePatched) continue;
+    cls.prototype._lcSettlePatched = true;
+    const onCfg = cls.prototype.onConfigure;
+    cls.prototype.onConfigure = function (info) {
+      const r = onCfg?.apply(this, arguments);
+      this._lcHubReady = false;
+      clearTimeout(this._lcHubReadyTimer);
+      this._lcHubReadyTimer = setTimeout(() => {
+        this._lcHubReady = true;
+      }, 1500);
+      return r;
+    };
+  }
+}
+
 function hubMode(relay, g) {
   for (const hub of allNodes(g)) {
     if (!HUBS.has(hub.type)) continue;
+    if (hub._lcHubReady === false) continue;
     const pairs = Math.floor((hub.inputs?.length || 0) / 2);
     for (let p = 0; p < pairs; p++) {
       const o = originOf(g, hub.inputs[p * 2]);
@@ -130,58 +149,14 @@ function hubMode(relay, g) {
   return null;
 }
 
-function wrapHub(hub) {
-  if (!hub || hub._lcRelayWrap) return;
-  hub._lcRelayWrap = true;
-  const sync = hub.syncWidgets?.bind(hub);
-  if (sync) {
-    hub.syncWidgets = function () {
-      const keep = [];
-      const g = graph();
-      const pairs = Math.floor((this.inputs?.length || 0) / 2);
-      for (let p = 0; p < pairs; p++) {
-        const o = originOf(g, this.inputs?.[p * 2]);
-        const w = this.widgets?.[p];
-        if (isRelay(o) && w) keep.push([p, w.value]);
-      }
-      sync();
-      for (const [p, val] of keep) {
-        const o = originOf(g, this.inputs?.[p * 2]);
-        if (!isRelay(o) || !this.widgets?.[p]) continue;
-        const saved = o.properties?.lc_mode;
-        if (o._lcRestoring && (saved === MUTE || saved === BYPASS)) {
-          this.widgets[p].value = false;
-        } else if (val === false) {
-          this.widgets[p].value = false;
-        }
-      }
-    };
-  }
-}
-
 function stamp(relay) {
   const g = graph();
   if (!g || !relay) return;
-  relay.properties = relay.properties || {};
   let mode = hubMode(relay, g);
-  const saved = relay.properties.lc_mode;
-  if (
-    relay._lcRestoring &&
-    (saved === MUTE || saved === BYPASS) &&
-    (mode == null || mode === LIVE)
-  ) {
-    mode = saved;
-  }
   if (mode == null) {
-    mode =
-      relay.mode === MUTE || relay.mode === BYPASS
-        ? relay.mode
-        : saved === MUTE || saved === BYPASS
-          ? saved
-          : LIVE;
+    mode = relay.mode === MUTE || relay.mode === BYPASS ? relay.mode : LIVE;
   }
   relay._lcMode = mode;
-  relay.properties.lc_mode = mode;
   setMode(relay, mode);
   for (const inp of relay.inputs || []) {
     if (!inp || inp.link == null) continue;
@@ -212,22 +187,6 @@ app.registerExtension({
       this.properties = this.properties || {};
       return r;
     };
-    const onCfg = nodeType.prototype.onConfigure;
-    nodeType.prototype.onConfigure = function (info) {
-      const r = onCfg?.apply(this, arguments);
-      this.properties = this.properties || {};
-      const m = this.properties.lc_mode ?? info?.mode ?? this.mode;
-      if (m === MUTE || m === BYPASS) {
-        this.mode = m;
-        this.properties.lc_mode = m;
-      }
-      this._lcRestoring = true;
-      setTimeout(() => {
-        this._lcRestoring = false;
-        stamp(this);
-      }, 400);
-      return r;
-    };
     const onConn = nodeType.prototype.onConnectionsChange;
     nodeType.prototype.onConnectionsChange = function () {
       const r = onConn?.apply(this, arguments);
@@ -242,19 +201,14 @@ app.registerExtension({
   },
 
   async setup() {
-    const tick = () => {
+    setInterval(() => {
       try {
-        const g = graph();
-        for (const n of allNodes(g)) {
-          if (HUBS.has(n.type)) wrapHub(n);
+        patchHubSettle();
+        for (const n of allNodes(graph())) {
           if (isRelay(n)) stamp(n);
         }
       } catch (_) {}
-    };
-    setInterval(tick, 80);
-    setTimeout(tick, 50);
-    setTimeout(tick, 250);
-    setTimeout(tick, 800);
+    }, 80);
   },
 });
 
