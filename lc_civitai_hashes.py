@@ -11,6 +11,7 @@ from __future__ import annotations
 import hashlib
 import os
 import re
+from urllib.parse import parse_qs, urlparse
 
 import folder_paths
 
@@ -346,14 +347,86 @@ def collect_hashes(prompt=None, extra_pnginfo=None) -> dict:
     return buckets
 
 
+_AIR_RE = re.compile(
+    r"^(?:urn:air:|air:)?(?P<ecosystem>[^:]+):(?P<type>[^:]+):(?P<source>[^:]+):(?P<rest>.+)$"
+)
+_MODEL_URL_RE = re.compile(
+    r"^https://(?:www\.)?civitai\.com/models/(\d+)(?:/[^/?#]*)?/?(?:\?(.*))?$", re.I
+)
+_CIVITAI_TYPE_ALIASES = {
+    "diffusion_model": "diffusionmodel",
+    "embed": "embedding",
+    "hypernetwork": "hypernet",
+    "textual_inversion": "embedding",
+    "textualinversion": "embedding",
+    "text_encoder": "text_encoders",
+    "textencoder": "text_encoders",
+    "aestheticgradient": "ag",
+    "motionmodule": "motion",
+}
+
+
+def _positive_int(value) -> int | None:
+    try:
+        n = int(str(value).strip())
+    except (TypeError, ValueError):
+        return None
+    return n if n > 0 else None
+
+
 def civitai_resources_payload(air: str) -> list:
-    """Civitai reads this JSON (PNG chunk + parameters line), not 'AIR: ...'."""
+    """
+    Build the ``Civitai resources`` array Civitai's parser actually reads:
+    ``[{"type": "checkpoint", "modelVersionId": 128713, "air": "urn:air:..."}]``.
+    A bare AIR or URL string on its own (the old shape here -- ``{"air": ...}``
+    or ``{"url": ...}``) isn't a field Civitai's parser recognizes: it keys a
+    resource off ``type`` + ``modelVersionId``, so without those two an entry
+    is worse than useless and gets silently ignored -- which is exactly why a
+    custom merge with no Civitai-known hash could never get credited before.
+
+    Accepts a full AIR URN (``urn:air:<eco>:<type>:civitai:<modelId>@<versionId>``),
+    a Civitai model URL with ``?modelVersionId=``, or a bare model-version ID.
+    """
     air = (air or "").strip()
     if not air:
         return []
-    item = {"air": air}
-    if air.lower().startswith("http"):
-        item = {"url": air}
+
+    if air.isdecimal():
+        version_id = _positive_int(air)
+        return [{"type": "checkpoint", "modelVersionId": version_id}] if version_id else []
+
+    if air.lower().startswith("https://"):
+        parsed = urlparse(air)
+        if parsed.hostname not in ("civitai.com", "www.civitai.com"):
+            return []
+        m = _MODEL_URL_RE.match(air)
+        if not m:
+            return []
+        model_id = int(m.group(1))
+        versions = parse_qs(m.group(2) or "").get("modelVersionId", [])
+        version_id = _positive_int(versions[0]) if len(versions) == 1 else None
+        if version_id is None:
+            return []
+        return [{"type": "checkpoint", "modelId": model_id, "modelVersionId": version_id}]
+
+    m = _AIR_RE.match(air)
+    if not m or m.group("source").lower() != "civitai":
+        return []
+    res_type = m.group("type").strip().lower()
+    res_type = _CIVITAI_TYPE_ALIASES.get(res_type, res_type)
+    rest = m.group("rest").split("+", 1)[0]  # drop optional +fileId(.format) tail
+    model_id_s, sep, version_s = rest.partition("@")
+    if not sep:
+        return []
+    if "." in version_s:
+        version_s = version_s.rsplit(".", 1)[0]  # drop optional .format suffix
+    version_id = _positive_int(version_s)
+    if version_id is None:
+        return []
+    item = {"type": res_type, "modelVersionId": version_id, "air": air}
+    model_id = _positive_int(model_id_s)
+    if model_id is not None:
+        item["modelId"] = model_id
     return [item]
 
 
