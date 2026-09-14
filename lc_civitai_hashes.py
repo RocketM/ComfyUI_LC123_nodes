@@ -334,6 +334,13 @@ def collect_hashes(prompt=None, extra_pnginfo=None) -> dict:
         elif kind == "clip":
             hashes_json[f"clip:{label}"] = digest
         elif kind == "unet":
+            # A UNETLoader ("Load Diffusion Model") IS the base model on a diffusion-only
+            # architecture (Krea2, Flux, ...) -- it just never resolves via the classic
+            # single-file "checkpoints" folder that sets kind=="model" above. Without this,
+            # a UNET-loaded base model never got the bare "model" key Civitai's parser
+            # actually keys the primary resource off, only "unet:Name" -- Civitai never had
+            # a way to auto-link it. Same pattern as the vae branch just below.
+            hashes_json.setdefault("model", digest)
             hashes_json[f"unet:{label}"] = digest
         elif kind == "vae":
             hashes_json.setdefault("vae", digest)
@@ -430,15 +437,21 @@ def civitai_resources_payload(air: str) -> list:
     return [item]
 
 
-def format_hash_fields(buckets: dict) -> tuple[str, str, str]:
+def format_hash_fields(buckets: dict) -> tuple[str, str, str, str]:
     """
-    Model hash line fragment, Lora hashes fragment, Hashes JSON fragment.
+    Model hash, VAE hash, Lora hashes, and Hashes JSON line fragments.
     Empty strings when nothing found.
     """
     models = buckets.get("model") or []
     unets = buckets.get("unet") or []
     primary = models[0][1] if models else (unets[0][1] if unets else "")
     model_hash = f"Model hash: {primary}" if primary else ""
+
+    # Classic A1111/Civitai field, same status as "Model hash:" -- never emitted before,
+    # so a custom/non-Civitai-known VAE had no way to get credited even though its hash
+    # was already sitting in the Hashes JSON blob.
+    vaes = buckets.get("vae") or []
+    vae_hash = f"VAE hash: {vaes[0][1]}" if vaes else ""
 
     loras = buckets.get("lora") or []
     lora_part = ""
@@ -450,4 +463,4 @@ def format_hash_fields(buckets: dict) -> tuple[str, str, str]:
 
     hj = buckets.get("hashes_json") or {}
     hashes_part = f"Hashes: {json.dumps(hj, separators=(',', ':'))}" if hj else ""
-    return model_hash, lora_part, hashes_part
+    return model_hash, vae_hash, lora_part, hashes_part
