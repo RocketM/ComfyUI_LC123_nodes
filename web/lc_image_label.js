@@ -5,9 +5,13 @@
 // upload, settings dialog, image baked into the workflow JSON as a webp
 // data URL), rebuilt under LC123's own node name, route namespace, and
 // widget id so it coexists cleanly with the original if both packs are
-// installed. One real fix over upstream: pinned-label click-through (so a
+// installed. Two real fixes over upstream: pinned-label click-through (so a
 // label parked on top of other nodes doesn't block clicking them) actually
-// works here -- see the lastCanvasMouseEvent note near the bottom.
+// works here -- see the lastCanvasMouseEvent note near the bottom -- and
+// dropping a file that carries embedded ComfyUI workflow metadata (i.e. any
+// image this app previously saved) no longer gets hijacked by core's
+// load-workflow-from-PNG feature and wipes the graph -- see the
+// window-capture note in onNodeCreated.
 import { app } from "../../scripts/app.js";
 
 const lcImageLabelState = {
@@ -24,7 +28,7 @@ app.registerExtension({
         const origOnCreated = nodeType.prototype.onNodeCreated;
 
         nodeType.prototype._lcDnDHandler = function (e) {
-            const canvas = LGraphCanvas.active_canvas;
+            const canvas = app.canvas;
             if (!canvas || !this.graph) return false;
             const point = canvas.convertEventToCanvasOffset(e);
             return point[0] >= this.pos[0] && point[0] <= this.pos[0] + this.size[0] &&
@@ -75,12 +79,16 @@ app.registerExtension({
                 this.updateNodeSize();
             }
 
+            this._boundDragEnter = (e) => {
+                if (this._lcDnDHandler(e)) { e.preventDefault(); e.stopImmediatePropagation(); }
+            };
             this._boundDragOver = (e) => {
-                if (this._lcDnDHandler(e)) e.preventDefault();
+                if (this._lcDnDHandler(e)) { e.preventDefault(); e.stopImmediatePropagation(); }
             };
             this._boundDrop = (e) => {
                 if (this._lcDnDHandler(e)) {
                     e.preventDefault();
+                    e.stopImmediatePropagation();
                     e.stopPropagation();
                     const files = e.dataTransfer?.files;
                     if (files && files.length > 0 && files[0].type.startsWith("image/")) {
@@ -89,11 +97,20 @@ app.registerExtension({
                 }
             };
 
-            const canvas = app.canvas?.canvas;
-            if (canvas) {
-                canvas.addEventListener("dragover", this._boundDragOver, { capture: true });
-                canvas.addEventListener("drop", this._boundDrop, { capture: true });
-            }
+            // Registered on window's capture phase, not the canvas element. ComfyUI's own
+            // core drop handler treats any dropped image carrying embedded workflow/prompt
+            // metadata (i.e. basically anything this app previously saved) as "load this
+            // workflow" and replaces the whole graph -- wiping this node along with
+            // everything else -- no matter which node the file visually lands on. That
+            // handler already sits on the canvas element by the time any node exists, so a
+            // listener added here later never gets a turn: same-element listeners run in
+            // registration order during the target phase regardless of the capture flag.
+            // A window-level capture listener runs earlier in the actual DOM capture phase,
+            // ahead of canvas entirely, so it can claim the drop for this node before core
+            // ever sees it.
+            window.addEventListener("dragenter", this._boundDragEnter, { capture: true });
+            window.addEventListener("dragover", this._boundDragOver, { capture: true });
+            window.addEventListener("drop", this._boundDrop, { capture: true });
         };
 
         nodeType.prototype.onConfigure = function (info) {
@@ -127,19 +144,25 @@ app.registerExtension({
         };
 
         nodeType.prototype.onRemoved = function () {
-            const canvas = app.canvas?.canvas;
-            if (canvas && this._boundDragOver && this._boundDrop) {
-                canvas.removeEventListener("dragover", this._boundDragOver, { capture: true });
-                canvas.removeEventListener("drop", this._boundDrop, { capture: true });
-            }
+            if (this._boundDragEnter) window.removeEventListener("dragenter", this._boundDragEnter, { capture: true });
+            if (this._boundDragOver) window.removeEventListener("dragover", this._boundDragOver, { capture: true });
+            if (this._boundDrop) window.removeEventListener("drop", this._boundDrop, { capture: true });
         };
 
         nodeType.prototype.getImageUrl = function () {
             const pathWidget = this.widgets?.find((w) => w.name === "_image_path");
             if (!pathWidget || !pathWidget.value) return null;
-            const parts = pathWidget.value.split(" ");
-            const filename = parts[0];
-            const subfolder = parts.slice(1).join(" ") || "";
+            let filename, subfolder;
+            try {
+                ({ filename, subfolder = "" } = JSON.parse(pathWidget.value));
+            } catch {
+                // Legacy "filename subfolder" format (single space-joined string), from
+                // before filenames containing a space were handled correctly -- a plain
+                // split broke on any upload whose original filename had a space in it.
+                const parts = pathWidget.value.split(" ");
+                filename = parts[0];
+                subfolder = parts.slice(1).join(" ") || "";
+            }
             return `/lc123/image_label/get_image?filename=${encodeURIComponent(filename)}&subfolder=${encodeURIComponent(subfolder)}&type=temp`;
         };
 
@@ -204,8 +227,7 @@ app.registerExtension({
                 if (!resp.ok) throw new Error(`Upload failed: ${resp.status}`);
                 const data = await resp.json();
                 if (data.name) {
-                    const fullPath = data.subfolder ? `${data.name} ${data.subfolder}` : data.name;
-                    pathWidget.value = fullPath;
+                    pathWidget.value = JSON.stringify({ filename: data.name, subfolder: data.subfolder || "" });
                     this.loadImage(this.getImageUrl());
                 }
             } catch (e) {
