@@ -23,9 +23,11 @@ _FOLDERS = (
     "checkpoints",
     "diffusion_models",
     "unet",
+    "unet_gguf",
     "loras",
     "text_encoders",
     "clip",
+    "clip_gguf",
     "clip_vision",
     "vae",
     "controlnet",
@@ -38,9 +40,11 @@ _KIND_BY_FOLDER = {
     "checkpoints": "model",
     "diffusion_models": "unet",
     "unet": "unet",
+    "unet_gguf": "unet",
     "loras": "lora",
     "text_encoders": "clip",
     "clip": "clip",
+    "clip_gguf": "clip",
     "clip_vision": "clip",
     "vae": "vae",
     "controlnet": "controlnet",
@@ -103,13 +107,16 @@ def _resolve(name: str, prefer: str | None = None) -> tuple[str | None, str | No
         folders.append(prefer)
         # unet vs diffusion_models alias
         if prefer == "diffusion_models":
-            folders.append("unet")
+            folders.extend(["unet", "unet_gguf"])
         if prefer == "unet":
-            folders.append("diffusion_models")
+            folders.extend(["diffusion_models", "unet_gguf"])
         if prefer == "text_encoders":
-            folders.extend(["clip", "clip_vision"])
+            folders.extend(["clip", "clip_vision", "clip_gguf"])
         if prefer == "clip":
-            folders.append("text_encoders")
+            folders.extend(["text_encoders", "clip_gguf"])
+        # ComfyUI-GGUF registers .gguf files under separate "unet_gguf"/"clip_gguf"
+        # folder_paths keys (same directory, different extension whitelist) -- a
+        # .gguf file never resolves through the vanilla key it reuses the path of.
     for f in _FOLDERS:
         if f not in folders:
             folders.append(f)
