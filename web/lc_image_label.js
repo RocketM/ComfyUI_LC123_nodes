@@ -50,11 +50,11 @@ app.registerExtension({
             this.onDrawBackground = function (ctx) {};
 
             this.properties = {
-                size: 100,
+                size: 125,
                 padding: 5,
-                borderWidth: 2,
-                borderColor: "#FF0000",
-                borderRadius: 5,
+                borderWidth: 1,
+                borderColor: "#ffffff",
+                borderRadius: 0,
                 backgroundColor: "transparent",
                 bgTransparent: true,
                 syncImageRadius: true,
@@ -309,7 +309,7 @@ app.registerExtension({
             dialog.style.cssText = "position:fixed;background:#1a1a1a;border:2px solid #333;border-radius:8px;padding:20px;z-index:10000;min-width:350px;color:#fff;font-family:Arial,sans-serif;";
 
             const title = document.createElement("h3");
-            title.textContent = "LC Image Label Settings";
+            title.textContent = "LC Image Label Settings ⚙️";
             title.style.cssText = "margin:0 0 15px 0;color:#fff;cursor:grab;user-select:none;padding-bottom:5px;border-bottom:1px solid #333;";
             dialog.appendChild(title);
 
@@ -479,7 +479,7 @@ app.registerExtension({
                 return container;
             });
 
-            createRow("BG Transparent:", () => {
+            createRow("Transparent Background:", () => {
                 const checkbox = document.createElement("input");
                 checkbox.type = "checkbox";
                 checkbox.checked = this.properties.bgTransparent !== false;
@@ -490,7 +490,7 @@ app.registerExtension({
                 return checkbox;
             });
 
-            createRow("BG Color:", () => {
+            createRow("Background Color:", () => {
                 const container = document.createElement("div");
                 container.style.cssText = "display:flex;align-items:center;gap:8px;";
                 const preview = document.createElement("div");
