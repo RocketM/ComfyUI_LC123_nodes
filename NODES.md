@@ -1,6 +1,6 @@
 # LC123 node inventory
 
-Registered class IDs (63):
+Registered class IDs (64):
 
 - `AnimaRegionalCanvasInline`
 - `AspectRatioSimplifier`
@@ -34,6 +34,7 @@ Registered class IDs (63):
 - `LCImageCrop`
 - `LCImageDenoise`
 - `LCImageDesaturate`
+- `LCImageLabel`
 - `LCImageRGB`
 - `LCIntCompare`
 - `LCInvertBoolean`

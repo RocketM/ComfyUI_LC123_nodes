@@ -77,6 +77,7 @@ _load("lc_batch_image")
 _load("lc_batch_image_comparer")
 _load("lc_image_split")
 _load("lc_last_image_holder")
+_load("lc_image_label")
 
 # Sampling helpers
 _load("lc_sampler_configure")
