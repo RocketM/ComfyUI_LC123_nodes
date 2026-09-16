@@ -114,8 +114,11 @@ SIZE_SLOTS = [
 ]
 
 
-def _slot_keys():
-    keys = list(HEAD_SLOTS) + list(SIZE_SLOTS)
+def _slot_keys(extra_after_size=()):
+    """extra_after_size lets a caller (V2) insert additional slots right
+    after frame_rate / before ref_image_0, without duplicating this
+    function or touching what V1 (which always calls with no args) gets."""
+    keys = list(HEAD_SLOTS) + list(SIZE_SLOTS) + list(extra_after_size)
     for i in range(IMAGE_MAX):
         keys.append((f"ref_image_{i}", "IMAGE", f"ref_image_{i}"))
     for i in range(VIDEO_MAX):
@@ -253,15 +256,15 @@ def _empty_v2():
 
 def _merge_incoming_v2(pipe):
     """V2 pipe -> full merge (reference media + sampling fields).
-    V1 H3 pipe -> upgrade: reference media merges in, sampling fields stay
-    unset until wired via this node's own sockets. LC_PIPE (ARS) ->
-    width/height only, same as V1."""
+    V1 H3 pipe -> upgrade: reference media merges in; V1 has no sampling
+    keys at all, so they're naturally skipped by the same loop. LC_PIPE
+    (ARS) -> width/height only, same as V1."""
     base = _empty_v2()
     if not isinstance(pipe, dict):
         return base
     t = pipe.get("_type")
     if t in (PIPE_TYPE_V2, PIPE_TYPE):
-        for key, _kind, _label in _slot_keys():
+        for key, _kind, _label in _slot_keys(SAMPLING_SLOTS_V2):
             if key in pipe and pipe[key] is not None:
                 base[key] = pipe[key]
         for group in ("ref_images", "ref_videos", "ref_video_audios", "ref_audios"):
@@ -271,10 +274,6 @@ def _merge_incoming_v2(pipe):
         if old is not None:
             base.setdefault("fl2va_clip", old)
             base.setdefault("ref2va_clip", old)
-        if t == PIPE_TYPE_V2:
-            for key, _kind, _label in SAMPLING_SLOTS_V2:
-                if key in pipe and pipe[key] is not None:
-                    base[key] = pipe[key]
         return base
     for k in ARS_TAKE:
         if pipe.get(k) is not None:
@@ -290,9 +289,10 @@ class LCMiniMaxH3PipeV2:
                 "tooltip": "H3 Pipe V2 to merge, a V1 H3 pipe to upgrade (reference media only -- sampling fields stay unset until wired via this node's own sockets), or Aspect Ratio Simplifier / LC Pipe (width + height only).",
             }),
         }
-        for key, kind, label in _slot_keys():
-            optional[key] = _optional_slot(key, kind, label)
-        for key, kind, label in SAMPLING_SLOTS_V2:
+        # SAMPLING_SLOTS_V2 inserted between frame_rate and ref_image_0 --
+        # a deliberate ordering choice specific to this brand-new V2 node,
+        # safe to set however makes sense since nothing depends on it yet.
+        for key, kind, label in _slot_keys(SAMPLING_SLOTS_V2):
             optional[key] = _optional_slot(key, kind, label)
         return {"required": {}, "optional": optional}
 
@@ -358,35 +358,34 @@ class LCMiniMaxH3PipeOutV2:
             },
         }
 
-    RETURN_TYPES = (
-        (PIPE_TYPE_V2,)
-        + tuple(kind for _k, kind, _l in _slot_keys())
-        + tuple(kind for _k, kind, _l in SAMPLING_SLOTS_V2)
-    )
-    RETURN_NAMES = (
-        ("pipe",)
-        + tuple(label for _k, _kind, label in _slot_keys())
-        + tuple(label for _k, _kind, label in SAMPLING_SLOTS_V2)
-    )
+    # SAMPLING_SLOTS_V2 inserted between frame_rate and ref_image_0, same
+    # ordering as the Pack node's INPUT_TYPES above.
+    RETURN_TYPES = (PIPE_TYPE_V2,) + tuple(kind for _k, kind, _l in _slot_keys(SAMPLING_SLOTS_V2))
+    RETURN_NAMES = ("pipe",) + tuple(label for _k, _kind, label in _slot_keys(SAMPLING_SLOTS_V2))
     FUNCTION = "unpack"
     CATEGORY = "LC123/pipe"
     DESCRIPTION = (
         "Unpacks an LC MiniMax H3 pipe V2. Same reference-media outputs as LC MiniMax H3 Pipe Out, plus "
-        "prompt / total_steps / cfg / sampler_name / scheduler."
+        "prompt / total_steps / cfg / sampler_name / scheduler (between frame_rate and ref_image_0)."
     )
+
+    # Fallback defaults when a sampling field was never wired on the way
+    # in -- matches LC Sampler Configure Simple's own defaults.
+    _SAMPLING_DEFAULTS = {"prompt": "", "total_steps": 40, "cfg": 8.0, "sampler_name": "euler", "scheduler": "normal"}
+    _SAMPLING_COERCE = {"total_steps": int, "cfg": float}
 
     def unpack(self, pipe):
         if not isinstance(pipe, dict):
             pipe = _empty_v2()
-        values = tuple(pipe.get(key) for key, _kind, _label in _slot_keys())
-        prompt = pipe.get("prompt") or ""
-        total_steps = pipe.get("total_steps")
-        total_steps = int(total_steps) if total_steps is not None else 40
-        cfg = pipe.get("cfg")
-        cfg = float(cfg) if cfg is not None else 8.0
-        sampler_name = pipe.get("sampler_name") or "euler"
-        scheduler = pipe.get("scheduler") or "normal"
-        return (pipe,) + values + (prompt, total_steps, cfg, sampler_name, scheduler)
+        values = []
+        for key, _kind, _label in _slot_keys(SAMPLING_SLOTS_V2):
+            val = pipe.get(key)
+            if val is None:
+                val = self._SAMPLING_DEFAULTS.get(key)
+            elif key in self._SAMPLING_COERCE:
+                val = self._SAMPLING_COERCE[key](val)
+            values.append(val)
+        return (pipe,) + tuple(values)
 
 
 NODE_CLASS_MAPPINGS = {
