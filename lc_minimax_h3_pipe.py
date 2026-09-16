@@ -14,8 +14,11 @@ Pipe in accepts LC_H3_PIPE (full merge) or LC_PIPE from Aspect Ratio Simplifier
 
 from __future__ import annotations
 
+import comfy.samplers
+
 PIPE_TYPE = "LC_H3_PIPE"
 LC_PIPE = "LC_PIPE"
+PIPE_TYPE_V2 = "LC_H3_PIPE_V2"
 
 IMAGE_MAX = 9
 VIDEO_MAX = 3
@@ -208,12 +211,179 @@ class LCMiniMaxH3PipeOut:
         return (pipe,) + values
 
 
+SAMPLING_SLOTS_V2 = [
+    ("prompt", "STRING", "prompt"),
+    ("total_steps", "INT", "total_steps"),
+    ("cfg", "FLOAT", "cfg"),
+    ("sampler_name", "SAMPLER", "sampler_name"),
+    ("scheduler", "SCHEDULER", "scheduler"),
+]
+
+
+class H3PipeAcceptV2(str):
+    """Connect LC_H3_PIPE_V2 (full merge), LC_H3_PIPE (upgrades a V1 pipe --
+    reference media carries over, sampling fields take this node's own
+    defaults/widgets), or LC_PIPE (Aspect Ratio Simplifier / LC Pipe,
+    width + height only)."""
+
+    def __ne__(self, other):
+        o = str(other) if other is not None else ""
+        return o not in {PIPE_TYPE_V2, PIPE_TYPE, LC_PIPE, "*"}
+
+
+h3_pipe_in_v2 = H3PipeAcceptV2(PIPE_TYPE_V2)
+
+
+def _empty_v2():
+    return {"_type": PIPE_TYPE_V2}
+
+
+def _merge_incoming_v2(pipe):
+    """V2 pipe -> full merge (reference media + sampling fields).
+    V1 H3 pipe -> upgrade: reference media merges in, sampling fields are
+    left for this node's own widgets to set. LC_PIPE (ARS) -> width/height
+    only, same as V1."""
+    base = _empty_v2()
+    if not isinstance(pipe, dict):
+        return base
+    t = pipe.get("_type")
+    if t in (PIPE_TYPE_V2, PIPE_TYPE):
+        for key, _kind, _label in _slot_keys():
+            if key in pipe and pipe[key] is not None:
+                base[key] = pipe[key]
+        for group in ("ref_images", "ref_videos", "ref_video_audios", "ref_audios"):
+            if isinstance(pipe.get(group), dict):
+                base[group] = dict(pipe[group])
+        old = pipe.get("clip")
+        if old is not None:
+            base.setdefault("fl2va_clip", old)
+            base.setdefault("ref2va_clip", old)
+        if t == PIPE_TYPE_V2:
+            for key, _kind, _label in SAMPLING_SLOTS_V2:
+                if key in pipe and pipe[key] is not None:
+                    base[key] = pipe[key]
+        return base
+    for k in ARS_TAKE:
+        if pipe.get(k) is not None:
+            base[k] = pipe[k]
+    return base
+
+
+class LCMiniMaxH3PipeV2:
+    @classmethod
+    def INPUT_TYPES(cls):
+        optional = {
+            "pipe": (h3_pipe_in_v2, {
+                "tooltip": "H3 Pipe V2 to merge, a V1 H3 pipe to upgrade (reference media only -- sampling fields use this node's own widgets), or Aspect Ratio Simplifier / LC Pipe (width + height only).",
+            }),
+        }
+        for key, kind, label in _slot_keys():
+            optional[key] = _optional_slot(key, kind, label)
+        optional["prompt"] = ("STRING", {"multiline": True, "default": "", "tooltip": "Positive prompt text."})
+        optional["total_steps"] = ("INT", {"default": 40, "min": 1, "max": 10000, "tooltip": "Sampling steps."})
+        optional["cfg"] = ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0, "step": 0.1, "tooltip": "Classifier-free guidance scale."})
+        optional["sampler_name"] = (comfy.samplers.KSampler.SAMPLERS, {"default": "euler", "tooltip": "Sampler algorithm."})
+        optional["scheduler"] = (comfy.samplers.KSampler.SCHEDULERS, {"default": "normal", "tooltip": "Noise schedule."})
+        return {"required": {}, "optional": optional}
+
+    RETURN_TYPES = (PIPE_TYPE_V2,)
+    RETURN_NAMES = ("pipe",)
+    FUNCTION = "pack"
+    CATEGORY = "LC123/pipe"
+    DESCRIPTION = (
+        "MiniMax H3 pipe in / edit, V2 -- adds prompt / total_steps / cfg / sampler_name / scheduler on "
+        "top of everything LC MiniMax H3 Pipe already carries, matching LC Sampler Configure's own "
+        "field names and defaults. New pipe type (LC_H3_PIPE_V2) -- the original LC MiniMax H3 Pipe / "
+        "Pipe Out are completely unchanged and unaffected by this node's existence, so no existing "
+        "workflow can break from adding it."
+    )
+
+    def pack(self, pipe=None, prompt="", total_steps=40, cfg=8.0, sampler_name="euler", scheduler="normal", **kwargs):
+        base = _merge_incoming_v2(pipe)
+        for key, _kind, _label in HEAD_SLOTS + SIZE_SLOTS:
+            val = kwargs.get(key)
+            if _is_provided(val):
+                base[key] = val
+        images = _collect(kwargs, "ref_image_", IMAGE_MAX)
+        videos = _collect(kwargs, "ref_video_", VIDEO_MAX)
+        video_audios = _collect(kwargs, "ref_video_audio_", VIDEO_MAX)
+        audios = _collect(kwargs, "ref_audio_", AUDIO_MAX)
+        if images:
+            base["ref_images"] = {**base.get("ref_images", {}), **images}
+            for k, v in images.items():
+                base[k] = v
+        if videos:
+            base["ref_videos"] = {**base.get("ref_videos", {}), **videos}
+            for k, v in videos.items():
+                base[k] = v
+        if video_audios:
+            base["ref_video_audios"] = {**base.get("ref_video_audios", {}), **video_audios}
+            for k, v in video_audios.items():
+                base[k] = v
+        if audios:
+            base["ref_audios"] = {**base.get("ref_audios", {}), **audios}
+            for k, v in audios.items():
+                base[k] = v
+        base["prompt"] = prompt
+        base["total_steps"] = total_steps
+        base["cfg"] = cfg
+        base["sampler_name"] = sampler_name
+        base["scheduler"] = scheduler
+        return (base,)
+
+
+class LCMiniMaxH3PipeOutV2:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "pipe": (PIPE_TYPE_V2, {
+                    "tooltip": "LC MiniMax H3 Pipe V2.",
+                }),
+            },
+        }
+
+    RETURN_TYPES = (
+        (PIPE_TYPE_V2,)
+        + tuple(kind for _k, kind, _l in _slot_keys())
+        + ("STRING", "INT", "FLOAT", comfy.samplers.KSampler.SAMPLERS, comfy.samplers.KSampler.SCHEDULERS)
+    )
+    RETURN_NAMES = (
+        ("pipe",)
+        + tuple(label for _k, _kind, label in _slot_keys())
+        + ("prompt", "total_steps", "cfg", "sampler_name", "scheduler")
+    )
+    FUNCTION = "unpack"
+    CATEGORY = "LC123/pipe"
+    DESCRIPTION = (
+        "Unpacks an LC MiniMax H3 pipe V2. Same reference-media outputs as LC MiniMax H3 Pipe Out, plus "
+        "prompt / total_steps / cfg / sampler_name / scheduler."
+    )
+
+    def unpack(self, pipe):
+        if not isinstance(pipe, dict):
+            pipe = _empty_v2()
+        values = tuple(pipe.get(key) for key, _kind, _label in _slot_keys())
+        prompt = pipe.get("prompt") or ""
+        total_steps = pipe.get("total_steps")
+        total_steps = int(total_steps) if total_steps is not None else 40
+        cfg = pipe.get("cfg")
+        cfg = float(cfg) if cfg is not None else 8.0
+        sampler_name = pipe.get("sampler_name") or "euler"
+        scheduler = pipe.get("scheduler") or "normal"
+        return (pipe,) + values + (prompt, total_steps, cfg, sampler_name, scheduler)
+
+
 NODE_CLASS_MAPPINGS = {
     "LCMiniMaxH3Pipe": LCMiniMaxH3Pipe,
     "LCMiniMaxH3PipeOut": LCMiniMaxH3PipeOut,
+    "LCMiniMaxH3PipeV2": LCMiniMaxH3PipeV2,
+    "LCMiniMaxH3PipeOutV2": LCMiniMaxH3PipeOutV2,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "LCMiniMaxH3Pipe": "LC MiniMax H3 Pipe",
     "LCMiniMaxH3PipeOut": "LC MiniMax H3 Pipe Out",
+    "LCMiniMaxH3PipeV2": "LC MiniMax H3 Pipe V2",
+    "LCMiniMaxH3PipeOutV2": "LC MiniMax H3 Pipe Out V2",
 }
