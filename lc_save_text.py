@@ -21,8 +21,11 @@ def _sanitize_segment(name: str, fallback: str = "untitled") -> str:
         return fallback
     s = str(name).strip().replace("\r", " ").replace("\n", " ")
     s = _ILLEGAL.sub("_", s)
-    # collapse runs of underscores/spaces mixed from replacements
-    s = re.sub(r"[_\s]+", "_", s)
+    # Collapse runs of underscores left behind by illegal-character
+    # replacement above. Spaces are left alone -- they're valid in
+    # filenames, and treating them as interchangeable with underscores
+    # here used to replace every space in the name with "_".
+    s = _MULTI_UNDERSCORE.sub("_", s)
     s = s.strip(" ._")
     # Windows reserved device names
     reserved = {
