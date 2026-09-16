@@ -6,7 +6,7 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 - **Civitai:** [lonecatone23](https://civitai.com/user/lonecatone23)
 - **Instagram:** [synth.studio.models](https://www.instagram.com/synth.studio.models/)
 - **Support:** [Buy me a ☕](https://ko-fi.com/lonecatone)
-- **Version:** 1.29.0 · **111 Python nodes** · **4 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel)
+- **Version:** 1.29.5 · **111 Python nodes** · **4 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel)
 
 > Small tools that remove friction: less wire mess, fewer clicks, clearer workflows.
 
@@ -335,7 +335,7 @@ Workflow → Open, or just drag it onto the canvas.
 - **Reference Latent:** all slots empty just means pass-through. Bypasser-safe.
 - **Denoise 💉:** match the sampler's denoise number. 1.0 = no injection happening.
 - **H3 pipe:** Aspect Ratio Simplifier's pipe into the H3 **pipe** socket only copies size. Length and fps still need their own wires. The pipe **forwards wires only**, it doesn't generate anything extra. MiniMax prompt tags are 1-based: `<Picture N>` = `ref_image_{N-1}` (so `<Picture 1>` = `ref_image_0`). Native MiniMax **Ref2V** needs `ref_video` to be at least **5 frames**.
-- **H3 pipe V2:** new pipe type, `LC_H3_PIPE_V2`, carries everything the original does plus `prompt`, `total_steps`, `cfg`, `sampler_name`, `scheduler` (same field names/defaults as **LC Sampler Configure Simple**). Feed a V1 H3 pipe into V2's **pipe** socket to upgrade it, reference media carries over and the sampling fields use V2's own widgets. The original **LC MiniMax H3 Pipe** / **Pipe Out** are untouched, existing graphs keep working exactly as before.
+- **H3 pipe V2:** new pipe type, `LC_H3_PIPE_V2`, carries everything the original does plus `prompt`, `total_steps`, `cfg`, `sampler_name`, `scheduler` sockets (same field names/defaults as **LC Sampler Configure Simple**), sitting between `frame_rate` and `ref_image_0`. Same forceInput-socket convention as every other field on this pipe, wire these in rather than typing them on the node. Feed a V1 H3 pipe into V2's **pipe** socket to upgrade it, reference media carries over and the sampling fields stay unset until wired. The original **LC MiniMax H3 Pipe** / **Pipe Out** are untouched, existing graphs keep working exactly as before.
 - **Tone Match:** same crop only. Doing a head-swap? Mask off the new head (black). This is not a color-match substitute.
 - **Color Match mask:** white = regrade, black = keep the original pixel. Optional: leave it unconnected and you get the old behavior back.
 - **Notify:** drop your own audio into `assets/sounds/`, restart once, done.
