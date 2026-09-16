@@ -102,6 +102,18 @@ app.registerExtension({
         this.size = saved;
         this._lcShowSized = true;
       }
+      // The display widget is only created lazily in onExecuted, so it does
+      // not exist yet when a saved workflow loads -- LiteGraph's own
+      // widgets_values restore runs first and has nothing to write into,
+      // silently dropping the saved text. Recreate the widget now and pull
+      // the saved value back in ourselves.
+      const savedText =
+        Array.isArray(data?.widgets_values) && data.widgets_values.length
+          ? data.widgets_values[0]
+          : undefined;
+      if (savedText != null) {
+        setDisplayText(this, String(savedText));
+      }
       return r;
     };
 
