@@ -103,16 +103,19 @@ app.registerExtension({
         this._lcShowSized = true;
       }
       // The display widget is only created lazily in onExecuted, so it does
-      // not exist yet when a saved workflow loads -- LiteGraph's own
-      // widgets_values restore runs first and has nothing to write into,
-      // silently dropping the saved text. Recreate the widget now and pull
-      // the saved value back in ourselves.
-      const savedText =
-        Array.isArray(data?.widgets_values) && data.widgets_values.length
-          ? data.widgets_values[0]
-          : undefined;
+      // not exist yet when a workflow (re)configures this node -- e.g.
+      // switching between open workflow tabs re-hydrates each node from its
+      // serialized data on every switch, not just on a fresh page load.
+      // widgets_values is NOT a reliable source for this: since the node has
+      // zero Python-declared widgets, ComfyUI's own loader reconciles
+      // widgets_values down to [] against the (currently empty) widget list
+      // before this hook ever sees it. Properties aren't subject to that
+      // reconciliation, so onExecuted below also mirrors the text into
+      // this.properties, and this restores from there instead.
+      const savedText = this.properties?.lc_display_text;
       if (savedText != null) {
-        setDisplayText(this, String(savedText));
+        const node = this;
+        requestAnimationFrame(() => setDisplayText(node, String(savedText)));
       }
       return r;
     };
@@ -131,6 +134,8 @@ app.registerExtension({
       const display = texts.map((t) => (t == null ? "" : String(t))).join("");
 
       setDisplayText(this, display);
+      this.properties = this.properties || {};
+      this.properties.lc_display_text = display;
 
       // Restore dimensions — never snap to computeSize()
       if (keepW > 40 && keepH > 40) {
