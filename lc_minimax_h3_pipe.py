@@ -50,15 +50,17 @@ def _optional_slot(key, kind, label):
     return (kind, {"tooltip": tooltips.get(key, label)})
 
 
-class H3PipeAccept(str):
-    """Connect LC_H3_PIPE or LC_PIPE (Aspect Ratio Simplifier / LC Pipe)."""
-
-    def __ne__(self, other):
-        o = str(other) if other is not None else ""
-        return o not in {PIPE_TYPE, LC_PIPE, "*"}
-
-
-h3_pipe_in = H3PipeAccept(PIPE_TYPE)
+# Comma-joined "T1,T2,..." is the actual mechanism ComfyUI's socket-type
+# checking understands at BOTH layers -- the frontend's own drag-connect
+# validation, and the backend's validate_node_input() in
+# comfy_execution/validation.py. A custom str subclass with a __ne__
+# override (the previous approach here) only ever affects the backend
+# check; confirmed live that it does not make the frontend allow the
+# connection at all, so a fresh drag from Aspect Ratio Simplifier / LC
+# Pipe was never actually connectable despite being documented as
+# accepted -- this fixes that, purely by making more things connectable
+# than before (nothing that already worked changes).
+h3_pipe_in = f"{PIPE_TYPE},{LC_PIPE}"
 
 
 def _empty():
@@ -220,18 +222,13 @@ SAMPLING_SLOTS_V2 = [
 ]
 
 
-class H3PipeAcceptV2(str):
-    """Connect LC_H3_PIPE_V2 (full merge), LC_H3_PIPE (upgrades a V1 pipe --
-    reference media carries over, sampling fields take this node's own
-    defaults/widgets), or LC_PIPE (Aspect Ratio Simplifier / LC Pipe,
-    width + height only)."""
-
-    def __ne__(self, other):
-        o = str(other) if other is not None else ""
-        return o not in {PIPE_TYPE_V2, PIPE_TYPE, LC_PIPE, "*"}
-
-
-h3_pipe_in_v2 = H3PipeAcceptV2(PIPE_TYPE_V2)
+# Same comma-joined "T1,T2,..." mechanism as h3_pipe_in above -- accepts
+# LC_H3_PIPE_V2 (full merge), LC_H3_PIPE (upgrades a V1 pipe -- reference
+# media carries over, sampling fields take this node's own defaults/
+# widgets), or LC_PIPE (Aspect Ratio Simplifier / LC Pipe, width + height
+# only). Confirmed live this is what actually makes the connection
+# draggable in the UI, not just backend-valid.
+h3_pipe_in_v2 = f"{PIPE_TYPE_V2},{PIPE_TYPE},{LC_PIPE}"
 
 
 def _empty_v2():
