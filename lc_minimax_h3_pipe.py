@@ -36,6 +36,7 @@ def _optional_slot(key, kind, label):
             "length": dict(default=124, min=5, max=3600, step=1, tooltip="Frame count. H3 is 24 fps; 124 ≈ 5s, 244 ≈ 10s."),
             "frame_rate": dict(default=24, min=1, max=120, step=1, tooltip="Frame rate. MiniMax H3 is trained at 24."),
             "total_steps": dict(default=40, min=1, max=10000, tooltip="Sampling steps."),
+            "seed": dict(default=0, min=0, max=0xFFFFFFFFFFFFFFFF, tooltip="Sampling seed."),
         }
         opt = dict(specs.get(key, dict(default=0, min=0, max=0xFFFFFFFF)))
         opt["forceInput"] = True
@@ -210,8 +211,11 @@ class LCMiniMaxH3PipeOut:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "pipe": (PIPE_TYPE, {
-                    "tooltip": "LC MiniMax H3 Pipe.",
+                # Comma-joined so a V2 pipe can be unpacked here too -- unpack()
+                # only reads the V1 keys it asks for, so the extra V2 sampling
+                # fields are simply ignored.
+                "pipe": (f"{PIPE_TYPE},{PIPE_TYPE_V2}", {
+                    "tooltip": "LC MiniMax H3 Pipe (V1 or V2 -- V2's extra sampling fields are ignored here).",
                 }),
             },
         }
@@ -236,6 +240,7 @@ SAMPLING_SLOTS_V2 = [
     ("prompt", "STRING", "prompt"),
     ("total_steps", "INT", "total_steps"),
     ("cfg", "FLOAT", "cfg"),
+    ("seed", "INT", "seed"),
     ("sampler_name", comfy.samplers.KSampler.SAMPLERS, "sampler_name"),
     ("scheduler", comfy.samplers.KSampler.SCHEDULERS, "scheduler"),
 ]
@@ -301,15 +306,15 @@ class LCMiniMaxH3PipeV2:
     FUNCTION = "pack"
     CATEGORY = "LC123/pipe"
     DESCRIPTION = (
-        "MiniMax H3 pipe in / edit, V2 -- adds prompt / total_steps / cfg / sampler_name / scheduler "
-        "sockets on top of everything LC MiniMax H3 Pipe already carries (same forceInput-socket "
-        "convention as every other field on this pipe, wire these in rather than setting them "
+        "MiniMax H3 pipe in / edit, V2 -- adds prompt / total_steps / cfg / seed / sampler_name / "
+        "scheduler sockets on top of everything LC MiniMax H3 Pipe already carries (same forceInput-"
+        "socket convention as every other field on this pipe, wire these in rather than setting them "
         "directly). New pipe type (LC_H3_PIPE_V2) -- the original LC MiniMax H3 Pipe / Pipe Out are "
         "completely unchanged and unaffected by this node's existence, so no existing workflow can "
         "break from adding it."
     )
 
-    def pack(self, pipe=None, prompt=None, total_steps=None, cfg=None, sampler_name=None, scheduler=None, **kwargs):
+    def pack(self, pipe=None, prompt=None, total_steps=None, cfg=None, seed=None, sampler_name=None, scheduler=None, **kwargs):
         base = _merge_incoming_v2(pipe)
         for key, _kind, _label in HEAD_SLOTS + SIZE_SLOTS:
             val = kwargs.get(key)
@@ -319,6 +324,7 @@ class LCMiniMaxH3PipeV2:
             ("prompt", prompt),
             ("total_steps", total_steps),
             ("cfg", cfg),
+            ("seed", seed),
             ("sampler_name", sampler_name),
             ("scheduler", scheduler),
         ):
@@ -352,8 +358,12 @@ class LCMiniMaxH3PipeOutV2:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "pipe": (PIPE_TYPE_V2, {
-                    "tooltip": "LC MiniMax H3 Pipe V2.",
+                # Comma-joined so a V1 pipe can be unpacked here directly,
+                # skipping the V2 Pack step -- unpack() below already falls
+                # back to _SAMPLING_DEFAULTS for any sampling field a V1
+                # pipe doesn't have.
+                "pipe": (f"{PIPE_TYPE_V2},{PIPE_TYPE}", {
+                    "tooltip": "LC MiniMax H3 Pipe V2 (or a V1 LC_H3_PIPE -- sampling fields fall back to defaults).",
                 }),
             },
         }
@@ -366,13 +376,14 @@ class LCMiniMaxH3PipeOutV2:
     CATEGORY = "LC123/pipe"
     DESCRIPTION = (
         "Unpacks an LC MiniMax H3 pipe V2. Same reference-media outputs as LC MiniMax H3 Pipe Out, plus "
-        "prompt / total_steps / cfg / sampler_name / scheduler (between frame_rate and ref_image_0)."
+        "prompt / total_steps / cfg / seed / sampler_name / scheduler (between frame_rate and ref_image_0). "
+        "Also accepts a V1 LC_H3_PIPE directly -- sampling fields fall back to their defaults."
     )
 
     # Fallback defaults when a sampling field was never wired on the way
     # in -- matches LC Sampler Configure Simple's own defaults.
-    _SAMPLING_DEFAULTS = {"prompt": "", "total_steps": 40, "cfg": 8.0, "sampler_name": "euler", "scheduler": "normal"}
-    _SAMPLING_COERCE = {"total_steps": int, "cfg": float}
+    _SAMPLING_DEFAULTS = {"prompt": "", "total_steps": 40, "cfg": 8.0, "seed": 0, "sampler_name": "euler", "scheduler": "normal"}
+    _SAMPLING_COERCE = {"total_steps": int, "cfg": float, "seed": int}
 
     def unpack(self, pipe):
         if not isinstance(pipe, dict):
