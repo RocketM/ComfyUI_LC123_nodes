@@ -131,6 +131,27 @@ def _build_parameters(meta: dict, width: int, height: int, hash_bits=None) -> st
     return "\n".join(lines).strip()
 
 
+def _next_counter_for_ext(folder: str, stem: str, ext: str) -> int:
+    """Highest existing {stem}_NNNNN.{ext} in folder, +1. Extension-scoped
+    on purpose: folder_paths.get_save_image_path()'s own counter scans
+    os.listdir() with no extension filter at all, so a stem_00005.png
+    makes it treat 00005 as globally "used" and skip straight to 00006
+    for a same-stem .jpg save too -- even though stem_00005.jpg doesn't
+    exist. That's invisible for native SaveImage (always one fixed
+    extension per node instance) but real here, since this node's
+    format widget can switch png/jpeg/webp on the same stem."""
+    pattern = re.compile(rf"^{re.escape(stem)}_(\d+)\.{re.escape(ext)}$", re.IGNORECASE)
+    max_n = 0
+    try:
+        for name in os.listdir(folder):
+            m = pattern.match(name)
+            if m:
+                max_n = max(max_n, int(m.group(1)))
+    except OSError:
+        pass
+    return max_n + 1
+
+
 def _as_meta(metadata) -> dict:
     if isinstance(metadata, dict):
         out = dict(metadata)
@@ -512,10 +533,14 @@ class LCSaveImage:
         n = int(batch.shape[0]) if hasattr(batch, "shape") else len(batch)
 
         first = _tensor_to_pil(batch[0])
-        full_dir, file_stem, counter, subfolder, _pfx = folder_paths.get_save_image_path(
+        full_dir, file_stem, _core_counter, subfolder, _pfx = folder_paths.get_save_image_path(
             combined or "LC123", output_dir, first.size[0], first.size[1]
         )
         os.makedirs(full_dir, exist_ok=True)
+        # Ignore folder_paths' own counter (extension-blind -- see
+        # _next_counter_for_ext) and compute our own, scoped to the
+        # extension actually being saved this run.
+        counter = _next_counter_for_ext(full_dir, file_stem, ext)
 
         results = []
         last_path = ""

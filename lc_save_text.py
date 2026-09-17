@@ -1,4 +1,8 @@
-"""LC123 Save Text — first file is bare name, then _01, _02, ... (2-digit).
+"""LC123 Save Text -- numbering matches LC Save Image: stem_00001.ext,
+stem_00002.ext, ... (5-digit, no bare/unnumbered first file). The counter
+is scoped to the extension actually being saved -- a .txt at 00005 never
+blocks a same-stem .json from also using 00005, matching LC Save Image's
+own per-extension counter.
 
 Path segments are sanitized for Windows-illegal characters.
 """
@@ -57,7 +61,7 @@ def _sanitize_prefix(prefix: str) -> tuple[str, str]:
 
 
 class LC123SaveText:
-    """Save text with naming: prefix.ext, then prefix_01.ext, prefix_02.ext, ..."""
+    """Save text with naming: prefix_00001.ext, prefix_00002.ext, ... (matches LC Save Image)."""
 
     FORMAT_EXTENSIONS = {
         "txt": "txt",
@@ -93,16 +97,13 @@ class LC123SaveText:
 
     def _next_path(self, folder, stem, extension):
         """
-        First free name:
-          stem.ext          (if missing)
-          stem_01.ext
-          stem_02.ext
+        First free name, matching LC Save Image's own convention:
+          stem_00001.ext
+          stem_00002.ext
           ...
+        Counter is scoped to `extension` -- a .txt at 00005 doesn't block
+        a same-stem .json from also using 00005.
         """
-        bare = os.path.join(folder, f"{stem}.{extension}")
-        if not os.path.exists(bare):
-            return bare, f"{stem}.{extension}"
-
         pattern = re.compile(
             rf"^{re.escape(stem)}_(\d+)\.{re.escape(extension)}$",
             re.IGNORECASE,
@@ -116,9 +117,9 @@ class LC123SaveText:
         except OSError:
             pass
 
-        n = max(1, max_n + 1)
+        n = max_n + 1
         while True:
-            filename = f"{stem}_{n:02d}.{extension}"
+            filename = f"{stem}_{n:05d}.{extension}"
             path = os.path.join(folder, filename)
             if not os.path.exists(path):
                 return path, filename
