@@ -375,11 +375,28 @@ app.registerExtension({
     };
 
     const onConfigure = nodeType.prototype.onConfigure;
-    nodeType.prototype.onConfigure = function () {
+    nodeType.prototype.onConfigure = function (data) {
       this._lcSplineConfigured = true;
       this._lcPts = null;
       this._lcHist = [];
-      return onConfigure?.apply(this, arguments);
+      const r = onConfigure?.apply(this, arguments);
+
+      // Saved before the `block` widget was added as the first widget: every
+      // value sits one slot too early (points land in overlay_opacity, pencil
+      // lands in block). Old layout is recognizable by the points string at
+      // index 6, where the new layout has the overlay_opacity number.
+      const wv = data?.widgets_values;
+      if (Array.isArray(wv) && typeof wv[6] === "string") {
+        const oldOrder = ["pencil", "smooth", "invert", "feather", "opacity", "overlay_opacity", "points"];
+        const block = getW(this, "block");
+        if (block) block.value = false;
+        oldOrder.forEach((name, i) => {
+          const w = getW(this, name);
+          if (w && wv[i] !== undefined) w.value = wv[i];
+        });
+        this._lcPts = null;
+      }
+      return r;
     };
 
     const onExecuted = nodeType.prototype.onExecuted;
