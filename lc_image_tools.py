@@ -19,11 +19,20 @@ from .lc_image_helpers import (
 def _preview(self, result_tensor, source_tensor=None):
     """Attach after (and optional before) preview images for on-node compare wipe."""
     out = {"ui": {}, "result": (result_tensor,)}
+    # An RGBA input is processed as RGB (see _alpha_safe below); put its alpha back on the
+    # preview images so a cutout still looks like a cutout on the node.
+    alpha = getattr(self, "_lc_alpha", None)
+
+    def shown(t):
+        if alpha is not None and torch.is_tensor(t) and t.dim() == 4 and t.shape[-1] == 3 and t.shape[:3] == alpha.shape[:3]:
+            return torch.cat([t, alpha.to(t.dtype)], dim=-1)
+        return t
+
     try:
-        after = self.save_images(result_tensor, filename_prefix="lc_after")
+        after = self.save_images(shown(result_tensor), filename_prefix="lc_after")
         out["ui"]["lc_preview"] = after["ui"]["images"]
         if source_tensor is not None:
-            before = self.save_images(source_tensor, filename_prefix="lc_before")
+            before = self.save_images(shown(source_tensor), filename_prefix="lc_before")
             out["ui"]["lc_before"] = before["ui"]["images"]
     except Exception:
         pass
@@ -1806,7 +1815,11 @@ def _alpha_safe(run):
         if not (torch.is_tensor(image) and image.dim() == 4 and image.shape[-1] == 4):
             return run(self, image, *args, **kwargs)
         alpha = image[..., 3:4]
-        out = run(self, image[..., :3], *args, **kwargs)
+        self._lc_alpha = alpha
+        try:
+            out = run(self, image[..., :3], *args, **kwargs)
+        finally:
+            self._lc_alpha = None
 
         def reattach(t):
             if torch.is_tensor(t) and t.dim() == 4 and t.shape[-1] == 3 and t.shape[:3] == alpha.shape[:3]:
