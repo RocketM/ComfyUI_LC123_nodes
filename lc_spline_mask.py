@@ -1,5 +1,5 @@
 """
-LC Spline Mask
+LC Create Mask
 --------------
 Draw a mask on the image right on the node: click to add points (as many as you
 like), drag them to reshape, or switch to the pencil and draw freehand.
@@ -142,5 +142,5 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "LCSplineMask": "LC Spline Mask 🖼️✏️",
+    "LCSplineMask": "LC Create Mask 🖼️✏️",
 }

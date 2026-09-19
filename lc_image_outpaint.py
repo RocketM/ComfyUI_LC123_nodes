@@ -1,6 +1,6 @@
 """
-LC Image Outpaint
------------------
+LC Outpaint
+-----------
 Interactive canvas expansion (drag the edges of the canvas outward on the node).
 The source is placed on a grey canvas; the mask marks the new area (white = new).
 left/top/right/bottom store the expansion as a percentage of the source
@@ -120,5 +120,5 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "LCImageOutpaint": "LC Image Outpaint 🖼️➕",
+    "LCImageOutpaint": "LC Outpaint 🖌️➕",
 }

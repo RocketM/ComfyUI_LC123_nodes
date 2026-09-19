@@ -1,5 +1,5 @@
 /**
- * LC Image Outpaint 🖼️➕ — drag the canvas edges outward.
+ * LC Outpaint 🖌️➕ — drag the canvas edges outward.
  * Same interaction model as LC Image Crop: hidden percent widgets, on-node
  * preview after a run, global mouseup so a drag always releases.
  */

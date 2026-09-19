@@ -1,5 +1,5 @@
 /**
- * LC Spline Mask 🖼️✏️ — draw a mask on the node.
+ * LC Create Mask 🖼️✏️ — draw a mask on the node.
  * points mode: click to add (as many as you like), drag to move, shift+click
  * removes. pencil mode: draw freehand. Points live in a hidden widget as
  * normalized 0-1 coordinates.

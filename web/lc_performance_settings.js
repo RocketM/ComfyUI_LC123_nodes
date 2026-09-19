@@ -17,6 +17,7 @@ const ID = {
   skipCollapsed: "LC123.Performance.SkipCollapsed",
   hidePreviews: "LC123.Performance.HidePreviews",
   skinFull: "LC123.Performance.SkinBeautyFullPreview",
+  recentColors: "LC123.Performance.RecentColors",
 };
 
 function dirty() {
@@ -144,6 +145,15 @@ app.registerExtension({
         "Hide all LC image FX on-node previews. Compare / Split / Overlay unchanged.",
       category: ["LC123", "Performance", "Hide FX on-node previews"],
       onChange: dirty,
+    },
+    {
+      id: ID.recentColors,
+      name: "Recent colors",
+      type: "boolean",
+      defaultValue: true,
+      tooltip:
+        "Show your last 8 custom colors in the right-click Colors menu (adds a Custom picker if Custom Scripts isn't installed).",
+      category: ["LC123", "Performance", "Recent colors"],
     },
     {
       id: ID.skinFull,

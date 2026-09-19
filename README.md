@@ -6,7 +6,7 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 - **Civitai:** [lonecatone23](https://civitai.com/user/lonecatone23)
 - **Instagram:** [synth.studio.models](https://www.instagram.com/synth.studio.models/)
 - **Support:** [Buy me a ☕](https://ko-fi.com/lonecatone)
-- **Version:** 1.30.0 · **113 Python nodes** · **4 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel)
+- **Version:** 1.30.1 · **113 Python nodes** · **4 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel)
 
 > Small tools that remove friction: less wire mess, fewer clicks, clearer workflows.
 
@@ -62,6 +62,7 @@ This is a **UI-only** switch panel: smoother scrolling, lighter on-node previews
 | **No preview when collapsed** | On | Skip draw on collapsed FX nodes |
 | **Hide FX on-node previews** | Off | Hide all LC image FX on-node previews |
 | **Skin Beauty full preview override** | On | Skin Beauty stays full quality on-node |
+| **Recent colors** | On | Your last 8 custom colors show up in the right-click **Colors** menu. Adds its own 🎨 Custom picker if Custom Scripts isn't installed |
 
 **Doesn't touch:** LC Image Compare · LC Dynamic Overlay · LC Image Split
 
@@ -172,6 +173,8 @@ Subjects + Scene + Camera + Lighting + Style + Palette
 | **LC Image Pass** | An identity pass for IMAGE. `enable` off mutes just this tap, so anything downstream watching an optional socket sees nothing. |
 | **LC Mask Pass** | Same idea for MASK: a bank tap. `enable` off mutes this tap only; Color / Tone Match then run with `mask=None` (full frame). |
 | **LC Watermark 💧** | Image watermark with size, opacity, and drag-to-place. |
+| **LC Outpaint 🖌️➕** | Drag the canvas edges outward on the node. Drag inside the source to reposition it. **free** or locked to a common aspect ratio, grey fill. Outputs **control_image**, **control_mask** (white = new area), **mask_image**, **width**, **height**. Run once to get the preview. *note:* **snap_to** rounds the final size up to a multiple (8 by default), set it to 1 to turn that off. |
+| **LC Create Mask 🖼️✏️** | Draw a mask right on the node. Click to add points (no limit), drag to move, shift+click removes one. Flip the toggle to **pencil** for freehand. **smooth**, **invert**, **feather**, and **opacity** are built in. Undo and Clear buttons on the node. Run once to get the preview. |
 | **LC Image Label 🖼️⚙️** | Chromeless sticker: drag an image onto the canvas (or double-click → Load Image) and it floats there, no title bar, no sockets, nothing to wire. Double-click for settings — size, padding, border width/color/radius, background. Baked into the saved workflow as a small webp data URL, so the label survives sharing even after the original upload is gone. |
 
 ---
