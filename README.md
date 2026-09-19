@@ -6,7 +6,7 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 - **Civitai:** [lonecatone23](https://civitai.com/user/lonecatone23)
 - **Instagram:** [synth.studio.models](https://www.instagram.com/synth.studio.models/)
 - **Support:** [Buy me a ☕](https://ko-fi.com/lonecatone)
-- **Version:** 1.30.1 · **113 Python nodes** · **4 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel)
+- **Version:** 1.30.2 · **113 Python nodes** · **4 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel)
 
 > Small tools that remove friction: less wire mess, fewer clicks, clearer workflows.
 
@@ -174,7 +174,7 @@ Subjects + Scene + Camera + Lighting + Style + Palette
 | **LC Mask Pass** | Same idea for MASK: a bank tap. `enable` off mutes this tap only; Color / Tone Match then run with `mask=None` (full frame). |
 | **LC Watermark 💧** | Image watermark with size, opacity, and drag-to-place. |
 | **LC Outpaint 🖌️➕** | Drag the canvas edges outward on the node. Drag inside the source to reposition it. **free** or locked to a common aspect ratio, grey fill. Outputs **control_image**, **control_mask** (white = new area), **mask_image**, **width**, **height**. Run once to get the preview. *note:* **snap_to** rounds the final size up to a multiple (8 by default), set it to 1 to turn that off. |
-| **LC Create Mask 🖼️✏️** | Draw a mask right on the node. Click to add points (no limit), drag to move, shift+click removes one. Flip the toggle to **pencil** for freehand. **smooth**, **invert**, **feather**, and **opacity** are built in. Undo and Clear buttons on the node. Run once to get the preview. |
+| **LC Create Mask 🖼️✏️** | Draw a mask right on the node. Click to add points (no limit), drag to move, shift+click removes one. Flip the toggle to **pencil** for freehand. **smooth**, **invert**, **feather**, and **opacity** are built in. Undo and Clear buttons on the node. **block** (top widget) set to **if_empty_mask** stops everything downstream until you have drawn something, same idea as Impact Pack's Preview Bridge. Run once to get the preview. |
 | **LC Image Label 🖼️⚙️** | Chromeless sticker: drag an image onto the canvas (or double-click → Load Image) and it floats there, no title bar, no sockets, nothing to wire. Double-click for settings — size, padding, border width/color/radius, background. Baked into the saved workflow as a small webp data URL, so the label survives sharing even after the original upload is gone. |
 
 ---
