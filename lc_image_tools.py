@@ -3,6 +3,8 @@ LC Image tools — self-contained adjustments with on-node preview.
 No Darkroom package dependency.
 """
 
+import functools
+import inspect
 import math
 import numpy as np
 import torch
@@ -1792,3 +1794,36 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "LCChromaticAberration": "LC Chromatic Aberration",
     "LCImageDesaturate": "LC Image Desaturate",
 }
+
+
+# ---------------------------------------------------------------------------
+# RGBA safety: these tools work on RGB. If an image comes in with an alpha channel
+# (a cutout, for example) they process the color and hand the alpha back untouched.
+# ---------------------------------------------------------------------------
+def _alpha_safe(run):
+    @functools.wraps(run)
+    def wrapper(self, image, *args, **kwargs):
+        if not (torch.is_tensor(image) and image.dim() == 4 and image.shape[-1] == 4):
+            return run(self, image, *args, **kwargs)
+        alpha = image[..., 3:4]
+        out = run(self, image[..., :3], *args, **kwargs)
+
+        def reattach(t):
+            if torch.is_tensor(t) and t.dim() == 4 and t.shape[-1] == 3 and t.shape[:3] == alpha.shape[:3]:
+                return torch.cat([t, alpha.to(t.dtype)], dim=-1)
+            return t
+
+        if isinstance(out, dict) and "result" in out:
+            out["result"] = (reattach(out["result"][0]),) + tuple(out["result"][1:])
+            return out
+        if isinstance(out, tuple) and out:
+            return (reattach(out[0]),) + tuple(out[1:])
+        return out
+
+    return wrapper
+
+
+for _cls in NODE_CLASS_MAPPINGS.values():
+    _params = list(inspect.signature(_cls.run).parameters)
+    if len(_params) > 1 and _params[1] == "image":
+        _cls.run = _alpha_safe(_cls.run)
