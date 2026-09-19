@@ -35,7 +35,6 @@ Registered class IDs (64):
 - `LCImageDenoise`
 - `LCImageDesaturate`
 - `LCImageLabel`
-- `LCImageOutpaint`
 - `LCImageRGB`
 - `LCIntCompare`
 - `LCInvertBoolean`
@@ -57,7 +56,6 @@ Registered class IDs (64):
 - `LCSeedJump`
 - `LCShowText`
 - `LCSlider`
-- `LCSplineMask`
 - `LCSplitSigmaScheduler`
 - `LCSplitSigmasAdvanced`
 - `LCStop`
