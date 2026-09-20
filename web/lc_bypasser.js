@@ -7,9 +7,11 @@
  */
 
 import { app } from "../../scripts/app.js";
+import { lcHasSavedColor } from "./lc_color.js";
 
 function lcApplyLaunchColor(node, color, bgcolor) {
   if (!node) return;
+  if (lcHasSavedColor(node)) return;
   const c = String(node.color || "").trim().toLowerCase();
   const stock = !c || c === "undefined" || c === "null" ||
     ["#333", "#333333", "#353535", "#232", "#223", "#222", "#222222"].includes(c);
