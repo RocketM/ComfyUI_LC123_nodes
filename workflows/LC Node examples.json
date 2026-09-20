@@ -1,7 +1,7 @@
 {
   "id": "acd3f8f3-ac79-4037-9846-8d4bfb5b39a9",
   "revision": 0,
-  "last_node_id": 403,
+  "last_node_id": 405,
   "last_link_id": 504,
   "nodes": [
     {
@@ -18,7 +18,7 @@
       "flags": {
         "collapsed": true
       },
-      "order": 133,
+      "order": 135,
       "mode": 0,
       "inputs": [
         {
@@ -68,7 +68,7 @@
       "flags": {
         "collapsed": true
       },
-      "order": 136,
+      "order": 138,
       "mode": 0,
       "inputs": [
         {
@@ -693,7 +693,7 @@
         130
       ],
       "flags": {},
-      "order": 131,
+      "order": 133,
       "mode": 0,
       "inputs": [
         {
@@ -746,7 +746,7 @@
         250
       ],
       "flags": {},
-      "order": 130,
+      "order": 132,
       "mode": 0,
       "inputs": [
         {
@@ -829,7 +829,7 @@
         50
       ],
       "flags": {},
-      "order": 159,
+      "order": 161,
       "mode": 0,
       "inputs": [
         {
@@ -978,7 +978,7 @@
         280
       ],
       "flags": {},
-      "order": 188,
+      "order": 190,
       "mode": 0,
       "inputs": [
         {
@@ -1042,7 +1042,7 @@
       "flags": {
         "pinned": false
       },
-      "order": 128,
+      "order": 130,
       "mode": 0,
       "inputs": [
         {
@@ -1099,7 +1099,7 @@
         30
       ],
       "flags": {},
-      "order": 140,
+      "order": 142,
       "mode": 0,
       "inputs": [
         {
@@ -1148,7 +1148,7 @@
         50
       ],
       "flags": {},
-      "order": 141,
+      "order": 143,
       "mode": 0,
       "inputs": [
         {
@@ -1324,7 +1324,7 @@
         90
       ],
       "flags": {},
-      "order": 132,
+      "order": 134,
       "mode": 0,
       "inputs": [
         {
@@ -1432,7 +1432,7 @@
         60
       ],
       "flags": {},
-      "order": 139,
+      "order": 141,
       "mode": 0,
       "inputs": [
         {
@@ -1491,7 +1491,7 @@
         50
       ],
       "flags": {},
-      "order": 138,
+      "order": 140,
       "mode": 0,
       "inputs": [
         {
@@ -1661,7 +1661,7 @@
         340
       ],
       "flags": {},
-      "order": 126,
+      "order": 128,
       "mode": 0,
       "inputs": [
         {
@@ -1719,7 +1719,7 @@
         520
       ],
       "flags": {},
-      "order": 127,
+      "order": 129,
       "mode": 0,
       "inputs": [
         {
@@ -2040,7 +2040,7 @@
       "flags": {
         "collapsed": true
       },
-      "order": 214,
+      "order": 216,
       "mode": 0,
       "inputs": [
         {
@@ -2133,7 +2133,7 @@
         640
       ],
       "flags": {},
-      "order": 217,
+      "order": 219,
       "mode": 0,
       "inputs": [
         {
@@ -2181,7 +2181,7 @@
         120
       ],
       "flags": {},
-      "order": 134,
+      "order": 136,
       "mode": 0,
       "inputs": [
         {
@@ -2306,7 +2306,7 @@
         450
       ],
       "flags": {},
-      "order": 135,
+      "order": 137,
       "mode": 0,
       "inputs": [
         {
@@ -2430,7 +2430,7 @@
         400
       ],
       "flags": {},
-      "order": 161,
+      "order": 163,
       "mode": 0,
       "inputs": [
         {
@@ -2845,7 +2845,7 @@
       "flags": {
         "collapsed": true
       },
-      "order": 221,
+      "order": 223,
       "mode": 0,
       "inputs": [
         {
@@ -3328,7 +3328,7 @@
         140
       ],
       "flags": {},
-      "order": 124,
+      "order": 126,
       "mode": 0,
       "inputs": [
         {
@@ -3405,7 +3405,7 @@
         130
       ],
       "flags": {},
-      "order": 219,
+      "order": 221,
       "mode": 0,
       "inputs": [
         {
@@ -3471,7 +3471,7 @@
       "flags": {
         "pinned": false
       },
-      "order": 162,
+      "order": 164,
       "mode": 0,
       "inputs": [
         {
@@ -3529,7 +3529,7 @@
         420
       ],
       "flags": {},
-      "order": 163,
+      "order": 165,
       "mode": 0,
       "inputs": [
         {
@@ -3594,7 +3594,7 @@
         640
       ],
       "flags": {},
-      "order": 190,
+      "order": 192,
       "mode": 0,
       "inputs": [
         {
@@ -3674,7 +3674,7 @@
         390
       ],
       "flags": {},
-      "order": 193,
+      "order": 195,
       "mode": 0,
       "inputs": [
         {
@@ -3878,7 +3878,7 @@
         740
       ],
       "flags": {},
-      "order": 137,
+      "order": 139,
       "mode": 0,
       "inputs": [
         {
@@ -3984,7 +3984,7 @@
         740
       ],
       "flags": {},
-      "order": 123,
+      "order": 125,
       "mode": 0,
       "inputs": [
         {
@@ -4089,7 +4089,7 @@
         560
       ],
       "flags": {},
-      "order": 189,
+      "order": 191,
       "mode": 0,
       "inputs": [
         {
@@ -4172,7 +4172,7 @@
         600
       ],
       "flags": {},
-      "order": 192,
+      "order": 194,
       "mode": 0,
       "inputs": [
         {
@@ -4259,7 +4259,7 @@
         540
       ],
       "flags": {},
-      "order": 198,
+      "order": 200,
       "mode": 0,
       "inputs": [
         {
@@ -4340,7 +4340,7 @@
         490
       ],
       "flags": {},
-      "order": 199,
+      "order": 201,
       "mode": 0,
       "inputs": [
         {
@@ -4416,7 +4416,7 @@
         560
       ],
       "flags": {},
-      "order": 201,
+      "order": 203,
       "mode": 0,
       "inputs": [
         {
@@ -4499,7 +4499,7 @@
         540
       ],
       "flags": {},
-      "order": 203,
+      "order": 205,
       "mode": 0,
       "inputs": [
         {
@@ -4580,7 +4580,7 @@
         490
       ],
       "flags": {},
-      "order": 205,
+      "order": 207,
       "mode": 0,
       "inputs": [
         {
@@ -4657,7 +4657,7 @@
         540
       ],
       "flags": {},
-      "order": 206,
+      "order": 208,
       "mode": 0,
       "inputs": [
         {
@@ -4738,7 +4738,7 @@
         540
       ],
       "flags": {},
-      "order": 207,
+      "order": 209,
       "mode": 0,
       "inputs": [
         {
@@ -4818,7 +4818,7 @@
         560
       ],
       "flags": {},
-      "order": 213,
+      "order": 215,
       "mode": 0,
       "inputs": [
         {
@@ -4915,7 +4915,7 @@
         230
       ],
       "flags": {},
-      "order": 222,
+      "order": 224,
       "mode": 0,
       "inputs": [
         {
@@ -5018,7 +5018,7 @@
         1050
       ],
       "flags": {},
-      "order": 224,
+      "order": 226,
       "mode": 0,
       "inputs": [
         {
@@ -5066,7 +5066,7 @@
         450
       ],
       "flags": {},
-      "order": 220,
+      "order": 222,
       "mode": 0,
       "inputs": [
         {
@@ -5181,7 +5181,7 @@
         120
       ],
       "flags": {},
-      "order": 166,
+      "order": 168,
       "mode": 0,
       "inputs": [
         {
@@ -5214,7 +5214,14 @@
           "input_ue_unconnectable": {},
           "version": "7.8"
         },
-        "lc_show_text": "Goodbye"
+        "lc_show_text": "Goodbye",
+        "lc_display_text": "Goodbye"
+      },
+      "widgets_values": [
+        "Goodbye"
+      ],
+      "widgets_values_named": {
+        "text": "Goodbye"
       },
       "color": "#28281E",
       "bgcolor": "#28281E"
@@ -5324,7 +5331,7 @@
         90
       ],
       "flags": {},
-      "order": 185,
+      "order": 187,
       "mode": 0,
       "inputs": [
         {
@@ -5412,7 +5419,7 @@
         90
       ],
       "flags": {},
-      "order": 184,
+      "order": 186,
       "mode": 0,
       "inputs": [
         {
@@ -5498,7 +5505,7 @@
         130
       ],
       "flags": {},
-      "order": 156,
+      "order": 158,
       "mode": 0,
       "inputs": [
         {
@@ -5636,7 +5643,7 @@
         130
       ],
       "flags": {},
-      "order": 157,
+      "order": 159,
       "mode": 0,
       "inputs": [
         {
@@ -5719,7 +5726,7 @@
         260
       ],
       "flags": {},
-      "order": 182,
+      "order": 184,
       "mode": 0,
       "inputs": [
         {
@@ -5768,7 +5775,7 @@
         310
       ],
       "flags": {},
-      "order": 183,
+      "order": 185,
       "mode": 0,
       "inputs": [
         {
@@ -5817,7 +5824,7 @@
         90
       ],
       "flags": {},
-      "order": 181,
+      "order": 183,
       "mode": 0,
       "inputs": [
         {
@@ -6034,7 +6041,7 @@
         160
       ],
       "flags": {},
-      "order": 146,
+      "order": 148,
       "mode": 0,
       "inputs": [
         {
@@ -6126,7 +6133,7 @@
         90
       ],
       "flags": {},
-      "order": 168,
+      "order": 170,
       "mode": 0,
       "inputs": [
         {
@@ -6162,10 +6169,10 @@
         }
       },
       "widgets_values": [
-        "845403106092983"
+        "14934889063314680394"
       ],
       "widgets_values_named": {
-        "text": "845403106092983"
+        "text": "14934889063314680394"
       }
     },
     {
@@ -6180,7 +6187,7 @@
         90
       ],
       "flags": {},
-      "order": 172,
+      "order": 174,
       "mode": 0,
       "inputs": [
         {
@@ -6215,10 +6222,10 @@
         }
       },
       "widgets_values": [
-        "845403106093023"
+        "14934889063314680434"
       ],
       "widgets_values_named": {
-        "text": "845403106093023"
+        "text": "14934889063314680434"
       }
     },
     {
@@ -6233,7 +6240,7 @@
         90
       ],
       "flags": {},
-      "order": 169,
+      "order": 171,
       "mode": 0,
       "inputs": [
         {
@@ -6269,10 +6276,10 @@
         }
       },
       "widgets_values": [
-        "845403106092993"
+        "14934889063314680404"
       ],
       "widgets_values_named": {
-        "text": "845403106092993"
+        "text": "14934889063314680404"
       }
     },
     {
@@ -6287,7 +6294,7 @@
         90
       ],
       "flags": {},
-      "order": 170,
+      "order": 172,
       "mode": 0,
       "inputs": [
         {
@@ -6323,10 +6330,10 @@
         }
       },
       "widgets_values": [
-        "845403106093003"
+        "14934889063314680414"
       ],
       "widgets_values_named": {
-        "text": "845403106093003"
+        "text": "14934889063314680414"
       }
     },
     {
@@ -6341,7 +6348,7 @@
         90
       ],
       "flags": {},
-      "order": 173,
+      "order": 175,
       "mode": 0,
       "inputs": [
         {
@@ -6376,10 +6383,10 @@
         }
       },
       "widgets_values": [
-        "845403106093033"
+        "14934889063314680444"
       ],
       "widgets_values_named": {
-        "text": "845403106093033"
+        "text": "14934889063314680444"
       }
     },
     {
@@ -6394,7 +6401,7 @@
         90
       ],
       "flags": {},
-      "order": 171,
+      "order": 173,
       "mode": 0,
       "inputs": [
         {
@@ -6430,10 +6437,10 @@
         }
       },
       "widgets_values": [
-        "845403106093013"
+        "14934889063314680424"
       ],
       "widgets_values_named": {
-        "text": "845403106093013"
+        "text": "14934889063314680424"
       }
     },
     {
@@ -6450,7 +6457,7 @@
       "flags": {
         "collapsed": false
       },
-      "order": 143,
+      "order": 145,
       "mode": 0,
       "inputs": [
         {
@@ -6580,7 +6587,7 @@
         236
       ],
       "flags": {},
-      "order": 144,
+      "order": 146,
       "mode": 0,
       "inputs": [
         {
@@ -6776,7 +6783,7 @@
         120
       ],
       "flags": {},
-      "order": 167,
+      "order": 169,
       "mode": 0,
       "inputs": [
         {
@@ -6808,7 +6815,14 @@
           "input_ue_unconnectable": {},
           "version": "7.8"
         },
-        "lc_show_text": "woman,  old,  , adult, cat,  ,  , and a bunch of other words I'm not even comfortable typing."
+        "lc_show_text": "woman,  old,  , adult, cat,  ,  , and a bunch of other words I'm not even comfortable typing.",
+        "lc_display_text": "woman,  old,  , adult, cat,  ,  , and a bunch of other words I'm not even comfortable typing."
+      },
+      "widgets_values": [
+        "woman,  old,  , adult, cat,  ,  , and a bunch of other words I'm not even comfortable typing."
+      ],
+      "widgets_values_named": {
+        "text": "woman,  old,  , adult, cat,  ,  , and a bunch of other words I'm not even comfortable typing."
       },
       "color": "#28281E",
       "bgcolor": "#28281E"
@@ -6875,7 +6889,7 @@
         60
       ],
       "flags": {},
-      "order": 145,
+      "order": 147,
       "mode": 0,
       "inputs": [
         {
@@ -6933,7 +6947,7 @@
       "flags": {
         "collapsed": false
       },
-      "order": 142,
+      "order": 144,
       "mode": 0,
       "inputs": [
         {
@@ -7011,7 +7025,7 @@
         150
       ],
       "flags": {},
-      "order": 165,
+      "order": 167,
       "mode": 0,
       "inputs": [
         {
@@ -7271,11 +7285,11 @@
         }
       },
       "widgets_values": [
-        0,
+        14934889063314680000,
         "randomize"
       ],
       "widgets_values_named": {
-        "base_seed": 0,
+        "base_seed": 14934889063314680000,
         "seed_mode": "randomize"
       },
       "color": "#28281E",
@@ -7395,7 +7409,7 @@
         40
       ],
       "flags": {},
-      "order": 147,
+      "order": 149,
       "mode": 0,
       "inputs": [
         {
@@ -7453,7 +7467,7 @@
         900
       ],
       "flags": {},
-      "order": 174,
+      "order": 176,
       "mode": 0,
       "inputs": [
         {
@@ -7867,7 +7881,7 @@
       "flags": {
         "collapsed": true
       },
-      "order": 148,
+      "order": 150,
       "mode": 0,
       "inputs": [
         {
@@ -7996,7 +8010,7 @@
         340
       ],
       "flags": {},
-      "order": 175,
+      "order": 177,
       "mode": 0,
       "inputs": [
         {
@@ -8301,7 +8315,7 @@
         170
       ],
       "flags": {},
-      "order": 191,
+      "order": 193,
       "mode": 0,
       "inputs": [
         {
@@ -8399,7 +8413,7 @@
         860
       ],
       "flags": {},
-      "order": 197,
+      "order": 199,
       "mode": 0,
       "inputs": [
         {
@@ -8504,7 +8518,7 @@
         340
       ],
       "flags": {},
-      "order": 149,
+      "order": 151,
       "mode": 0,
       "inputs": [
         {
@@ -8602,7 +8616,7 @@
         360
       ],
       "flags": {},
-      "order": 194,
+      "order": 196,
       "mode": 0,
       "inputs": [
         {
@@ -8710,7 +8724,7 @@
         470
       ],
       "flags": {},
-      "order": 196,
+      "order": 198,
       "mode": 0,
       "inputs": [
         {
@@ -8791,7 +8805,7 @@
         130
       ],
       "flags": {},
-      "order": 125,
+      "order": 127,
       "mode": 0,
       "inputs": [
         {
@@ -8935,7 +8949,7 @@
         130
       ],
       "flags": {},
-      "order": 158,
+      "order": 160,
       "mode": 0,
       "inputs": [
         {
@@ -9018,7 +9032,7 @@
         90
       ],
       "flags": {},
-      "order": 187,
+      "order": 189,
       "mode": 0,
       "inputs": [
         {
@@ -9071,7 +9085,7 @@
         90
       ],
       "flags": {},
-      "order": 186,
+      "order": 188,
       "mode": 0,
       "inputs": [
         {
@@ -10604,7 +10618,7 @@
         80
       ],
       "flags": {},
-      "order": 176,
+      "order": 178,
       "mode": 0,
       "inputs": [
         {
@@ -10635,7 +10649,14 @@
           "widget_ue_connectable": {},
           "input_ue_unconnectable": {},
           "version": "7.8"
-        }
+        },
+        "lc_display_text": "Pears"
+      },
+      "widgets_values": [
+        "Pears"
+      ],
+      "widgets_values_named": {
+        "text": "Pears"
       },
       "color": "#28281E",
       "bgcolor": "#28281E"
@@ -10652,7 +10673,7 @@
         64
       ],
       "flags": {},
-      "order": 151,
+      "order": 153,
       "mode": 0,
       "inputs": [
         {
@@ -10983,7 +11004,7 @@
         820
       ],
       "flags": {},
-      "order": 152,
+      "order": 154,
       "mode": 0,
       "inputs": [
         {
@@ -11330,7 +11351,7 @@
         470
       ],
       "flags": {},
-      "order": 154,
+      "order": 156,
       "mode": 0,
       "inputs": [
         {
@@ -11402,7 +11423,7 @@
         300
       ],
       "flags": {},
-      "order": 153,
+      "order": 155,
       "mode": 0,
       "inputs": [
         {
@@ -11485,7 +11506,7 @@
         520
       ],
       "flags": {},
-      "order": 129,
+      "order": 131,
       "mode": 0,
       "inputs": [
         {
@@ -11558,7 +11579,7 @@
         540
       ],
       "flags": {},
-      "order": 160,
+      "order": 162,
       "mode": 0,
       "inputs": [
         {
@@ -11735,7 +11756,7 @@
         640
       ],
       "flags": {},
-      "order": 212,
+      "order": 214,
       "mode": 0,
       "inputs": [
         {
@@ -11818,7 +11839,7 @@
         430
       ],
       "flags": {},
-      "order": 211,
+      "order": 213,
       "mode": 0,
       "inputs": [
         {
@@ -11885,7 +11906,7 @@
         490
       ],
       "flags": {},
-      "order": 210,
+      "order": 212,
       "mode": 0,
       "inputs": [
         {
@@ -11962,7 +11983,7 @@
         470
       ],
       "flags": {},
-      "order": 209,
+      "order": 211,
       "mode": 0,
       "inputs": [
         {
@@ -12097,7 +12118,7 @@
         582
       ],
       "flags": {},
-      "order": 223,
+      "order": 225,
       "mode": 0,
       "inputs": [
         {
@@ -12186,7 +12207,7 @@
       "flags": {
         "pinned": false
       },
-      "order": 215,
+      "order": 217,
       "mode": 0,
       "inputs": [
         {
@@ -12243,7 +12264,7 @@
         540
       ],
       "flags": {},
-      "order": 204,
+      "order": 206,
       "mode": 0,
       "inputs": [
         {
@@ -12326,7 +12347,7 @@
         560
       ],
       "flags": {},
-      "order": 208,
+      "order": 210,
       "mode": 0,
       "inputs": [
         {
@@ -12411,7 +12432,7 @@
         650
       ],
       "flags": {},
-      "order": 202,
+      "order": 204,
       "mode": 0,
       "inputs": [
         {
@@ -12502,7 +12523,7 @@
         520
       ],
       "flags": {},
-      "order": 195,
+      "order": 197,
       "mode": 0,
       "inputs": [
         {
@@ -12674,7 +12695,7 @@
       "flags": {
         "pinned": false
       },
-      "order": 177,
+      "order": 179,
       "mode": 0,
       "inputs": [
         {
@@ -12732,7 +12753,7 @@
         560
       ],
       "flags": {},
-      "order": 179,
+      "order": 181,
       "mode": 0,
       "inputs": [
         {
@@ -12850,7 +12871,7 @@
         520
       ],
       "flags": {},
-      "order": 200,
+      "order": 202,
       "mode": 0,
       "inputs": [
         {
@@ -12961,7 +12982,7 @@
         400
       ],
       "flags": {},
-      "order": 178,
+      "order": 180,
       "mode": 0,
       "inputs": [
         {
@@ -13133,7 +13154,7 @@
         120
       ],
       "flags": {},
-      "order": 164,
+      "order": 166,
       "mode": 0,
       "inputs": [
         {
@@ -13166,7 +13187,14 @@
           "input_ue_unconnectable": {},
           "version": "7.8"
         },
-        "lc_show_text": "Hello!\nHow\nare\nyou?"
+        "lc_show_text": "Hello!\nHow\nare\nyou?",
+        "lc_display_text": "Hello!\nHow\nare\nyou?"
+      },
+      "widgets_values": [
+        "Hello!\nHow\nare\nyou?"
+      ],
+      "widgets_values_named": {
+        "text": "Hello!\nHow\nare\nyou?"
       },
       "color": "#28281E",
       "bgcolor": "#28281E"
@@ -13227,7 +13255,7 @@
         130
       ],
       "flags": {},
-      "order": 216,
+      "order": 218,
       "mode": 0,
       "inputs": [
         {
@@ -13305,7 +13333,7 @@
       "flags": {
         "collapsed": false
       },
-      "order": 218,
+      "order": 220,
       "mode": 0,
       "inputs": [
         {
@@ -13442,7 +13470,7 @@
         130
       ],
       "flags": {},
-      "order": 150,
+      "order": 152,
       "mode": 0,
       "inputs": [
         {
@@ -13759,6 +13787,78 @@
       "bgcolor": "#000"
     },
     {
+      "id": 389,
+      "type": "LCSaveImage",
+      "pos": [
+        -10590,
+        -1210
+      ],
+      "size": [
+        280,
+        250
+      ],
+      "flags": {},
+      "order": 111,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "metadata",
+          "shape": 7,
+          "type": "LC_SAVE_META",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": null
+        },
+        {
+          "name": "saved_as",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "3d7e0de54080f5d9bdd720e0e1b854e33c4f0673",
+        "Node name for S&R": "LCSaveImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        "LC123",
+        "",
+        "png",
+        95,
+        true,
+        true,
+        true,
+        ""
+      ],
+      "widgets_values_named": {
+        "filename": "LC123",
+        "path": "",
+        "format": "png",
+        "quality": 95,
+        "embed_workflow": true,
+        "embed_civitai": true,
+        "hash_resources": true,
+        "filename_prefix": ""
+      },
+      "color": "#28281E",
+      "bgcolor": "#28281E"
+    },
+    {
       "id": 388,
       "type": "LCSaveImageMetadata",
       "pos": [
@@ -13770,7 +13870,7 @@
         430
       ],
       "flags": {},
-      "order": 111,
+      "order": 112,
       "mode": 0,
       "inputs": [
         {
@@ -13847,7 +13947,7 @@
         290
       ],
       "flags": {},
-      "order": 112,
+      "order": 113,
       "mode": 0,
       "inputs": [],
       "outputs": [],
@@ -13880,7 +13980,7 @@
         90
       ],
       "flags": {},
-      "order": 113,
+      "order": 114,
       "mode": 0,
       "inputs": [
         {
@@ -13929,7 +14029,7 @@
         470
       ],
       "flags": {},
-      "order": 114,
+      "order": 115,
       "mode": 0,
       "inputs": [
         {
@@ -14000,7 +14100,7 @@
         120
       ],
       "flags": {},
-      "order": 115,
+      "order": 116,
       "mode": 0,
       "inputs": [],
       "outputs": [],
@@ -14030,29 +14130,30 @@
       ],
       "size": [
         270,
-        86
+        130
       ],
       "flags": {},
-      "order": 155,
+      "order": 157,
       "mode": 0,
       "inputs": [
         {
-          "name": "",
+          "name": "any_1",
+          "shape": 7,
           "type": "*",
           "link": 501
         },
         {
-          "name": "",
+          "name": "any_2",
           "type": "*",
           "link": 502
         },
         {
-          "name": "",
+          "name": "any_3",
           "type": "*",
           "link": 503
         },
         {
-          "name": "",
+          "name": "any_4",
           "type": "*",
           "link": null
         }
@@ -14066,7 +14167,16 @@
           ]
         }
       ],
-      "properties": {},
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "80aac39b1bb19be84913fd8c279600bc5731c69b",
+        "Node name for S&R": "LCBypassRelay",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
       "color": "#28281E",
       "bgcolor": "#28281E"
     },
@@ -14079,10 +14189,10 @@
       ],
       "size": [
         270,
-        58
+        60
       ],
       "flags": {},
-      "order": 116,
+      "order": 117,
       "mode": 0,
       "inputs": [],
       "outputs": [
@@ -14095,13 +14205,14 @@
         }
       ],
       "properties": {
-        "ue_properties": {
-          "widget_ue_connectable": {},
-          "input_ue_unconnectable": {}
-        },
         "cnr_id": "comfy-core",
         "ver": "0.34.0",
-        "Node name for S&R": "PrimitiveString"
+        "Node name for S&R": "PrimitiveString",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
       },
       "widgets_values": [
         "B"
@@ -14119,10 +14230,10 @@
       ],
       "size": [
         270,
-        58
+        60
       ],
       "flags": {},
-      "order": 117,
+      "order": 118,
       "mode": 0,
       "inputs": [],
       "outputs": [
@@ -14135,13 +14246,14 @@
         }
       ],
       "properties": {
-        "ue_properties": {
-          "widget_ue_connectable": {},
-          "input_ue_unconnectable": {}
-        },
         "cnr_id": "comfy-core",
         "ver": "0.34.0",
-        "Node name for S&R": "PrimitiveString"
+        "Node name for S&R": "PrimitiveString",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
       },
       "widgets_values": [
         "C"
@@ -14154,15 +14266,15 @@
       "id": 403,
       "type": "LC Bypasser",
       "pos": [
-        -12308.027176289554,
-        -2491.365010359675
+        -12310,
+        -2490
       ],
       "size": [
         270,
-        118
+        120
       ],
       "flags": {},
-      "order": 180,
+      "order": 182,
       "mode": 0,
       "inputs": [
         {
@@ -14194,7 +14306,12 @@
         }
       ],
       "properties": {
-        "toggleRestriction": "default"
+        "toggleRestriction": "default",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
       },
       "widgets_values": [
         true
@@ -14214,10 +14331,10 @@
       ],
       "size": [
         270,
-        58
+        60
       ],
       "flags": {},
-      "order": 118,
+      "order": 119,
       "mode": 0,
       "inputs": [],
       "outputs": [
@@ -14230,13 +14347,14 @@
         }
       ],
       "properties": {
-        "ue_properties": {
-          "widget_ue_connectable": {},
-          "input_ue_unconnectable": {}
-        },
         "cnr_id": "comfy-core",
         "ver": "0.34.0",
-        "Node name for S&R": "PrimitiveString"
+        "Node name for S&R": "PrimitiveString",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
       },
       "widgets_values": [
         "A"
@@ -14257,7 +14375,7 @@
         160
       ],
       "flags": {},
-      "order": 119,
+      "order": 120,
       "mode": 0,
       "inputs": [
         {
@@ -14310,10 +14428,10 @@
       ],
       "size": [
         270,
-        58
+        60
       ],
       "flags": {},
-      "order": 120,
+      "order": 121,
       "mode": 0,
       "inputs": [
         {
@@ -14330,13 +14448,14 @@
         }
       ],
       "properties": {
-        "ue_properties": {
-          "widget_ue_connectable": {},
-          "input_ue_unconnectable": {}
-        },
         "cnr_id": "ComfyUI_LC123_nodes",
         "ver": "b95a1745f3730a7be8cb4cc9463e05c5d7e87650",
-        "Node name for S&R": "LCMaskPass"
+        "Node name for S&R": "LCMaskPass",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
       },
       "widgets_values": [
         true
@@ -14356,10 +14475,10 @@
       ],
       "size": [
         270,
-        58
+        60
       ],
       "flags": {},
-      "order": 121,
+      "order": 122,
       "mode": 0,
       "inputs": [
         {
@@ -14376,13 +14495,14 @@
         }
       ],
       "properties": {
-        "ue_properties": {
-          "widget_ue_connectable": {},
-          "input_ue_unconnectable": {}
-        },
         "cnr_id": "ComfyUI_LC123_nodes",
         "ver": "b95a1745f3730a7be8cb4cc9463e05c5d7e87650",
-        "Node name for S&R": "LCImagePass"
+        "Node name for S&R": "LCImagePass",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
       },
       "widgets_values": [
         true
@@ -14394,76 +14514,79 @@
       "bgcolor": "#28281E"
     },
     {
-      "id": 389,
-      "type": "LCSaveImage",
+      "id": 404,
+      "type": "MarkdownNote",
       "pos": [
-        -10560,
-        -1260
+        -15620,
+        -5550
       ],
       "size": [
-        280,
-        250
+        1040,
+        1040
       ],
       "flags": {},
-      "order": 122,
+      "order": 123,
       "mode": 0,
-      "inputs": [
-        {
-          "name": "images",
-          "type": "IMAGE",
-          "link": null
-        },
-        {
-          "name": "metadata",
-          "shape": 7,
-          "type": "LC_SAVE_META",
-          "link": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "images",
-          "type": "IMAGE",
-          "links": null
-        },
-        {
-          "name": "saved_as",
-          "type": "STRING",
-          "links": null
-        }
-      ],
+      "inputs": [],
+      "outputs": [],
+      "title": "Stuffs 260920",
       "properties": {
-        "cnr_id": "ComfyUI_LC123_nodes",
-        "ver": "3d7e0de54080f5d9bdd720e0e1b854e33c4f0673",
-        "Node name for S&R": "LCSaveImage",
         "ue_properties": {
           "widget_ue_connectable": {},
-          "input_ue_unconnectable": {},
-          "version": "7.8"
+          "version": "7.8",
+          "input_ue_unconnectable": {}
         }
       },
       "widgets_values": [
-        "LC123",
-        "",
-        "png",
-        95,
-        true,
-        true,
-        true,
-        ""
+        "# Total nodes\n\n**151 nodes** across 6 packs.\n\n| Pack | Nodes |\n|---|---|\n| LC123 (ComfyUI_LC123_nodes) | 114 |\n| LC AV (ComfyUI_LC_AV_nodes) | 16 |\n| LC MaskMaker (ComfyUI_LC_MaskMaker_nodes) | 10 |\n| LC Vision (ComfyUI_LC_Vision_nodes) | 4 |\n| LC ModelBuilder (ComfyUI_LC_ModelBuilder_nodes) | 4 |\n| LC TiledUpscale (ComfyUI_LC_TiledUpscale) | 3 |\n\n---\n\n## LC123 (ComfyUI_LC123_nodes)\n\n| Node | What it does |\n|---|---|\n| **Civitai 🚩🔪** | Strips flagged terms from a prompt using a compliance list, as an aid only (you are still responsible for Civitai's terms). |\n| **LC Advanced Folder 📂** | Builds separate filename and path outputs for Image Saver style nodes, with optional prefix-in-path and timestamp. |\n| **LC Anima Regional Inline Canvas** | Paint RGB regions on the node and get a separate conditioning and mask for each region, for Anima regional prompting. |\n| **LC Any Empty Bool** | Outputs true if any connected input is empty, muted or bypassed. |\n| **LC Any Empty Float** | Runs the same empty test as Any Empty Bool and outputs an empty and a not-empty float. |\n| **LC Any Empty Int** | Runs the same empty test as Any Empty Bool and outputs an empty and a not-empty integer. |\n| **LC Any Index Switch** | Passes through the input at the chosen index and ignores the other slots. |\n| **LC AnySwitch** | Picks the first connected input out of 2 to 20 and locks to its type. |\n| **LC Apply LUT** | Applies a .cube 3D LUT from models/luts with a strength from 0 to 2. |\n| **LC Aspect Ratio Pipe (In/Edit)** | Unpacks the aspect ratio fields of an LC_PIPE into separate sockets and passes the pipe on. |\n| **📐 LC Aspect Ratio Simplifier** | Resizes an image and/or mask to a target size and outputs image, mask, size, empty latent and batch. |\n| **📐 LC Aspect Ratio Simplifier (pipe)** | Does the same as the Aspect Ratio Simplifier and adds a pipe output for Get/Set. |\n| **LC Auto White Balance** | Corrects white balance automatically with a choice of algorithm, a strength blend and a before/after wipe. |\n| **LC Basic Scheduler** | Outputs sigmas for the full step count (no denoise), made to feed LC Split Sigmas (Advanced) for dual-pass sampling. |\n| **LC Batch Image 🖼️** | Batches images from auto-growing slots, ignoring muted or missing ones and resizing later images to the first. |\n| **LC Bloom** | Adds a glow from the bright areas, with threshold, radius and intensity controls. |\n| **LC Boolean** | Turns a boolean, int or float into a clean true/false and shows it on the node. |\n| **LC Boolean Flip** | Outputs the opposite of its toggle. |\n| **LC Boolean Switch** | Picks the on_true or on_false input (any type) based on a boolean. |\n| **LC Boolean Value** | A plain boolean toggle you can wire anywhere. |\n| **LC Bypass Relay** | Gathers nodes on its left so a hub can mute or bypass all of them together through OPT_CONNECTION. |\n| **LC Bypasser** | Bypasses linked nodes from one place with toggles or BOOLEAN inputs (frontend node). |\n| **LC Bypasser Panel** | A widgets-only remote for LC Bypasser, LC Mute or LC Groups Bypasser (frontend node). |\n| **🗒️LC Camera** | Sets camera framing and depth of field for a prompt from distance and angle presets. |\n| **LC Chromatic Aberration** | Shifts the RGB channels apart to fake lens fringing, with pixel amount and direction per channel. |\n| **LC Color Match 🎨** | Matches an image's colors to a reference (AdaIN / mean-std) with optional skin protection and mask. |\n| **🎨LC Color Palette** | Picks a 4 to 6 color palette from a preset or from an image, for use in prompts. |\n| **LC Combo Selector** | A dropdown that mirrors the options of another node's combo (sampler, scheduler, etc.) when wired into it. |\n| **LC Custom Combo** | Builds your own list of options and outputs the chosen text and its index. |\n| **LC Custom Combo Panel** | A remote control that picks the choice for an LC Custom Combo from another spot. |\n| **LC Denoise 💉** | Injects latent noise scaled to 1 minus your denoise value, using the same denoise you give the sampler. |\n| **LC Detail Pipe Out** | Unpacks the detailer settings (models, prompts, seed, cfg, sampler, scheduler, steps) from an LC_PIPE. |\n| **LC Dimension Resize 📐** | Adds, subtracts, multiplies or divides width and height by one value and rounds the results to integers. |\n| **LC Dynamic Overlay** | Overlays image B on image A and lets you adjust the opacity on the node after one run without regenerating. |\n| **LC Easy Folder 📂** | Builds a filename_prefix for the native Save Image node and creates the folders. |\n| **LC Film Grain** | Adds film grain with amount, contrast, size and mono or color options. |\n| **LC Film Stock (B&W)** | Gives a black and white film look from presets with a strength blend. |\n| **LC Film Stock (Color)** | Gives a color film look from presets (toe, shoulder, gamma) with a strength blend. |\n| **LC Float Compare** | Outputs the larger or smaller of two floats. |\n| **LC Get Image 📐** | Reads an image's width, height, megapixels, longer side, batch size and aspect ratio. |\n| **LC Groups Bypasser** | Bypasses whole groups from one place, with one toggle per group (frontend node). |\n| **LC Image Adjust** | Basic color grade (hue, saturation, brightness, contrast) with a mild sharpen or soften. |\n| **LC Image Compare 🔎** | Compares large batches of images with a compact dropdown and a stable image area. |\n| **LC Image Crop 🖼️🔪** | Crops by dragging a box and handles on the node, with an optional aspect lock. |\n| **LC Image Denoise** | Smart denoise with blur strength, edge preservation and a blend. |\n| **LC Image Desaturate** | Desaturates toward grayscale with a factor and a luminance method. |\n| **LC Image Grid 🖼️** | Arranges a batch of images into a grid with optional gap, outline and border. |\n| **LC Image Label** | A floating image sticker with drag-and-drop upload for annotating a workflow (no sockets). |\n| **LC Image Pass** | Passes an image straight through, and its enable switch mutes what hangs off it downstream. |\n| **LC Image RGB** | Offsets each color channel separately with an overall strength. |\n| **LC Image Split 🖼️** | A before/after wipe on the node whose output is the baked split for saving. |\n| **LC Image-Mask Resize 📐** | Resizes an image and/or mask to a preset, custom size, multiplier or megapixel count, in multiples of divisible_by. |\n| **LC Int Compare** | Outputs the larger or smaller of two integers. |\n| **LC Int Split** | Splits a total into a + b at a fractional split point, so a + b always equals the total. |\n| **LC Invert Boolean** | Coerces a boolean, int or float and outputs the opposite. |\n| **LC Join Strings 🔗** | Joins multiple strings with a delimiter and skips the empty ones. |\n| **LC Krea2 Regional Inline Canvas** | Paint RGB regions on the node and get regional conditioning using the krea2 CLIP type. |\n| **LC Last Image Holder** | Keeps the last generated image for before/after comparison, even after disconnecting. |\n| **LC Lens Effects** | Combines chromatic aberration, vignette and grain in one node. |\n| **LC Lens Profile** | Applies or corrects a named lens profile with adjustable strength. |\n| **LC Lift Gamma Gain** | Grades shadows, midtones and highlights with lift, gamma, gain and offset. |\n| **🗒️LC Lighting** | Sets lighting style and direction for a prompt from presets plus your own notes. |\n| **LC Lighting Control 🔦** | Relights an image from a normal map and a depth map with virtual lights, shadows and an optional subject mask. |\n| **LC Mask Pass** | Passes a mask through, and turning it off makes downstream nodes run with no mask (full frame). |\n| **LC MiniMax H3 Pipe** | Packs or edits an H3 pipe holding the prompts, references and settings for MiniMax H3. |\n| **LC MiniMax H3 Pipe Out** | Unpacks an LC MiniMax H3 pipe into its separate sockets. |\n| **LC MiniMax H3 Pipe Out V2** | Unpacks an H3 pipe V2, adding prompt, steps, cfg, seed, sampler and scheduler outputs. |\n| **LC MiniMax H3 Pipe V2** | Packs or edits an H3 pipe V2, which also carries prompt, steps, cfg, seed, sampler and scheduler. |\n| **LC Mute** | Works like LC Bypasser, but Off mutes the linked nodes instead of bypassing them (frontend node). |\n| **LC Negative** | A negative prompt text box. |\n| **LC Node Snapshot 📋** | Reads another node's widgets and outputs the selected value, all lines, or JSON. |\n| **LC Notify 🔊** | Plays a chosen sound when the node runs (always, on empty queue, or never). |\n| **LC Photo Style 📷** | Gives an image a phone-camera look from a style preset, with sliders and a strength blend. |\n| **LC Pipe (in/edit)** | Packs values into an LC_PIPE, or merges overrides into an existing pipe. |\n| **LC Pipe Out** | Expands an LC_PIPE into individual sockets and passes the pipe on. |\n| **LC Positive** | A positive prompt text box. |\n| **🧩LC Prompt Assembler** | Assembles the prompt builder pieces (subject, camera, lighting, style, scene) into one prompt or JSON. |\n| **LC Prompt to Conditioning + Zero** | Encodes a prompt into conditioning and also outputs a zeroed copy for the negative. |\n| **LC Reference Latent** | Attaches up to eight reference latents to conditioning. |\n| **LC Sampler Configure** | Central dual-pass sampler settings: steps, swap point, detailer steps, denoise, CFGs, sampler and scheduler. |\n| **LC Sampler Configure (pipe)** | Dual-pass sampler settings with an optional pipe in and a pipe out. |\n| **LC Sampler Configure Pipe Out** | Unpacks an LC_PIPE into the sampler configure sockets. |\n| **LC Sampler Configure Simple** | Single-pass sampler settings with one CFG and no step swap. |\n| **LC Sampler Configure Simple (pipe)** | Simple sampler settings that read from and write to an LC_PIPE. |\n| **LC Save Image 💾** | Saves images with workflow metadata, and Civitai parameters when paired with LC Save Metadata. |\n| **LC Save Metadata 🏷️** | Builds the metadata (models, AIR or URL, settings) that LC Save Image writes. |\n| **📝 LC Save Text** | Writes a text string to a file in the output folder. |\n| **🗒️LC Scene Builder** | Builds a scene description from scene presets and objects. |\n| **🌱LC Seed** | A utility seed with a mode that also works when you queue only this node. |\n| **LC Seed Jump 🌱** | Takes a seed and a jump value and outputs the seed plus five successive jumps. |\n| **LC Sharpen Pro** | Sharpens with clarity (mid-tone contrast) and edge sharpening, with halo control and skin protection. |\n| **LC Show Text 🔤** | Shows a string on the node and passes it on. |\n| **LC Sigma Curve** | Draw a custom sigma curve on the node, save it, and reuse it. |\n| **LC Sigma Resample** | Resamples a sigma curve to a new step count while keeping its start and end sigma (also registered as LCChangeStepCount). |\n| **LC Skin Beauty ✨** | Cools, brightens and evens skin in LAB with presets, protecting highlights, with an optional mask. |\n| **LC Skin Upscale** | Upscales only the masked skin area with a CNN model and blends it back. |\n| **LC Slider** | A slider on the node face that outputs an int or float. |\n| **LC Split Sigma Scheduler** | Splits sigmas between two models for a dual-model SamplerCustomAdvanced. |\n| **LC Split Sigmas (Advanced)** | Splits sigma curves at a swap step into a high and a low set. |\n| **LC Stop 🛑** | A queue breakpoint you can enable to pause until you continue. |\n| **🗒️LC Style Selector** | Picks a style preset (and quality level) for a prompt and adds your own notes. |\n| **🗒️LC Subject** | Describes the subject of a prompt with freeform text plus pose, action, outfit and placement options. |\n| **🗒️LC Subject Array** | Combines several subject outputs into one line. |\n| **LC Text Overlay** | Draws text on an image with a draggable position, font size and color. |\n| **LC Text Remove 🔪** | Removes up to twenty substrings from a text, in order. |\n| **LC Text Replace ✂️** | Runs up to twenty find and replace pairs (optionally regex) on a text. |\n| **LC Tone Match** | Keeps the reference's broad lighting and color while keeping the image's fine detail, with an optional mask. |\n| **LC Vibrance** | Smart saturation (vibrance) with optional plain saturation and skin protection. |\n| **LC Vignette** | Darkens or brightens the edges of the image. |\n| **LC VRAM Cache Clear** | A pass-through node that clears GPU and model cache when it runs. |\n| **LC Watermark 💧** | Composites a watermark image you position by dragging, with live size and opacity. |\n| **LC Widget To String** | Reads a widget on another node as a string. |\n| **🎲LC Wildcard** | Picks a random line from a wildcard text file. |\n| **Prompt to Conditioning** | Encodes a text prompt into CLIP conditioning. |\n\n---\n\n## LC AV (ComfyUI_LC_AV_nodes)\n\n| Node | What it does |\n|---|---|\n| **LC Audio Channel 🎚️** | Splits stereo audio into left and right, and duplicates mono to both. |\n| **LC Audio Crop ✂️** | Crops audio from a start time to an end time (MM:SS). |\n| **LC Audio Duration ⏱️** | Outputs the audio length as seconds and minutes, as int and float. |\n| **LC Audio EQ 3-Band 🎛️** | A 3-band equalizer with a low shelf, a peaking mid and a high shelf. |\n| **LC Audio Separate 🎼** | Splits audio into Bass, Drums, Other and Vocals stems with Hybrid Demucs. |\n| **LC Audio Volume 🔊** | Changes audio volume with a slider and soft-clips after the gain. |\n| **LC AV Pipe (in/edit) 🎬** | Packs or edits an LC_AV_PIPE holding video, audio and settings. |\n| **LC AV Pipe Out 🎬** | Unpacks an LC_AV_PIPE into its slots and passes the av_pipe on. |\n| **LC Create Video 🎬** | Builds an LC_AV_PIPE from an image batch (it does not encode a file). |\n| **LC Final Frame 🖼️** | Outputs the last frame of an image batch. |\n| **LC Get Latent Size 📐** | Reads the pixel width and height of a latent, plus batch and frames for video latents. |\n| **LC Load Audio 📂** | Loads audio from the input folder with start and end trim and a preview player. |\n| **LC Pipe → AV Pipe 🔌** | Converts an LC_PIPE or MiniMax H3 pipe into an LC_AV_PIPE, copying only the shared fields. |\n| **LC Save Video Metadata 🏷️** | Builds the same metadata as LC Save Metadata, for LC Save Image or LC Save Video. |\n| **LC Save Video 💾** | Saves video with Video Combine style options (frame rate, loop, format, pingpong, crf, pix_fmt, audio). |\n| **LC VAE Decode 🧩** | A VAE Decode with a switch between full and tiled decoding. |\n\n---\n\n## LC MaskMaker (ComfyUI_LC_MaskMaker_nodes)\n\n| Node | What it does |\n|---|---|\n| **LC Auto Adjust 🔆** | One-click auto levels (per channel, luminance, saturation or mono) with trims, a strength blend and an optional mask. |\n| **LC Create Mask 🖼️✏️** | Draws a mask right on the node with points or a freehand pencil, with feather, invert and opacity built in. |\n| **LC Depth Anything V2 🌊** | Makes a Depth Anything V2 depth map (bright = near) as an image and a mask. |\n| **LC Image Blend Advance 🎚️** | Places a layer on a background (position, scale, rotate, mirror) and blends it with 29 blend modes through an optional mask. |\n| **LC Mask Refine ✨** | Tightens a mask with a trimap, using a guided filter or VITMatte on the edge band only, with a before/after wipe. |\n| **LC Normal Map (BAE) 🗺️** | Makes a BAE surface normal map (RGB = XYZ), the same style ControlNet's normal_bae makes. |\n| **LC Outpaint 🖌️➕** | Drag the canvas edges outward on the node to build a grey canvas and a mask of the new area. |\n| **LC Person Mask 🧍** | Selects parts of a person (face, hair, body, clothes, accessories, background) with Segformer or MediaPipe. |\n| **LC Remove Background ✂️** | Removes the background with BiRefNet and outputs an RGBA cutout, the mask and the subject on a solid color. |\n| **LC Segment Anything 🎯** | Selects things by describing them, using GroundingDINO + SAM or SAM 3, with optional edge refine. |\n\n---\n\n## LC Vision (ComfyUI_LC_Vision_nodes)\n\n| Node | What it does |\n|---|---|\n| **LC Vision Caption 📝** | Generates text from a loaded LC Vision model, an instruction, up to three reference images and a reference video. |\n| **LC Vision Loader 🔬** | Loads a Qwen-VL GGUF model and its vision projector once and keeps it resident across queues. |\n| **LC Vision Moviemaker 🎥** | Plans a video as several continuous segments in one call, each written as a self-contained MiniMax H3 prompt. |\n| **LC Vision Prompt Enhancer 📝** | Rewrites a prompt through an LC Vision model using a preset instruction (text only). |\n\n---\n\n## LC ModelBuilder (ComfyUI_LC_ModelBuilder_nodes) (Unplublished. Ask me)\n\n| Node | What it does |\n|---|---|\n| **LC Checkpoint Save** | Saves an all-in-one checkpoint (model, clip, vae) with an enabled toggle to skip the save. |\n| **LC Diffusion Model Save** | Saves just the diffusion model, with no clip or vae. |\n| **LC Krea2 Block Merge Advanced** | Merges Krea2 checkpoints with a draggable per-block ratio curve across the 28 blocks plus sliders for the named regions. |\n| **LC Krea2 Semantic Vector Tuner** | Amplifies or attenuates specific regions of a single Krea2 checkpoint's weights (not a merge). |\n\n---\n\n## LC TiledUpscale (ComfyUI_LC_TiledUpscale) (WIP)\n\n| Node | What it does |\n|---|---|\n| **LC Tile Planner** | Sets tile width, height and overlap once and emits the LC_TILE_PIPE that the other tiled nodes use. |\n| **LC Tile Reassemble** | Blends a batch or list of tiles back into a full image using the pipe's overlaps. |\n| **LC Tile Split** | Splits an image into tiles according to the planner's LC_TILE_PIPE. |\n\n---\n\n*Alphabetical within each pack (emoji ignored). Frontend node means the node lives in JavaScript only, with no Python class.*\n"
       ],
       "widgets_values_named": {
-        "filename": "LC123",
-        "path": "",
-        "format": "png",
-        "quality": 95,
-        "embed_workflow": true,
-        "embed_civitai": true,
-        "hash_resources": true,
-        "filename_prefix": ""
+        "text": "# Total nodes\n\n**151 nodes** across 6 packs.\n\n| Pack | Nodes |\n|---|---|\n| LC123 (ComfyUI_LC123_nodes) | 114 |\n| LC AV (ComfyUI_LC_AV_nodes) | 16 |\n| LC MaskMaker (ComfyUI_LC_MaskMaker_nodes) | 10 |\n| LC Vision (ComfyUI_LC_Vision_nodes) | 4 |\n| LC ModelBuilder (ComfyUI_LC_ModelBuilder_nodes) | 4 |\n| LC TiledUpscale (ComfyUI_LC_TiledUpscale) | 3 |\n\n---\n\n## LC123 (ComfyUI_LC123_nodes)\n\n| Node | What it does |\n|---|---|\n| **Civitai 🚩🔪** | Strips flagged terms from a prompt using a compliance list, as an aid only (you are still responsible for Civitai's terms). |\n| **LC Advanced Folder 📂** | Builds separate filename and path outputs for Image Saver style nodes, with optional prefix-in-path and timestamp. |\n| **LC Anima Regional Inline Canvas** | Paint RGB regions on the node and get a separate conditioning and mask for each region, for Anima regional prompting. |\n| **LC Any Empty Bool** | Outputs true if any connected input is empty, muted or bypassed. |\n| **LC Any Empty Float** | Runs the same empty test as Any Empty Bool and outputs an empty and a not-empty float. |\n| **LC Any Empty Int** | Runs the same empty test as Any Empty Bool and outputs an empty and a not-empty integer. |\n| **LC Any Index Switch** | Passes through the input at the chosen index and ignores the other slots. |\n| **LC AnySwitch** | Picks the first connected input out of 2 to 20 and locks to its type. |\n| **LC Apply LUT** | Applies a .cube 3D LUT from models/luts with a strength from 0 to 2. |\n| **LC Aspect Ratio Pipe (In/Edit)** | Unpacks the aspect ratio fields of an LC_PIPE into separate sockets and passes the pipe on. |\n| **📐 LC Aspect Ratio Simplifier** | Resizes an image and/or mask to a target size and outputs image, mask, size, empty latent and batch. |\n| **📐 LC Aspect Ratio Simplifier (pipe)** | Does the same as the Aspect Ratio Simplifier and adds a pipe output for Get/Set. |\n| **LC Auto White Balance** | Corrects white balance automatically with a choice of algorithm, a strength blend and a before/after wipe. |\n| **LC Basic Scheduler** | Outputs sigmas for the full step count (no denoise), made to feed LC Split Sigmas (Advanced) for dual-pass sampling. |\n| **LC Batch Image 🖼️** | Batches images from auto-growing slots, ignoring muted or missing ones and resizing later images to the first. |\n| **LC Bloom** | Adds a glow from the bright areas, with threshold, radius and intensity controls. |\n| **LC Boolean** | Turns a boolean, int or float into a clean true/false and shows it on the node. |\n| **LC Boolean Flip** | Outputs the opposite of its toggle. |\n| **LC Boolean Switch** | Picks the on_true or on_false input (any type) based on a boolean. |\n| **LC Boolean Value** | A plain boolean toggle you can wire anywhere. |\n| **LC Bypass Relay** | Gathers nodes on its left so a hub can mute or bypass all of them together through OPT_CONNECTION. |\n| **LC Bypasser** | Bypasses linked nodes from one place with toggles or BOOLEAN inputs (frontend node). |\n| **LC Bypasser Panel** | A widgets-only remote for LC Bypasser, LC Mute or LC Groups Bypasser (frontend node). |\n| **🗒️LC Camera** | Sets camera framing and depth of field for a prompt from distance and angle presets. |\n| **LC Chromatic Aberration** | Shifts the RGB channels apart to fake lens fringing, with pixel amount and direction per channel. |\n| **LC Color Match 🎨** | Matches an image's colors to a reference (AdaIN / mean-std) with optional skin protection and mask. |\n| **🎨LC Color Palette** | Picks a 4 to 6 color palette from a preset or from an image, for use in prompts. |\n| **LC Combo Selector** | A dropdown that mirrors the options of another node's combo (sampler, scheduler, etc.) when wired into it. |\n| **LC Custom Combo** | Builds your own list of options and outputs the chosen text and its index. |\n| **LC Custom Combo Panel** | A remote control that picks the choice for an LC Custom Combo from another spot. |\n| **LC Denoise 💉** | Injects latent noise scaled to 1 minus your denoise value, using the same denoise you give the sampler. |\n| **LC Detail Pipe Out** | Unpacks the detailer settings (models, prompts, seed, cfg, sampler, scheduler, steps) from an LC_PIPE. |\n| **LC Dimension Resize 📐** | Adds, subtracts, multiplies or divides width and height by one value and rounds the results to integers. |\n| **LC Dynamic Overlay** | Overlays image B on image A and lets you adjust the opacity on the node after one run without regenerating. |\n| **LC Easy Folder 📂** | Builds a filename_prefix for the native Save Image node and creates the folders. |\n| **LC Film Grain** | Adds film grain with amount, contrast, size and mono or color options. |\n| **LC Film Stock (B&W)** | Gives a black and white film look from presets with a strength blend. |\n| **LC Film Stock (Color)** | Gives a color film look from presets (toe, shoulder, gamma) with a strength blend. |\n| **LC Float Compare** | Outputs the larger or smaller of two floats. |\n| **LC Get Image 📐** | Reads an image's width, height, megapixels, longer side, batch size and aspect ratio. |\n| **LC Groups Bypasser** | Bypasses whole groups from one place, with one toggle per group (frontend node). |\n| **LC Image Adjust** | Basic color grade (hue, saturation, brightness, contrast) with a mild sharpen or soften. |\n| **LC Image Compare 🔎** | Compares large batches of images with a compact dropdown and a stable image area. |\n| **LC Image Crop 🖼️🔪** | Crops by dragging a box and handles on the node, with an optional aspect lock. |\n| **LC Image Denoise** | Smart denoise with blur strength, edge preservation and a blend. |\n| **LC Image Desaturate** | Desaturates toward grayscale with a factor and a luminance method. |\n| **LC Image Grid 🖼️** | Arranges a batch of images into a grid with optional gap, outline and border. |\n| **LC Image Label** | A floating image sticker with drag-and-drop upload for annotating a workflow (no sockets). |\n| **LC Image Pass** | Passes an image straight through, and its enable switch mutes what hangs off it downstream. |\n| **LC Image RGB** | Offsets each color channel separately with an overall strength. |\n| **LC Image Split 🖼️** | A before/after wipe on the node whose output is the baked split for saving. |\n| **LC Image-Mask Resize 📐** | Resizes an image and/or mask to a preset, custom size, multiplier or megapixel count, in multiples of divisible_by. |\n| **LC Int Compare** | Outputs the larger or smaller of two integers. |\n| **LC Int Split** | Splits a total into a + b at a fractional split point, so a + b always equals the total. |\n| **LC Invert Boolean** | Coerces a boolean, int or float and outputs the opposite. |\n| **LC Join Strings 🔗** | Joins multiple strings with a delimiter and skips the empty ones. |\n| **LC Krea2 Regional Inline Canvas** | Paint RGB regions on the node and get regional conditioning using the krea2 CLIP type. |\n| **LC Last Image Holder** | Keeps the last generated image for before/after comparison, even after disconnecting. |\n| **LC Lens Effects** | Combines chromatic aberration, vignette and grain in one node. |\n| **LC Lens Profile** | Applies or corrects a named lens profile with adjustable strength. |\n| **LC Lift Gamma Gain** | Grades shadows, midtones and highlights with lift, gamma, gain and offset. |\n| **🗒️LC Lighting** | Sets lighting style and direction for a prompt from presets plus your own notes. |\n| **LC Lighting Control 🔦** | Relights an image from a normal map and a depth map with virtual lights, shadows and an optional subject mask. |\n| **LC Mask Pass** | Passes a mask through, and turning it off makes downstream nodes run with no mask (full frame). |\n| **LC MiniMax H3 Pipe** | Packs or edits an H3 pipe holding the prompts, references and settings for MiniMax H3. |\n| **LC MiniMax H3 Pipe Out** | Unpacks an LC MiniMax H3 pipe into its separate sockets. |\n| **LC MiniMax H3 Pipe Out V2** | Unpacks an H3 pipe V2, adding prompt, steps, cfg, seed, sampler and scheduler outputs. |\n| **LC MiniMax H3 Pipe V2** | Packs or edits an H3 pipe V2, which also carries prompt, steps, cfg, seed, sampler and scheduler. |\n| **LC Mute** | Works like LC Bypasser, but Off mutes the linked nodes instead of bypassing them (frontend node). |\n| **LC Negative** | A negative prompt text box. |\n| **LC Node Snapshot 📋** | Reads another node's widgets and outputs the selected value, all lines, or JSON. |\n| **LC Notify 🔊** | Plays a chosen sound when the node runs (always, on empty queue, or never). |\n| **LC Photo Style 📷** | Gives an image a phone-camera look from a style preset, with sliders and a strength blend. |\n| **LC Pipe (in/edit)** | Packs values into an LC_PIPE, or merges overrides into an existing pipe. |\n| **LC Pipe Out** | Expands an LC_PIPE into individual sockets and passes the pipe on. |\n| **LC Positive** | A positive prompt text box. |\n| **🧩LC Prompt Assembler** | Assembles the prompt builder pieces (subject, camera, lighting, style, scene) into one prompt or JSON. |\n| **LC Prompt to Conditioning + Zero** | Encodes a prompt into conditioning and also outputs a zeroed copy for the negative. |\n| **LC Reference Latent** | Attaches up to eight reference latents to conditioning. |\n| **LC Sampler Configure** | Central dual-pass sampler settings: steps, swap point, detailer steps, denoise, CFGs, sampler and scheduler. |\n| **LC Sampler Configure (pipe)** | Dual-pass sampler settings with an optional pipe in and a pipe out. |\n| **LC Sampler Configure Pipe Out** | Unpacks an LC_PIPE into the sampler configure sockets. |\n| **LC Sampler Configure Simple** | Single-pass sampler settings with one CFG and no step swap. |\n| **LC Sampler Configure Simple (pipe)** | Simple sampler settings that read from and write to an LC_PIPE. |\n| **LC Save Image 💾** | Saves images with workflow metadata, and Civitai parameters when paired with LC Save Metadata. |\n| **LC Save Metadata 🏷️** | Builds the metadata (models, AIR or URL, settings) that LC Save Image writes. |\n| **📝 LC Save Text** | Writes a text string to a file in the output folder. |\n| **🗒️LC Scene Builder** | Builds a scene description from scene presets and objects. |\n| **🌱LC Seed** | A utility seed with a mode that also works when you queue only this node. |\n| **LC Seed Jump 🌱** | Takes a seed and a jump value and outputs the seed plus five successive jumps. |\n| **LC Sharpen Pro** | Sharpens with clarity (mid-tone contrast) and edge sharpening, with halo control and skin protection. |\n| **LC Show Text 🔤** | Shows a string on the node and passes it on. |\n| **LC Sigma Curve** | Draw a custom sigma curve on the node, save it, and reuse it. |\n| **LC Sigma Resample** | Resamples a sigma curve to a new step count while keeping its start and end sigma (also registered as LCChangeStepCount). |\n| **LC Skin Beauty ✨** | Cools, brightens and evens skin in LAB with presets, protecting highlights, with an optional mask. |\n| **LC Skin Upscale** | Upscales only the masked skin area with a CNN model and blends it back. |\n| **LC Slider** | A slider on the node face that outputs an int or float. |\n| **LC Split Sigma Scheduler** | Splits sigmas between two models for a dual-model SamplerCustomAdvanced. |\n| **LC Split Sigmas (Advanced)** | Splits sigma curves at a swap step into a high and a low set. |\n| **LC Stop 🛑** | A queue breakpoint you can enable to pause until you continue. |\n| **🗒️LC Style Selector** | Picks a style preset (and quality level) for a prompt and adds your own notes. |\n| **🗒️LC Subject** | Describes the subject of a prompt with freeform text plus pose, action, outfit and placement options. |\n| **🗒️LC Subject Array** | Combines several subject outputs into one line. |\n| **LC Text Overlay** | Draws text on an image with a draggable position, font size and color. |\n| **LC Text Remove 🔪** | Removes up to twenty substrings from a text, in order. |\n| **LC Text Replace ✂️** | Runs up to twenty find and replace pairs (optionally regex) on a text. |\n| **LC Tone Match** | Keeps the reference's broad lighting and color while keeping the image's fine detail, with an optional mask. |\n| **LC Vibrance** | Smart saturation (vibrance) with optional plain saturation and skin protection. |\n| **LC Vignette** | Darkens or brightens the edges of the image. |\n| **LC VRAM Cache Clear** | A pass-through node that clears GPU and model cache when it runs. |\n| **LC Watermark 💧** | Composites a watermark image you position by dragging, with live size and opacity. |\n| **LC Widget To String** | Reads a widget on another node as a string. |\n| **🎲LC Wildcard** | Picks a random line from a wildcard text file. |\n| **Prompt to Conditioning** | Encodes a text prompt into CLIP conditioning. |\n\n---\n\n## LC AV (ComfyUI_LC_AV_nodes)\n\n| Node | What it does |\n|---|---|\n| **LC Audio Channel 🎚️** | Splits stereo audio into left and right, and duplicates mono to both. |\n| **LC Audio Crop ✂️** | Crops audio from a start time to an end time (MM:SS). |\n| **LC Audio Duration ⏱️** | Outputs the audio length as seconds and minutes, as int and float. |\n| **LC Audio EQ 3-Band 🎛️** | A 3-band equalizer with a low shelf, a peaking mid and a high shelf. |\n| **LC Audio Separate 🎼** | Splits audio into Bass, Drums, Other and Vocals stems with Hybrid Demucs. |\n| **LC Audio Volume 🔊** | Changes audio volume with a slider and soft-clips after the gain. |\n| **LC AV Pipe (in/edit) 🎬** | Packs or edits an LC_AV_PIPE holding video, audio and settings. |\n| **LC AV Pipe Out 🎬** | Unpacks an LC_AV_PIPE into its slots and passes the av_pipe on. |\n| **LC Create Video 🎬** | Builds an LC_AV_PIPE from an image batch (it does not encode a file). |\n| **LC Final Frame 🖼️** | Outputs the last frame of an image batch. |\n| **LC Get Latent Size 📐** | Reads the pixel width and height of a latent, plus batch and frames for video latents. |\n| **LC Load Audio 📂** | Loads audio from the input folder with start and end trim and a preview player. |\n| **LC Pipe → AV Pipe 🔌** | Converts an LC_PIPE or MiniMax H3 pipe into an LC_AV_PIPE, copying only the shared fields. |\n| **LC Save Video Metadata 🏷️** | Builds the same metadata as LC Save Metadata, for LC Save Image or LC Save Video. |\n| **LC Save Video 💾** | Saves video with Video Combine style options (frame rate, loop, format, pingpong, crf, pix_fmt, audio). |\n| **LC VAE Decode 🧩** | A VAE Decode with a switch between full and tiled decoding. |\n\n---\n\n## LC MaskMaker (ComfyUI_LC_MaskMaker_nodes)\n\n| Node | What it does |\n|---|---|\n| **LC Auto Adjust 🔆** | One-click auto levels (per channel, luminance, saturation or mono) with trims, a strength blend and an optional mask. |\n| **LC Create Mask 🖼️✏️** | Draws a mask right on the node with points or a freehand pencil, with feather, invert and opacity built in. |\n| **LC Depth Anything V2 🌊** | Makes a Depth Anything V2 depth map (bright = near) as an image and a mask. |\n| **LC Image Blend Advance 🎚️** | Places a layer on a background (position, scale, rotate, mirror) and blends it with 29 blend modes through an optional mask. |\n| **LC Mask Refine ✨** | Tightens a mask with a trimap, using a guided filter or VITMatte on the edge band only, with a before/after wipe. |\n| **LC Normal Map (BAE) 🗺️** | Makes a BAE surface normal map (RGB = XYZ), the same style ControlNet's normal_bae makes. |\n| **LC Outpaint 🖌️➕** | Drag the canvas edges outward on the node to build a grey canvas and a mask of the new area. |\n| **LC Person Mask 🧍** | Selects parts of a person (face, hair, body, clothes, accessories, background) with Segformer or MediaPipe. |\n| **LC Remove Background ✂️** | Removes the background with BiRefNet and outputs an RGBA cutout, the mask and the subject on a solid color. |\n| **LC Segment Anything 🎯** | Selects things by describing them, using GroundingDINO + SAM or SAM 3, with optional edge refine. |\n\n---\n\n## LC Vision (ComfyUI_LC_Vision_nodes)\n\n| Node | What it does |\n|---|---|\n| **LC Vision Caption 📝** | Generates text from a loaded LC Vision model, an instruction, up to three reference images and a reference video. |\n| **LC Vision Loader 🔬** | Loads a Qwen-VL GGUF model and its vision projector once and keeps it resident across queues. |\n| **LC Vision Moviemaker 🎥** | Plans a video as several continuous segments in one call, each written as a self-contained MiniMax H3 prompt. |\n| **LC Vision Prompt Enhancer 📝** | Rewrites a prompt through an LC Vision model using a preset instruction (text only). |\n\n---\n\n## LC ModelBuilder (ComfyUI_LC_ModelBuilder_nodes) (Unplublished. Ask me)\n\n| Node | What it does |\n|---|---|\n| **LC Checkpoint Save** | Saves an all-in-one checkpoint (model, clip, vae) with an enabled toggle to skip the save. |\n| **LC Diffusion Model Save** | Saves just the diffusion model, with no clip or vae. |\n| **LC Krea2 Block Merge Advanced** | Merges Krea2 checkpoints with a draggable per-block ratio curve across the 28 blocks plus sliders for the named regions. |\n| **LC Krea2 Semantic Vector Tuner** | Amplifies or attenuates specific regions of a single Krea2 checkpoint's weights (not a merge). |\n\n---\n\n## LC TiledUpscale (ComfyUI_LC_TiledUpscale) (WIP)\n\n| Node | What it does |\n|---|---|\n| **LC Tile Planner** | Sets tile width, height and overlap once and emits the LC_TILE_PIPE that the other tiled nodes use. |\n| **LC Tile Reassemble** | Blends a batch or list of tiles back into a full image using the pipe's overlaps. |\n| **LC Tile Split** | Splits an image into tiles according to the planner's LC_TILE_PIPE. |\n\n---\n\n*Alphabetical within each pack (emoji ignored). Frontend node means the node lives in JavaScript only, with no Python class.*\n"
       },
-      "color": "#28281E",
-      "bgcolor": "#28281E"
+      "color": "#322",
+      "bgcolor": "#533"
+    },
+    {
+      "id": 405,
+      "type": "LCImageLabel",
+      "pos": [
+        -12210,
+        -6010
+      ],
+      "size": [
+        210,
+        210
+      ],
+      "flags": {},
+      "order": 124,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "size": 400,
+        "padding": 5,
+        "borderWidth": 0,
+        "borderColor": "#ffffff",
+        "borderRadius": 0,
+        "backgroundColor": "transparent",
+        "bgTransparent": true,
+        "syncImageRadius": true,
+        "imageRadius": 0,
+        "embeddedData": "data:image/webp;base64,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",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "{\"filename\":\"Logo no background_00001_.png\",\"subfolder\":\"\"}"
+      ],
+      "widgets_values_named": {
+        "_image_path": "{\"filename\":\"Logo no background_00001_.png\",\"subfolder\":\"\"}"
+      },
+      "color": "#fff0",
+      "bgcolor": "#fff0"
     }
   ],
   "links": [
@@ -16162,10 +16285,10 @@
   "extra": {
     "ue_links": [],
     "ds": {
-      "scale": 0.7400249944258193,
+      "scale": 0.6727499949325638,
       "offset": [
-        11274.069148105094,
-        1904.962895348659
+        13373.732391121994,
+        6310.798953388921
       ]
     },
     "links_added_by_ue": [],
