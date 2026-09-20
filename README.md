@@ -6,7 +6,7 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 - **Civitai:** [lonecatone23](https://civitai.com/user/lonecatone23)
 - **Instagram:** [synth.studio.models](https://www.instagram.com/synth.studio.models/)
 - **Support:** [Buy me a ☕](https://ko-fi.com/lonecatone)
-- **Version:** 1.31.0 · **112 Python nodes** · **4 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel)
+- **Version:** 1.31.1 · **112 Python nodes** · **4 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel)
 
 > Small tools that remove friction: less wire mess, fewer clicks, clearer workflows.
 
@@ -266,7 +266,7 @@ Hover any of these to wipe against the original. If your graph's heavy, dial the
 | **LC Int Split** | `total` splits into `a` + `b`. `split_point` is a fraction, **0–1**, not a raw count. |
 | **LC Seed Jump 🌱** | One seed + a jump value → six stepped seeds, no manual math. |
 | **🌱LC Seed** | A seed widget with seed_mode: fixed / randomize / increment / decrement. |
-| **LC Slider** | An on-node slider: min/max/step/decimals all live in the node's settings. |
+| **LC Slider** | A plain slider (thin track, round knob, value) that looks and works the same in Nodes classic and Nodes 2.0. Double-click the value to type one. **min / max / step / decimals** are behind the faint gear on the node (also the right-click menu). Decimals 0 = INT, more = FLOAT. |
 | **LC Node Snapshot 📋** | Reads another node's widgets → value / dump / JSON, whichever you need. |
 | **LC Notify 🔊** | Plays a sound from `assets/sounds/` when the run hits it. Mode: always / on empty queue / **never**. The ▶ preview still works even when it's set to silent. |
 | **LC Bypasser** / **LC Mute** / **Groups Bypasser** / **Bypasser Panel** | Remote **bypass** (pass-through) or **mute** (never runs). Same toggles, same boolean lock, same collapse behavior across all of them. Panel's `hub` accepts any of the three. Constructor takes a string title only. Off-mode lives in the `lcOffMode` class, not constructor args. |

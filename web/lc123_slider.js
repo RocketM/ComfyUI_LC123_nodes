@@ -1,10 +1,15 @@
-// LC Slider — full DOM face (decimals + INT/FLOAT label work under Nodes 2.0)
+// LC Slider - one small DOM face that looks and behaves the same in Nodes classic and Nodes 2.0.
+// A thin track, a round knob and the value; nothing else on the node. Double-click the value to type one.
+// min / max / step / decimals live in node.properties (the Properties Panel) and behind the faint gear,
+// the right-click menu entry "Slider settings...", so the face stays a plain slider.
 import { app } from "../../scripts/app.js";
 import { lcApplyLaunchColor } from "./lc_color.js";
 
 const NODE_NAMES = new Set(["LCSlider"]);
 const HIDE = new Set(["value", "min", "max", "step", "decimals", "snap"]);
 const DEFAULTS = { min: 0, max: 100, step: 1, decimals: 0 };
+const FACE_H = 30;
+const NODE_SIZE = [230, 86];
 
 function findWidget(node, name) {
   return (node.widgets || []).find((w) => w && w.name === name);
@@ -25,10 +30,15 @@ function snapValue(value, lo, hi, step) {
   return v;
 }
 
+function roundTo(v, decimals) {
+  if (decimals <= 0) return Math.round(v);
+  const rn = Math.pow(10, decimals);
+  return Math.round(v * rn) / rn;
+}
+
 function formatByDecimals(v, decimals) {
   const d = Math.max(0, Math.min(4, Math.floor(Number(decimals) || 0)));
-  if (d <= 0) return String(Math.round(Number(v)));
-  return Number(v).toFixed(d);
+  return d <= 0 ? String(Math.round(Number(v))) : Number(v).toFixed(d);
 }
 
 function ensureProps(node) {
@@ -36,8 +46,7 @@ function ensureProps(node) {
   for (const [k, v] of Object.entries(DEFAULTS)) {
     if (node.properties[k] === undefined || node.properties[k] === null) {
       const w = findWidget(node, k);
-      node.properties[k] =
-        w !== undefined && w.value !== undefined && w.value !== null ? w.value : v;
+      node.properties[k] = w !== undefined && w.value !== undefined && w.value !== null ? w.value : v;
     }
   }
   if ("snap" in node.properties) delete node.properties.snap;
@@ -46,16 +55,11 @@ function ensureProps(node) {
 function hideBackendWidgets(node) {
   for (const w of node.widgets || []) {
     if (!w || !HIDE.has(w.name)) continue;
-    if (w.name === "lc123_settings" || w.name === "lc123_face") continue;
     w.type = "hidden";
     w.computeSize = () => [0, -4];
     if (w.options) w.options.hidden = true;
     try {
-      Object.defineProperty(w, "hidden", {
-        configurable: true,
-        get: () => true,
-        set: () => {},
-      });
+      Object.defineProperty(w, "hidden", { configurable: true, get: () => true, set: () => {} });
     } catch (_) {
       w.hidden = true;
     }
@@ -69,76 +73,71 @@ function readConfig(node) {
   if (lo > hi) [lo, hi] = [hi, lo];
   let st = num(node.properties.step, 1);
   if (!(st > 0)) st = 1;
-  const decimals = Math.max(
-    0,
-    Math.min(4, Math.floor(num(node.properties.decimals, 0)))
-  );
+  const decimals = Math.max(0, Math.min(4, Math.floor(num(node.properties.decimals, 0))));
   return { lo, hi, st, decimals };
 }
 
+// The hidden backend widgets are what execution reads, so they always mirror value + config.
 function writeValueWidget(node, v) {
   const w = findWidget(node, "value");
   if (w) w.value = v;
-  // keep hidden config widgets in sync for execution
   const { lo, hi, st, decimals } = readConfig(node);
-  const map = { min: lo, max: hi, step: st, decimals };
-  for (const [k, val] of Object.entries(map)) {
+  for (const [k, val] of Object.entries({ min: lo, max: hi, step: st, decimals })) {
     const cw = findWidget(node, k);
     if (cw) cw.value = val;
   }
 }
 
-function updateOutputType(node, _decimals) {
+function updateOutputType(node) {
+  // Static any-type socket. Switching INT/FLOAT at runtime is unreliable in Nodes 2.0.
   const out = node.outputs?.[0];
   if (!out) return;
-  // Static any-type socket (matches mxSlider). Runtime INT/FLOAT switching is unreliable in Nodes 2.0.
   out.type = "*";
   out.name = "*";
   out.localized_name = "*";
   out.label = "*";
 }
 
+function paintTrack(ui, v, lo, hi) {
+  const span = hi - lo;
+  const pct = span > 0 ? Math.max(0, Math.min(100, ((v - lo) / span) * 100)) : 0;
+  ui.range.style.setProperty("--lc-p", pct + "%");
+}
+
 function applyFace(node) {
   const ui = node._lc123Face;
   if (!ui) return;
   const { lo, hi, st, decimals } = readConfig(node);
-  let v = num(findWidget(node, "value")?.value, lo);
-  v = snapValue(v, lo, hi, st);
-  if (decimals <= 0) v = Math.round(v);
-  else {
-    const rn = Math.pow(10, decimals);
-    v = Math.round(v * rn) / rn;
-  }
+  let v = snapValue(num(findWidget(node, "value")?.value, lo), lo, hi, st);
+  v = roundTo(v, decimals);
   writeValueWidget(node, v);
   ui.range.min = String(lo);
   ui.range.max = String(hi);
   ui.range.step = String(st);
   ui.range.value = String(v);
   ui.label.textContent = formatByDecimals(v, decimals);
-  updateOutputType(node, decimals);
-  layoutFace(node);
+  paintTrack(ui, v, lo, hi);
+  updateOutputType(node);
 }
 
 function setFromFace(node, raw) {
   const { lo, hi, st, decimals } = readConfig(node);
-  let v = snapValue(num(raw, lo), lo, hi, st);
-  if (decimals <= 0) v = Math.round(v);
-  else {
-    const rn = Math.pow(10, decimals);
-    v = Math.round(v * rn) / rn;
-  }
+  const v = roundTo(snapValue(num(raw, lo), lo, hi, st), decimals);
   writeValueWidget(node, v);
   const ui = node._lc123Face;
   if (ui) {
     ui.range.value = String(v);
     ui.label.textContent = formatByDecimals(v, decimals);
+    paintTrack(ui, v, lo, hi);
   }
-  updateOutputType(node, decimals);
+  updateOutputType(node);
   node.setDirtyCanvas?.(true, true);
   try {
     node.graph?.setisChangedFlag?.(node.id);
   } catch (_) {}
 }
+
+// ---- settings popup (min / max / step / decimals) ----
 
 function openSettingsModal(node) {
   ensureProps(node);
@@ -152,11 +151,11 @@ function openSettingsModal(node) {
 
   const panel = document.createElement("div");
   panel.style.cssText =
-    "background:#1e1e1e;color:#eee;border:1px solid #444;border-radius:10px;padding:16px 18px;min-width:280px;max-width:90vw;box-shadow:0 12px 40px rgba(0,0,0,0.5);";
+    "background:#1e1e1e;color:#eee;border:1px solid #444;border-radius:10px;padding:16px 18px;min-width:260px;max-width:90vw;box-shadow:0 12px 40px rgba(0,0,0,0.5);";
 
   const title = document.createElement("div");
   title.textContent = "Slider settings";
-  title.style.cssText = "font-size:15px;font-weight:600;margin-bottom:12px;";
+  title.style.cssText = "font-size:15px;font-weight:600;margin-bottom:10px;";
   panel.appendChild(title);
 
   const fields = [
@@ -172,13 +171,13 @@ function openSettingsModal(node) {
       "display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 0;font-size:13px;";
     const span = document.createElement("span");
     span.textContent = f.label;
-    span.style.minWidth = "130px";
+    span.style.minWidth = "120px";
     const input = document.createElement("input");
     input.type = "number";
     input.step = f.key === "decimals" ? "1" : "any";
     input.value = String(p[f.key] ?? DEFAULTS[f.key]);
     input.style.cssText =
-      "width:120px;padding:4px 8px;border-radius:6px;border:1px solid #555;background:#111;color:#eee;";
+      "width:110px;padding:4px 8px;border-radius:6px;border:1px solid #555;background:#111;color:#eee;";
     row.appendChild(span);
     row.appendChild(input);
     panel.appendChild(row);
@@ -187,30 +186,28 @@ function openSettingsModal(node) {
 
   const actions = document.createElement("div");
   actions.style.cssText = "display:flex;justify-content:flex-end;gap:8px;margin-top:12px;";
+  const mkBtn = (text, css) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = text;
+    b.style.cssText = "padding:6px 14px;border-radius:6px;cursor:pointer;" + css;
+    return b;
+  };
+  const cancel = mkBtn("Cancel", "border:1px solid #555;background:#2a2a2a;color:#ddd;");
+  const ok = mkBtn("Apply", "border:1px solid #567;background:#345;color:#fff;font-weight:600;");
 
-  const cancel = document.createElement("button");
-  cancel.type = "button";
-  cancel.textContent = "Cancel";
-  cancel.style.cssText =
-    "padding:6px 12px;border-radius:6px;border:1px solid #555;background:#2a2a2a;color:#ddd;cursor:pointer;";
-
-  const ok = document.createElement("button");
-  ok.type = "button";
-  ok.textContent = "Apply";
-  ok.style.cssText =
-    "padding:6px 14px;border-radius:6px;border:1px solid #3a7;background:#1a4;color:#fff;cursor:pointer;font-weight:600;";
-
-  const close = () => overlay.remove();
+  const onKey = (e) => {
+    if (e.key === "Escape") close();
+    else if (e.key === "Enter") ok.click();
+  };
+  const close = () => {
+    overlay.remove();
+    window.removeEventListener("keydown", onKey);
+  };
   cancel.addEventListener("click", close);
   overlay.addEventListener("click", (e) => {
     if (e.target === overlay) close();
   });
-  const onKey = (e) => {
-    if (e.key === "Escape") {
-      close();
-      window.removeEventListener("keydown", onKey);
-    }
-  };
   window.addEventListener("keydown", onKey);
 
   ok.addEventListener("click", () => {
@@ -221,13 +218,9 @@ function openSettingsModal(node) {
     if (min > max) [min, max] = [max, min];
     if (!(step > 0)) step = 1;
     decimals = Math.max(0, Math.min(4, Math.floor(decimals)));
-    node.properties.min = min;
-    node.properties.max = max;
-    node.properties.step = step;
-    node.properties.decimals = decimals;
+    Object.assign(node.properties, { min, max, step, decimals });
     applyFace(node);
     close();
-    window.removeEventListener("keydown", onKey);
   });
 
   actions.appendChild(cancel);
@@ -239,23 +232,67 @@ function openSettingsModal(node) {
   inputs.min.select();
 }
 
+// ---- the face ----
+
+function ensureStyle() {
+  if (document.getElementById("lc123-slider-style")) return;
+  const st = document.createElement("style");
+  st.id = "lc123-slider-style";
+  st.textContent = `
+.lc-sl{display:flex;align-items:center;gap:8px;width:100%;box-sizing:border-box;padding:0 6px;height:${FACE_H}px;color:#ddd;font:13px system-ui,sans-serif;user-select:none}
+.lc-sl input[type=range]{--lc-p:0%;flex:1 1 auto;min-width:0;height:16px;margin:0;background:transparent;cursor:pointer;-webkit-appearance:none;appearance:none}
+.lc-sl input[type=range]:focus{outline:none}
+.lc-sl input[type=range]::-webkit-slider-runnable-track{height:3px;border-radius:2px;background:linear-gradient(to right,#cfcfcf var(--lc-p),#555 var(--lc-p))}
+.lc-sl input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:13px;height:13px;margin-top:-5px;border-radius:50%;background:#fff;border:1px solid #00000066}
+.lc-sl input[type=range]::-moz-range-track{height:3px;border-radius:2px;background:#555}
+.lc-sl input[type=range]::-moz-range-progress{height:3px;border-radius:2px;background:#cfcfcf}
+.lc-sl input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;background:#fff;border:1px solid #00000066}
+.lc-sl .lc-val{flex:0 0 auto;min-width:34px;max-width:80px;text-align:right;font-variant-numeric:tabular-nums;cursor:text;padding:1px 2px;border-radius:3px}
+.lc-sl .lc-val:hover{background:#ffffff14}
+.lc-sl input.lc-edit{flex:0 0 auto;width:64px;font:inherit;text-align:right;color:#fff;background:#111;border:1px solid #666;border-radius:3px;padding:1px 3px}
+.lc-sl .lc-gear{flex:0 0 auto;opacity:.25;cursor:pointer;font-size:12px;line-height:1;padding:2px}
+.lc-sl:hover .lc-gear{opacity:.8}
+`;
+  document.head.appendChild(st);
+}
+
 function layoutFace(node) {
   const ui = node._lc123Face;
   if (!ui) return;
-  // Classic LiteGraph pins a fixed pixel width on the DOM widget host; force it to the node body width.
-  const pad = 20; // left/right margins inside node
-  const w = Math.max(80, (node.size?.[0] || 240) - pad);
+  // Classic LiteGraph pins a fixed pixel width on the DOM widget host; make it follow the node body.
+  const w = Math.max(80, (node.size?.[0] || NODE_SIZE[0]) - 20);
   const host = ui.wrap.parentElement;
   if (host) {
     host.style.width = w + "px";
     host.style.maxWidth = w + "px";
     host.style.boxSizing = "border-box";
   }
-  ui.wrap.style.width = "100%";
-  ui.wrap.style.maxWidth = "100%";
-  ui.row.style.width = "100%";
-  ui.range.style.width = "100%";
-  ui.range.style.flex = "1 1 auto";
+}
+
+function startEdit(node) {
+  const ui = node._lc123Face;
+  if (!ui || ui.editing) return;
+  ui.editing = true;
+  const input = document.createElement("input");
+  input.type = "number";
+  input.className = "lc-edit";
+  input.step = "any";
+  input.value = ui.label.textContent;
+  ui.label.replaceWith(input);
+  input.focus();
+  input.select();
+  const done = (commit) => {
+    if (!ui.editing) return;
+    ui.editing = false;
+    input.replaceWith(ui.label);
+    if (commit && input.value !== "") setFromFace(node, input.value);
+  };
+  input.addEventListener("keydown", (e) => {
+    e.stopPropagation();
+    if (e.key === "Enter") done(true);
+    else if (e.key === "Escape") done(false);
+  });
+  input.addEventListener("blur", () => done(true));
 }
 
 function attachFace(node) {
@@ -265,92 +302,75 @@ function attachFace(node) {
     return;
   }
   node._lc123FaceAttached = true;
+  ensureStyle();
 
   const wrap = document.createElement("div");
-  wrap.style.cssText =
-    "display:flex;flex-direction:column;gap:6px;padding:4px 6px;width:100%;max-width:100%;box-sizing:border-box;";
-
-  const row = document.createElement("div");
-  row.style.cssText =
-    "display:flex;align-items:center;gap:8px;width:100%;max-width:100%;box-sizing:border-box;";
+  wrap.className = "lc-sl";
 
   const range = document.createElement("input");
   range.type = "range";
-  range.style.cssText =
-    "flex:1 1 auto;min-width:0;width:100%;cursor:pointer;box-sizing:border-box;";
-
-  const label = document.createElement("div");
-  label.style.cssText =
-    "flex:0 0 auto;min-width:56px;max-width:88px;text-align:right;font-variant-numeric:tabular-nums;font-size:13px;color:#eee;padding:2px 4px;";
-
   range.addEventListener("input", () => setFromFace(node, range.value));
 
-  label.style.cursor = "text";
-  label.title = "Click to type a value";
-  label.addEventListener("click", (e) => {
+  const label = document.createElement("div");
+  label.className = "lc-val";
+  label.title = "Double-click to type a value";
+  label.addEventListener("dblclick", (e) => {
     e.stopPropagation();
-    const cur = label.textContent;
-    const next = window.prompt("Value", cur);
-    if (next === null || next === "") return;
-    setFromFace(node, next);
+    startEdit(node);
   });
 
-  row.appendChild(range);
-  row.appendChild(label);
-
-  const bar = document.createElement("div");
-  bar.style.cssText = "display:flex;justify-content:flex-end;width:100%;";
-  const btn = document.createElement("button");
-  btn.type = "button";
-  btn.textContent = "⚙ Settings";
-  btn.style.cssText =
-    "cursor:pointer;font-size:12px;padding:2px 8px;border-radius:4px;border:1px solid #555;background:#2a2a2a;color:#eee;";
-  btn.addEventListener("click", (e) => {
+  const gear = document.createElement("div");
+  gear.className = "lc-gear";
+  gear.textContent = "⚙";
+  gear.title = "Slider settings (min, max, step, decimals)";
+  gear.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
     openSettingsModal(node);
   });
-  bar.appendChild(btn);
 
-  wrap.appendChild(row);
-  wrap.appendChild(bar);
-
-  node._lc123Face = { range, label, wrap, row };
+  wrap.append(range, label, gear);
+  node._lc123Face = { range, label, wrap, editing: false };
 
   try {
-    const domWidget = node.addDOMWidget("lc123_face", "LC123_FACE", wrap, {
-      getMinHeight: () => 56,
-      getHeight: () => 56,
+    node._lc123DomWidget = node.addDOMWidget("lc123_face", "LC123_FACE", wrap, {
+      getMinHeight: () => FACE_H,
+      getHeight: () => FACE_H,
       serialize: false,
-      // classic LiteGraph resize hook
       afterResize: () => layoutFace(node),
     });
-    node._lc123DomWidget = domWidget;
   } catch (e) {
     console.warn("LC Slider face widget failed", e);
   }
 
-  // Chain onResize for Nodes 1.0
   const prevResize = node.onResize;
-  node.onResize = function (size) {
+  node.onResize = function () {
     prevResize?.apply(this, arguments);
     layoutFace(this);
   };
-
-  // Also refresh on draw (covers some 1.0 paths that skip onResize)
   const prevDraw = node.onDrawForeground;
-  node.onDrawForeground = function (ctx, graphCanvas) {
+  node.onDrawForeground = function () {
     const r = prevDraw?.apply(this, arguments);
-    if (this.flags?.collapsed) return r;
-    layoutFace(this);
+    if (!this.flags?.collapsed) layoutFace(this);
     return r;
   };
 
   applyFace(node);
   layoutFace(node);
-  // deferred — host element exists after first layout pass
   requestAnimationFrame(() => layoutFace(node));
-  setTimeout(() => layoutFace(node), 50);
+}
+
+// The frontend re-sizes nodes with hidden widgets while a workflow loads (a slider came back 160 tall instead of
+// its saved 86). For the first moments after the node exists, put it back to the saved size, or to the compact
+// default for a brand-new node. After that the user's own resizing is never touched.
+function enforceSize(node) {
+  if (performance.now() - (node._lc123Born || 0) > 900) return;
+  const target = node._lc123Saved || [Math.max(node.size?.[0] || NODE_SIZE[0], 200), NODE_SIZE[1]];
+  if (!node.size || Math.abs(node.size[1] - target[1]) > 1 || Math.abs(node.size[0] - target[0]) > 1) {
+    try {
+      node.setSize?.([target[0], target[1]]);
+    } catch (_) {}
+  }
 }
 
 function boot(node) {
@@ -358,14 +378,7 @@ function boot(node) {
   hideBackendWidgets(node);
   attachFace(node);
   applyFace(node);
-  try {
-    const w = Math.max(node.size?.[0] || 280, 240);
-    node.setSize?.([w, 100]);
-    if (node.size) {
-      node.size[0] = w;
-      node.size[1] = 100;
-    }
-  } catch (_) {}
+  enforceSize(node);
 }
 
 app.registerExtension({
@@ -377,11 +390,13 @@ app.registerExtension({
     nodeType.prototype.onNodeCreated = function () {
       onNodeCreated?.apply(this, arguments);
       lcApplyLaunchColor(this, "#28281E");
+      this._lc123Born = performance.now();
 
       requestAnimationFrame(() => boot(this));
       setTimeout(() => boot(this), 0);
-      setTimeout(() => boot(this), 100);
-      setTimeout(() => boot(this), 400);
+      setTimeout(() => boot(this), 150);
+      setTimeout(() => boot(this), 450);
+      setTimeout(() => boot(this), 850);
 
       const prevProp = this.onPropertyChanged;
       this.onPropertyChanged = function () {
@@ -390,18 +405,14 @@ app.registerExtension({
       };
 
       const onConfigure = this.onConfigure;
-      this.onConfigure = function () {
+      this.onConfigure = function (info) {
+        this._lc123Saved = Array.isArray(info?.size) ? [info.size[0], info.size[1]] : null;
+        this._lc123Born = performance.now();
         onConfigure?.apply(this, arguments);
         requestAnimationFrame(() => {
-          for (const key of ["value", "min", "max", "step", "decimals"]) {
+          for (const key of ["min", "max", "step", "decimals"]) {
             const w = findWidget(this, key);
-            if (w !== undefined && w.value !== undefined && w.value !== null) {
-              if (key === "value") {
-                // value stays in widget; config → properties
-              } else {
-                this.properties[key] = w.value;
-              }
-            }
+            if (w !== undefined && w.value !== undefined && w.value !== null) this.properties[key] = w.value;
           }
           boot(this);
         });
@@ -410,10 +421,7 @@ app.registerExtension({
       const getExtra = this.getExtraMenuOptions;
       this.getExtraMenuOptions = function (_, options) {
         getExtra?.apply(this, arguments);
-        options.push({
-          content: "🎚️ Slider settings…",
-          callback: () => openSettingsModal(this),
-        });
+        options.push({ content: "🎚️ Slider settings…", callback: () => openSettingsModal(this) });
       };
     };
   },
