@@ -6,7 +6,7 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 - **Civitai:** [lonecatone23](https://civitai.com/user/lonecatone23)
 - **Instagram:** [synth.studio.models](https://www.instagram.com/synth.studio.models/)
 - **Support:** [Buy me a ☕](https://ko-fi.com/lonecatone)
-- **Version:** 1.30.9 · **111 Python nodes** · **4 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel)
+- **Version:** 1.31.0 · **112 Python nodes** · **4 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel)
 
 > Small tools that remove friction: less wire mess, fewer clicks, clearer workflows.
 
@@ -164,6 +164,7 @@ Subjects + Scene + Camera + Lighting + Style + Palette
 | **LC Get Image 📐** | Megapixels, width, height, batch, aspect, longer-side resolution. |
 | **LC Dimension Resize 📐** | One value in, add / sub / mul / div both sides from it; rounded outputs. |
 | **LC Image-Mask Resize 📐** | Image + mask only: no latent, no batch. **match_aspect_ratio** keeps the input ratio pinned to the longer settings side. **upscale_by:** none / multiplier (0.25) / megapixels (0.01). After a run, the actual **WxH** (e.g. `1024x1390`) gets drawn right on the node in a reserved footer, so you don't have to go hunting for it. |
+| **LC Image to Total Megapixels 📐** | Same scaling as the native **Scale Image to Total Pixels** (1.0 MP = 1024 x 1024, sizes snap to **resolution_steps**), plus **resolution** (longer side in pixels) and **megapixels** outputs. |
 | **LC Batch Image 🖼️** | Autogrow IMAGE slots into one batch. Muted or empty sockets get skipped, not counted. Mixed sizes follow whatever the first live image is. |
 | **LC Image Compare 🔎** | Batch A/B with one slider per pair. |
 | **LC Image Split 🖼️** | Saveable A\|B wipe: slider only, no drag. The output is the baked split, not the two halves. |

@@ -96,6 +96,7 @@ const COLORS = {
     LCBatchImageComparer: { color: "#324B4B", bgcolor: "#324B4B" },
     LCImageGrid: { color: "#324B4B", bgcolor: "#324B4B" },
     LCImageMaskResize: { color: "#324B4B", bgcolor: "#324B4B" },
+    LCImageToTotalMegapixels: { color: "#324B4B", bgcolor: "#324B4B" },
     LCImageSplit: { color: "#324B4B", bgcolor: "#324B4B" },
     LCPhoneLook: { color: "#324B4B", bgcolor: "#324B4B" },
     LCRelight: { color: "#324B4B", bgcolor: "#324B4B" },
