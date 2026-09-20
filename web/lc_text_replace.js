@@ -55,6 +55,34 @@ function fixTextSocket(node) {
   node.inputs = [keep, ...rest];
 }
 
+// Hidden rows keep a socket for their widget. Those sockets are laid out at y=0 of the node, right on
+// top of the text socket, so a link dropped there could land on find_11 (or replace_11) instead of text.
+// Park hidden rows far outside the node so their sockets cannot be hit.
+const HIDDEN_Y = -10000;
+
+function parkHidden(node) {
+  for (const w of node.widgets || []) {
+    if (w?.hidden && w.y !== HIDDEN_Y) w.y = HIDDEN_Y;
+  }
+}
+
+// A link that already landed on a hidden row's socket (older saves) belongs on text.
+function healMisdirectedLink(node) {
+  const inputs = node.inputs || [];
+  const textIdx = inputs.findIndex((i) => i?.name === "text");
+  if (textIdx < 0 || inputs[textIdx].link != null || !app.graph) return;
+  const hiddenNames = new Set((node.widgets || []).filter((w) => w?.hidden).map((w) => w.name));
+  for (const inp of inputs) {
+    if (!inp || inp.link == null || !hiddenNames.has(inp.name)) continue;
+    const link = app.graph.links?.get ? app.graph.links.get(inp.link) : app.graph.links?.[inp.link];
+    if (!link) continue;
+    link.target_slot = textIdx;
+    inputs[textIdx].link = inp.link;
+    inp.link = null;
+    return;
+  }
+}
+
 function syncEntries(node) {
   if (!node.widgets) return;
   fixTextSocket(node);
@@ -80,6 +108,8 @@ function syncEntries(node) {
       w.computeSize = () => [0, -4];
     }
   }
+  healMisdirectedLink(node);
+  parkHidden(node);
 
   // Reorder: fixed widgets first, then visible pairs in order, then hidden
   const fixed = [];
@@ -178,6 +208,13 @@ app.registerExtension({
       setTimeout(() => syncEntries(this), 100);
 
       return r;
+    };
+
+    // Keep hidden rows (and their sockets) parked outside the node every frame
+    const onDrawFG = nodeType.prototype.onDrawForeground;
+    nodeType.prototype.onDrawForeground = function () {
+      parkHidden(this);
+      return onDrawFG?.apply(this, arguments);
     };
 
     const onConfigure = nodeType.prototype.onConfigure;
