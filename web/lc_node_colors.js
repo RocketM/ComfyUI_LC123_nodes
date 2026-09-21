@@ -100,6 +100,7 @@ const COLORS = {
     LCImageSplit: { color: "#324B4B", bgcolor: "#324B4B" },
     LCPhoneLook: { color: "#324B4B", bgcolor: "#324B4B" },
     LCRelight: { color: "#324B4B", bgcolor: "#324B4B" },
+    LCLightingControlV2: { color: "#324B4B", bgcolor: "#324B4B" },
     LCToneMatch: { color: "#324B4B", bgcolor: "#324B4B" },
     LCWatermark: { color: "#324B4B", bgcolor: "#324B4B" },
     AnimaRegionalCanvasInline: { color: "#324B4B", bgcolor: "#324B4B" },
