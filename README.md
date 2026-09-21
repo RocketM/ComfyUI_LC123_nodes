@@ -6,7 +6,7 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 - **Civitai:** [lonecatone23](https://civitai.com/user/lonecatone23)
 - **Instagram:** [synth.studio.models](https://www.instagram.com/synth.studio.models/)
 - **Support:** [Buy me a ☕](https://ko-fi.com/lonecatone)
-- **Version:** 1.32.0 · **113 Python nodes** · **4 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel)
+- **Version:** 1.32.1 · **113 Python nodes** · **4 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel)
 
 > Small tools that remove friction: less wire mess, fewer clicks, clearer workflows.
 
@@ -49,10 +49,10 @@ Example: [`workflows/LC Lighting Control (BETA).json`](workflows/LC%20Lighting%2
 
 The same idea with real cast shadows and far fewer knobs. It is a separate node, so **LC Lighting Control 🔦** above keeps working as it is.
 
-- **Presets:** Soft window, Rembrandt, Split, Top light, Under light, Rim, Golden hour, Key + fill, Flat front. Change any value and it flips to **custom**
+- **Presets:** Soft window, Rembrandt, Split, Top light, Under light, Rim, Golden hour, Campfire, Cyberpunk, Key + fill, Flat front. Change any value and it flips to **custom**
 - **Light stage:** drag = XY, Shift+drag / wheel = Z. A blue arrow shows where the shadow falls
 - **Shadows:** soft, hard or off, with **shadow_blur**, **self_shadow** (head on body) and **background_shadow** (0 = distant background, 1 = wall right behind)
-- **Spot or sun** per light, plus **warmth**
+- **Spot or sun** per light, plus **warmth** and an optional colored gel (**color** + **color_amount**)
 - **advanced** toggle for the fine controls
 
 Outputs: **image** · **shadow_mask** (white = lit) · **light_layer**.

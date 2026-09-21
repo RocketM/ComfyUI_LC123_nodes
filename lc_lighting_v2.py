@@ -133,9 +133,27 @@ def _light_dir(lx: float, ly: float, lz: float) -> tuple[float, float, float]:
     return float(v[0]), float(v[1]), float(v[2])
 
 
-def _tint(warmth: float) -> torch.Tensor:
+# gel colours (RGB multipliers at full amount). "none" leaves the light as it is.
+LIGHT_COLORS = {
+    "none": (1.0, 1.0, 1.0),
+    "red": (1.0, 0.2, 0.2),
+    "orange": (1.0, 0.55, 0.15),
+    "yellow": (1.0, 0.9, 0.2),
+    "green": (0.25, 1.0, 0.3),
+    "cyan": (0.2, 0.9, 1.0),
+    "blue": (0.25, 0.35, 1.0),
+    "purple": (0.6, 0.25, 1.0),
+    "magenta": (1.0, 0.2, 0.8),
+}
+
+
+def _tint(warmth: float, color: str = "none", amount: float = 0.5) -> torch.Tensor:
+    """Colour of one light: warmth (blue..orange) times an optional gel colour, kept at the same overall brightness."""
     w = float(np.clip(warmth, -1.0, 1.0))
     t = np.array([1.0 + 0.30 * w, 1.0 + 0.05 * w, 1.0 - 0.30 * w], dtype=np.float32)
+    rgb = np.array(LIGHT_COLORS.get(str(color), LIGHT_COLORS["none"]), dtype=np.float32)
+    a = float(np.clip(amount, 0.0, 1.0))
+    t = t * (1.0 + a * (rgb - 1.0))
     t = t / float(t @ np.array([0.299, 0.587, 0.114], dtype=np.float32))
     return torch.from_numpy(t)
 
@@ -254,7 +272,7 @@ TYPES = ["spot", "sun"]
 SHADOW_MODES = ["soft", "hard", "off"]
 PRESETS = [
     "custom", "Soft window (left)", "Soft window (right)", "Rembrandt", "Split (hard side)", "Top light",
-    "Under light", "Rim / back light", "Golden hour", "Key + fill", "Flat front",
+    "Under light", "Rim / back light", "Golden hour", "Campfire", "Cyberpunk", "Key + fill", "Flat front",
 ]
 
 
@@ -269,6 +287,8 @@ def _light_inputs(n: int, d: dict):
         p + "brightness": ("FLOAT", {"default": d["brightness"], "min": 0.0, "max": 4.0, "step": 0.01, "tooltip": "How bright the light is. About 1.2 to 1.5 is a natural key light."}),
         p + "spread": ("FLOAT", {"default": d["spread"], "min": 0.05, "max": 1.5, "step": 0.01, "tooltip": "Spot only: how wide the beam is. Small = tight spotlight, large = soft flood over the whole face."}),
         p + "warmth": ("FLOAT", {"default": d["warmth"], "min": -1.0, "max": 1.0, "step": 0.05, "tooltip": "Color of the light. Negative = cool blue, 0 = neutral, positive = warm orange."}),
+        p + "color": (list(LIGHT_COLORS), {"default": d.get("color", "none"), "tooltip": "Optional colored gel on this light. Works together with warmth. The color only shows where this light reaches, so shadows fall back to the neutral fill."}),
+        p + "color_amount": ("FLOAT", {"default": d.get("color_amount", 0.5), "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": "How strong the colored gel is. 0.3 to 0.6 looks natural, 1 is a saturated stage light."}),
     }
 
 
@@ -322,9 +342,9 @@ class LCLightingControlV2:
     )
 
     def relight(self, image, normal_map, depth_map, preset="custom", blend=0.8,
-                light1_type="spot", light1_x=0.65, light1_y=0.6, light1_z=0.5, light1_brightness=1.4, light1_spread=0.9, light1_warmth=0.1,
+                light1_type="spot", light1_x=0.65, light1_y=0.6, light1_z=0.5, light1_brightness=1.4, light1_spread=0.9, light1_warmth=0.1, light1_color="none", light1_color_amount=0.5,
                 fill=0.18, shadows="soft", shadow_amount=0.55, advanced=False, enable_light_2=False,
-                light2_type="spot", light2_x=-0.8, light2_y=-0.1, light2_z=0.5, light2_brightness=0.6, light2_spread=1.2, light2_warmth=-0.15,
+                light2_type="spot", light2_x=-0.8, light2_y=-0.1, light2_z=0.5, light2_brightness=0.6, light2_spread=1.2, light2_warmth=-0.15, light2_color="none", light2_color_amount=0.5,
                 relief=0.3, depth_falloff=0.4, shadow_height=0.4, shadow_length=0.3, shadow_softness=0.5,
                 subject_distance=0.15, self_shadow=0.5, mask_dome=0.4, shadow_blur=0.35, light_wrap=0.3, background_shadow=0.5, mask=None):
         dev = _device()
@@ -375,10 +395,10 @@ class LCLightingControlV2:
 
         lit = torch.full((b, 3, h, w), float(fill), device=dev)
         shadow_out = torch.zeros((b, 1, h, w), device=dev)
-        lights = [(1, light1_type, light1_x, light1_y, light1_z, light1_brightness, light1_spread, light1_warmth)]
+        lights = [(1, light1_type, light1_x, light1_y, light1_z, light1_brightness, light1_spread, light1_warmth, light1_color, light1_color_amount)]
         if enable_light_2:
-            lights.append((2, light2_type, light2_x, light2_y, light2_z, light2_brightness, light2_spread, light2_warmth))
-        for n, ltype, lx, ly, lz, bright, spread, warmth in lights:
+            lights.append((2, light2_type, light2_x, light2_y, light2_z, light2_brightness, light2_spread, light2_warmth, light2_color, light2_color_amount))
+        for n, ltype, lx, ly, lz, bright, spread, warmth, lcolor, lamount in lights:
             if float(bright) <= 1e-6:
                 continue
             term = _diffuse(normals, depth, dev, ltype, lx, ly, lz, spread, depth_falloff, light_wrap) * float(bright)
@@ -397,7 +417,7 @@ class LCLightingControlV2:
                     sh = sh * ((1.0 - bgw) + bgw * float(background_shadow))
                 term = term * (1.0 - sh * float(np.clip(shadow_amount, 0, 1)))
                 shadow_out = torch.maximum(shadow_out, sh)
-            lit = lit + term * _tint(warmth).to(dev).view(1, 3, 1, 1)
+            lit = lit + term * _tint(warmth, lcolor, lamount).to(dev).view(1, 3, 1, 1)
 
         relit = (rgb * lit).clamp(0, 1)
         s = float(np.clip(blend, 0.0, 1.0))

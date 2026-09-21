@@ -13,8 +13,17 @@ const STAGE = 268; // square stage, CSS px
 const MARGIN = 16;
 
 const L2_WIDGETS = [
-  "light2_type", "light2_x", "light2_y", "light2_z", "light2_brightness", "light2_spread", "light2_warmth",
+  "light2_type", "light2_x", "light2_y", "light2_z", "light2_brightness", "light2_spread", "light2_warmth", "light2_color",
 ];
+// gel colors as drawn on the stage (the engine has its own values)
+const GEL_HEX = {
+  red: "#ff5050", orange: "#ff9a3c", yellow: "#ffe63c", green: "#50ff6a", cyan: "#3cd8ff", blue: "#5a78ff", purple: "#a05aff", magenta: "#ff4ccc",
+};
+function mixHex(base, gel, a) {
+  const c = (h, i) => parseInt(h.slice(1 + i * 2, 3 + i * 2), 16);
+  const t = clamp(0.3 + 0.7 * Number(a), 0, 1);
+  return "#" + [0, 1, 2].map((i) => Math.round(c(base, i) * (1 - t) + c(gel, i) * t).toString(16).padStart(2, "0")).join("");
+}
 // fine controls, shown only when "advanced" is on
 const ADVANCED_WIDGETS = [
   "relief", "depth_falloff", "shadow_height", "shadow_length", "shadow_softness", "subject_distance", "self_shadow", "mask_dome", "background_shadow",
@@ -24,8 +33,9 @@ const ALWAYS_SHOWN = new Set(["relief", "self_shadow", "background_shadow"]);
 const ADVANCED_SHADOW = new Set(["relief", "shadow_height", "shadow_length", "shadow_softness", "self_shadow", "background_shadow"]);
 
 // preset = a starting look. Applying one sets these widgets; editing any of them afterwards flips the preset to custom.
-const L1 = (x, y, z, brightness, spread, warmth, type = "spot") => ({
+const L1 = (x, y, z, brightness, spread, warmth, type = "spot", color = "none", amount = 0.5) => ({
   light1_type: type, light1_x: x, light1_y: y, light1_z: z, light1_brightness: brightness, light1_spread: spread, light1_warmth: warmth,
+  light1_color: color, light1_color_amount: amount,
 });
 const PRESETS = {
   "Soft window (left)": { ...L1(-0.7, 0.3, 0.55, 1.3, 1.3, 0.05), fill: 0.25, shadows: "soft", shadow_amount: 0.35, enable_light_2: false },
@@ -36,9 +46,20 @@ const PRESETS = {
   "Under light": { ...L1(0, -0.85, 0.45, 1.2, 1.0, -0.1), fill: 0.15, shadows: "soft", shadow_amount: 0.45, enable_light_2: false },
   "Rim / back light": { ...L1(0.9, 0.5, 0.05, 1.6, 0.6, 0.2), fill: 0.3, shadows: "soft", shadow_amount: 0.3, enable_light_2: false },
   "Golden hour": { ...L1(0.85, 0.25, 0.3, 1.5, 1.5, 0.7), fill: 0.22, shadows: "soft", shadow_amount: 0.5, enable_light_2: false },
+  "Campfire": {
+    ...L1(0.1, -0.85, 0.35, 1.6, 0.9, 0.8, "spot", "orange", 0.6), fill: 0.1, shadows: "hard", shadow_amount: 0.65, enable_light_2: true,
+    light2_type: "spot", light2_x: -0.55, light2_y: 1, light2_z: 0.3, light2_brightness: 0.45, light2_spread: 1.4, light2_warmth: 0,
+    light2_color: "blue", light2_color_amount: 0.5,
+  },
+  "Cyberpunk": {
+    ...L1(0.85, 0.3, 0.3, 1.3, 0.7, 0, "spot", "magenta", 0.75), fill: 0.1, shadows: "soft", shadow_amount: 0.5, enable_light_2: true,
+    light2_type: "spot", light2_x: -0.9, light2_y: 0.05, light2_z: 0.25, light2_brightness: 1.3, light2_spread: 0.8, light2_warmth: 0,
+    light2_color: "cyan", light2_color_amount: 0.85,
+  },
   "Key + fill": {
     ...L1(0.6, 0.5, 0.55, 1.3, 1.0, 0.1), fill: 0.15, shadows: "soft", shadow_amount: 0.5, enable_light_2: true,
     light2_type: "spot", light2_x: -0.8, light2_y: -0.1, light2_z: 0.5, light2_brightness: 0.5, light2_spread: 1.4, light2_warmth: -0.15,
+    light2_color: "blue", light2_color_amount: 0.3,
   },
   "Flat front": { ...L1(0, 0.15, 1.0, 1.0, 1.4, 0), fill: 0.3, shadows: "off", shadow_amount: 0.4, enable_light_2: false },
 };
@@ -54,13 +75,22 @@ const FINE = {
   "Under light": [0.4, 0.4, 0.4, 0.3, 0.6, 0.12, 0.7, 0.4, 0.4, 0.3, 0.5],
   "Rim / back light": [0.4, 0.3, 0.25, 0.35, 0.5, 0.15, 0.5, 0.5, 0.35, 0.2, 0.5],
   "Golden hour": [0.45, 0.5, 0.2, 0.45, 0.55, 0.2, 0.8, 0.4, 0.35, 0.3, 0.5],
+  "Campfire": [0.45, 0.5, 0.25, 0.4, 0.6, 0.5, 1.0, 0.4, 0.44, 0.32, 0.75],
+  "Cyberpunk": [0.4, 0.3, 0.3, 0.35, 0.4, 0.15, 0.7, 0.4, 0.3, 0.3, 0.5],
   "Key + fill": [0.45, 0.4, 0.3, 0.35, 0.5, 0.15, 0.8, 0.4, 0.3, 0.3, 0.5],
   "Flat front": [0.3, 0.2, 0.4, 0.3, 0.5, 0.1, 0.5, 0.4, 0.3, 0.4, 0.5],
 };
 for (const [k, v] of Object.entries(PRESETS)) FINE_KEYS.forEach((n, i) => (v[n] = FINE[k][i]));
+// a preset without a second light still resets light 2 (and both colors), so nothing carries over from the last preset
+const L2_DEFAULTS = {
+  light2_type: "spot", light2_x: -0.8, light2_y: -0.1, light2_z: 0.5, light2_brightness: 0.6, light2_spread: 1.2, light2_warmth: -0.15,
+  light2_color: "none", light2_color_amount: 0.5,
+};
+for (const v of Object.values(PRESETS)) for (const [k, d] of Object.entries(L2_DEFAULTS)) if (!(k in v)) v[k] = d;
 const PRESET_KEYS = new Set(["preset", ...new Set(Object.values(PRESETS).flatMap((p) => Object.keys(p)))]);
 PRESET_KEYS.delete("preset");
-PRESET_KEYS.add("light2_type").add("light2_x").add("light2_y").add("light2_z").add("light2_brightness").add("light2_spread").add("light2_warmth");
+PRESET_KEYS.add("light2_type").add("light2_x").add("light2_y").add("light2_z").add("light2_brightness").add("light2_spread").add("light2_warmth")
+  .add("light2_color").add("light2_color_amount");
 
 function widget(node, name) {
   return (node.widgets || []).find((x) => x && x.name === name);
@@ -79,6 +109,7 @@ function setWval(node, name, value) {
   } catch (_) {}
 }
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const stageColor = (base, name, amount) => (GEL_HEX[name] ? mixHex(base, GEL_HEX[name], amount) : base);
 const radiusForZ = (z, base) => base * (0.55 + 0.7 * clamp(Number(z), 0, 1));
 
 // ---- show / hide widgets that do not apply ----
@@ -132,6 +163,9 @@ function syncVisibility(node) {
   }
   setVisible(widget(node, "light1_spread"), String(wval(node, "light1_type", "spot")) === "spot");
   if (two) setVisible(widget(node, "light2_spread"), String(wval(node, "light2_type", "spot")) === "spot");
+  // the gel strength only matters once a color is picked
+  setVisible(widget(node, "light1_color_amount"), String(wval(node, "light1_color", "none")) !== "none");
+  setVisible(widget(node, "light2_color_amount"), two && String(wval(node, "light2_color", "none")) !== "none");
   // keep the width, follow the new content height
   try {
     const sz = node.computeSize();
@@ -199,9 +233,9 @@ function installStage(node) {
     return { x: ((ev.clientX - r.left) * STAGE) / Math.max(1, r.width), y: ((ev.clientY - r.top) * STAGE) / Math.max(1, r.height) };
   };
   const lights = () => {
-    const out = [{ id: "1", x: wval(node, "light1_x", 0.65), y: wval(node, "light1_y", 0.6), z: wval(node, "light1_z", 0.5), type: wval(node, "light1_type", "spot"), color: "#F5F5F5" }];
+    const out = [{ id: "1", x: wval(node, "light1_x", 0.65), y: wval(node, "light1_y", 0.6), z: wval(node, "light1_z", 0.5), type: wval(node, "light1_type", "spot"), color: stageColor("#F5F5F5", wval(node, "light1_color", "none"), wval(node, "light1_color_amount", 0.5)) }];
     if (wval(node, "enable_light_2", false)) {
-      out.push({ id: "2", x: wval(node, "light2_x", -0.8), y: wval(node, "light2_y", -0.1), z: wval(node, "light2_z", 0.5), type: wval(node, "light2_type", "spot"), color: "#E74C3C" });
+      out.push({ id: "2", x: wval(node, "light2_x", -0.8), y: wval(node, "light2_y", -0.1), z: wval(node, "light2_z", 0.5), type: wval(node, "light2_type", "spot"), color: stageColor("#E74C3C", wval(node, "light2_color", "none"), wval(node, "light2_color_amount", 0.5)) });
     }
     return out;
   };
@@ -405,7 +439,7 @@ function installStage(node) {
 
   // any related widget change redraws the stage and re-checks what to show
   const hookNames = new Set([...PRESET_KEYS, "preset", "advanced"]);
-  const visNames = new Set(["enable_light_2", "shadows", "light1_type", "light2_type", "advanced", "preset"]);
+  const visNames = new Set(["enable_light_2", "shadows", "light1_type", "light2_type", "advanced", "preset", "light1_color", "light2_color"]);
   for (const w of node.widgets || []) {
     if (!w || w._lcStageHooked || !hookNames.has(w.name)) continue;
     w._lcStageHooked = true;
