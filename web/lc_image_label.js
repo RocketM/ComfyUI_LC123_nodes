@@ -13,11 +13,292 @@
 // load-workflow-from-PNG feature and wipes the graph -- see the
 // window-capture note in onNodeCreated.
 import { app } from "../../scripts/app.js";
+import { getLayer, isSelected, screenCentre, setCentreFromScreen, commit, dragHandle, hitRotated, clientToGraph, snapAngle } from "./lc_overlay_common.js";
 
 const lcImageLabelState = {
     processingMouseDown: false,
     lastCanvasMouseEvent: null,
 };
+
+
+// ---- the on-canvas look: an HTML layer above the canvas, with rotate / grow / stretch handles ------------------------
+// (the label used to be drawn on the canvas, which could not rotate and could get buried under nodes)
+const ilNodes = new Set();
+let ilLoopOn = false;
+function ilStart() {
+    if (ilLoopOn) return;
+    ilLoopOn = true;
+    const tick = () => {
+        if (!ilNodes.size) { ilLoopOn = false; return; }
+        for (const n of ilNodes) ilRender(n);
+        requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+}
+
+function ilDims(node) {
+    const p = node.properties;
+    const pad = Math.max(Number(p.padding) || 0, 5);
+    const bw = Number(p.borderWidth) || 0;
+    const m = pad + bw;
+    const iw = p.imgW > 0 ? p.imgW : 100;
+    const ih = p.imgH > 0 ? p.imgH : 100;
+    return { pad, bw, m, iw, ih, W: iw + 2 * m, H: ih + 2 * m };
+}
+
+function ilBuild(node) {
+    const box = document.createElement("div");
+    box.style.cssText = "position:absolute;left:0;top:0;transform-origin:0 0;pointer-events:none;will-change:transform;display:none;";
+    const frame = document.createElement("div");
+    frame.style.cssText = "position:absolute;left:0;top:0;box-sizing:border-box;overflow:visible;";
+    const img = document.createElement("img");
+    img.draggable = false;
+    img.style.cssText = "display:block;width:100%;height:100%;object-fit:fill;user-select:none;";
+    const ph = document.createElement("div");
+    ph.textContent = "Drop an image";
+    ph.style.cssText = "position:absolute;inset:0;display:none;align-items:center;justify-content:center;color:#777;font:12px Arial,sans-serif;border:1px dashed #555;";
+    frame.append(img, ph);
+    box.appendChild(frame);
+    const sel = document.createElement("div");
+    sel.style.cssText = "position:absolute;left:0;top:0;right:0;bottom:0;pointer-events:none;display:none;";
+    box.appendChild(sel);
+
+    const mk = (cursor, w, h, round) => {
+        const el = document.createElement("div");
+        el.style.cssText = `position:absolute;width:${w}px;height:${h}px;background:#fff;border:2px solid #6cf;border-radius:${round ? "50%" : "3px"};cursor:${cursor};pointer-events:auto;display:none;box-sizing:border-box;touch-action:none;align-items:center;justify-content:center;font-size:15px;font-weight:bold;color:#246;line-height:1;`;
+        box.appendChild(el);
+        return el;
+    };
+    const corners = [[0, 0, "nwse-resize"], [1, 0, "nesw-resize"], [0, 1, "nesw-resize"], [1, 1, "nwse-resize"]].map(([fx, fy, c]) => ({ el: mk(c, 12, 12), fx, fy }));
+    const sides = [
+        { el: mk("ew-resize", 10, 18), fx: 0, fy: 0.5 },
+        { el: mk("ew-resize", 10, 18), fx: 1, fy: 0.5 },
+        { el: mk("ns-resize", 18, 10), fx: 0.5, fy: 0 },
+        { el: mk("ns-resize", 18, 10), fx: 0.5, fy: 1 },
+    ];
+    const rot = mk("grab", 24, 24, true);
+    rot.textContent = "⟳";
+    const stem = document.createElement("div");
+    stem.style.cssText = "position:absolute;background:#6cf;pointer-events:none;display:none;";
+    box.appendChild(stem);
+    const badge = document.createElement("div");
+    badge.style.cssText = "position:absolute;padding:2px 8px;background:#111;border:1px solid #6cf;color:#6cf;border-radius:10px;font:12px Arial,sans-serif;white-space:nowrap;pointer-events:none;display:none;";
+    box.appendChild(badge);
+
+    const v = { box, frame, img, ph, sel, corners, sides, rot, stem, badge, w: 110, h: 110, key: "", sig: "", src: "" };
+    getLayer().appendChild(box);
+    ilWire(node, v);
+    return v;
+}
+
+// style from the properties; the box is the image plus padding and border, exactly as it was on the canvas
+function ilApplyStyle(node) {
+    const v = node.__il;
+    const p = node.properties;
+    const d = ilDims(node);
+    const br = Number(p.borderRadius) || 0;
+    const bc = p.borderColor || "#FF0000";
+    const fs = v.frame.style;
+    fs.width = d.W + "px";
+    fs.height = d.H + "px";
+    fs.padding = d.pad + "px";
+    fs.border = d.bw > 0 ? `${d.bw}px solid ${bc}` : "none";
+    fs.borderRadius = br + "px";
+    fs.background = !p.bgTransparent && p.backgroundColor && p.backgroundColor !== "transparent" ? p.backgroundColor : "transparent";
+    let ir = p.syncImageRadius ? Math.max(0, br - d.bw - d.pad) : Number(p.imageRadius) || 0;
+    ir = Math.min(ir, Math.min(d.iw, d.ih) / 2);
+    v.img.style.borderRadius = ir + "px";
+    const src = node.imageLoaded && node.cachedImage ? node.cachedImage.src : "";
+    if (src !== v.src) {
+        v.src = src;
+        if (src) v.img.src = src; else v.img.removeAttribute("src");
+    }
+    v.img.style.display = src ? "block" : "none";
+    v.ph.style.display = src ? "none" : "flex";
+}
+
+// size the node to the rotated bounding box, keeping the centre where it was (the exact box is kept in the properties,
+// because ComfyUI rounds a reloaded node's size up to its grid)
+function ilLayout(node, topLeft = false) {
+    const v = node.__il;
+    if (!v) return;
+    ilApplyStyle(node);
+    const d = ilDims(node);
+    const a = (node.properties.angle * Math.PI) / 180;
+    const W = Math.abs(d.W * Math.cos(a)) + Math.abs(d.H * Math.sin(a));
+    const H = Math.abs(d.W * Math.sin(a)) + Math.abs(d.H * Math.cos(a));
+    const pr = node.properties;
+    const ow = Number.isFinite(pr._w) ? pr._w : node.size[0];
+    const oh = Number.isFinite(pr._h) ? pr._h : node.size[1];
+    if (topLeft) {
+        node.size = [W, H];
+    } else if (Math.abs(W - ow) < 0.75 && Math.abs(H - oh) < 0.75) {
+        node.size = [ow, oh];
+    } else {
+        const cx = node.pos[0] + ow / 2;
+        const cy = node.pos[1] + oh / 2;
+        node.size = [W, H];
+        node.pos = [cx - W / 2, cy - H / 2];
+    }
+    pr._w = node.size[0];
+    pr._h = node.size[1];
+    v.w = d.W;
+    v.h = d.H;
+    v.key = "";
+    v.box.style.display = "block";
+    app.canvas?.setDirty?.(true, true);
+}
+
+function ilRender(node) {
+    const v = node.__il;
+    if (!v) return;
+    const c = app.canvas;
+    if (!c || !node.graph || node.graph !== c.graph) { v.box.style.display = "none"; return; }
+    const p = node.properties;
+    const sig = JSON.stringify([p.imgW, p.imgH, p.angle, p.padding, p.borderWidth, p.borderColor, p.borderRadius, p.backgroundColor, p.bgTransparent, p.syncImageRadius, p.imageRadius, node.imageLoaded, node.cachedImage && node.cachedImage.src && node.cachedImage.src.length]);
+    if (sig !== v.sig) { v.sig = sig; ilLayout(node); }
+    const ds = c.ds;
+    const s = ds.scale;
+    const cr = c.canvas.getBoundingClientRect();
+    const lr = getLayer().getBoundingClientRect();
+    const ex = Number.isFinite(p._w) ? p._w : node.size[0];
+    const ey = Number.isFinite(p._h) ? p._h : node.size[1];
+    const cx = (node.pos[0] + ex / 2 + ds.offset[0]) * s + (cr.left - lr.left);
+    const cy = (node.pos[1] + ey / 2 + ds.offset[1]) * s + (cr.top - lr.top);
+    const sel = isSelected(node) && !node.dialogOpen;
+    const key = [cx.toFixed(2), cy.toFixed(2), s.toFixed(4), p.angle, v.w, v.h, sel, v.badgeText || ""].join("|");
+    if (key === v.key) return;
+    v.key = key;
+    v.box.style.display = "block";
+    v.box.style.transform = `translate(${cx}px,${cy}px) rotate(${p.angle}deg) scale(${s}) translate(${-v.w / 2}px,${-v.h / 2}px)`;
+    const inv = 1 / s;
+    v.sel.style.display = sel ? "block" : "none";
+    v.sel.style.border = `${2 * inv}px dashed #6cf`;
+    for (const k of [...v.corners, ...v.sides]) {
+        k.el.style.display = sel ? "block" : "none";
+        k.el.style.left = k.fx * v.w + "px";
+        k.el.style.top = k.fy * v.h + "px";
+        k.el.style.transform = `translate(-50%,-50%) scale(${inv})`;
+    }
+    const off = 38 * inv;
+    v.rot.style.display = sel ? "flex" : "none";
+    v.rot.style.left = v.w / 2 + "px";
+    v.rot.style.top = -off + "px";
+    v.rot.style.transform = `translate(-50%,-50%) scale(${inv})`;
+    v.stem.style.display = sel ? "block" : "none";
+    v.stem.style.left = v.w / 2 - inv + "px";
+    v.stem.style.top = -off + "px";
+    v.stem.style.width = 2 * inv + "px";
+    v.stem.style.height = off + "px";
+    const showBadge = sel && v.badgeText;
+    v.badge.style.display = showBadge ? "block" : "none";
+    if (showBadge) {
+        v.badge.textContent = v.badgeText;
+        v.badge.style.left = v.w / 2 + 26 * inv + "px";
+        v.badge.style.top = -off - 10 * inv + "px";
+        v.badge.style.transformOrigin = "0 0";
+        v.badge.style.transform = `scale(${inv}) rotate(${-p.angle}deg)`;
+    }
+}
+
+// set the image size, keeping one anchor point (a corner or an edge midpoint) fixed on screen
+function ilResizeTo(node, iw, ih, afx, afy, anchor) {
+    const p = node.properties;
+    const d0 = ilDims(node);
+    iw = Math.max(16, iw);
+    ih = Math.max(16, ih);
+    p.imgW = Math.round(iw * 10) / 10;
+    p.imgH = Math.round(ih * 10) / 10;
+    p.size = Math.round(Math.max(p.imgW, p.imgH)); // kept for older versions
+    const s = app.canvas.ds.scale;
+    const a = (p.angle * Math.PI) / 180;
+    const W2 = iw + 2 * d0.m;
+    const H2 = ih + 2 * d0.m;
+    const lx = (afx - 0.5) * W2 * s;
+    const ly = (afy - 0.5) * H2 * s;
+    setCentreFromScreen(node, anchor[0] - (lx * Math.cos(a) - ly * Math.sin(a)), anchor[1] - (lx * Math.sin(a) + ly * Math.cos(a)));
+    ilLayout(node);
+}
+
+function ilWire(node, v) {
+    const local = (fx, fy) => {
+        const s = app.canvas.ds.scale;
+        const a = (node.properties.angle * Math.PI) / 180;
+        const [cx, cy] = screenCentre(node);
+        const lx = (fx - 0.5) * v.w * s;
+        const ly = (fy - 0.5) * v.h * s;
+        return [cx + lx * Math.cos(a) - ly * Math.sin(a), cy + lx * Math.sin(a) + ly * Math.cos(a)];
+    };
+
+    // rotate: 5 degree steps with a magnet at 0 / 90 / 180, Shift = 15, Alt = free
+    dragHandle(
+        v.rot,
+        () => { v.badgeText = Math.round(node.properties.angle) + "°"; },
+        (e) => {
+            const [cx, cy] = screenCentre(node);
+            const a = snapAngle((Math.atan2(e.clientY - cy, e.clientX - cx) * 180) / Math.PI + 90, e);
+            node.properties.angle = a;
+            v.badgeText = node.properties.angle + "°";
+            ilLayout(node);
+        },
+        () => { v.badgeText = ""; v.key = ""; commit(); }
+    );
+
+    // grow from a corner: proportional, the opposite corner stays put
+    for (const k of v.corners) {
+        let st = null;
+        dragHandle(
+            k.el,
+            () => {
+                const d = ilDims(node);
+                const anchor = local(1 - k.fx, 1 - k.fy);
+                const corner = local(k.fx, k.fy);
+                st = { anchor, d0: Math.max(1, Math.hypot(corner[0] - anchor[0], corner[1] - anchor[1])), iw: d.iw, ih: d.ih };
+            },
+            (e) => {
+                if (!st) return;
+                const r = Math.hypot(e.clientX - st.anchor[0], e.clientY - st.anchor[1]) / st.d0;
+                ilResizeTo(node, st.iw * r, st.ih * r, 1 - k.fx, 1 - k.fy, st.anchor);
+            },
+            () => { st = null; commit(); }
+        );
+    }
+
+    // stretch from a side: one axis only, the opposite edge stays put. Shift keeps the proportions.
+    for (const k of v.sides) {
+        const horizontal = k.fy === 0.5;
+        let st = null;
+        dragHandle(
+            k.el,
+            () => {
+                const d = ilDims(node);
+                const a = (node.properties.angle * Math.PI) / 180;
+                const afx = horizontal ? 1 - k.fx : 0.5;
+                const afy = horizontal ? 0.5 : 1 - k.fy;
+                st = {
+                    afx, afy, anchor: local(afx, afy), iw: d.iw, ih: d.ih, m: d.m,
+                    axis: horizontal ? [Math.cos(a), Math.sin(a)] : [-Math.sin(a), Math.cos(a)],
+                    sign: (horizontal ? k.fx : k.fy) === 1 ? 1 : -1,
+                    s: app.canvas.ds.scale,
+                };
+            },
+            (e) => {
+                if (!st) return;
+                const proj = (((e.clientX - st.anchor[0]) * st.axis[0] + (e.clientY - st.anchor[1]) * st.axis[1]) * st.sign) / st.s;
+                let iw = st.iw, ih = st.ih;
+                if (horizontal) {
+                    iw = proj - 2 * st.m;
+                    if (e.shiftKey) ih = st.ih * (Math.max(16, iw) / st.iw);
+                } else {
+                    ih = proj - 2 * st.m;
+                    if (e.shiftKey) iw = st.iw * (Math.max(16, ih) / st.ih);
+                }
+                ilResizeTo(node, iw, ih, st.afx, st.afy, st.anchor);
+            },
+            () => { st = null; commit(); }
+        );
+    }
+}
 
 app.registerExtension({
     name: "LC123.ImageLabel",
@@ -51,6 +332,9 @@ app.registerExtension({
 
             this.properties = {
                 size: 125,
+                imgW: 0,
+                imgH: 0,
+                angle: 0,
                 padding: 5,
                 borderWidth: 1,
                 borderColor: "#ffffff",
@@ -69,6 +353,10 @@ app.registerExtension({
             this.cachedImage = null;
             this.imageLoaded = false;
             this.dialogOpen = false;
+            this.__il = ilBuild(this);
+            ilNodes.add(this);
+            ilStart();
+            this.__ilPlaced = false;
 
             // Prefer the baked-in image; fall back to re-fetching by path.
             if (this.properties.embeddedData) {
@@ -114,6 +402,20 @@ app.registerExtension({
         };
 
         nodeType.prototype.onConfigure = function (info) {
+            this.properties = Object.assign({ imgW: 0, imgH: 0, angle: 0 }, this.properties);
+            {
+                // an older label has no image size of its own: its saved node size is the exact display size, so take it from there
+                const p = this.properties;
+                if (!(p.imgW > 0 && p.imgH > 0) && info && Array.isArray(info.size)) {
+                    const m = Math.max(Number(p.padding) || 0, 5) + (Number(p.borderWidth) || 0);
+                    const iw = info.size[0] - 2 * m, ih = info.size[1] - 2 * m;
+                    if (iw >= 16 && ih >= 16) {
+                        p.imgW = iw; p.imgH = ih;
+                        p._w = info.size[0]; p._h = info.size[1];
+                    }
+                }
+            }
+            if (this.__il) ilLayout(this);
             if (info && info.widgets_values) {
                 const widgetIndex = this.widgets?.findIndex((w) => w.name === "_image_path");
                 if (widgetIndex !== -1 && info.widgets_values[widgetIndex]) {
@@ -144,6 +446,9 @@ app.registerExtension({
         };
 
         nodeType.prototype.onRemoved = function () {
+            ilNodes.delete(this);
+            try { this.__il?.box.remove(); } catch (_) {}
+            this.__il = null;
             if (this._boundDragEnter) window.removeEventListener("dragenter", this._boundDragEnter, { capture: true });
             if (this._boundDragOver) window.removeEventListener("dragover", this._boundDragOver, { capture: true });
             if (this._boundDrop) window.removeEventListener("drop", this._boundDrop, { capture: true });
@@ -228,6 +533,8 @@ app.registerExtension({
                 const data = await resp.json();
                 if (data.name) {
                     pathWidget.value = JSON.stringify({ filename: data.name, subfolder: data.subfolder || "" });
+                    this.properties.imgW = 0; // a new image takes its own proportions, at the current longest side
+                    this.properties.imgH = 0;
                     this.loadImage(this.getImageUrl());
                 }
             } catch (e) {
@@ -236,65 +543,25 @@ app.registerExtension({
         };
 
         nodeType.prototype.updateNodeSize = function () {
-            const internalPadding = Math.max(Number(this.properties.padding) || 0, 5);
-            const bw = Number(this.properties.borderWidth) || 0;
-            let displayW = 100, displayH = 100;
-            if (this.imageLoaded && this.cachedImage) {
-                const maxSize = Math.max(16, Math.min(200, Number(this.properties.size) || 100));
+            const p = this.properties;
+            let derived = false;
+            if (this.imageLoaded && this.cachedImage && !(p.imgW > 0 && p.imgH > 0)) {
+                derived = true;
+                // an older label: its size was the longest side, capped at 200. The cap is gone, the look is the same.
+                const maxSize = Math.max(16, Number(p.size) || 100);
                 const aspect = this.cachedImage.width / this.cachedImage.height;
-                if (aspect >= 1) { displayW = maxSize; displayH = maxSize / aspect; }
-                else { displayH = maxSize; displayW = maxSize * aspect; }
+                if (aspect >= 1) { p.imgW = maxSize; p.imgH = maxSize / aspect; }
+                else { p.imgH = maxSize; p.imgW = maxSize * aspect; }
             }
-            this.size[0] = displayW + internalPadding * 2 + bw * 2;
-            this.size[1] = displayH + internalPadding * 2 + bw * 2;
+            if (this.__il) {
+                this.__il.sig = "";
+                ilLayout(this, derived || !this.__ilPlaced); // a fresh image keeps the top-left corner where it was dropped
+                this.__ilPlaced = true;
+            }
         };
 
-        nodeType.prototype.drawLabel = function (ctx) {
-            ctx.save();
-            const internalPadding = Math.max(Number(this.properties.padding) || 0, 5);
-            const bw = Number(this.properties.borderWidth) || 0;
-            const br = Number(this.properties.borderRadius) || 0;
-            const bc = this.properties.borderColor || "#FF0000";
-            const bg = this.properties.backgroundColor;
-
-            if (!this.properties.bgTransparent && bg && bg !== "transparent") {
-                ctx.beginPath();
-                ctx.roundRect(0, 0, this.size[0], this.size[1], [br]);
-                ctx.fillStyle = bg;
-                ctx.fill();
-            }
-            if (bw > 0) {
-                ctx.beginPath();
-                ctx.roundRect(0, 0, this.size[0], this.size[1], [br]);
-                ctx.strokeStyle = bc;
-                ctx.lineWidth = bw;
-                ctx.stroke();
-            }
-            if (this.imageLoaded && this.cachedImage) {
-                const maxSize = Math.max(16, Math.min(200, Number(this.properties.size) || 100));
-                const aspect = this.cachedImage.width / this.cachedImage.height;
-                let drawW, drawH;
-                if (aspect >= 1) { drawW = maxSize; drawH = maxSize / aspect; }
-                else { drawH = maxSize; drawW = maxSize * aspect; }
-                const x = bw + internalPadding;
-                const y = bw + internalPadding;
-                let imageRadius = this.properties.syncImageRadius
-                    ? Math.max(0, br - bw - internalPadding)
-                    : Number(this.properties.imageRadius) || 0;
-                imageRadius = Math.min(imageRadius, Math.min(drawW, drawH) / 2);
-                if (imageRadius > 0) {
-                    ctx.save();
-                    ctx.beginPath();
-                    ctx.roundRect(x, y, drawW, drawH, [imageRadius]);
-                    ctx.clip();
-                    ctx.drawImage(this.cachedImage, x, y, drawW, drawH);
-                    ctx.restore();
-                } else {
-                    ctx.drawImage(this.cachedImage, x, y, drawW, drawH);
-                }
-            }
-            ctx.restore();
-        };
+        // the HTML layer above the canvas draws the label now (see ilBuild)
+        nodeType.prototype.drawLabel = function () {};
 
         nodeType.prototype.onDblClick = function () {
             this.showSettingsDialog();
@@ -382,17 +649,38 @@ app.registerExtension({
             uploadRow.appendChild(fileInput);
             dialog.appendChild(uploadRow);
 
-            createRow("Size (max side):", () => {
+            const numRow = (label, key, min, max, step = 1) => createRow(label, () => {
                 const input = document.createElement("input");
-                input.type = "number"; input.value = this.properties.size;
-                input.min = 16; input.max = 200;
+                input.type = "number";
+                input.min = min; input.max = max; input.step = step;
+                input.value = key === "imgW" ? Math.round(ilDims(this).iw) : key === "imgH" ? Math.round(ilDims(this).ih) : this.properties[key];
                 input.style.cssText = "width:80px;padding:6px;background:#2a2a2a;color:#fff;border:1px solid #444;border-radius:4px;";
-                input.addEventListener("change", (e) => {
-                    this.properties.size = parseInt(e.target.value);
-                    this.updateNodeSize(); this.setDirtyCanvas(true, true);
+                input.addEventListener("input", () => {
+                    const n = parseFloat(input.value);
+                    if (!Number.isFinite(n)) return;
+                    this.properties[key] = Math.min(max, Math.max(min, n));
+                    if (key === "imgW" || key === "imgH") {
+                        if (!(this.properties.imgW > 0)) this.properties.imgW = ilDims(this).iw;
+                        if (!(this.properties.imgH > 0)) this.properties.imgH = ilDims(this).ih;
+                        this.properties.size = Math.round(Math.max(this.properties.imgW, this.properties.imgH));
+                    }
                 });
                 return input;
             });
+            numRow("Width (px):", "imgW", 16, 4000);
+            numRow("Height (px):", "imgH", 16, 4000);
+            createRow("Original shape:", () => {
+                const b = document.createElement("button");
+                b.textContent = "Reset proportions";
+                b.style.cssText = "padding:6px 10px;background:#2a2a2a;color:#fff;border:1px solid #444;border-radius:4px;cursor:pointer;";
+                b.addEventListener("click", () => {
+                    if (!this.cachedImage) return;
+                    const d = ilDims(this);
+                    this.properties.imgH = Math.round((d.iw * this.cachedImage.height) / this.cachedImage.width);
+                });
+                return b;
+            });
+            numRow("Angle:", "angle", -180, 180);
 
             createRow("Padding:", () => {
                 const input = document.createElement("input");
@@ -547,7 +835,7 @@ app.registerExtension({
 
         nodeType.prototype.getHelp = function () {
             return `<p>LC Image Label displays an image as a floating, chromeless label.</p>
-            <p><strong>Double-click</strong> to open settings. <strong>Drag &amp; drop</strong> an image onto the node to upload.</p>`;
+            <p><strong>Double-click</strong> to open settings. <strong>Drag &amp; drop</strong> an image onto the node to upload. Select it: drag the round handle to rotate (snaps to 5&deg;, magnet at 0, 90 and 180; Shift = 15&deg;, Alt = free), a corner to grow, a side to stretch (Shift keeps the proportions).</p>`;
         };
 
         nodeType.title_mode = LiteGraph.NO_TITLE;
@@ -581,6 +869,21 @@ app.registerExtension({
         // Upstream (RaykoStudio) declares lastCanvasMouseEvent but never assigns it, so its
         // pinned-label click-through check is permanently false -- fixed here by actually
         // capturing the event.
+        // double-click on the image opens its settings in classic and in Nodes 2.0 (where nodes are HTML and never call onDblClick)
+        document.addEventListener("dblclick", (e) => {
+            const c = app.canvas;
+            if (!c || !ilNodes.size) return;
+            if (e.target?.closest?.("input,textarea,button,select")) return;
+            const [gx, gy, cr] = clientToGraph(e);
+            if (e.clientX < cr.left || e.clientX > cr.right || e.clientY < cr.top || e.clientY > cr.bottom) return;
+            let hit = null;
+            for (const n of ilNodes) {
+                if (!n.__il || n.graph !== c.graph) continue;
+                if (hitRotated(n, gx, gy, n.__il.w, n.__il.h, n.properties.angle)) hit = n;
+            }
+            if (hit) { e.preventDefault(); e.stopPropagation(); hit.showSettingsDialog(); }
+        }, true);
+
         document.addEventListener("mousedown", (e) => {
             lcImageLabelState.processingMouseDown = true;
             lcImageLabelState.lastCanvasMouseEvent = e;
