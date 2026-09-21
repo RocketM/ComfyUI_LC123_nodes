@@ -8,8 +8,8 @@ import { lcApplyLaunchColor } from "./lc_color.js";
 const NODE_NAMES = new Set(["LCSlider"]);
 const HIDE = new Set(["value", "min", "max", "step", "decimals", "snap"]);
 const DEFAULTS = { min: 0, max: 100, step: 1, decimals: 0 };
-const FACE_H = 30;
-const NODE_SIZE = [230, 86];
+const FACE_H = 22;
+const NODE_SIZE = [230, 32];
 
 function findWidget(node, name) {
   return (node.widgets || []).find((w) => w && w.name === name);
@@ -95,7 +95,7 @@ function updateOutputType(node) {
   out.type = "*";
   out.name = "*";
   out.localized_name = "*";
-  out.label = "*";
+  out.label = " "; // no text beside the socket: the face is on its row
 }
 
 function paintTrack(ui, v, lo, hi) {
@@ -239,7 +239,7 @@ function ensureStyle() {
   const st = document.createElement("style");
   st.id = "lc123-slider-style";
   st.textContent = `
-.lc-sl{display:flex;align-items:center;gap:8px;width:100%;box-sizing:border-box;padding:0 6px;height:${FACE_H}px;color:#ddd;font:13px system-ui,sans-serif;user-select:none}
+.lc-sl{display:flex;align-items:center;gap:8px;width:100%;box-sizing:border-box;padding:0 24px 0 6px;height:${FACE_H}px;color:#ddd;font:13px system-ui,sans-serif;user-select:none}
 .lc-sl input[type=range]{--lc-p:0%;flex:1 1 auto;min-width:0;height:16px;margin:0;background:transparent;cursor:pointer;-webkit-appearance:none;appearance:none}
 .lc-sl input[type=range]:focus{outline:none}
 .lc-sl input[type=range]::-webkit-slider-runnable-track{height:3px;border-radius:2px;background:linear-gradient(to right,#cfcfcf var(--lc-p),#555 var(--lc-p))}
@@ -252,6 +252,12 @@ function ensureStyle() {
 .lc-sl input.lc-edit{flex:0 0 auto;width:64px;font:inherit;text-align:right;color:#fff;background:#111;border:1px solid #666;border-radius:3px;padding:1px 3px}
 .lc-sl .lc-gear{flex:0 0 auto;opacity:.25;cursor:pointer;font-size:12px;line-height:1;padding:2px}
 .lc-sl:hover .lc-gear{opacity:.8}
+/* Nodes 2.0: the face sits on the same row as the output socket, so the node is one short row. The widget area is
+   click-through except the slider, the value and the gear, which leaves the socket free to connect. */
+.lg-node:has(.lc-sl) .lg-node-widgets{margin-top:-24px;pointer-events:none}
+.lg-node:has(.lc-sl) .lg-node-widgets .lc-sl > *{pointer-events:auto}
+.lg-node:has(.lc-sl) .lg-slot--output span{display:none}
+div:has(> .lg-node-widgets .lc-sl){padding-bottom:2px !important}
 `;
   document.head.appendChild(st);
 }
@@ -374,6 +380,7 @@ function enforceSize(node) {
 }
 
 function boot(node) {
+  node.widgets_start_y = 0; // classic: the face sits on the same row as the output socket
   ensureProps(node);
   hideBackendWidgets(node);
   attachFace(node);
@@ -407,6 +414,8 @@ app.registerExtension({
       const onConfigure = this.onConfigure;
       this.onConfigure = function (info) {
         this._lc123Saved = Array.isArray(info?.size) ? [info.size[0], info.size[1]] : null;
+        // a slider saved with the old tall face (about 86 high) comes back as the compact one-row node
+        if (this._lc123Saved && this._lc123Saved[1] >= 60 && this._lc123Saved[1] <= 120) this._lc123Saved[1] = NODE_SIZE[1];
         this._lc123Born = performance.now();
         onConfigure?.apply(this, arguments);
         requestAnimationFrame(() => {
