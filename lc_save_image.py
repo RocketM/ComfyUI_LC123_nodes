@@ -238,7 +238,7 @@ class LCSaveImageMetadata:
                     "STRING",
                     {
                         "default": "",
-                        "tooltip": "Primary Civitai AIR or model URL only. No hash lookup.",
+                        "tooltip": "Primary Civitai AIR or model URL. No hash lookup. Fill it to link your workflow/model on Civitai. Trade-off: Civitai then labels the image \"made on-site\". Leave it empty and the image reads as an external generator (models and LoRAs still match by hash).",
                     },
                 ),
                 "width": (

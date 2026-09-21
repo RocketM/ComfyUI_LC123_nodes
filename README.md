@@ -6,7 +6,7 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 - **Civitai:** [lonecatone23](https://civitai.com/user/lonecatone23)
 - **Instagram:** [synth.studio.models](https://www.instagram.com/synth.studio.models/)
 - **Support:** [Buy me a ☕](https://ko-fi.com/lonecatone)
-- **Version:** 1.32.1 · **113 Python nodes** · **4 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel)
+- **Version:** 1.32.2 · **113 Python nodes** · **4 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel)
 
 > Small tools that remove friction: less wire mess, fewer clicks, clearer workflows.
 
@@ -41,7 +41,7 @@ Outputs: **image** (relit) · **debug_mask** (ignore).
 
 External (not bundled): Depth Anything V2, a normal-map preprocessor, optional remBG.
 
-Example: [`workflows/LC Lighting Control (BETA).json`](workflows/LC%20Lighting%20Control%20(BETA).json)
+Example workflow: see **LC Lighting Control V2** below.
 
 ---
 
@@ -56,6 +56,8 @@ The same idea with real cast shadows and far fewer knobs. It is a separate node,
 - **advanced** toggle for the fine controls
 
 Outputs: **image** · **shadow_mask** (white = lit) · **light_layer**.
+
+Example: [`workflows/Lonecats Lighting Control Module V2.json`](workflows/Lonecats%20Lighting%20Control%20Module%20V2.json)
 
 ---
 
@@ -308,7 +310,7 @@ Manual node sizes stick across a reload. Auto-fit only kicks in on first create,
 | File | Description |
 |------|-------------|
 | [`workflows/LC Node examples.json`](workflows/LC%20Node%20examples.json) | A tour of the utility / image / prompt / **sigma curve** nodes (**updated**) |
-| [`workflows/LC Lighting Control (BETA).json`](workflows/LC%20Lighting%20Control%20(BETA).json) | Image → normals / depth / mask → Lighting Control |
+| [`workflows/Lonecats Lighting Control Module V2.json`](workflows/Lonecats%20Lighting%20Control%20Module%20V2.json) | Image → normals / depth / mask → Lighting Control V2 |
 | [`workflows/LC Skin Beauty.json`](workflows/LC%20Skin%20Beauty.json) | Skin Beauty with an optional mask |
 | [`workflows/LC Skin Beauty basic (no deps).json`](workflows/LC%20Skin%20Beauty%20basic%20(no%20deps).json) | Skin Beauty on its own |
 | [`workflows/Skin Upscaler Module.json`](workflows/Skin%20Upscaler%20Module.json) | Skin Upscale + PersonMaskUltra V2 + split compare |
