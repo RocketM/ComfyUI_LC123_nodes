@@ -6,7 +6,7 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 - **Civitai:** [lonecatone23](https://civitai.com/user/lonecatone23)
 - **Instagram:** [synth.studio.models](https://www.instagram.com/synth.studio.models/)
 - **Support:** [Buy me a ☕](https://ko-fi.com/lonecatone)
-- **Version:** 1.34.3 · **116 Python nodes** · **4 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel)
+- **Version:** 1.34.4 · **116 Python nodes** · **4 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel)
 
 > Small tools that remove friction: less wire mess, fewer clicks, clearer workflows.
 
@@ -80,6 +80,7 @@ A text label for annotating a workflow, like the ones in the example workflows, 
 - **Rotate:** select it, drag the round handle above it. It snaps to 5° with a magnet at 0, 90 and 180 (**Shift** = 15°, **Alt** = free). Or type an angle in the settings
 - **Scale:** drag a corner. The opposite corner stays put
 - **Wrap:** drag a side handle to set a wrap width, and the text reflows. **Wrap width 0** in the settings goes back to auto
+- **Pin it** (right-click → Pin) and it locks: clicks pass straight through to whatever is under it, and the only way to select it again is Ctrl+drag a box around it
 - **Settings:** double-click, same dialog style as LC Image Label. Text, font, size, bold / italic, align, color, outline, shadow, background fill
 - **Never buried:** it is drawn as HTML above the canvas, so nodes and links can't cover it. Clicks pass through to the canvas, so it moves, pins and selects like any node
 - **Fonts:** Bebas Neue, Oswald, Permanent Marker and Pacifico ship with the pack (`web/fonts`, licenses included), plus the usual system fonts. Each one is shown in its own typeface in the dropdown
@@ -215,7 +216,7 @@ Subjects + Scene + Camera + Lighting + Style + Palette
 | **LC Image Pass** | An identity pass for IMAGE. `enable` off mutes just this tap, so anything downstream watching an optional socket sees nothing. |
 | **LC Mask Pass** | Same idea for MASK: a bank tap. `enable` off mutes this tap only; Color / Tone Match then run with `mask=None` (full frame). |
 | **LC Watermark 💧** | Image watermark with size, opacity, and drag-to-place. |
-| **LC Image Label 🖼️⚙️** | Chromeless sticker: drag an image onto the canvas (or double-click → Load Image) and it floats there, no title bar, no sockets, nothing to wire. Select it to rotate (round handle, snaps to 5° with a magnet at 0, 90 and 180; Shift = 15°, Alt = free), grow (corners) or stretch (sides, Shift keeps the proportions), with no size cap. Double-click for settings: width, height, angle, padding, border width/color/radius, background. It sits above the canvas, so nodes and links can't cover it. Baked into the saved workflow as a small webp data URL, so the label survives sharing even after the original upload is gone. |
+| **LC Image Label 🖼️⚙️** | Chromeless sticker: drag an image onto the canvas (or double-click → Load Image) and it floats there, no title bar, no sockets, nothing to wire. Select it to rotate (round handle, snaps to 5° with a magnet at 0, 90 and 180; Shift = 15°, Alt = free), grow (corners) or stretch (sides, Shift keeps the proportions), with no size cap. Double-click for settings: width, height, angle, padding, border width/color/radius, background. It sits above the canvas, so nodes and links can't cover it. Pin it and it locks the same way LC Label does. Baked into the saved workflow as a small webp data URL, so the label survives sharing even after the original upload is gone. |
 
 ---
 

@@ -4,7 +4,7 @@
 // pinned like any node). Select it to get the Word / Paint style handles: the round handle above rotates it (hold
 // snaps to 5 degrees with a magnet at 0 / 90 / 180), a corner handle scales it. Double-click opens the settings dialog, like LC Image Label.
 import { app } from "../../scripts/app.js";
-import { getLayer, isSelected, screenCentre, setCentreFromScreen, commit, dragHandle, hitRotated, clientToGraph, snapAngle } from "./lc_overlay_common.js";
+import { getLayer, isSelected, screenCentre, setCentreFromScreen, commit, dragHandle, hitRotated, clientToGraph, snapAngle, vueClickThrough } from "./lc_overlay_common.js";
 
 const NODE = "LCLabel";
 
@@ -230,7 +230,10 @@ function renderNode(node) {
   const cx = (node.pos[0] + node.size[0] / 2 + ds.offset[0]) * s + (cr.left - lr.left);
   const cy = (node.pos[1] + node.size[1] / 2 + ds.offset[1]) * s + (cr.top - lr.top);
   const sel = isSelected(node) && !node.__lcDialog;
-  const key = [cx.toFixed(2), cy.toFixed(2), s.toFixed(4), node.properties.angle, v.w, v.h, sel, v.badgeText || ""].join("|");
+  const pinned = !!(node.flags && node.flags.pinned);
+  vueClickThrough(node, pinned);
+  const edit = sel && !pinned; // a pinned label is locked: frame only, no handles
+  const key = [cx.toFixed(2), cy.toFixed(2), s.toFixed(4), node.properties.angle, v.w, v.h, sel, edit, v.badgeText || ""].join("|");
   if (key === v.key) return;
   v.key = key;
   v.box.style.display = "block";
@@ -239,28 +242,28 @@ function renderNode(node) {
   v.frame.style.display = sel ? "block" : "none";
   v.frame.style.border = `${2 * inv}px dashed #6cf`;
   for (const k of v.corners) {
-    k.el.style.display = sel ? "block" : "none";
+    k.el.style.display = edit ? "block" : "none";
     k.el.style.left = k.fx * v.w + "px";
     k.el.style.top = k.fy * v.h + "px";
     k.el.style.transform = `translate(-50%,-50%) scale(${inv})`;
   }
   for (const k of v.sides) {
-    k.el.style.display = sel ? "block" : "none";
+    k.el.style.display = edit ? "block" : "none";
     k.el.style.left = k.fx * v.w + "px";
     k.el.style.top = k.fy * v.h + "px";
     k.el.style.transform = `translate(-50%,-50%) scale(${inv})`;
   }
   const off = 38 * inv;
-  v.rot.style.display = sel ? "flex" : "none";
+  v.rot.style.display = edit ? "flex" : "none";
   v.rot.style.left = v.w / 2 + "px";
   v.rot.style.top = -off + "px";
   v.rot.style.transform = `translate(-50%,-50%) scale(${inv})`;
-  v.stem.style.display = sel ? "block" : "none";
+  v.stem.style.display = edit ? "block" : "none";
   v.stem.style.left = v.w / 2 - inv + "px";
   v.stem.style.top = -off + "px";
   v.stem.style.width = 2 * inv + "px";
   v.stem.style.height = off + "px";
-  const showBadge = sel && v.badgeText;
+  const showBadge = edit && v.badgeText;
   v.badge.style.display = showBadge ? "block" : "none";
   if (showBadge) {
     v.badge.textContent = v.badgeText;
@@ -707,9 +710,9 @@ app.registerExtension({
     const oldGetNodeOnPos = LGraph.prototype.getNodeOnPos;
     LGraph.prototype.getNodeOnPos = function (x, y, nodes_list) {
       const e = lcLabelState.down;
-      if (nodes_list && e && e.type.includes("down") && e.which === 1) {
-        const dbl = LiteGraph.getTime() - (LGraphCanvas.active_canvas?.last_mouseclick || 0) < 300;
-        if (!dbl) nodes_list = [...nodes_list].filter((n) => !((n.comfyClass === NODE || n.type === NODE) && n.flags && n.flags.pinned));
+      if (nodes_list && e && e.type.includes("down") && e.button === 0) {
+        // a pinned label ignores left clicks entirely: they reach the node under it. Ctrl+drag a box to select it.
+        nodes_list = [...nodes_list].filter((n) => !((n.comfyClass === NODE || n.type === NODE) && n.flags && n.flags.pinned));
       }
       return oldGetNodeOnPos.apply(this, [x, y, nodes_list]);
     };
@@ -725,6 +728,7 @@ app.registerExtension({
         let hit = null;
         for (const n of labelNodes) {
           if (!n.__lc || n.graph !== c.graph) continue;
+          if (n.flags && n.flags.pinned) continue; // pinned = locked
           if (hitRotated(n, gx, gy, n.__lc.w, n.__lc.h, n.properties.angle)) hit = n;
         }
         if (hit) {
@@ -735,7 +739,8 @@ app.registerExtension({
       },
       true
     );
-    document.addEventListener("mousedown", (e) => { lcLabelState.down = e; }, true);
-    document.addEventListener("mouseup", () => { lcLabelState.down = null; }, true);
+    document.addEventListener("pointerdown", (e) => { lcLabelState.down = e; }, true);
+    document.addEventListener("pointerup", () => { lcLabelState.down = null; }, true);
+    document.addEventListener("pointercancel", () => { lcLabelState.down = null; }, true);
   },
 });

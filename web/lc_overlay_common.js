@@ -109,3 +109,25 @@ export function snapAngle(a, e) {
   if (r > 180) r -= 360;
   return Math.round(r * 10) / 10;
 }
+
+// Nodes 2.0 draws every node as an HTML element that takes the click before the canvas does. A pinned label has to let
+// the click through (to the node under it, or to the canvas for a box selection), so its element ignores the pointer.
+// keydown/keyup miss a Ctrl already held when the canvas gets focus, and a synthetic drag never fires them at all -- the
+// pointer/mouse events themselves always carry the live modifier state, so track it from those instead
+let ctrlHeld = false;
+for (const t of ["pointerdown", "pointermove", "mousedown", "mousemove"]) {
+  window.addEventListener(t, (e) => { ctrlHeld = !!(e.ctrlKey || e.metaKey); }, true);
+}
+
+export function vueClickThrough(node, on) {
+  let el = node.__vueEl;
+  if (!el || !el.isConnected) {
+    el = document.querySelector(`.lg-node[data-node-id="${node.id}"]`);
+    node.__vueEl = el || null;
+  }
+  if (!el) return;
+  // clip-path: a fully clipped element takes no clicks
+  // while Ctrl is down (the box selection) the element is hit-testable again, which is how the box finds it
+  const want = on && !ctrlHeld ? "inset(100%)" : "";
+  if (el.style.clipPath !== want) el.style.clipPath = want;
+}
