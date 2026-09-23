@@ -16,6 +16,7 @@ from urllib.parse import parse_qs, urlparse
 import folder_paths
 
 from .lc_lora_metadata import parse_lc_lora_rows
+from .lc_lora_weights import row_strengths
 
 _FILE_EXT = re.compile(r"\.(safetensors|sft|gguf|ckpt|pt|bin|pth)$", re.I)
 _LORA_TAG = re.compile(r"<lora:([^:>]+)(?::[^>]+)?>", re.I)
@@ -258,7 +259,7 @@ def _collect_from_prompt(prompt, skip_ids=None) -> list[tuple[str, str | None]]:
         class_type = str(node.get("class_type") or node.get("type") or "")
         hint_node = _hint_from_class(class_type)
         inputs = node.get("inputs") if isinstance(node.get("inputs"), dict) else {}
-        if class_type == 'LCLoraLoader':
+        if class_type in ('LCLoraLoader', 'LCGroupLoraLoader', 'LCGroupLoraLoaderStack'):
             widgets = node.get('widgets_values')
             values = [inputs.get('lora_rows')]
             if isinstance(widgets, dict):
@@ -268,7 +269,8 @@ def _collect_from_prompt(prompt, skip_ids=None) -> list[tuple[str, str | None]]:
             for value in values:
                 for row in parse_lc_lora_rows(value):
                     name = row.get('lora')
-                    if row.get('on') and row['strength'] != 0.0 and isinstance(name, str):
+                    weights = row_strengths(row) if class_type != 'LCLoraLoader' else (row['strength'],)
+                    if row.get('on') and any(weight != 0.0 for weight in weights) and isinstance(name, str):
                         add(name, 'loras')
             continue
         for key, val in inputs.items():
