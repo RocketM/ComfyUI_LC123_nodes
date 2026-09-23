@@ -10,6 +10,8 @@ import os
 import re
 from collections import Counter
 
+from .lc_lora_weights import row_strengths
+
 
 def _number(value):
     try:
@@ -75,12 +77,12 @@ def collect_lora_metadata(prompt, save_node_id=None):
         kind = node.get('class_type', '')
         inputs = node.get('inputs', {})
         slots = []
-        if kind == 'LCLoraLoader':
+        if kind in ('LCLoraLoader', 'LCGroupLoraLoader'):
             rows = parse_lc_lora_rows(_resolve(inputs.get('lora_rows', '[]'), prompt))
             for index, row in enumerate(rows):
-                weight = row['strength']
-                model = weight if inputs.get('model') is not None else 0.0
-                clip = weight if inputs.get('clip') is not None else 0.0
+                model, clip = row_strengths(row) if kind == 'LCGroupLoraLoader' else (row['strength'], row['strength'])
+                model = model if inputs.get('model') is not None else 0.0
+                clip = clip if inputs.get('clip') is not None else 0.0
                 slots.append((f'lora_rows[{index}]', row.get('lora'), bool(row.get('on')), model, clip))
         else:
             candidates = [('lora', inputs)] + [
