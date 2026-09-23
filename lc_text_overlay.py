@@ -162,6 +162,63 @@ def _wrap_line(draw, line, font, max_w):
     return rows or [""]
 
 
+MIN_FONT_PX = 8  # floor for the auto-shrink below -- smaller than this isn't legible anyway
+
+
+def _layout(draw, paragraphs, font_fn, size, max_w):
+    """Wrap + measure at one font size. Returns (font_obj, lines, metrics, gap, block_h, max_line_w)."""
+    font_obj = font_fn(size)
+    lines = []
+    for para in paragraphs:
+        lines.extend(_wrap_line(draw, para, font_obj, max_w))
+    if not lines:
+        lines = [""]
+    metrics = []
+    for ln in lines:
+        l, t, r, b = _text_bbox(draw, ln, font_obj)
+        metrics.append((l, t, r, b, max(1, b - t)))
+    gap = max(2, int(size * 0.15))
+    # Each line's own lh (= b - t) is already its true rendered height, top-bearing and descender both
+    # included -- the total block is just those stacked with a gap between, no separate ascent term. (The
+    # previous version only added an ascent correction when t was negative, but textbbox's t is usually
+    # *positive* for plain text -- PIL's default anchor measures from the font's ascender line, which sits
+    # above typical cap-height -- so the block quietly ran taller than predicted and could still spill past
+    # the margin the fit search was aiming for.)
+    block_h = sum(m[4] for m in metrics) + gap * (len(metrics) - 1)
+    max_line_w = max((max(0, r - l) for (l, t, r, b, lh) in metrics), default=0)
+    return font_obj, lines, metrics, gap, block_h, max_line_w
+
+
+def _fit_text_to_box(draw, paragraphs, font_fn, requested_size, max_w, max_h, min_size=MIN_FONT_PX):
+    """Largest font size <= requested_size whose wrapped block fits within max_w x max_h (the preview box,
+    minus margin). Binary search over integer sizes -- ~6-8 layout passes regardless of how far it has to
+    shrink, so this stays cheap even on a tiny image with a big requested size. Already fits at the
+    requested size (the common case): one pass, unchanged output. Doesn't fit anywhere down to min_size:
+    renders at min_size rather than failing -- still may clip a hair, but nowhere near as far as the
+    unshrunk text would have.
+    """
+    requested_size = max(min_size, int(requested_size))
+
+    def fits(res):
+        return res[4] <= max_h and res[5] <= max_w
+
+    at_requested = _layout(draw, paragraphs, font_fn, requested_size, max_w)
+    if fits(at_requested):
+        return at_requested
+
+    lo, hi = min_size, requested_size
+    best = _layout(draw, paragraphs, font_fn, min_size, max_w)
+    while lo <= hi:
+        mid = (lo + hi) // 2
+        res = _layout(draw, paragraphs, font_fn, mid, max_w)
+        if fits(res):
+            best = res
+            lo = mid + 1
+        else:
+            hi = mid - 1
+    return best
+
+
 class LCTextOverlay(PreviewImage):
     @classmethod
     def INPUT_TYPES(cls):
@@ -244,7 +301,6 @@ class LCTextOverlay(PreviewImage):
             return _preview(self, image, image)
 
         color = (int(color_r), int(color_g), int(color_b), 255)
-        font_obj = self._font(font, int(font_size))
         # Prefer alignment; accept legacy "anchor" or "left-top" style values
         raw = alignment if alignment is not None else anchor
         if raw is None:
@@ -254,6 +310,7 @@ class LCTextOverlay(PreviewImage):
         if ah not in ("left", "center", "right"):
             ah = "center"
 
+        paragraphs = str(text).split("\n")
         arrays = tensor_to_np(image)
         out = []
         for img in arrays:
@@ -261,25 +318,14 @@ class LCTextOverlay(PreviewImage):
             draw = ImageDraw.Draw(pil)
             w, h = pil.size
             max_w = max(8, w - 2 * MARGIN_PX)
+            max_h = max(8, h - 2 * MARGIN_PX)
 
-            lines = []
-            for para in str(text).split("\n"):
-                lines.extend(_wrap_line(draw, para, font_obj, max_w))
-            if not lines:
-                lines = [""]
-
-            metrics = []
-            for ln in lines:
-                l, t, r, b = _text_bbox(draw, ln, font_obj)
-                metrics.append((l, t, r, b, max(1, b - t)))
-
-            gap = max(2, int(font_size * 0.15))
-            first_ascent = -metrics[0][1] if metrics[0][1] < 0 else 0
-            block_h = first_ascent
-            for i, m in enumerate(metrics):
-                block_h += m[4]
-                if i < len(metrics) - 1:
-                    block_h += gap
+            # Text that would overflow the image at the requested size is shrunk (never enlarged) to the
+            # largest size that fits the padded box -- a giant font_size on a small image no longer runs
+            # the letters off the edge, it just renders smaller. Already fits: unchanged, one layout pass.
+            font_obj, lines, metrics, gap, block_h, _max_line_w = _fit_text_to_box(
+                draw, paragraphs, lambda sz: self._font(font, sz), int(font_size), max_w, max_h
+            )
 
             cx = int(w * (float(x_percent) / 100.0))
             # y_percent = top of text block (no vertical anchor)
@@ -288,7 +334,10 @@ class LCTextOverlay(PreviewImage):
             if block_h > h - 2 * MARGIN_PX:
                 top_y = MARGIN_PX
 
-            y = top_y + first_ascent
+            # top_edge tracks where THIS line's glyph bbox top should land; draw.text's own y places the
+            # bbox top at draw_y + t, so draw_y = top_edge - t gets it there regardless of the sign of t
+            # (fixes the same top-bearing gap that block_h accounts for above).
+            top_edge = top_y
             for (ln, (l, t, r, b, lh)) in zip(lines, metrics):
                 tw = max(0, r - l)
                 if ah == "left":
@@ -298,9 +347,9 @@ class LCTextOverlay(PreviewImage):
                 else:
                     x = cx - tw // 2 - l
                 x = int(max(MARGIN_PX - l, min(w - MARGIN_PX - tw - l, x)))
-                draw_y = y - t if t < 0 else y
+                draw_y = top_edge - t
                 draw.text((x, draw_y), ln, font=font_obj, fill=color)
-                y = draw_y + lh + gap
+                top_edge = top_edge + lh + gap
 
             rgb = np.array(pil.convert("RGB")).astype(np.float32) / 255.0
             out.append(rgb)

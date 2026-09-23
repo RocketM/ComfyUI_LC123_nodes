@@ -11,6 +11,14 @@ const DEFAULTS = { min: 0, max: 100, step: 1, decimals: 0 };
 const FACE_H = 22;
 const NODE_SIZE = [230, 32];
 
+// Shared across every slider node: whether a mouse button is currently held anywhere on the page. The
+// height-guard below must never fight an in-progress drag (corner-resize in Nodes classic sends a stream
+// of setSize calls while the button is down) -- only correct a bad height once nothing is being dragged.
+let lcSlMouseDown = false;
+window.addEventListener("pointerdown", () => (lcSlMouseDown = true), true);
+window.addEventListener("pointerup", () => (lcSlMouseDown = false), true);
+window.addEventListener("pointercancel", () => (lcSlMouseDown = false), true);
+
 function findWidget(node, name) {
   return (node.widgets || []).find((w) => w && w.name === name);
 }
@@ -354,6 +362,7 @@ function attachFace(node) {
     prevResize?.apply(this, arguments);
     layoutFace(this);
   };
+
   const prevDraw = node.onDrawForeground;
   node.onDrawForeground = function () {
     const r = prevDraw?.apply(this, arguments);
@@ -392,6 +401,25 @@ app.registerExtension({
   name: "LC123.Slider",
   async beforeRegisterNodeDef(nodeType, nodeData) {
     if (!NODE_NAMES.has(nodeData.name)) return;
+
+    // Patched once on the class prototype, at registration -- before any node instance exists -- rather
+    // than per-instance from boot(). A per-instance guard installed later (from onNodeCreated/onConfigure)
+    // can lose a race in a big workflow: the frontend's own widget-driven auto-fit can call setSize() on a
+    // slider before that slider's own boot() has run at all (confirmed live), so a guard that only exists
+    // after boot() misses it entirely. Patching the prototype here means every instance is covered from its
+    // very first setSize call, in Nodes classic and Nodes 2.0 alike. The face is always one fixed-height
+    // row, so height is never something the user needs to change -- except while they're actively dragging
+    // a resize handle (lcSlMouseDown), which must never be fought mid-drag.
+    if (!nodeType.prototype._lc123SizeGuarded) {
+      nodeType.prototype._lc123SizeGuarded = true;
+      const rawSetSize = nodeType.prototype.setSize;
+      nodeType.prototype.setSize = function (size) {
+        if (!lcSlMouseDown && Array.isArray(size) && Math.abs(size[1] - NODE_SIZE[1]) > 1) {
+          size = [size[0], NODE_SIZE[1]];
+        }
+        return rawSetSize.call(this, size);
+      };
+    }
 
     const onNodeCreated = nodeType.prototype.onNodeCreated;
     nodeType.prototype.onNodeCreated = function () {

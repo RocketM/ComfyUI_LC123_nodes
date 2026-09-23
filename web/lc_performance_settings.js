@@ -18,11 +18,16 @@ const ID = {
   hidePreviews: "LC123.Performance.HidePreviews",
   skinFull: "LC123.Performance.SkinBeautyFullPreview",
   recentColors: "LC123.Performance.RecentColors",
+  loraInfo: "LC123.Performance.LoraInfoButton",
 };
 
 function dirty() {
   try {
     app.canvas?.setDirty?.(true, true);
+  } catch (_) {}
+  // generic notify: any LC123 node can listen for this instead of each setting needing its own wiring
+  try {
+    window.dispatchEvent(new CustomEvent("lc123-perf-changed"));
   } catch (_) {}
 }
 
@@ -163,6 +168,16 @@ app.registerExtension({
       tooltip:
         "LC Skin Beauty keeps full-quality on-node preview (no half-res / no clamp). Wipe still follows Remove wipe.",
       category: ["LC123", "Performance", "Skin Beauty full preview override"],
+      onChange: dirty,
+    },
+    {
+      id: ID.loraInfo,
+      name: "LoRA loader info button",
+      type: "boolean",
+      defaultValue: true,
+      tooltip:
+        "Show the ℹ info button on each row of LC LoRA Loader. Reads trigger words from the LoRA file's own metadata, no network call. Turn off to declutter the rows.",
+      category: ["LC123", "Performance", "LoRA loader info button"],
       onChange: dirty,
     },
   ],

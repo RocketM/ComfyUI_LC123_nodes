@@ -31,6 +31,8 @@ const NODE_CLASSES = new Set([
   "LCSkinBeauty",
   "LCSkinUpscale",
   "LCPhoneLook",
+  "LCPhoneFilters",
+  "LCDirectionalBlur",
 ]);
 
 // Text overlay handled separately (live overlay, no wipe)

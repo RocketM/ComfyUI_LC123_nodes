@@ -1,0 +1,6082 @@
+{
+  "id": "846f877d-0cc5-4ac4-8e23-1fc871b7695e",
+  "revision": 0,
+  "last_node_id": 197,
+  "last_link_id": 331,
+  "nodes": [
+    {
+      "id": 117,
+      "type": "MarkdownNote",
+      "pos": [
+        -5980,
+        -420
+      ],
+      "size": [
+        750,
+        2160
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "## 🛑🚫✋ I **Highly suggest** you Fix the seed, run the picture, then do not change anything upstream so it does not reprocess.\n\n## VRAM issues. See the **LC123 Performance Settings ⚙️** note.\n\n---\n\n## Collected notes for all of my **🎨 Post Production** nodes. Any of them may or may not appear in this workflow.\n\n---\n\n### ⚖️ Balance, 🔴🟢🔵 Adjust, 🔪 LC Sharpen Pro\n\n**Color Match**\n- 💡 After light, so the match sees the new key.\n- Matches colors to the original loaded image.\n- Method: **adain** is the most common and stable.\n- Strength: 0–1.\n- **Skin protect:** reduces how hard the match hits skin (keeps faces from shifting hue oddly).\n\n**LC Sharpen Pro**\n- 💡 Mid-structure. After skin + light so it does not pre-sharpen what SkinContrast will hit again.\n- Photorealism-first mid-tone structure + edge sharpen (not an ink outline by default).\n- **Clarity** (the *slider*) = local structure.\n- **Sharpen** = finer edge detail.\n- **Strength** = overall mix vs original.\n- **Halo** + auto-raise when sharpen is high · **Skin protect** for faces.\n- **Advanced:** radius, blend mode, shadow / highlight protect.\n- 💡 Start **Natural** or **Portrait** for influencers / NSFW realism. Raise the Clarity slider before Sharpen. Use **Lineart / Anime sharp** only when you want deliberate edge punch.\n\n**Image Adjust**\n- Brightness, Contrast, Saturation, Sharpness, Blur.\n- Brightness center = 0.\n- Contrast and Saturation center = 1.\n\n**Vibrance**\n- Boosts muted colors without destroying already-saturated areas.\n- Kinder to skin than normal saturation.\n- Vibrance + Saturation + Strength.\n- 💡 Prefer this over regular saturation for portraits.\n- 💡 Does not pair well with amateur photo looks. Use **White Balance** and **Image Adjust** saturation instead.\n\n**Lift / Gamma / Gain**\n- Classic three-way color corrector.\n- Lift = shadows · Gamma = midtones · Gain = highlights.\n- 💡 Most “film look” color work happens here.\n\n**Auto White Balance**\n- Tries to neutralize overall color cast.\n- Method: “Shades of Gray” is usually safest.\n- 💡 Subtle — compare before / after.\n\n**Adjust RGB**\n- 💡 Global grade last among color nodes so you are not grading twice around Lighting.\n\n---\n\n### 📷 Effects\n\n**Lens Profile**\n- Real lens characteristics (e.g. Canon 50mm f/1.8).\n- Optional aberrations.\n- 💡 Subtle optical flaws that make AI images feel more photographic.\n\n**Lens FX**\n- General lens distortion and optical effects.\n- 💡 Pair with the next node for a more realistic camera.\n\n**Chromatic Aberration**\n- Shifts RGB channels for a 3D / vintage-lens look.\n- Separate horizontal / vertical amounts for R, G, B.\n- 💡 A little goes a long way. Try small opposite values (R +2, G –1, B –3).\n\n**Bloom**\n- 💡 After Lighting, or you glow a flat plate.\n- Soft glow on bright areas (camera light bloom).\n- Intensity, threshold, and size.\n- 💡 A little is dreamy. A lot is fog.\n\n**Vignette**\n- Darkens (or lightens) the edges.\n- Amount, softness, and roundness.\n- 💡 Soft vignette looks more natural than hard black borders.\n\n---\n\n### ✨ Image effects\n\n**Film Stock B&W**\n- Black and white using real film responses.\n- 50+ stocks (Ilford HP5+, Kodak Tri-X, Fuji Acros, etc.).\n- Strength + optional filter.\n- 💡 Leave this off if you want color.\n\n**Film Stock Color**\n- Classic color film response (Ektachrome, Portra, etc.).\n- Strength is the main control.\n- 💡 0.6–0.9 often looks more natural than full strength.\n\n**Film Grain**\n- 💡 After Upscale, or the CNN treats grain as pores.\n- Realistic grain with a lot of control.\n- Power, scale, shadows / highlights.\n- 💡 Fixed seed keeps grain consistent. Slightly more grain in shadows usually looks better.\n\n**Desaturate**\n- Partial or full desaturation.\n- Several methods (luminance Rec.709 is common).\n- 💡 Useful right before a LUT if you want a muted base.\n\n**LUT**\n- 💡 Last, so it sits on the final look.\n- 3D LUT (`.cube`).\n- Strength 0–1 · Log option for certain LUTs.\n\n```\nComfyUI/\n└── models/\n    └── luts/\n        ├── your_look.cube\n        ├── film_emulation.cube\n        └── ...\n```\n\n**Image Crop**\n- Inline crop.\n- X / Y / Width / Height or free mode.\n- 💡 Crop after all effects so you do not lose edge treatments (vignette, bloom, etc.).\n\n**Text Overlay**\n- Text on the final image.\n- Font, size, color, **alignment** (left / center / right), position, opacity.\n- Applies on the 2nd run.\n\n**LC Watermark 💧**\n- Any image as a watermark.\n- Size, location, opacity.\n- Applies on the 2nd run.\n\n---\n\n## 中文\n\n## 🛑🚫✋ 强烈建议先锁死种子、出一张图，再不要改这条线前面的任何东西，以免整图重跑。\n\n## 显存问题请看 **LC123 Performance Settings ⚙️** 说明。\n\n---\n\n## 下面是我全部 **🎨 后期节点** 的汇总笔记。本工作流里不一定会用到每一颗。\n\n---\n\n### ⚖️ 平衡、🔴🟢🔵 调整、🔪 LC Sharpen Pro\n\n**Color Match**\n- 💡 放在打光之后，让匹配看到新的主光。\n- 对到原始载入图的颜色。\n- 方法：**adain** 最稳、最常用。\n- Strength：0–1。\n- **Skin protect：** 减轻匹配对皮肤的拉扯，脸不容易怪偏色。\n\n**LC Sharpen Pro**\n- 💡 中频结构。放在皮肤 + 打光之后，避免先锐化、再被 SkinContrast 打一遍。\n- 先真实感的中频结构，再边缘锐化（默认不是描边）。\n- **Clarity 滑条** = 局部结构。\n- **Sharpen** = 更细的边缘。\n- **Strength** = 和原图的混合。\n- **Halo** + 锐化高时自动抬 · 脸部 **Skin protect**。\n- **高级：** radius、混合模式、暗部 / 高光保护。\n- 💡 博主 / NSFW 真实感从 **Natural** 或 **Portrait** 起。先加 Clarity 滑条，再加 Sharpen。只有想要硬边时才用 **Lineart / Anime sharp**。\n\n**Image Adjust**\n- 亮度、对比、饱和、锐化、模糊。\n- 亮度中心 = 0。\n- 对比和饱和中心 = 1。\n\n**Vibrance**\n- 提暗淡颜色，少毁已经很艳的地方。\n- 对人像皮肤比普通饱和更温和。\n- Vibrance + Saturation + Strength。\n- 💡 人像优先用这个，而不是普通饱和。\n- 💡 和「业余照片」那套不合。那种用 **White Balance** 和 **Image Adjust** 的饱和。\n\n**Lift / Gamma / Gain**\n- 经典三分校色。\n- Lift = 暗部 · Gamma = 中间调 · Gain = 高光。\n- 💡 大部分「胶片感」颜色在这里做。\n\n**Auto White Balance**\n- 尽量消整体色偏。\n- 方法：一般 **Shades of Gray** 最稳。\n- 💡 很轻 — 自己对比前后。\n\n**Adjust RGB**\n- 💡 颜色节点里最后做全局，避免在 Lighting 前后各校一遍。\n\n---\n\n### 📷 镜头\n\n**Lens Profile**\n- 真实镜头特性（例如 Canon 50mm f/1.8）。\n- 可选像差。\n- 💡 一点点光学瑕疵，AI 图会更像相机。\n\n**Lens FX**\n- 一般畸变和光学效果。\n- 💡 和下一颗一起更像相机。\n\n**Chromatic Aberration（色差）**\n- 错开 RGB，3D / 老镜头感。\n- R、G、B 可分横竖。\n- 💡 少即是多。可试很小的反向值（R +2，G –1，B –3）。\n\n**Bloom**\n- 💡 放在打光之后，否则是在平光板上发光。\n- 亮部柔光（镜头光晕）。\n- 强度、阈值、大小。\n- 💡 一点梦幻，多了像雾。\n\n**Vignette**\n- 压（或提）四角。\n- 量、软度、圆度。\n- 💡 软暗角比硬黑边自然。\n\n---\n\n### ✨ 画面效果\n\n**Film Stock B&W**\n- 按真实胶片响应转黑白。\n- 50+ 种（Ilford HP5+、Kodak Tri-X、Fuji Acros 等）。\n- Strength + 可选滤镜。\n- 💡 要彩色就关掉。\n\n**Film Stock Color**\n- 经典彩色胶片（Ektachrome、Portra 等）。\n- 主要靠 Strength。\n- 💡 0.6–0.9 往往比拉满自然。\n\n**Film Grain**\n- 💡 放在 Upscale **之后**，否则 CNN 会把颗粒当成毛孔。\n- 可控的胶片颗粒。\n- Power、scale、暗部 / 高光。\n- 💡 固定种子颗粒才稳。暗部略多一点通常更好看。\n\n**Desaturate**\n- 部分或全部去饱和。\n- 多种算法（常用 luminance Rec.709）。\n- 💡 LUT 前想要闷一点的底，可以用。\n\n**LUT**\n- 💡 放最后，坐在最终样子上。\n- 3D LUT（`.cube`）。\n- Strength 0–1 · 部分 LUT 有 Log。\n\n```\nComfyUI/\n└── models/\n    └── luts/\n        ├── your_look.cube\n        ├── film_emulation.cube\n        └── ...\n```\n\n**Image Crop**\n- 画布内裁切。\n- X / Y / 宽 / 高，或自由模式。\n- 💡 所有效果之后再裁，暗角、bloom 才不会被切掉。\n\n**Text Overlay**\n- 成图上叠字。\n- 字体、大小、颜色、**对齐**（左 / 中 / 右）、位置、透明度。\n- 第二次运行才写上。\n\n**LC Watermark 💧**\n- 任意图当水印。\n- 大小、位置、透明度。\n- 第二次运行才写上。"
+      ],
+      "widgets_values_named": {
+        "text": "## 🛑🚫✋ I **Highly suggest** you Fix the seed, run the picture, then do not change anything upstream so it does not reprocess.\n\n## VRAM issues. See the **LC123 Performance Settings ⚙️** note.\n\n---\n\n## Collected notes for all of my **🎨 Post Production** nodes. Any of them may or may not appear in this workflow.\n\n---\n\n### ⚖️ Balance, 🔴🟢🔵 Adjust, 🔪 LC Sharpen Pro\n\n**Color Match**\n- 💡 After light, so the match sees the new key.\n- Matches colors to the original loaded image.\n- Method: **adain** is the most common and stable.\n- Strength: 0–1.\n- **Skin protect:** reduces how hard the match hits skin (keeps faces from shifting hue oddly).\n\n**LC Sharpen Pro**\n- 💡 Mid-structure. After skin + light so it does not pre-sharpen what SkinContrast will hit again.\n- Photorealism-first mid-tone structure + edge sharpen (not an ink outline by default).\n- **Clarity** (the *slider*) = local structure.\n- **Sharpen** = finer edge detail.\n- **Strength** = overall mix vs original.\n- **Halo** + auto-raise when sharpen is high · **Skin protect** for faces.\n- **Advanced:** radius, blend mode, shadow / highlight protect.\n- 💡 Start **Natural** or **Portrait** for influencers / NSFW realism. Raise the Clarity slider before Sharpen. Use **Lineart / Anime sharp** only when you want deliberate edge punch.\n\n**Image Adjust**\n- Brightness, Contrast, Saturation, Sharpness, Blur.\n- Brightness center = 0.\n- Contrast and Saturation center = 1.\n\n**Vibrance**\n- Boosts muted colors without destroying already-saturated areas.\n- Kinder to skin than normal saturation.\n- Vibrance + Saturation + Strength.\n- 💡 Prefer this over regular saturation for portraits.\n- 💡 Does not pair well with amateur photo looks. Use **White Balance** and **Image Adjust** saturation instead.\n\n**Lift / Gamma / Gain**\n- Classic three-way color corrector.\n- Lift = shadows · Gamma = midtones · Gain = highlights.\n- 💡 Most “film look” color work happens here.\n\n**Auto White Balance**\n- Tries to neutralize overall color cast.\n- Method: “Shades of Gray” is usually safest.\n- 💡 Subtle — compare before / after.\n\n**Adjust RGB**\n- 💡 Global grade last among color nodes so you are not grading twice around Lighting.\n\n---\n\n### 📷 Effects\n\n**Lens Profile**\n- Real lens characteristics (e.g. Canon 50mm f/1.8).\n- Optional aberrations.\n- 💡 Subtle optical flaws that make AI images feel more photographic.\n\n**Lens FX**\n- General lens distortion and optical effects.\n- 💡 Pair with the next node for a more realistic camera.\n\n**Chromatic Aberration**\n- Shifts RGB channels for a 3D / vintage-lens look.\n- Separate horizontal / vertical amounts for R, G, B.\n- 💡 A little goes a long way. Try small opposite values (R +2, G –1, B –3).\n\n**Bloom**\n- 💡 After Lighting, or you glow a flat plate.\n- Soft glow on bright areas (camera light bloom).\n- Intensity, threshold, and size.\n- 💡 A little is dreamy. A lot is fog.\n\n**Vignette**\n- Darkens (or lightens) the edges.\n- Amount, softness, and roundness.\n- 💡 Soft vignette looks more natural than hard black borders.\n\n---\n\n### ✨ Image effects\n\n**Film Stock B&W**\n- Black and white using real film responses.\n- 50+ stocks (Ilford HP5+, Kodak Tri-X, Fuji Acros, etc.).\n- Strength + optional filter.\n- 💡 Leave this off if you want color.\n\n**Film Stock Color**\n- Classic color film response (Ektachrome, Portra, etc.).\n- Strength is the main control.\n- 💡 0.6–0.9 often looks more natural than full strength.\n\n**Film Grain**\n- 💡 After Upscale, or the CNN treats grain as pores.\n- Realistic grain with a lot of control.\n- Power, scale, shadows / highlights.\n- 💡 Fixed seed keeps grain consistent. Slightly more grain in shadows usually looks better.\n\n**Desaturate**\n- Partial or full desaturation.\n- Several methods (luminance Rec.709 is common).\n- 💡 Useful right before a LUT if you want a muted base.\n\n**LUT**\n- 💡 Last, so it sits on the final look.\n- 3D LUT (`.cube`).\n- Strength 0–1 · Log option for certain LUTs.\n\n```\nComfyUI/\n└── models/\n    └── luts/\n        ├── your_look.cube\n        ├── film_emulation.cube\n        └── ...\n```\n\n**Image Crop**\n- Inline crop.\n- X / Y / Width / Height or free mode.\n- 💡 Crop after all effects so you do not lose edge treatments (vignette, bloom, etc.).\n\n**Text Overlay**\n- Text on the final image.\n- Font, size, color, **alignment** (left / center / right), position, opacity.\n- Applies on the 2nd run.\n\n**LC Watermark 💧**\n- Any image as a watermark.\n- Size, location, opacity.\n- Applies on the 2nd run.\n\n---\n\n## 中文\n\n## 🛑🚫✋ 强烈建议先锁死种子、出一张图，再不要改这条线前面的任何东西，以免整图重跑。\n\n## 显存问题请看 **LC123 Performance Settings ⚙️** 说明。\n\n---\n\n## 下面是我全部 **🎨 后期节点** 的汇总笔记。本工作流里不一定会用到每一颗。\n\n---\n\n### ⚖️ 平衡、🔴🟢🔵 调整、🔪 LC Sharpen Pro\n\n**Color Match**\n- 💡 放在打光之后，让匹配看到新的主光。\n- 对到原始载入图的颜色。\n- 方法：**adain** 最稳、最常用。\n- Strength：0–1。\n- **Skin protect：** 减轻匹配对皮肤的拉扯，脸不容易怪偏色。\n\n**LC Sharpen Pro**\n- 💡 中频结构。放在皮肤 + 打光之后，避免先锐化、再被 SkinContrast 打一遍。\n- 先真实感的中频结构，再边缘锐化（默认不是描边）。\n- **Clarity 滑条** = 局部结构。\n- **Sharpen** = 更细的边缘。\n- **Strength** = 和原图的混合。\n- **Halo** + 锐化高时自动抬 · 脸部 **Skin protect**。\n- **高级：** radius、混合模式、暗部 / 高光保护。\n- 💡 博主 / NSFW 真实感从 **Natural** 或 **Portrait** 起。先加 Clarity 滑条，再加 Sharpen。只有想要硬边时才用 **Lineart / Anime sharp**。\n\n**Image Adjust**\n- 亮度、对比、饱和、锐化、模糊。\n- 亮度中心 = 0。\n- 对比和饱和中心 = 1。\n\n**Vibrance**\n- 提暗淡颜色，少毁已经很艳的地方。\n- 对人像皮肤比普通饱和更温和。\n- Vibrance + Saturation + Strength。\n- 💡 人像优先用这个，而不是普通饱和。\n- 💡 和「业余照片」那套不合。那种用 **White Balance** 和 **Image Adjust** 的饱和。\n\n**Lift / Gamma / Gain**\n- 经典三分校色。\n- Lift = 暗部 · Gamma = 中间调 · Gain = 高光。\n- 💡 大部分「胶片感」颜色在这里做。\n\n**Auto White Balance**\n- 尽量消整体色偏。\n- 方法：一般 **Shades of Gray** 最稳。\n- 💡 很轻 — 自己对比前后。\n\n**Adjust RGB**\n- 💡 颜色节点里最后做全局，避免在 Lighting 前后各校一遍。\n\n---\n\n### 📷 镜头\n\n**Lens Profile**\n- 真实镜头特性（例如 Canon 50mm f/1.8）。\n- 可选像差。\n- 💡 一点点光学瑕疵，AI 图会更像相机。\n\n**Lens FX**\n- 一般畸变和光学效果。\n- 💡 和下一颗一起更像相机。\n\n**Chromatic Aberration（色差）**\n- 错开 RGB，3D / 老镜头感。\n- R、G、B 可分横竖。\n- 💡 少即是多。可试很小的反向值（R +2，G –1，B –3）。\n\n**Bloom**\n- 💡 放在打光之后，否则是在平光板上发光。\n- 亮部柔光（镜头光晕）。\n- 强度、阈值、大小。\n- 💡 一点梦幻，多了像雾。\n\n**Vignette**\n- 压（或提）四角。\n- 量、软度、圆度。\n- 💡 软暗角比硬黑边自然。\n\n---\n\n### ✨ 画面效果\n\n**Film Stock B&W**\n- 按真实胶片响应转黑白。\n- 50+ 种（Ilford HP5+、Kodak Tri-X、Fuji Acros 等）。\n- Strength + 可选滤镜。\n- 💡 要彩色就关掉。\n\n**Film Stock Color**\n- 经典彩色胶片（Ektachrome、Portra 等）。\n- 主要靠 Strength。\n- 💡 0.6–0.9 往往比拉满自然。\n\n**Film Grain**\n- 💡 放在 Upscale **之后**，否则 CNN 会把颗粒当成毛孔。\n- 可控的胶片颗粒。\n- Power、scale、暗部 / 高光。\n- 💡 固定种子颗粒才稳。暗部略多一点通常更好看。\n\n**Desaturate**\n- 部分或全部去饱和。\n- 多种算法（常用 luminance Rec.709）。\n- 💡 LUT 前想要闷一点的底，可以用。\n\n**LUT**\n- 💡 放最后，坐在最终样子上。\n- 3D LUT（`.cube`）。\n- Strength 0–1 · 部分 LUT 有 Log。\n\n```\nComfyUI/\n└── models/\n    └── luts/\n        ├── your_look.cube\n        ├── film_emulation.cube\n        └── ...\n```\n\n**Image Crop**\n- 画布内裁切。\n- X / Y / 宽 / 高，或自由模式。\n- 💡 所有效果之后再裁，暗角、bloom 才不会被切掉。\n\n**Text Overlay**\n- 成图上叠字。\n- 字体、大小、颜色、**对齐**（左 / 中 / 右）、位置、透明度。\n- 第二次运行才写上。\n\n**LC Watermark 💧**\n- 任意图当水印。\n- 大小、位置、透明度。\n- 第二次运行才写上。"
+      },
+      "color": "#222",
+      "bgcolor": "#000"
+    },
+    {
+      "id": 118,
+      "type": "MarkdownNote",
+      "pos": [
+        -6300,
+        1040
+      ],
+      "size": [
+        300,
+        200
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "**LC Notify 🔊**\n- hook to any node outlet.\n- plays a selected sound upon completion\n- select from a list of preloaded sounds or place your own in the folder shown below\n\n\n\n```\n📂 ComfyUI/\n│── 📂 custom_nodes\n│   ├── 📂 ComfyUI_LC123_nodes\n│   │      └── 📂 assets\n│   │             └──📂 sounds\n│   │                   └── any .mp3 sound\n```"
+      ],
+      "widgets_values_named": {
+        "text": "**LC Notify 🔊**\n- hook to any node outlet.\n- plays a selected sound upon completion\n- select from a list of preloaded sounds or place your own in the folder shown below\n\n\n\n```\n📂 ComfyUI/\n│── 📂 custom_nodes\n│   ├── 📂 ComfyUI_LC123_nodes\n│   │      └── 📂 assets\n│   │             └──📂 sounds\n│   │                   └── any .mp3 sound\n```"
+      },
+      "color": "#222",
+      "bgcolor": "#000"
+    },
+    {
+      "id": 119,
+      "type": "LCBatchImageComparer",
+      "pos": [
+        -6290,
+        1290
+      ],
+      "size": [
+        300,
+        440
+      ],
+      "flags": {
+        "pinned": false
+      },
+      "order": 73,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "Start",
+          "name": "image_a",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 239
+        },
+        {
+          "label": "Finish",
+          "name": "image_b",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 240
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "b95a1745f3730a7be8cb4cc9463e05c5d7e87650",
+        "Node name for S&R": "LCBatchImageComparer",
+        "comparer_mode": "Slide",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "color": "#325A5A",
+      "bgcolor": "#325A5A"
+    },
+    {
+      "id": 121,
+      "type": "LCNotify",
+      "pos": [
+        -6300,
+        870
+      ],
+      "size": [
+        310,
+        130
+      ],
+      "flags": {},
+      "order": 74,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "any",
+          "shape": 7,
+          "type": "*",
+          "link": 242
+        }
+      ],
+      "outputs": [
+        {
+          "name": "any",
+          "type": "*",
+          "links": [
+            276
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "59eb00aa296704f5fd1a8b38f6913ac625a6ea74",
+        "Node name for S&R": "LCNotify",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        "always",
+        1,
+        "whatever-female-voice.mp3",
+        null
+      ],
+      "widgets_values_named": {
+        "mode": "always",
+        "volume": 1,
+        "file": "whatever-female-voice.mp3",
+        "▶ preview": null
+      },
+      "color": "#649632",
+      "bgcolor": "#649632"
+    },
+    {
+      "id": 122,
+      "type": "Label (rgthree)",
+      "pos": [
+        -7690,
+        -590
+      ],
+      "size": [
+        1944.580078125,
+        50
+      ],
+      "flags": {
+        "allow_interaction": true
+      },
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "With all nodes it is very RAM heavy. Delete any node you do not need and it heals itself.",
+      "properties": {
+        "fontSize": 50,
+        "fontFamily": "Arial",
+        "fontColor": "#ffffff",
+        "textAlign": "left",
+        "backgroundColor": "transparent",
+        "padding": 0,
+        "borderRadius": 0,
+        "angle": 0,
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "color": "#fff0",
+      "bgcolor": "#fff0"
+    },
+    {
+      "id": 123,
+      "type": "LCGetImage",
+      "pos": [
+        -6620,
+        1150
+      ],
+      "size": [
+        300,
+        130
+      ],
+      "flags": {},
+      "order": 75,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 243
+        }
+      ],
+      "outputs": [
+        {
+          "name": "megapixels",
+          "type": "FLOAT",
+          "links": null
+        },
+        {
+          "name": "width",
+          "type": "INT",
+          "links": null
+        },
+        {
+          "name": "height",
+          "type": "INT",
+          "links": null
+        },
+        {
+          "name": "resolution",
+          "type": "INT",
+          "links": null
+        },
+        {
+          "name": "batch",
+          "type": "INT",
+          "links": null
+        },
+        {
+          "name": "aspect ratio",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "4ac98869e5f9ef0a5382ec86d105271257c09267",
+        "Node name for S&R": "LCGetImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        },
+        "aux_id": "lonecatone23/ComfyUI_LC123_nodes"
+      },
+      "color": "#324b4b",
+      "bgcolor": "#324b4b"
+    },
+    {
+      "id": 124,
+      "type": "SetNode",
+      "pos": [
+        -6460,
+        1090
+      ],
+      "size": [
+        210,
+        40
+      ],
+      "flags": {
+        "collapsed": true
+      },
+      "order": 76,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "link": 244
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "title": "Set_Pro Post",
+      "properties": {
+        "Node name for S&R": "SetNode",
+        "aux_id": "kijai/ComfyUI-KJNodes",
+        "previousName": "Pro Post",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "Pro Post"
+      ],
+      "widgets_values_named": {
+        "Constant": "Pro Post"
+      },
+      "color": "#2a363b",
+      "bgcolor": "#3f5159"
+    },
+    {
+      "id": 125,
+      "type": "Label (rgthree)",
+      "pos": [
+        -7840,
+        -510
+      ],
+      "size": [
+        1500,
+        50
+      ],
+      "flags": {
+        "allow_interaction": true
+      },
+      "order": 3,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "节点全开时会非常吃内存。不需要的节点直接删掉，图会自己接好。",
+      "properties": {
+        "fontSize": 50,
+        "fontFamily": "Arial",
+        "fontColor": "#ffffff",
+        "textAlign": "left",
+        "backgroundColor": "transparent",
+        "padding": 0,
+        "borderRadius": 0,
+        "angle": 0,
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "color": "#fff0",
+      "bgcolor": "#fff0"
+    },
+    {
+      "id": 126,
+      "type": "LCImageRGB",
+      "pos": [
+        -6620,
+        -250
+      ],
+      "size": [
+        300,
+        520
+      ],
+      "flags": {},
+      "order": 59,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 245
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            262,
+            327
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "4ac98869e5f9ef0a5382ec86d105271257c09267",
+        "Node name for S&R": "LCImageRGB",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        },
+        "aux_id": "lonecatone23/ComfyUI_LC123_nodes",
+        "lc_preview_meta": [
+          {
+            "filename": "lc_after_temp_cgspi_00003_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ],
+        "lc_before_meta": [
+          {
+            "filename": "lc_before_temp_cgspi_00003_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ]
+      },
+      "widgets_values": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "widgets_values_named": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "strength": 1
+      },
+      "color": "#324B4B",
+      "bgcolor": "#324B4B"
+    },
+    {
+      "id": 127,
+      "type": "LCFilmStockColor",
+      "pos": [
+        -6620,
+        440
+      ],
+      "size": [
+        300,
+        540
+      ],
+      "flags": {},
+      "order": 66,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 246
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            269,
+            325
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "4ac98869e5f9ef0a5382ec86d105271257c09267",
+        "Node name for S&R": "LCFilmStockColor",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        },
+        "aux_id": "lonecatone23/ComfyUI_LC123_nodes",
+        "lc_preview_meta": [
+          {
+            "filename": "lc_after_temp_avepn_00002_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ],
+        "lc_before_meta": [
+          {
+            "filename": "lc_before_temp_avepn_00002_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ]
+      },
+      "widgets_values": [
+        "Slide / Kodak Ektachrome E100",
+        0.32,
+        -1,
+        -1,
+        -1
+      ],
+      "widgets_values_named": {
+        "film_stock": "Slide / Kodak Ektachrome E100",
+        "strength": 0.32,
+        "override_toe": -1,
+        "override_shoulder": -1,
+        "override_gamma": -1
+      },
+      "color": "#324B4B",
+      "bgcolor": "#324B4B"
+    },
+    {
+      "id": 128,
+      "type": "LoadImage",
+      "pos": [
+        -6620,
+        1360
+      ],
+      "size": [
+        300,
+        360
+      ],
+      "flags": {
+        "collapsed": false
+      },
+      "order": 4,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            280
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": [
+            248
+          ]
+        }
+      ],
+      "title": "Load watermark",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.31.0",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        "Logo no background_00001_.png",
+        "image"
+      ],
+      "widgets_values_named": {
+        "image": "Logo no background_00001_.png",
+        "upload": "image"
+      },
+      "color": "#233",
+      "bgcolor": "#355"
+    },
+    {
+      "id": 129,
+      "type": "LCBypassRelay",
+      "pos": [
+        -6620,
+        1320
+      ],
+      "size": [
+        270,
+        100
+      ],
+      "flags": {
+        "collapsed": true
+      },
+      "order": 77,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "any_1",
+          "shape": 7,
+          "type": "*",
+          "link": 247
+        },
+        {
+          "name": "any_2",
+          "type": "*",
+          "link": 248
+        },
+        {
+          "name": "any_3",
+          "type": "*",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "OPT_CONNECTION",
+          "type": "*",
+          "links": [
+            275
+          ]
+        }
+      ],
+      "title": "LC Watermark 💧",
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "155abf95de26033d7ea2b4348523c55982806f93",
+        "Node name for S&R": "LCBypassRelay",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "color": "#28281E",
+      "bgcolor": "#28281E"
+    },
+    {
+      "id": 130,
+      "type": "LCLightingControlV2",
+      "pos": [
+        -5830,
+        -1620
+      ],
+      "size": [
+        290,
+        910
+      ],
+      "flags": {},
+      "order": 44,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 249
+        },
+        {
+          "name": "normal_map",
+          "type": "IMAGE",
+          "link": 250
+        },
+        {
+          "name": "depth_map",
+          "type": "IMAGE",
+          "link": 251
+        },
+        {
+          "name": "mask",
+          "shape": 7,
+          "type": "MASK",
+          "link": 252
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            287
+          ]
+        },
+        {
+          "name": "shadow_mask",
+          "type": "MASK",
+          "links": [
+            255
+          ]
+        },
+        {
+          "name": "light_layer",
+          "type": "IMAGE",
+          "links": [
+            254
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "bfb1067b71bc70299c016cae8fad2fe0932fb8ba",
+        "Node name for S&R": "LCLightingControlV2",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        "",
+        "Rembrandt",
+        0.8,
+        "spot",
+        0.65,
+        0.6,
+        0.5,
+        1.4,
+        0.9,
+        0.1,
+        "none",
+        0.5,
+        false,
+        "spot",
+        -0.8,
+        -0.1,
+        0.5,
+        0.6,
+        1.2,
+        -0.15,
+        "none",
+        0.5,
+        0.3,
+        0.18,
+        "soft",
+        0.55,
+        0.3,
+        0.5,
+        0.8,
+        0.45,
+        false,
+        0.4,
+        0.3,
+        0.35,
+        0.5,
+        0.15,
+        0.4
+      ],
+      "widgets_values_named": {
+        "lc_light_stage": "",
+        "preset": "Rembrandt",
+        "blend": 0.8,
+        "light1_type": "spot",
+        "light1_x": 0.65,
+        "light1_y": 0.6,
+        "light1_z": 0.5,
+        "light1_brightness": 1.4,
+        "light1_spread": 0.9,
+        "light1_warmth": 0.1,
+        "light1_color": "none",
+        "light1_color_amount": 0.5,
+        "enable_light_2": false,
+        "light2_type": "spot",
+        "light2_x": -0.8,
+        "light2_y": -0.1,
+        "light2_z": 0.5,
+        "light2_brightness": 0.6,
+        "light2_spread": 1.2,
+        "light2_warmth": -0.15,
+        "light2_color": "none",
+        "light2_color_amount": 0.5,
+        "light_wrap": 0.3,
+        "fill": 0.18,
+        "shadows": "soft",
+        "shadow_amount": 0.55,
+        "shadow_blur": 0.3,
+        "background_shadow": 0.5,
+        "self_shadow": 0.8,
+        "relief": 0.45,
+        "advanced": false,
+        "depth_falloff": 0.4,
+        "shadow_height": 0.3,
+        "shadow_length": 0.35,
+        "shadow_softness": 0.5,
+        "subject_distance": 0.15,
+        "mask_dome": 0.4
+      },
+      "color": "#324B4B",
+      "bgcolor": "#324B4B"
+    },
+    {
+      "id": 131,
+      "type": "LCPreviewMask",
+      "pos": [
+        -6040,
+        -980
+      ],
+      "size": [
+        200,
+        280
+      ],
+      "flags": {},
+      "order": 35,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "mask",
+          "shape": 7,
+          "type": "MASK",
+          "link": 253
+        }
+      ],
+      "outputs": [
+        {
+          "name": "mask",
+          "type": "MASK",
+          "links": [
+            252
+          ]
+        }
+      ],
+      "title": "Target Mask 🎭",
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "7e2d1aeb3227d1c20192d54210f67ce09469ad6c",
+        "Node name for S&R": "LCPreviewMask",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        ""
+      ],
+      "widgets_values_named": {
+        "lc_preview": ""
+      },
+      "color": "#222",
+      "bgcolor": "#000"
+    },
+    {
+      "id": 132,
+      "type": "LCPreviewImage",
+      "pos": [
+        -5530,
+        -980
+      ],
+      "size": [
+        200,
+        280
+      ],
+      "flags": {},
+      "order": 50,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 254
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": []
+        }
+      ],
+      "title": "Light Layer ☀️",
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "24728b75a7291ed7d3ac57d6e23d906823392387",
+        "Node name for S&R": "LCPreviewImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        ""
+      ],
+      "widgets_values_named": {
+        "lc_preview": ""
+      },
+      "color": "#222",
+      "bgcolor": "#000"
+    },
+    {
+      "id": 133,
+      "type": "LCPreviewMask",
+      "pos": [
+        -5320,
+        -980
+      ],
+      "size": [
+        200,
+        280
+      ],
+      "flags": {},
+      "order": 49,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "mask",
+          "shape": 7,
+          "type": "MASK",
+          "link": 255
+        }
+      ],
+      "outputs": [
+        {
+          "name": "mask",
+          "type": "MASK",
+          "links": []
+        }
+      ],
+      "title": "Shadow Mask 🎭",
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "7e2d1aeb3227d1c20192d54210f67ce09469ad6c",
+        "Node name for S&R": "LCPreviewMask",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        ""
+      ],
+      "widgets_values_named": {
+        "lc_preview": ""
+      },
+      "color": "#222",
+      "bgcolor": "#000"
+    },
+    {
+      "id": 134,
+      "type": "MarkdownNote",
+      "pos": [
+        -6740,
+        -1410
+      ],
+      "size": [
+        320,
+        720
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "Lighting Control V2 Notes",
+      "properties": {
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "\n# LC Lighting Control V2 🔦 \n\n---\n\nRelight any image from a **normal map** + **depth map** (optional **subject mask**). Real cast shadows, hard or soft.\n\n✋ **Start here**\n- Pick a **preset**, then drag the light on the **stage**. That is 90% of it.\n- Change any value and the preset flips to **custom** (nothing is lost, it just gets a new label).\n- The old **LC Lighting Control 🔦** is a separate node and still works.\n\n### The stage\n- **Drag** = X / Y (where the light is. +X is right, +Y is up)\n- **Shift+drag** or **wheel** = Z (0 = side on, 1 = head on)\n- White = light 1, red = light 2. Pick a gel color and the handle takes it on.\n- The blue arrow shows where the shadow falls.\n- 💡 A light near the middle is head-on, so it throws no sideways shadow. Move it out to see one.\n\n### Presets\n- **Soft window** (left / right), **Rembrandt**, **Split** (hard side), **Top light**, **Under light**, **Rim / back light**, **Golden hour**, **Campfire**, **Cyberpunk**, **Key + fill**, **Flat front**\n- A preset sets everything, fine controls included. Start there, then nudge.\n\n### Each light\n- **type**: spot = a beam, sun = even light over the whole frame\n- **brightness**: 1.2 to 1.5 is a natural key light\n- **spread**: how wide the spot beam is (sun ignores it)\n- **warmth**: cool blue to warm orange. Golden hour lives around 0.7\n- **color** + **color_amount**: an optional colored gel (red, orange, yellow, green, cyan, blue, purple, magenta). 0.3 to 0.6 looks natural\n  - *note:* the color only shows where that light reaches, so \n  - 💡 dial the light size way down when using colors so it doesn't saturate the entire image\n  - shadows fall back to the neutral fill\n- **enable_light_2**: a second light. Fill or rim, keep it dim\n\n### The look\n- **blend**: relit vs original. 0.7 to 0.9 looks best\n- **light_wrap**: how gradually light rolls into shade on the face. 0 = hard lamp\n- **fill**: the floor the shadows never drop below. 0 = pitch black, 0.2 = natural\n\n### Shadows\n- **shadows**: soft / hard / off\n- **shadow_amount**: how dark\n- **shadow_blur**: blurs the edge. Shadow looks cut out? Raise this\n- **background_shadow**: 1 = a wall right behind, 0 = a distant background with nothing to catch a shadow\n- **self_shadow**: how strongly the subject shadows itself (nose, chin, hair). Needs a mask\n- **relief**: how deep the scene is in 3D. More = longer, stronger shadows\n- **advanced**: shows the rest (depth falloff, shadow height / length / softness, subject distance, mask dome)\n \n### Mask\n- Connect one and the subject throws a shadow on the wall behind it.\n- **subject_distance**: how far in front of the wall. 0 = flat against it\n\n### Outputs\n- **image**: the relit image\n- **shadow_mask**: white = lit, black = in shadow\n- **light_layer**: the light on its own (the color shows here too)\n\n### Quick fixes\n\n| Problem | Try |\n|---------|-----|\n| Harsh, cut out | raise **shadow_blur** or **light_wrap**, lower **blend** |\n| Muddy, too dark | raise **fill** or **brightness** |\n| Flat | lower **fill**, move the light off center, lower **Z** |\n| No shadow on the wall | connect the mask, raise **background_shadow** and **subject_distance** |\n| Shadow on a far-away room | lower **background_shadow** |\n\n\n## 💡 Portraits\n\n- start with **Rembrandt** or **Soft window**\n- **Warm scenes:** **Golden hour**, or **Campfire** for a low orange glow\n- **Neon:** **Cyberpunk** is two colored lights. Swap the colors to taste\n- **Two lights:** turn on **enable_light_2**, keep it dim (about 0.5) and cool\n- **Room behind the subject?** Set **background_shadow** to 0 to 0.2 so she isn't throwing shadows on a couch ten feet away\n- **Spot lights:** don't park one on the border of the stage, it messes up the cone\n- ⚠️ Shadows are strong on purpose (that's why there is a **blend**)\n\n\n---\n\n**\"True, nothing is. Permitted, everything is\"**  \n_Yoda Auditore. *Assassin's Wars*_\n\n\n---\n---\n\n# LC Lighting Control V2 🔦 \n\n---\n\n基于 **法线贴图** + **深度图**（可选 **主体蒙版**）给任意图片重新打光。真实的投射阴影，硬阴影或软阴影都可以。\n\n✋ **先看这里**\n- 选一个 **预设**，然后在 **灯光台** 上拖动灯光。这样就搞定 90% 了。\n- 改动任何数值，预设都会变成 **custom**（什么都不会丢，只是换了个标签）。\n- 旧的 **LC Lighting Control 🔦** 是独立节点，依然可用。\n\n### 灯光台\n- **拖动** = X / Y（灯的位置。+X 在右，+Y 在上）\n- **Shift+拖动** 或 **滚轮** = Z（0 = 侧面，1 = 正面）\n- 白色 = 灯 1，红色 = 灯 2。选了灯罩颜色，手柄就会变成那个颜色。\n- 蓝色箭头表示阴影落下的方向。\n- 💡 灯在中心附近就是正面光，不会有侧向阴影。把灯移出去才看得到。\n\n### 预设\n- **Soft window**（左 / 右）、**Rembrandt**、**Split**（硬侧光）、**Top light**、**Under light**、**Rim / back light**、**Golden hour**、**Campfire**、**Cyberpunk**、**Key + fill**、**Flat front**\n- 预设会设置所有参数，包括精细参数。先从预设开始，再微调。\n\n### 每盏灯\n- **type**：spot = 一束光，sun = 均匀照亮整个画面\n- **brightness**：1.2 到 1.5 是自然的主光\n- **spread**：聚光灯光束有多宽（sun 类型忽略）\n- **warmth**：冷蓝到暖橙。黄金时刻大约在 0.7\n- **color** + **color_amount**：可选的彩色灯罩（红、橙、黄、绿、青、蓝、紫、品红）。0.3 到 0.6 比较自然\n  - *提示：* 颜色只会出现在这盏灯照到的地方，所以阴影会回到中性的底光\n  - 💡 用颜色时把 **spread** 调得很小，这样颜色不会把整张图染满\n- **enable_light_2**：第二盏灯。用作补光或轮廓光，保持较暗\n\n### 整体效果\n- **blend**：重打光结果与原图的混合。0.7 到 0.9 效果最好\n- **light_wrap**：脸上从光到阴影的过渡有多渐进。0 = 硬灯\n- **fill**：阴影不会低于的底光。0 = 全黑，0.2 = 自然\n\n### 阴影\n- **shadows**：soft 软 / hard 硬 / off 关\n- **shadow_amount**：阴影有多深\n- **shadow_blur**：模糊阴影边缘。阴影像被剪出来的？调高它\n- **background_shadow**：1 = 身后紧贴一面墙，0 = 背景很远，没有东西能接住阴影\n- **self_shadow**：主体自身阴影的强度（鼻子、下巴、头发）。需要蒙版\n- **relief**：场景在 3D 里有多深。越大 = 阴影越长越重\n- **advanced**：显示其余参数（深度衰减、阴影高度 / 长度 / 柔和度、主体距离、蒙版穹顶）\n\n### 蒙版\n- 接入后，主体会在身后的墙上投下阴影。\n- **subject_distance**：主体离墙多远。0 = 贴着墙\n\n### 输出\n- **image**：重打光后的图片\n- **shadow_mask**：白 = 受光，黑 = 阴影\n- **light_layer**：单独的光照层（颜色也会显示在这里）\n\n### 快速修复\n\n| 问题 | 试试 |\n|------|------|\n| 太硬，像剪出来的 | 调高 **shadow_blur** 或 **light_wrap**，调低 **blend** |\n| 发闷，太暗 | 调高 **fill** 或 **brightness** |\n| 太平 | 调低 **fill**，把灯移离中心，调低 **Z** |\n| 墙上没有阴影 | 接入蒙版，调高 **background_shadow** 和 **subject_distance** |\n| 阴影落在很远的房间里 | 调低 **background_shadow** |\n\n\n## 💡 人像\n\n- 从 **Rembrandt** 或 **Soft window** 开始\n- **暖色场景：** **Golden hour**，或者用 **Campfire** 得到低位的橙色火光\n- **霓虹：** **Cyberpunk** 是两盏彩色灯。颜色随你换\n- **双灯：** 打开 **enable_light_2**，保持较暗（约 0.5）且偏冷\n- **主体身后是很深的房间？** 把 **background_shadow** 设为 0 到 0.2，这样她就不会把影子投到远处的沙发上\n- **聚光灯：** 别把灯放在灯光台边框上，会搞乱光锥\n- ⚠️ 阴影故意做得很强（所以才有 **blend**）\n\n\n---\n\n**\"True, nothing is. Permitted, everything is\"**  \n_Yoda Auditore. *Assassin's Wars*_\n\n"
+      ],
+      "widgets_values_named": {
+        "text": "\n# LC Lighting Control V2 🔦 \n\n---\n\nRelight any image from a **normal map** + **depth map** (optional **subject mask**). Real cast shadows, hard or soft.\n\n✋ **Start here**\n- Pick a **preset**, then drag the light on the **stage**. That is 90% of it.\n- Change any value and the preset flips to **custom** (nothing is lost, it just gets a new label).\n- The old **LC Lighting Control 🔦** is a separate node and still works.\n\n### The stage\n- **Drag** = X / Y (where the light is. +X is right, +Y is up)\n- **Shift+drag** or **wheel** = Z (0 = side on, 1 = head on)\n- White = light 1, red = light 2. Pick a gel color and the handle takes it on.\n- The blue arrow shows where the shadow falls.\n- 💡 A light near the middle is head-on, so it throws no sideways shadow. Move it out to see one.\n\n### Presets\n- **Soft window** (left / right), **Rembrandt**, **Split** (hard side), **Top light**, **Under light**, **Rim / back light**, **Golden hour**, **Campfire**, **Cyberpunk**, **Key + fill**, **Flat front**\n- A preset sets everything, fine controls included. Start there, then nudge.\n\n### Each light\n- **type**: spot = a beam, sun = even light over the whole frame\n- **brightness**: 1.2 to 1.5 is a natural key light\n- **spread**: how wide the spot beam is (sun ignores it)\n- **warmth**: cool blue to warm orange. Golden hour lives around 0.7\n- **color** + **color_amount**: an optional colored gel (red, orange, yellow, green, cyan, blue, purple, magenta). 0.3 to 0.6 looks natural\n  - *note:* the color only shows where that light reaches, so \n  - 💡 dial the light size way down when using colors so it doesn't saturate the entire image\n  - shadows fall back to the neutral fill\n- **enable_light_2**: a second light. Fill or rim, keep it dim\n\n### The look\n- **blend**: relit vs original. 0.7 to 0.9 looks best\n- **light_wrap**: how gradually light rolls into shade on the face. 0 = hard lamp\n- **fill**: the floor the shadows never drop below. 0 = pitch black, 0.2 = natural\n\n### Shadows\n- **shadows**: soft / hard / off\n- **shadow_amount**: how dark\n- **shadow_blur**: blurs the edge. Shadow looks cut out? Raise this\n- **background_shadow**: 1 = a wall right behind, 0 = a distant background with nothing to catch a shadow\n- **self_shadow**: how strongly the subject shadows itself (nose, chin, hair). Needs a mask\n- **relief**: how deep the scene is in 3D. More = longer, stronger shadows\n- **advanced**: shows the rest (depth falloff, shadow height / length / softness, subject distance, mask dome)\n \n### Mask\n- Connect one and the subject throws a shadow on the wall behind it.\n- **subject_distance**: how far in front of the wall. 0 = flat against it\n\n### Outputs\n- **image**: the relit image\n- **shadow_mask**: white = lit, black = in shadow\n- **light_layer**: the light on its own (the color shows here too)\n\n### Quick fixes\n\n| Problem | Try |\n|---------|-----|\n| Harsh, cut out | raise **shadow_blur** or **light_wrap**, lower **blend** |\n| Muddy, too dark | raise **fill** or **brightness** |\n| Flat | lower **fill**, move the light off center, lower **Z** |\n| No shadow on the wall | connect the mask, raise **background_shadow** and **subject_distance** |\n| Shadow on a far-away room | lower **background_shadow** |\n\n\n## 💡 Portraits\n\n- start with **Rembrandt** or **Soft window**\n- **Warm scenes:** **Golden hour**, or **Campfire** for a low orange glow\n- **Neon:** **Cyberpunk** is two colored lights. Swap the colors to taste\n- **Two lights:** turn on **enable_light_2**, keep it dim (about 0.5) and cool\n- **Room behind the subject?** Set **background_shadow** to 0 to 0.2 so she isn't throwing shadows on a couch ten feet away\n- **Spot lights:** don't park one on the border of the stage, it messes up the cone\n- ⚠️ Shadows are strong on purpose (that's why there is a **blend**)\n\n\n---\n\n**\"True, nothing is. Permitted, everything is\"**  \n_Yoda Auditore. *Assassin's Wars*_\n\n\n---\n---\n\n# LC Lighting Control V2 🔦 \n\n---\n\n基于 **法线贴图** + **深度图**（可选 **主体蒙版**）给任意图片重新打光。真实的投射阴影，硬阴影或软阴影都可以。\n\n✋ **先看这里**\n- 选一个 **预设**，然后在 **灯光台** 上拖动灯光。这样就搞定 90% 了。\n- 改动任何数值，预设都会变成 **custom**（什么都不会丢，只是换了个标签）。\n- 旧的 **LC Lighting Control 🔦** 是独立节点，依然可用。\n\n### 灯光台\n- **拖动** = X / Y（灯的位置。+X 在右，+Y 在上）\n- **Shift+拖动** 或 **滚轮** = Z（0 = 侧面，1 = 正面）\n- 白色 = 灯 1，红色 = 灯 2。选了灯罩颜色，手柄就会变成那个颜色。\n- 蓝色箭头表示阴影落下的方向。\n- 💡 灯在中心附近就是正面光，不会有侧向阴影。把灯移出去才看得到。\n\n### 预设\n- **Soft window**（左 / 右）、**Rembrandt**、**Split**（硬侧光）、**Top light**、**Under light**、**Rim / back light**、**Golden hour**、**Campfire**、**Cyberpunk**、**Key + fill**、**Flat front**\n- 预设会设置所有参数，包括精细参数。先从预设开始，再微调。\n\n### 每盏灯\n- **type**：spot = 一束光，sun = 均匀照亮整个画面\n- **brightness**：1.2 到 1.5 是自然的主光\n- **spread**：聚光灯光束有多宽（sun 类型忽略）\n- **warmth**：冷蓝到暖橙。黄金时刻大约在 0.7\n- **color** + **color_amount**：可选的彩色灯罩（红、橙、黄、绿、青、蓝、紫、品红）。0.3 到 0.6 比较自然\n  - *提示：* 颜色只会出现在这盏灯照到的地方，所以阴影会回到中性的底光\n  - 💡 用颜色时把 **spread** 调得很小，这样颜色不会把整张图染满\n- **enable_light_2**：第二盏灯。用作补光或轮廓光，保持较暗\n\n### 整体效果\n- **blend**：重打光结果与原图的混合。0.7 到 0.9 效果最好\n- **light_wrap**：脸上从光到阴影的过渡有多渐进。0 = 硬灯\n- **fill**：阴影不会低于的底光。0 = 全黑，0.2 = 自然\n\n### 阴影\n- **shadows**：soft 软 / hard 硬 / off 关\n- **shadow_amount**：阴影有多深\n- **shadow_blur**：模糊阴影边缘。阴影像被剪出来的？调高它\n- **background_shadow**：1 = 身后紧贴一面墙，0 = 背景很远，没有东西能接住阴影\n- **self_shadow**：主体自身阴影的强度（鼻子、下巴、头发）。需要蒙版\n- **relief**：场景在 3D 里有多深。越大 = 阴影越长越重\n- **advanced**：显示其余参数（深度衰减、阴影高度 / 长度 / 柔和度、主体距离、蒙版穹顶）\n\n### 蒙版\n- 接入后，主体会在身后的墙上投下阴影。\n- **subject_distance**：主体离墙多远。0 = 贴着墙\n\n### 输出\n- **image**：重打光后的图片\n- **shadow_mask**：白 = 受光，黑 = 阴影\n- **light_layer**：单独的光照层（颜色也会显示在这里）\n\n### 快速修复\n\n| 问题 | 试试 |\n|------|------|\n| 太硬，像剪出来的 | 调高 **shadow_blur** 或 **light_wrap**，调低 **blend** |\n| 发闷，太暗 | 调高 **fill** 或 **brightness** |\n| 太平 | 调低 **fill**，把灯移离中心，调低 **Z** |\n| 墙上没有阴影 | 接入蒙版，调高 **background_shadow** 和 **subject_distance** |\n| 阴影落在很远的房间里 | 调低 **background_shadow** |\n\n\n## 💡 人像\n\n- 从 **Rembrandt** 或 **Soft window** 开始\n- **暖色场景：** **Golden hour**，或者用 **Campfire** 得到低位的橙色火光\n- **霓虹：** **Cyberpunk** 是两盏彩色灯。颜色随你换\n- **双灯：** 打开 **enable_light_2**，保持较暗（约 0.5）且偏冷\n- **主体身后是很深的房间？** 把 **background_shadow** 设为 0 到 0.2，这样她就不会把影子投到远处的沙发上\n- **聚光灯：** 别把灯放在灯光台边框上，会搞乱光锥\n- ⚠️ 阴影故意做得很强（所以才有 **blend**）\n\n\n---\n\n**\"True, nothing is. Permitted, everything is\"**  \n_Yoda Auditore. *Assassin's Wars*_\n\n"
+      },
+      "color": "#222",
+      "bgcolor": "#000"
+    },
+    {
+      "id": 135,
+      "type": "LC Bypasser",
+      "pos": [
+        -6480,
+        390
+      ],
+      "size": [
+        300,
+        1400
+      ],
+      "flags": {
+        "collapsed": true
+      },
+      "order": 78,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "LC Color Match 🎨",
+          "type": "*",
+          "link": 256
+        },
+        {
+          "name": "enable",
+          "type": "BOOLEAN",
+          "link": null
+        },
+        {
+          "name": "LC Sharpen Pro",
+          "type": "*",
+          "link": 257
+        },
+        {
+          "name": "enable",
+          "type": "BOOLEAN",
+          "link": null
+        },
+        {
+          "name": "LC Image Adjust",
+          "type": "*",
+          "link": 258
+        },
+        {
+          "name": "enable",
+          "type": "BOOLEAN",
+          "link": null
+        },
+        {
+          "name": "LC Vibrance",
+          "type": "*",
+          "link": 259
+        },
+        {
+          "name": "enable",
+          "type": "BOOLEAN",
+          "link": null
+        },
+        {
+          "name": "LC Lift Gamma Gain",
+          "type": "*",
+          "link": 260
+        },
+        {
+          "name": "enable",
+          "type": "BOOLEAN",
+          "link": null
+        },
+        {
+          "name": "LC Auto White Balance",
+          "type": "*",
+          "link": 261
+        },
+        {
+          "name": "enable",
+          "type": "BOOLEAN",
+          "link": null
+        },
+        {
+          "name": "LC Image RGB",
+          "type": "*",
+          "link": 262
+        },
+        {
+          "name": "enable",
+          "type": "BOOLEAN",
+          "link": null
+        },
+        {
+          "name": "LC Lens Effects",
+          "type": "*",
+          "link": 263
+        },
+        {
+          "name": "enable",
+          "type": "BOOLEAN",
+          "link": null
+        },
+        {
+          "name": "LC Lens Profile",
+          "type": "*",
+          "link": 264
+        },
+        {
+          "name": "enable",
+          "type": "BOOLEAN",
+          "link": null
+        },
+        {
+          "name": "LC Chromatic Aberration",
+          "type": "*",
+          "link": 265
+        },
+        {
+          "name": "enable",
+          "type": "BOOLEAN",
+          "link": null
+        },
+        {
+          "name": "LC Bloom",
+          "type": "*",
+          "link": 266
+        },
+        {
+          "name": "enable",
+          "type": "BOOLEAN",
+          "link": null
+        },
+        {
+          "name": "LC Vignette",
+          "type": "*",
+          "link": 267
+        },
+        {
+          "name": "enable",
+          "type": "BOOLEAN",
+          "link": null
+        },
+        {
+          "name": "LC Film Stock (B&W)",
+          "type": "*",
+          "link": 268
+        },
+        {
+          "name": "enable",
+          "type": "BOOLEAN",
+          "link": null
+        },
+        {
+          "name": "LC Film Stock (Color)",
+          "type": "*",
+          "link": 269
+        },
+        {
+          "name": "enable",
+          "type": "BOOLEAN",
+          "link": null
+        },
+        {
+          "name": "LC Film Grain",
+          "type": "*",
+          "link": 270
+        },
+        {
+          "name": "enable",
+          "type": "BOOLEAN",
+          "link": null
+        },
+        {
+          "name": "LC Image Desaturate",
+          "type": "*",
+          "link": 271
+        },
+        {
+          "name": "enable",
+          "type": "BOOLEAN",
+          "link": null
+        },
+        {
+          "name": "LC Apply LUT",
+          "type": "*",
+          "link": 272
+        },
+        {
+          "name": "enable",
+          "type": "BOOLEAN",
+          "link": null
+        },
+        {
+          "name": "LC Image Crop 🖼️🔪",
+          "type": "*",
+          "link": 273
+        },
+        {
+          "name": "enable",
+          "type": "BOOLEAN",
+          "link": null
+        },
+        {
+          "name": "LC Text Overlay",
+          "type": "*",
+          "link": 274
+        },
+        {
+          "name": "enable",
+          "type": "BOOLEAN",
+          "link": null
+        },
+        {
+          "name": "LC Watermark 💧",
+          "type": "*",
+          "link": 275
+        },
+        {
+          "name": "enable",
+          "type": "BOOLEAN",
+          "link": null
+        },
+        {
+          "name": "LC Notify 🔊",
+          "type": "*",
+          "link": 276
+        },
+        {
+          "name": "enable",
+          "type": "BOOLEAN",
+          "link": null
+        },
+        {
+          "name": "",
+          "type": "*",
+          "link": null
+        },
+        {
+          "name": "enable",
+          "type": "BOOLEAN",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "OPT_CONNECTION",
+          "type": "*",
+          "links": [
+            241
+          ]
+        }
+      ],
+      "properties": {
+        "toggleRestriction": "default",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "widgets_values_named": {
+        "Enable LC Color Match 🎨": true,
+        "Enable LC Sharpen Pro": true,
+        "Enable LC Image Adjust": true,
+        "Enable LC Vibrance": true,
+        "Enable LC Lift Gamma Gain": true,
+        "Enable LC Auto White Balance": true,
+        "Enable LC Image RGB": true,
+        "Enable LC Lens Effects": true,
+        "Enable LC Lens Profile": true,
+        "Enable LC Chromatic Aberration": true,
+        "Enable LC Bloom": true,
+        "Enable LC Vignette": true,
+        "Enable LC Film Stock (B&W)": true,
+        "Enable LC Film Stock (Color)": true,
+        "Enable LC Film Grain": true,
+        "Enable LC Image Desaturate": true,
+        "Enable LC Apply LUT": true,
+        "Enable LC Image Crop 🖼️🔪": true,
+        "Enable LC Text Overlay": true,
+        "Enable LC Watermark 💧": true,
+        "Enable LC Notify 🔊": true
+      },
+      "color": "#28281E",
+      "bgcolor": "#28281E"
+    },
+    {
+      "id": 136,
+      "type": "LCAutoWhiteBalance",
+      "pos": [
+        -6930,
+        -220
+      ],
+      "size": [
+        300,
+        490
+      ],
+      "flags": {},
+      "order": 56,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 277
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            245,
+            261
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "4ac98869e5f9ef0a5382ec86d105271257c09267",
+        "Node name for S&R": "LCAutoWhiteBalance",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        },
+        "aux_id": "lonecatone23/ComfyUI_LC123_nodes",
+        "lc_preview_meta": [
+          {
+            "filename": "lc_after_temp_lvfth_00002_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ],
+        "lc_before_meta": [
+          {
+            "filename": "lc_before_temp_lvfth_00002_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ]
+      },
+      "widgets_values": [
+        "Shades of Gray",
+        6,
+        1
+      ],
+      "widgets_values_named": {
+        "method": "Shades of Gray",
+        "minkowski_p": 6,
+        "strength": 1
+      },
+      "color": "#324B4B",
+      "bgcolor": "#324B4B"
+    },
+    {
+      "id": 137,
+      "type": "LCFilmStockBW",
+      "pos": [
+        -6930,
+        440
+      ],
+      "size": [
+        300,
+        540
+      ],
+      "flags": {},
+      "order": 65,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 278
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            246,
+            268
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "4ac98869e5f9ef0a5382ec86d105271257c09267",
+        "Node name for S&R": "LCFilmStockBW",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        },
+        "aux_id": "lonecatone23/ComfyUI_LC123_nodes",
+        "lc_preview_meta": [
+          {
+            "filename": "lc_after_temp_isjlh_00002_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ],
+        "lc_before_meta": [
+          {
+            "filename": "lc_before_temp_isjlh_00002_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ]
+      },
+      "widgets_values": [
+        "Fuji Acros 100",
+        "None",
+        1,
+        0,
+        0
+      ],
+      "widgets_values_named": {
+        "film_stock": "Fuji Acros 100",
+        "color_filter": "None",
+        "strength": 1,
+        "contrast": 0,
+        "exposure_shift": 0
+      },
+      "color": "#324B4B",
+      "bgcolor": "#324B4B"
+    },
+    {
+      "id": 138,
+      "type": "LCWatermark",
+      "pos": [
+        -6930,
+        1160
+      ],
+      "size": [
+        300,
+        560
+      ],
+      "flags": {},
+      "order": 72,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 279
+        },
+        {
+          "name": "watermark",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 280
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            240,
+            242,
+            243,
+            244,
+            247
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "4ac98869e5f9ef0a5382ec86d105271257c09267",
+        "Node name for S&R": "LCWatermark",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        },
+        "aux_id": "lonecatone23/ComfyUI_LC123_nodes",
+        "lc_preview_meta": [
+          {
+            "filename": "lc_after_temp_txkdp_00001_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ],
+        "lc_before_meta": [
+          {
+            "filename": "lc_before_temp_nkhuk_00002_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ],
+        "lc_wm_meta": [
+          {
+            "filename": "lc_wm_temp_nkhuk_00002_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ]
+      },
+      "widgets_values": [
+        19,
+        0.6,
+        10.5,
+        96,
+        2.5
+      ],
+      "widgets_values_named": {
+        "size_percent": 19,
+        "opacity": 0.6,
+        "x_percent": 10.5,
+        "y_percent": 96,
+        "margin_percent": 2.5
+      },
+      "color": "#324B4B",
+      "bgcolor": "#324B4B"
+    },
+    {
+      "id": 139,
+      "type": "LCSkinUpscale",
+      "pos": [
+        -7110,
+        -1490
+      ],
+      "size": [
+        300,
+        630
+      ],
+      "flags": {},
+      "order": 51,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 281
+        },
+        {
+          "name": "upscale_model",
+          "type": "UPSCALE_MODEL",
+          "link": 282
+        },
+        {
+          "name": "mask",
+          "shape": 7,
+          "type": "MASK",
+          "link": 283
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            307,
+            317
+          ]
+        },
+        {
+          "name": "skin_mask",
+          "type": "MASK",
+          "links": []
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "2965616a343ef7c117c204dfabaf6ffa692ae982",
+        "Node name for S&R": "LCSkinUpscale",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        },
+        "lc_preview_meta": [
+          {
+            "filename": "lc_after_temp_ahljt_00002_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ],
+        "lc_before_meta": [
+          {
+            "filename": "lc_before_temp_ahljt_00002_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ]
+      },
+      "widgets_values": [
+        "detail 1x",
+        0.45,
+        "input",
+        0.55,
+        0.45,
+        512,
+        32
+      ],
+      "widgets_values_named": {
+        "mode": "detail 1x",
+        "blend": 0.45,
+        "mask_source": "input",
+        "mask_sensitivity": 0.55,
+        "mask_feather": 0.45,
+        "tile": 512,
+        "overlap": 32
+      },
+      "color": "#324B4B",
+      "bgcolor": "#324B4B"
+    },
+    {
+      "id": 140,
+      "type": "LCRemBG",
+      "pos": [
+        -6400,
+        -1210
+      ],
+      "size": [
+        340,
+        340
+      ],
+      "flags": {},
+      "order": 28,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 284
+        }
+      ],
+      "outputs": [
+        {
+          "name": "cutout",
+          "type": "IMAGE",
+          "links": []
+        },
+        {
+          "name": "mask",
+          "type": "MASK",
+          "links": [
+            253
+          ]
+        },
+        {
+          "name": "on_background",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC_MaskMaker_nodes",
+        "ver": "3f344dd1f4d2e4dbe30b35e08757f8f4d60cb000",
+        "Node name for S&R": "LCRemBG",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        "BiRefNet general (MIT)",
+        "none",
+        "models/vitmatte (local)",
+        0,
+        10,
+        10,
+        0,
+        1,
+        0,
+        2,
+        "black"
+      ],
+      "widgets_values_named": {
+        "model": "BiRefNet general (MIT)",
+        "refine": "none",
+        "vitmatte_model": "models/vitmatte (local)",
+        "grow": 0,
+        "edge_erode": 10,
+        "edge_dilate": 10,
+        "black_point": 0,
+        "white_point": 1,
+        "feather": 0,
+        "max_megapixels": 2,
+        "background": "black"
+      },
+      "color": "#324b4b",
+      "bgcolor": "#324b4b"
+    },
+    {
+      "id": 141,
+      "type": "LCPreviewImage",
+      "pos": [
+        -6050,
+        -1300
+      ],
+      "size": [
+        210,
+        280
+      ],
+      "flags": {},
+      "order": 40,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 285
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            251
+          ]
+        }
+      ],
+      "title": "Depth Map 🗺️",
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "24728b75a7291ed7d3ac57d6e23d906823392387",
+        "Node name for S&R": "LCPreviewImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        ""
+      ],
+      "widgets_values_named": {
+        "lc_preview": ""
+      },
+      "color": "#222",
+      "bgcolor": "#000"
+    },
+    {
+      "id": 142,
+      "type": "LCDynamicOverlay",
+      "pos": [
+        -5530,
+        -1620
+      ],
+      "size": [
+        410,
+        600
+      ],
+      "flags": {},
+      "order": 48,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "before",
+          "name": "image_a",
+          "type": "IMAGE",
+          "link": 286
+        },
+        {
+          "label": "relight 🔦",
+          "name": "image_b",
+          "type": "IMAGE",
+          "link": 287
+        }
+      ],
+      "outputs": [
+        {
+          "name": "blended Image",
+          "type": "IMAGE",
+          "links": [
+            301
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "f6f835f2c1478c00537a13d874320e122a6fa82d",
+        "Node name for S&R": "LCDynamicOverlay",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        0.71
+      ],
+      "widgets_values_named": {
+        "opacity": 0.71
+      },
+      "color": "#324B4B",
+      "bgcolor": "#324B4B"
+    },
+    {
+      "id": 143,
+      "type": "Label (rgthree)",
+      "pos": [
+        -7790,
+        -340
+      ],
+      "size": [
+        736.6025390625,
+        22
+      ],
+      "flags": {
+        "allow_interaction": true
+      },
+      "order": 6,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "Wipe can be turned off/on to save VRAM in the ⚙️settings area of ComfyUI",
+      "properties": {
+        "fontSize": 22,
+        "fontFamily": "Arial",
+        "fontColor": "#ffffff",
+        "textAlign": "left",
+        "backgroundColor": "transparent",
+        "padding": 0,
+        "borderRadius": 0,
+        "angle": 0,
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "color": "#fff0",
+      "bgcolor": "#fff0"
+    },
+    {
+      "id": 144,
+      "type": "LCLiftGammaGain",
+      "pos": [
+        -7240,
+        -270
+      ],
+      "size": [
+        300,
+        540
+      ],
+      "flags": {},
+      "order": 52,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 288
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            260,
+            277
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "4ac98869e5f9ef0a5382ec86d105271257c09267",
+        "Node name for S&R": "LCLiftGammaGain",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        },
+        "aux_id": "lonecatone23/ComfyUI_LC123_nodes",
+        "lc_preview_meta": [
+          {
+            "filename": "lc_after_temp_mhypx_00002_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ],
+        "lc_before_meta": [
+          {
+            "filename": "lc_before_temp_mhypx_00002_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ]
+      },
+      "widgets_values": [
+        0.01,
+        1,
+        0.9,
+        0,
+        0.5
+      ],
+      "widgets_values_named": {
+        "lift": 0.01,
+        "gamma": 1,
+        "gain": 0.9,
+        "offset": 0,
+        "strength": 0.5
+      },
+      "color": "#324B4B",
+      "bgcolor": "#324B4B"
+    },
+    {
+      "id": 145,
+      "type": "LCVignette",
+      "pos": [
+        -7240,
+        380
+      ],
+      "size": [
+        300,
+        600
+      ],
+      "flags": {},
+      "order": 64,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 289
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            267,
+            278
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "4ac98869e5f9ef0a5382ec86d105271257c09267",
+        "Node name for S&R": "LCVignette",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        },
+        "aux_id": "lonecatone23/ComfyUI_LC123_nodes",
+        "lc_preview_meta": [
+          {
+            "filename": "lc_after_temp_iagii_00002_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ],
+        "lc_before_meta": [
+          {
+            "filename": "lc_before_temp_iagii_00002_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ]
+      },
+      "widgets_values": [
+        0.25,
+        0.55,
+        0.8,
+        0.35,
+        true,
+        1,
+        1,
+        1.05
+      ],
+      "widgets_values_named": {
+        "intensity": 0.25,
+        "midpoint": 0.55,
+        "roundness": 0.8,
+        "feather": 0.35,
+        "cos4_falloff": true,
+        "tint_r": 1,
+        "tint_g": 1,
+        "tint_b": 1.05
+      },
+      "color": "#324B4B",
+      "bgcolor": "#324B4B"
+    },
+    {
+      "id": 147,
+      "type": "LCDepthAnythingV2",
+      "pos": [
+        -6400,
+        -1380
+      ],
+      "size": [
+        340,
+        130
+      ],
+      "flags": {},
+      "order": 36,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 291
+        },
+        {
+          "name": "resolution",
+          "type": "INT",
+          "widget": {
+            "name": "resolution"
+          },
+          "link": 292
+        }
+      ],
+      "outputs": [
+        {
+          "name": "depth",
+          "type": "IMAGE",
+          "links": [
+            285
+          ]
+        },
+        {
+          "name": "depth_mask",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC_MaskMaker_nodes",
+        "ver": "3f344dd1f4d2e4dbe30b35e08757f8f4d60cb000",
+        "Node name for S&R": "LCDepthAnythingV2",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        "depth_anything_v2_vits.pth (Depth Anything V2 Small, Apache-2.0, from comfyui_controlnet_aux)",
+        518,
+        true
+      ],
+      "widgets_values_named": {
+        "model": "depth_anything_v2_vits.pth (Depth Anything V2 Small, Apache-2.0, from comfyui_controlnet_aux)",
+        "resolution": 518,
+        "invert": true
+      },
+      "color": "#324b4b",
+      "bgcolor": "#324b4b"
+    },
+    {
+      "id": 148,
+      "type": "LCSkinBeauty",
+      "pos": [
+        -7420,
+        -1600
+      ],
+      "size": [
+        300,
+        740
+      ],
+      "flags": {},
+      "order": 45,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 293
+        },
+        {
+          "name": "mask",
+          "shape": 7,
+          "type": "MASK",
+          "link": 294
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            281,
+            306
+          ]
+        },
+        {
+          "name": "skin_mask",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "71d771a59e409597e4de43a6ffb8fde461f30eb3",
+        "Node name for S&R": "LCSkinBeauty",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        },
+        "lc_preview_meta": [
+          {
+            "filename": "lc_after_temp_lfnbq_00002_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ],
+        "lc_before_meta": [
+          {
+            "filename": "lc_before_temp_lfnbq_00002_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ]
+      },
+      "widgets_values": [
+        "Custom",
+        0.6,
+        0.22,
+        0.12,
+        0.08,
+        0.18,
+        0.15,
+        0.06,
+        0.88,
+        -0.08,
+        0.75,
+        0.55,
+        0.45
+      ],
+      "widgets_values_named": {
+        "preset": "Custom",
+        "strength": 0.6,
+        "coolness": 0.22,
+        "brightness": 0.12,
+        "rosy": 0.08,
+        "evenness": 0.18,
+        "shadow_lift": 0.15,
+        "smooth": 0.06,
+        "texture_preserve": 0.88,
+        "saturation": -0.08,
+        "highlight_protect": 0.75,
+        "mask_sensitivity": 0.55,
+        "mask_feather": 0.45
+      },
+      "color": "#324B4B",
+      "bgcolor": "#324B4B"
+    },
+    {
+      "id": 149,
+      "type": "LCPreviewImage",
+      "pos": [
+        -6050,
+        -1620
+      ],
+      "size": [
+        210,
+        280
+      ],
+      "flags": {},
+      "order": 41,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 295
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            250
+          ]
+        }
+      ],
+      "title": "BAE Normal Map 🗺️",
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "24728b75a7291ed7d3ac57d6e23d906823392387",
+        "Node name for S&R": "LCPreviewImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        ""
+      ],
+      "widgets_values_named": {
+        "lc_preview": ""
+      },
+      "color": "#222",
+      "bgcolor": "#000"
+    },
+    {
+      "id": 150,
+      "type": "Label (rgthree)",
+      "pos": [
+        -7790,
+        -380
+      ],
+      "size": [
+        551.421875,
+        32
+      ],
+      "flags": {
+        "allow_interaction": true
+      },
+      "order": 7,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "Hover over any node for a before/ after",
+      "properties": {
+        "fontSize": 32,
+        "fontFamily": "Arial",
+        "fontColor": "#ffffff",
+        "textAlign": "left",
+        "backgroundColor": "transparent",
+        "padding": 0,
+        "borderRadius": 0,
+        "angle": 0,
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "color": "#fff0",
+      "bgcolor": "#fff0"
+    },
+    {
+      "id": 151,
+      "type": "LCVibrance",
+      "pos": [
+        -7550,
+        -250
+      ],
+      "size": [
+        300,
+        520
+      ],
+      "flags": {},
+      "order": 47,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 296
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            259,
+            288
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "4ac98869e5f9ef0a5382ec86d105271257c09267",
+        "Node name for S&R": "LCVibrance",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        },
+        "aux_id": "lonecatone23/ComfyUI_LC123_nodes",
+        "lc_preview_meta": [
+          {
+            "filename": "lc_after_temp_jiqrt_00002_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ],
+        "lc_before_meta": [
+          {
+            "filename": "lc_before_temp_jiqrt_00002_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ]
+      },
+      "widgets_values": [
+        94.54541015625,
+        0,
+        true,
+        0.67
+      ],
+      "widgets_values_named": {
+        "vibrance": 94.54541015625,
+        "saturation": 0,
+        "protect_skin": true,
+        "strength": 0.67
+      },
+      "color": "#324B4B",
+      "bgcolor": "#324B4B"
+    },
+    {
+      "id": 152,
+      "type": "LCBloom",
+      "pos": [
+        -7550,
+        420
+      ],
+      "size": [
+        300,
+        560
+      ],
+      "flags": {},
+      "order": 63,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 297
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            266,
+            289
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "4ac98869e5f9ef0a5382ec86d105271257c09267",
+        "Node name for S&R": "LCBloom",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        },
+        "aux_id": "lonecatone23/ComfyUI_LC123_nodes",
+        "lc_preview_meta": [
+          {
+            "filename": "lc_after_temp_ljdpf_00002_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ],
+        "lc_before_meta": [
+          {
+            "filename": "lc_before_temp_ljdpf_00002_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ]
+      },
+      "widgets_values": [
+        1,
+        0.65,
+        0.3,
+        1,
+        0.94,
+        1
+      ],
+      "widgets_values_named": {
+        "intensity": 1,
+        "threshold": 0.65,
+        "smoothing": 0.3,
+        "radius": 1,
+        "saturation": 0.94,
+        "exposure": 1
+      },
+      "color": "#324B4B",
+      "bgcolor": "#324B4B"
+    },
+    {
+      "id": 153,
+      "type": "LCImageCrop",
+      "pos": [
+        -7550,
+        1290
+      ],
+      "size": [
+        300,
+        430
+      ],
+      "flags": {},
+      "order": 70,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 298
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            273,
+            290
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "4ac98869e5f9ef0a5382ec86d105271257c09267",
+        "Node name for S&R": "LCImageCrop",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        },
+        "aux_id": "lonecatone23/ComfyUI_LC123_nodes"
+      },
+      "widgets_values": [
+        0,
+        0,
+        100,
+        100,
+        "free"
+      ],
+      "widgets_values_named": {
+        "x": 0,
+        "y": 0,
+        "width": 100,
+        "height": 100,
+        "aspect": "free"
+      },
+      "color": "#324B4B",
+      "bgcolor": "#324B4B"
+    },
+    {
+      "id": 154,
+      "type": "LCNormalBAE",
+      "pos": [
+        -6400,
+        -1580
+      ],
+      "size": [
+        340,
+        160
+      ],
+      "flags": {},
+      "order": 37,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 299
+        },
+        {
+          "name": "resolution",
+          "type": "INT",
+          "widget": {
+            "name": "resolution"
+          },
+          "link": 300
+        }
+      ],
+      "outputs": [
+        {
+          "name": "normal_map",
+          "type": "IMAGE",
+          "links": [
+            295
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC_MaskMaker_nodes",
+        "ver": "3f344dd1f4d2e4dbe30b35e08757f8f4d60cb000",
+        "Node name for S&R": "LCNormalBAE",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        "scannet.pt (BAE normals, ScanNet-trained; license unclear, verify before commercial use) [from comfyui_controlnet_aux]",
+        512,
+        false,
+        3,
+        1
+      ],
+      "widgets_values_named": {
+        "model": "scannet.pt (BAE normals, ScanNet-trained; license unclear, verify before commercial use) [from comfyui_controlnet_aux]",
+        "resolution": 512,
+        "flip_y": false,
+        "blur_radius": 3,
+        "sigma": 1
+      },
+      "color": "#324b4b",
+      "bgcolor": "#324b4b"
+    },
+    {
+      "id": 155,
+      "type": "LCAnySwitch",
+      "pos": [
+        -6740,
+        -1490
+      ],
+      "size": [
+        330,
+        120
+      ],
+      "flags": {
+        "collapsed": true
+      },
+      "order": 53,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "IMAGE",
+          "name": "any_01",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 301
+        },
+        {
+          "label": "IMAGE",
+          "name": "any_02",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 302
+        }
+      ],
+      "outputs": [
+        {
+          "label": "IMAGE",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            303
+          ]
+        }
+      ],
+      "title": "image switch",
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "7e2d1aeb3227d1c20192d54210f67ce09469ad6c",
+        "Node name for S&R": "LCAnySwitch",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {
+            "any_01": true,
+            "any_02": true,
+            "any_03": true,
+            "any_04": true,
+            "any_05": true,
+            "any_06": true,
+            "any_07": true,
+            "any_08": true,
+            "any_09": true,
+            "any_10": true,
+            "any_11": true,
+            "any_12": true,
+            "any_13": true,
+            "any_14": true,
+            "any_15": true,
+            "any_16": true,
+            "any_17": true,
+            "any_18": true,
+            "any_19": true,
+            "any_20": true
+          },
+          "send_to_any": 0,
+          "apply_to_unrepeated": 0,
+          "version": "7.8"
+        },
+        "lc_w": 330,
+        "lc_h": 120
+      },
+      "widgets_values": [
+        2
+      ],
+      "widgets_values_named": {
+        "inputcount": 2
+      },
+      "color": "#222",
+      "bgcolor": "#000"
+    },
+    {
+      "id": 156,
+      "type": "SetNode",
+      "pos": [
+        -6740,
+        -1450
+      ],
+      "size": [
+        210,
+        40
+      ],
+      "flags": {
+        "collapsed": true
+      },
+      "order": 57,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "*",
+          "type": "*",
+          "link": 303
+        }
+      ],
+      "outputs": [
+        {
+          "name": "*",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "title": "Set_Lighting Control 🔦",
+      "properties": {
+        "Node name for S&R": "SetNode",
+        "aux_id": "kijai/ComfyUI-KJNodes",
+        "previousName": "Lighting Control 🔦",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "Lighting Control 🔦"
+      ],
+      "widgets_values_named": {
+        "Constant": "Lighting Control 🔦"
+      }
+    },
+    {
+      "id": 157,
+      "type": "GetNode",
+      "pos": [
+        -6740,
+        -1530
+      ],
+      "size": [
+        210,
+        40
+      ],
+      "flags": {
+        "collapsed": true
+      },
+      "order": 8,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            249,
+            284,
+            286,
+            291,
+            299,
+            302,
+            308
+          ]
+        }
+      ],
+      "title": "Get_Skin Realism",
+      "properties": {
+        "Node name for S&R": "GetNode",
+        "aux_id": "kijai/ComfyUI-KJNodes",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "Skin Realism"
+      ],
+      "widgets_values_named": {
+        "Constant": "Skin Realism"
+      },
+      "color": "#2a363b",
+      "bgcolor": "#3f5159"
+    },
+    {
+      "id": 158,
+      "type": "UpscaleModelLoader",
+      "pos": [
+        -7111.062858633886,
+        -1597.4534197076955
+      ],
+      "size": [
+        300,
+        70
+      ],
+      "flags": {
+        "pinned": true
+      },
+      "order": 9,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "UPSCALE_MODEL",
+          "type": "UPSCALE_MODEL",
+          "links": [
+            282
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.34.0",
+        "Node name for S&R": "UpscaleModelLoader",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        "1xSkinContrast-High-SuperUltraCompact.pth"
+      ],
+      "widgets_values_named": {
+        "model_name": "1xSkinContrast-High-SuperUltraCompact.pth"
+      },
+      "color": "#222",
+      "bgcolor": "#000"
+    },
+    {
+      "id": 159,
+      "type": "LCPersonMask",
+      "pos": [
+        -7760,
+        -1600
+      ],
+      "size": [
+        330,
+        460
+      ],
+      "flags": {},
+      "order": 38,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 304
+        }
+      ],
+      "outputs": [
+        {
+          "name": "cutout",
+          "type": "IMAGE",
+          "links": [
+            309
+          ]
+        },
+        {
+          "name": "mask",
+          "type": "MASK",
+          "links": [
+            316
+          ]
+        },
+        {
+          "name": "raw_mask",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC_MaskMaker_nodes",
+        "ver": "3f344dd1f4d2e4dbe30b35e08757f8f4d60cb000",
+        "Node name for S&R": "LCPersonMask",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        "segformer",
+        "models/segformer_b2_clothes (local)",
+        true,
+        false,
+        true,
+        false,
+        false,
+        false,
+        0.4,
+        "vitmatte",
+        "models/vitmatte (local)",
+        10,
+        10,
+        0.01,
+        0.99,
+        2
+      ],
+      "widgets_values_named": {
+        "engine": "segformer",
+        "segformer_model": "models/segformer_b2_clothes (local)",
+        "face": true,
+        "hair": false,
+        "body": true,
+        "clothes": false,
+        "accessories": false,
+        "background": false,
+        "confidence": 0.4,
+        "refine": "vitmatte",
+        "vitmatte_model": "models/vitmatte (local)",
+        "edge_erode": 10,
+        "edge_dilate": 10,
+        "black_point": 0.01,
+        "white_point": 0.99,
+        "max_megapixels": 2
+      },
+      "color": "#324b4b",
+      "bgcolor": "#324b4b"
+    },
+    {
+      "id": 161,
+      "type": "LC Bypasser",
+      "pos": [
+        -7561.062858633886,
+        -1057.4534197076955
+      ],
+      "size": [
+        280,
+        310
+      ],
+      "flags": {
+        "collapsed": true,
+        "pinned": true
+      },
+      "order": 54,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "LC Image Denoise",
+          "type": "*",
+          "link": 305
+        },
+        {
+          "name": "enable",
+          "type": "BOOLEAN",
+          "link": null
+        },
+        {
+          "name": "LC Skin Beauty ✨",
+          "type": "*",
+          "link": 306
+        },
+        {
+          "name": "enable",
+          "type": "BOOLEAN",
+          "link": null
+        },
+        {
+          "name": "LC Skin Upscale",
+          "type": "*",
+          "link": 307
+        },
+        {
+          "name": "enable",
+          "type": "BOOLEAN",
+          "link": null
+        },
+        {
+          "name": "",
+          "type": "*",
+          "link": null
+        },
+        {
+          "name": "enable",
+          "type": "BOOLEAN",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "OPT_CONNECTION",
+          "type": "*",
+          "links": [
+            322
+          ]
+        }
+      ],
+      "properties": {
+        "toggleRestriction": "default",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        true,
+        true,
+        true
+      ],
+      "widgets_values_named": {
+        "Enable LC Image Denoise": true,
+        "Enable LC Skin Beauty ✨": true,
+        "Enable LC Skin Upscale": true
+      },
+      "color": "#28281E",
+      "bgcolor": "#28281E"
+    },
+    {
+      "id": 162,
+      "type": "LCImageToTotalMegapixels",
+      "pos": [
+        -6400,
+        -1620
+      ],
+      "size": [
+        320,
+        150
+      ],
+      "flags": {
+        "collapsed": true
+      },
+      "order": 29,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 308
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": []
+        },
+        {
+          "name": "resolution",
+          "type": "INT",
+          "links": [
+            292,
+            300
+          ]
+        },
+        {
+          "name": "megapixels",
+          "type": "FLOAT",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "725b8198884b4b62a392d5b00fba114e1c23303d",
+        "Node name for S&R": "LCImageToTotalMegapixels",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        "lanczos",
+        1,
+        1
+      ],
+      "widgets_values_named": {
+        "upscale_method": "lanczos",
+        "megapixels": 1,
+        "resolution_steps": 1
+      },
+      "color": "#324B4B",
+      "bgcolor": "#324B4B"
+    },
+    {
+      "id": 163,
+      "type": "LC Mute",
+      "pos": [
+        -7561.062858633886,
+        -1097.4534197076955
+      ],
+      "size": [
+        280,
+        250
+      ],
+      "flags": {
+        "collapsed": true,
+        "pinned": true
+      },
+      "order": 46,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "LC Person Mask 🧍",
+          "type": "*",
+          "link": 309
+        },
+        {
+          "name": "enable",
+          "type": "BOOLEAN",
+          "link": 310
+        },
+        {
+          "name": "LC Preview Mask 🎭",
+          "type": "*",
+          "link": 311
+        },
+        {
+          "name": "enable",
+          "type": "BOOLEAN",
+          "link": 312
+        },
+        {
+          "name": "",
+          "type": "*",
+          "link": null
+        },
+        {
+          "name": "enable",
+          "type": "BOOLEAN",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "OPT_CONNECTION",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "toggleRestriction": "default",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        true,
+        true
+      ],
+      "widgets_values_named": {
+        "🔒 Enable LC Person Mask 🧍": true,
+        "🔒 Enable LC Preview Mask 🎭": true
+      },
+      "color": "#28281E",
+      "bgcolor": "#28281E"
+    },
+    {
+      "id": 164,
+      "type": "LCImageAdjust",
+      "pos": [
+        -7860,
+        -270
+      ],
+      "size": [
+        300,
+        540
+      ],
+      "flags": {},
+      "order": 43,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 313
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            258,
+            296
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "4ac98869e5f9ef0a5382ec86d105271257c09267",
+        "Node name for S&R": "LCImageAdjust",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        },
+        "aux_id": "lonecatone23/ComfyUI_LC123_nodes",
+        "lc_preview_meta": [
+          {
+            "filename": "lc_after_temp_fbddu_00003_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ],
+        "lc_before_meta": [
+          {
+            "filename": "lc_before_temp_fbddu_00003_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ]
+      },
+      "widgets_values": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "widgets_values_named": {
+        "hue": 0,
+        "saturation": 0,
+        "brightness": 0,
+        "contrast": 0,
+        "sharpness": 0
+      },
+      "color": "#324B4B",
+      "bgcolor": "#324B4B"
+    },
+    {
+      "id": 165,
+      "type": "LCChromaticAberration",
+      "pos": [
+        -7860,
+        420
+      ],
+      "size": [
+        300,
+        560
+      ],
+      "flags": {},
+      "order": 62,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 314
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            265,
+            297
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "4ac98869e5f9ef0a5382ec86d105271257c09267",
+        "Node name for S&R": "LCChromaticAberration",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        },
+        "aux_id": "lonecatone23/ComfyUI_LC123_nodes",
+        "lc_preview_meta": [
+          {
+            "filename": "lc_after_temp_grzql_00002_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ],
+        "lc_before_meta": [
+          {
+            "filename": "lc_before_temp_grzql_00002_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ]
+      },
+      "widgets_values": [
+        -3,
+        "horizontal",
+        -2,
+        "horizontal",
+        -8,
+        "horizontal"
+      ],
+      "widgets_values_named": {
+        "red_shift": -3,
+        "red_direction": "horizontal",
+        "green_shift": -2,
+        "green_direction": "horizontal",
+        "blue_shift": -8,
+        "blue_direction": "horizontal"
+      },
+      "color": "#324B4B",
+      "bgcolor": "#324B4B"
+    },
+    {
+      "id": 166,
+      "type": "LCApplyLUT",
+      "pos": [
+        -7860,
+        1230
+      ],
+      "size": [
+        300,
+        490
+      ],
+      "flags": {},
+      "order": 69,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 315
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            272,
+            298
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "fd45171f9af29d6bb018d9bbf35524262c62b66c",
+        "Node name for S&R": "LCApplyLUT",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        },
+        "lc_preview_meta": [
+          {
+            "filename": "lc_after_temp_aifau_00002_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ],
+        "lc_before_meta": [
+          {
+            "filename": "lc_before_temp_aifau_00002_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ]
+      },
+      "widgets_values": [
+        "LC_Crushed_Blacks.cube",
+        0.1,
+        false
+      ],
+      "widgets_values_named": {
+        "lut_name": "LC_Crushed_Blacks.cube",
+        "strength": 0.1,
+        "log": false
+      },
+      "color": "#324B4B",
+      "bgcolor": "#324B4B"
+    },
+    {
+      "id": 167,
+      "type": "LCPreviewMask",
+      "pos": [
+        -7760,
+        -1100
+      ],
+      "size": [
+        180,
+        240
+      ],
+      "flags": {},
+      "order": 42,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "mask",
+          "shape": 7,
+          "type": "MASK",
+          "link": 316
+        }
+      ],
+      "outputs": [
+        {
+          "name": "mask",
+          "type": "MASK",
+          "links": [
+            283,
+            294,
+            311
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "24728b75a7291ed7d3ac57d6e23d906823392387",
+        "Node name for S&R": "LCPreviewMask",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        ""
+      ],
+      "widgets_values_named": {
+        "lc_preview": ""
+      },
+      "color": "#222",
+      "bgcolor": "#000"
+    },
+    {
+      "id": 168,
+      "type": "Label (rgthree)",
+      "pos": [
+        -8490,
+        -590
+      ],
+      "size": [
+        785.68359375,
+        55
+      ],
+      "flags": {
+        "allow_interaction": true
+      },
+      "order": 10,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "This is meant to be broken up!!!!",
+      "properties": {
+        "fontSize": 55,
+        "fontFamily": "Arial",
+        "fontColor": "#9f2214",
+        "textAlign": "left",
+        "backgroundColor": "transparent",
+        "padding": 0,
+        "borderRadius": 0,
+        "angle": 0,
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "color": "#fff0",
+      "bgcolor": "#fff0"
+    },
+    {
+      "id": 169,
+      "type": "SetNode",
+      "pos": [
+        -7311.062858633886,
+        -1657.4534197076955
+      ],
+      "size": [
+        210,
+        40
+      ],
+      "flags": {
+        "collapsed": true,
+        "pinned": true
+      },
+      "order": 55,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "link": 317
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "title": "Set_Skin Realism",
+      "properties": {
+        "Node name for S&R": "SetNode",
+        "aux_id": "kijai/ComfyUI-KJNodes",
+        "previousName": "Skin Realism",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "Skin Realism"
+      ],
+      "widgets_values_named": {
+        "Constant": "Skin Realism"
+      },
+      "color": "#2a363b",
+      "bgcolor": "#3f5159"
+    },
+    {
+      "id": 171,
+      "type": "Label (rgthree)",
+      "pos": [
+        -8480,
+        -510
+      ],
+      "size": [
+        660,
+        55
+      ],
+      "flags": {
+        "allow_interaction": true
+      },
+      "order": 11,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "这是设计成可以拆开用的。",
+      "properties": {
+        "fontSize": 55,
+        "fontFamily": "Arial",
+        "fontColor": "#9f2214",
+        "textAlign": "left",
+        "backgroundColor": "transparent",
+        "padding": 0,
+        "borderRadius": 0,
+        "angle": 0,
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "color": "#fff0",
+      "bgcolor": "#fff0"
+    },
+    {
+      "id": 172,
+      "type": "LCClarity",
+      "pos": [
+        -8170,
+        -380
+      ],
+      "size": [
+        300,
+        650
+      ],
+      "flags": {},
+      "order": 39,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 318
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            257,
+            313
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "4ac98869e5f9ef0a5382ec86d105271257c09267",
+        "Node name for S&R": "LCClarity",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        },
+        "aux_id": "lonecatone23/ComfyUI_LC123_nodes",
+        "lc_preview_meta": [
+          {
+            "filename": "lc_after_temp_ljihe_00002_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ],
+        "lc_before_meta": [
+          {
+            "filename": "lc_before_temp_ljihe_00002_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ]
+      },
+      "widgets_values": [
+        "Custom",
+        0.32,
+        0.06,
+        0.7,
+        0.55,
+        0.6,
+        0.38,
+        "Soft Light",
+        0.3,
+        0.28
+      ],
+      "widgets_values_named": {
+        "preset": "Custom",
+        "clarity": 0.32,
+        "sharpen": 0.06,
+        "strength": 0.7,
+        "halo": 0.55,
+        "skin_protect": 0.6,
+        "radius": 0.38,
+        "blend_mode": "Soft Light",
+        "shadow_protect": 0.3,
+        "highlight_protect": 0.28
+      },
+      "color": "#324B4B",
+      "bgcolor": "#324B4B"
+    },
+    {
+      "id": 173,
+      "type": "LCImageDesaturate",
+      "pos": [
+        -8170,
+        1250
+      ],
+      "size": [
+        300,
+        470
+      ],
+      "flags": {},
+      "order": 68,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 319
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            271,
+            315
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "4ac98869e5f9ef0a5382ec86d105271257c09267",
+        "Node name for S&R": "LCImageDesaturate",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        },
+        "aux_id": "lonecatone23/ComfyUI_LC123_nodes",
+        "lc_preview_meta": [
+          {
+            "filename": "lc_after_temp_grild_00002_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ],
+        "lc_before_meta": [
+          {
+            "filename": "lc_before_temp_grild_00002_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ]
+      },
+      "widgets_values": [
+        0.93,
+        "luminance (Rec.709)"
+      ],
+      "widgets_values_named": {
+        "factor": 0.93,
+        "method": "luminance (Rec.709)"
+      },
+      "color": "#324B4B",
+      "bgcolor": "#324B4B"
+    },
+    {
+      "id": 174,
+      "type": "LCImageDenoise",
+      "pos": [
+        -8070,
+        -1380
+      ],
+      "size": [
+        300,
+        520
+      ],
+      "flags": {},
+      "order": 30,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 320
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            293,
+            304,
+            305
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "4ac98869e5f9ef0a5382ec86d105271257c09267",
+        "Node name for S&R": "LCImageDenoise",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        },
+        "aux_id": "lonecatone23/ComfyUI_LC123_nodes",
+        "lc_preview_meta": [
+          {
+            "filename": "lc_after_temp_qjsfm_00002_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ],
+        "lc_before_meta": [
+          {
+            "filename": "lc_before_temp_qjsfm_00002_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ]
+      },
+      "widgets_values": [
+        1,
+        0.049,
+        1,
+        0.65
+      ],
+      "widgets_values_named": {
+        "blur_strength": 1,
+        "edge_preservation": 0.049,
+        "radius_multiplier": 1,
+        "strength": 0.65
+      },
+      "color": "#324B4B",
+      "bgcolor": "#324B4B"
+    },
+    {
+      "id": 175,
+      "type": "LCLensProfile",
+      "pos": [
+        -8170,
+        490
+      ],
+      "size": [
+        300,
+        490
+      ],
+      "flags": {},
+      "order": 61,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 321
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            264,
+            314
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "4ac98869e5f9ef0a5382ec86d105271257c09267",
+        "Node name for S&R": "LCLensProfile",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        },
+        "aux_id": "lonecatone23/ComfyUI_LC123_nodes",
+        "lc_preview_meta": [
+          {
+            "filename": "lc_after_temp_gsgje_00002_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ],
+        "lc_before_meta": [
+          {
+            "filename": "lc_before_temp_gsgje_00002_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ]
+      },
+      "widgets_values": [
+        "Canon EF 50mm f/1.8",
+        "Add Aberrations",
+        1
+      ],
+      "widgets_values_named": {
+        "lens": "Canon EF 50mm f/1.8",
+        "mode": "Add Aberrations",
+        "strength": 1
+      },
+      "color": "#324B4B",
+      "bgcolor": "#324B4B"
+    },
+    {
+      "id": 176,
+      "type": "PrimitiveBoolean",
+      "pos": [
+        -8071.062858633886,
+        -1487.4534197076955
+      ],
+      "size": [
+        300,
+        60
+      ],
+      "flags": {
+        "pinned": true
+      },
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "Person Mask 🧍",
+          "name": "value",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "value"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "BOOLEAN",
+          "type": "BOOLEAN",
+          "links": [
+            310,
+            312
+          ]
+        }
+      ],
+      "title": "Use Person Mask 🧍",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.34.0",
+        "Node name for S&R": "PrimitiveBoolean",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        true
+      ],
+      "widgets_values_named": {
+        "value": true
+      },
+      "color": "#2a363b",
+      "bgcolor": "#3f5159"
+    },
+    {
+      "id": 177,
+      "type": "LC Bypasser Panel",
+      "pos": [
+        -8071.062858633886,
+        -1657.4534197076955
+      ],
+      "size": [
+        300,
+        126
+      ],
+      "flags": {
+        "pinned": true
+      },
+      "order": 58,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "hub",
+          "type": "*",
+          "link": 322
+        }
+      ],
+      "outputs": [
+        {
+          "name": "OPT_CONNECTION",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        true,
+        true,
+        true
+      ],
+      "widgets_values_named": {
+        "Enable LC Image Denoise": true,
+        "Enable LC Skin Beauty ✨": true,
+        "Enable LC Skin Upscale": true
+      },
+      "color": "#c87a2c",
+      "bgcolor": "#b46618"
+    },
+    {
+      "id": 178,
+      "type": "MarkdownNote",
+      "pos": [
+        -8490,
+        -1660
+      ],
+      "size": [
+        410,
+        800
+      ],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "Skin Realism Note",
+      "properties": {
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "\n## Skin enhancers\n\n**Denoise**\n- Kill decode / USDU grit so later CNNs do not amplify noise.\n- Removes noise while trying to keep detail.\n- Sigma: higher = smoother, lower = more detail.\n- Threshold: how aggressive the denoise is.\n- Radius multiplier: higher for noisy images, lower for clean ones.\n- 💡 Start gentle. Raise values only if the image is actually noisy.\n\n**LC Skin Beauty ✨**\n- LAB grade on Ultra `face+body`. Smooth / cool / lift *before* you add pores.\n- **Skin-first, not whole-frame bleach** — correction follows a skin-probability mask.\n- **Presets load the sliders** — pick a starting look, then fine-tune.\n- **Eyes and lips protected** — auto mask soft-excludes dark eyes and strong lip red.\n- **Fabric-aware auto mask** — high local pattern variance is suppressed.\n\n| Control | What it does |\n| --- | --- |\n| **preset** | Starting point (Natural, Light, Fresh, Porcelain, Warm keep, Custom). Loads sliders; sliders are then the source of truth. |\n| **strength** | How much of the effect to apply (0 = original, 1 = full, >1 = stronger). |\n| **coolness** | Less yellow / cooler skin (LAB b*). |\n| **brightness** | Overall skin lift (whitening), softened on highlights. |\n| **rosy** | Pink/red flush (LAB a*). Negative = less red. |\n| **evenness** | Local color evening under the mask. |\n| **shadow_lift** | Extra lift in dark skin regions. |\n| **smooth** | Mild softening under the mask. |\n| **texture_preserve** | Caps how much smooth can flatten pores. |\n| **saturation** | Skin chroma under the mask (negative = quieter). |\n| **highlight_protect** | Reduce effect on bright specular skin. |\n| **mask_sensitivity** | Auto-mask inclusiveness. |\n| **mask_feather** | Softness of mask edges. |\n| **mask** (optional) | External skin matte; blended with auto for precision. |\n\n**LC Skin Upscale**\n- Mode: `detail 1x`\n- [SkinContrast-High model](https://huggingface.co/notkenski/upscalers/blob/main/1xSkinContrast-High-SuperUltraCompact.pth)\n- Blend ~0.75\n- `mask_source`: input\n- High-frequency skin only. Size unchanged.\n\n\n---\n---\n## 皮肤\n\n**Denoise（降噪）**\n- 先清掉解码 / USDU 噪点，避免后面的 CNN 把噪放大。\n- 尽量保细节。\n- Sigma：越高越平，越低细节越多。\n- Threshold：降噪有多狠。\n- Radius multiplier：图越脏越高，越干净越低。\n- 💡 先轻。真的有噪再加。\n\n**LC Skin Beauty ✨**\n- 用 Ultra `face+body` 做 LAB。先匀、先冷、先提，**再**加毛孔。\n- **只动皮肤，不是整幅漂白** — 跟皮肤概率遮罩走。\n- **预设会写入滑条** — 先选一个起点，再微调。\n- **眼睛和嘴唇有保护** — 自动遮罩会弱化黑眼珠和嘴唇大红。\n- **布料感知** — 局部花纹很强的区域会被压掉。\n\n| 控件 | 作用 |\n| --- | --- |\n| **preset** | 起点（Natural、Light、Fresh、Porcelain、Warm keep、Custom）。先灌滑条，之后以滑条为准。 |\n| **strength** | 混合强度（0 = 原图，1 = 满，>1 = 更强）。 |\n| **coolness** | 少黄 / 更冷（LAB b*）。 |\n| **brightness** | 整体提亮，高光处会收一点。 |\n| **rosy** | 粉红（LAB a*）。负数 = 少红。 |\n| **evenness** | 遮罩内局部匀色。 |\n| **shadow_lift** | 暗部皮肤额外提亮。 |\n| **smooth** | 遮罩内轻度柔化。 |\n| **texture_preserve** | 限制 smooth 把毛孔抹平。 |\n| **saturation** | 遮罩内肤色饱和（负 = 更淡）。 |\n| **highlight_protect** | 高光皮肤少动。 |\n| **mask_sensitivity** | 自动遮罩收得有多宽。 |\n| **mask_feather** | 遮罩边缘软硬。 |\n| **mask**（可选） | 外部皮肤遮罩，与自动遮罩混合。 |\n\n**LC Skin Upscale**\n- 模式：`detail 1x`\n- [SkinContrast-High 模型](https://huggingface.co/notkenski/upscalers/blob/main/1xSkinContrast-High-SuperUltraCompact.pth)\n- blend 约 0.75\n- `mask_source`：input\n- 只加皮肤高频。尺寸不变。"
+      ],
+      "widgets_values_named": {
+        "text": "\n## Skin enhancers\n\n**Denoise**\n- Kill decode / USDU grit so later CNNs do not amplify noise.\n- Removes noise while trying to keep detail.\n- Sigma: higher = smoother, lower = more detail.\n- Threshold: how aggressive the denoise is.\n- Radius multiplier: higher for noisy images, lower for clean ones.\n- 💡 Start gentle. Raise values only if the image is actually noisy.\n\n**LC Skin Beauty ✨**\n- LAB grade on Ultra `face+body`. Smooth / cool / lift *before* you add pores.\n- **Skin-first, not whole-frame bleach** — correction follows a skin-probability mask.\n- **Presets load the sliders** — pick a starting look, then fine-tune.\n- **Eyes and lips protected** — auto mask soft-excludes dark eyes and strong lip red.\n- **Fabric-aware auto mask** — high local pattern variance is suppressed.\n\n| Control | What it does |\n| --- | --- |\n| **preset** | Starting point (Natural, Light, Fresh, Porcelain, Warm keep, Custom). Loads sliders; sliders are then the source of truth. |\n| **strength** | How much of the effect to apply (0 = original, 1 = full, >1 = stronger). |\n| **coolness** | Less yellow / cooler skin (LAB b*). |\n| **brightness** | Overall skin lift (whitening), softened on highlights. |\n| **rosy** | Pink/red flush (LAB a*). Negative = less red. |\n| **evenness** | Local color evening under the mask. |\n| **shadow_lift** | Extra lift in dark skin regions. |\n| **smooth** | Mild softening under the mask. |\n| **texture_preserve** | Caps how much smooth can flatten pores. |\n| **saturation** | Skin chroma under the mask (negative = quieter). |\n| **highlight_protect** | Reduce effect on bright specular skin. |\n| **mask_sensitivity** | Auto-mask inclusiveness. |\n| **mask_feather** | Softness of mask edges. |\n| **mask** (optional) | External skin matte; blended with auto for precision. |\n\n**LC Skin Upscale**\n- Mode: `detail 1x`\n- [SkinContrast-High model](https://huggingface.co/notkenski/upscalers/blob/main/1xSkinContrast-High-SuperUltraCompact.pth)\n- Blend ~0.75\n- `mask_source`: input\n- High-frequency skin only. Size unchanged.\n\n\n---\n---\n## 皮肤\n\n**Denoise（降噪）**\n- 先清掉解码 / USDU 噪点，避免后面的 CNN 把噪放大。\n- 尽量保细节。\n- Sigma：越高越平，越低细节越多。\n- Threshold：降噪有多狠。\n- Radius multiplier：图越脏越高，越干净越低。\n- 💡 先轻。真的有噪再加。\n\n**LC Skin Beauty ✨**\n- 用 Ultra `face+body` 做 LAB。先匀、先冷、先提，**再**加毛孔。\n- **只动皮肤，不是整幅漂白** — 跟皮肤概率遮罩走。\n- **预设会写入滑条** — 先选一个起点，再微调。\n- **眼睛和嘴唇有保护** — 自动遮罩会弱化黑眼珠和嘴唇大红。\n- **布料感知** — 局部花纹很强的区域会被压掉。\n\n| 控件 | 作用 |\n| --- | --- |\n| **preset** | 起点（Natural、Light、Fresh、Porcelain、Warm keep、Custom）。先灌滑条，之后以滑条为准。 |\n| **strength** | 混合强度（0 = 原图，1 = 满，>1 = 更强）。 |\n| **coolness** | 少黄 / 更冷（LAB b*）。 |\n| **brightness** | 整体提亮，高光处会收一点。 |\n| **rosy** | 粉红（LAB a*）。负数 = 少红。 |\n| **evenness** | 遮罩内局部匀色。 |\n| **shadow_lift** | 暗部皮肤额外提亮。 |\n| **smooth** | 遮罩内轻度柔化。 |\n| **texture_preserve** | 限制 smooth 把毛孔抹平。 |\n| **saturation** | 遮罩内肤色饱和（负 = 更淡）。 |\n| **highlight_protect** | 高光皮肤少动。 |\n| **mask_sensitivity** | 自动遮罩收得有多宽。 |\n| **mask_feather** | 遮罩边缘软硬。 |\n| **mask**（可选） | 外部皮肤遮罩，与自动遮罩混合。 |\n\n**LC Skin Upscale**\n- 模式：`detail 1x`\n- [SkinContrast-High 模型](https://huggingface.co/notkenski/upscalers/blob/main/1xSkinContrast-High-SuperUltraCompact.pth)\n- blend 约 0.75\n- `mask_source`：input\n- 只加皮肤高频。尺寸不变。"
+      },
+      "color": "#222",
+      "bgcolor": "#000"
+    },
+    {
+      "id": 179,
+      "type": "LCColorMatch",
+      "pos": [
+        -8480,
+        -270
+      ],
+      "size": [
+        300,
+        540
+      ],
+      "flags": {},
+      "order": 32,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 323
+        },
+        {
+          "name": "reference",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 324
+        },
+        {
+          "name": "mask",
+          "shape": 7,
+          "type": "MASK",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            256,
+            318
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "4ac98869e5f9ef0a5382ec86d105271257c09267",
+        "Node name for S&R": "LCColorMatch",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        },
+        "aux_id": "lonecatone23/ComfyUI_LC123_nodes",
+        "lc_preview_meta": [
+          {
+            "filename": "lc_after_temp_eeaei_00002_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ],
+        "lc_before_meta": [
+          {
+            "filename": "lc_before_temp_eeaei_00002_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ]
+      },
+      "widgets_values": [
+        "adain",
+        1,
+        0.5
+      ],
+      "widgets_values_named": {
+        "method": "adain",
+        "strength": 1,
+        "skin_protect": 0.5
+      },
+      "color": "#324B4B",
+      "bgcolor": "#324B4B"
+    },
+    {
+      "id": 180,
+      "type": "LCFilmGrain",
+      "pos": [
+        -8480,
+        1160
+      ],
+      "size": [
+        300,
+        560
+      ],
+      "flags": {},
+      "order": 67,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 325
+        },
+        {
+          "name": "seed",
+          "type": "INT",
+          "widget": {
+            "name": "seed"
+          },
+          "link": 326
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            270,
+            319
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "4ac98869e5f9ef0a5382ec86d105271257c09267",
+        "Node name for S&R": "LCFilmGrain",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        },
+        "aux_id": "lonecatone23/ComfyUI_LC123_nodes",
+        "lc_preview_meta": [
+          {
+            "filename": "lc_after_temp_kluej_00002_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ],
+        "lc_before_meta": [
+          {
+            "filename": "lc_before_temp_kluej_00002_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ]
+      },
+      "widgets_values": [
+        1.2,
+        0.5,
+        0,
+        0,
+        8675309,
+        "fixed",
+        0.8
+      ],
+      "widgets_values_named": {
+        "grain_size": 1.2,
+        "strength": 0.5,
+        "radius_variation": 0,
+        "color_grain": 0,
+        "seed": 8675309,
+        "control_after_generate": "fixed",
+        "softness": 0.8
+      },
+      "color": "#324B4B",
+      "bgcolor": "#324B4B"
+    },
+    {
+      "id": 181,
+      "type": "LCLensFX",
+      "pos": [
+        -8480,
+        440
+      ],
+      "size": [
+        300,
+        540
+      ],
+      "flags": {},
+      "order": 60,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 327
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            263,
+            321
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "4ac98869e5f9ef0a5382ec86d105271257c09267",
+        "Node name for S&R": "LCLensFX",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        },
+        "aux_id": "lonecatone23/ComfyUI_LC123_nodes",
+        "lc_preview_meta": [
+          {
+            "filename": "lc_after_temp_pljiq_00002_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ],
+        "lc_before_meta": [
+          {
+            "filename": "lc_before_temp_pljiq_00002_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ]
+      },
+      "widgets_values": [
+        0.42,
+        0.28,
+        0.2,
+        0.6,
+        8675309,
+        "fixed"
+      ],
+      "widgets_values_named": {
+        "chromatic_aberration": 0.42,
+        "vignette": 0.28,
+        "grain_amount": 0.2,
+        "grain_scale": 0.6,
+        "seed": 8675309,
+        "control_after_generate": "fixed"
+      },
+      "color": "#324B4B",
+      "bgcolor": "#324B4B"
+    },
+    {
+      "id": 182,
+      "type": "GetNode",
+      "pos": [
+        -8480,
+        -350
+      ],
+      "size": [
+        210,
+        40
+      ],
+      "flags": {
+        "collapsed": true
+      },
+      "order": 14,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "*",
+          "type": "*",
+          "links": [
+            239,
+            323
+          ]
+        }
+      ],
+      "title": "Get_Lighting Control 🔦",
+      "properties": {
+        "Node name for S&R": "GetNode",
+        "aux_id": "kijai/ComfyUI-KJNodes",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "Lighting Control 🔦"
+      ],
+      "widgets_values_named": {
+        "Constant": "Lighting Control 🔦"
+      }
+    },
+    {
+      "id": 183,
+      "type": "GetNode",
+      "pos": [
+        -8480,
+        1120
+      ],
+      "size": [
+        210,
+        40
+      ],
+      "flags": {
+        "collapsed": true
+      },
+      "order": 15,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "INT",
+          "type": "INT",
+          "links": [
+            326
+          ]
+        }
+      ],
+      "title": "Get_Seed",
+      "properties": {
+        "Node name for S&R": "GetNode",
+        "aux_id": "kijai/ComfyUI-KJNodes",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "Seed"
+      ],
+      "widgets_values_named": {
+        "Constant": "Seed"
+      },
+      "color": "#1b4669",
+      "bgcolor": "#29699c"
+    },
+    {
+      "id": 170,
+      "type": "GetNode",
+      "pos": [
+        -8830,
+        -1410
+      ],
+      "size": [
+        210,
+        60
+      ],
+      "flags": {
+        "collapsed": false
+      },
+      "order": 16,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            320
+          ]
+        }
+      ],
+      "title": "Get_Org pic",
+      "properties": {
+        "Node name for S&R": "GetNode",
+        "aux_id": "kijai/ComfyUI-KJNodes",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "Org pic"
+      ],
+      "widgets_values_named": {
+        "Constant": "Org pic"
+      },
+      "color": "#2a363b",
+      "bgcolor": "#3f5159"
+    },
+    {
+      "id": 160,
+      "type": "LC Groups Bypasser",
+      "pos": [
+        -6740,
+        -1660
+      ],
+      "size": [
+        320,
+        90
+      ],
+      "flags": {},
+      "order": 17,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "# Lighting Control 🔦",
+          "type": "BOOLEAN",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "OPT_CONNECTION",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "title": "Lighting Control",
+      "properties": {
+        "matchTitle": "# Lighting Control 🔦",
+        "matchColors": "",
+        "sort": "position",
+        "toggleRestriction": "default",
+        "lcBindings": {
+          "id:430": {
+            "value": true,
+            "originId": null
+          },
+          "id:373": {
+            "value": true,
+            "originId": null
+          },
+          "id:390": {
+            "value": true,
+            "originId": null
+          },
+          "id:437": {
+            "value": true,
+            "originId": null
+          },
+          "id:420": {
+            "value": true,
+            "originId": null
+          },
+          "id:419": {
+            "value": true,
+            "originId": null
+          },
+          "id:423": {
+            "value": true,
+            "originId": null
+          },
+          "id:388": {
+            "value": true,
+            "originId": null
+          },
+          "id:435": {
+            "value": true,
+            "originId": null
+          },
+          "id:312": {
+            "value": true,
+            "originId": null
+          },
+          "id:311": {
+            "value": true,
+            "originId": null
+          },
+          "id:174": {
+            "value": true,
+            "originId": null
+          },
+          "id:200": {
+            "value": true,
+            "originId": null
+          },
+          "id:357": {
+            "value": true,
+            "originId": null
+          },
+          "id:175": {
+            "value": true,
+            "originId": null
+          },
+          "id:395": {
+            "value": true,
+            "originId": null
+          },
+          "id:334": {
+            "value": true,
+            "originId": null
+          },
+          "id:394": {
+            "value": true,
+            "originId": null
+          },
+          "id:329": {
+            "value": true,
+            "originId": null
+          },
+          "id:330": {
+            "value": true,
+            "originId": null
+          },
+          "id:333": {
+            "value": true,
+            "originId": null
+          },
+          "id:422": {
+            "value": true,
+            "originId": null
+          },
+          "id:427": {
+            "value": true,
+            "originId": null
+          },
+          "id:428": {
+            "value": true,
+            "originId": null
+          },
+          "id:424": {
+            "value": true,
+            "originId": null
+          },
+          "id:421": {
+            "value": true,
+            "originId": null
+          },
+          "id:398": {
+            "value": true,
+            "originId": null
+          },
+          "id:27": {
+            "value": true,
+            "originId": null
+          },
+          "id:433": {
+            "value": true,
+            "originId": null
+          },
+          "id:442": {
+            "value": false,
+            "originId": null
+          },
+          "id:441": {
+            "value": true,
+            "originId": null
+          },
+          "id:406": {
+            "value": true,
+            "originId": null
+          },
+          "id:432": {
+            "value": true,
+            "originId": null
+          },
+          "id:404": {
+            "value": true,
+            "originId": null
+          },
+          "id:405": {
+            "value": true,
+            "originId": null
+          },
+          "id:431": {
+            "value": true,
+            "originId": null
+          },
+          "id:440": {
+            "value": true,
+            "originId": null
+          },
+          "id:438": {
+            "value": true,
+            "originId": null
+          },
+          "id:439": {
+            "value": true,
+            "originId": null
+          },
+          "id:1": {
+            "value": true,
+            "originId": null
+          }
+        },
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        true
+      ],
+      "widgets_values_named": {
+        "Enable # Lighting Control 🔦": true
+      },
+      "color": "#c87a2c",
+      "bgcolor": "#b46618"
+    },
+    {
+      "id": 120,
+      "type": "LC Bypasser Panel",
+      "pos": [
+        -6300,
+        240
+      ],
+      "size": [
+        310,
+        558
+      ],
+      "flags": {},
+      "order": 79,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "hub",
+          "type": "*",
+          "link": 241
+        }
+      ],
+      "outputs": [
+        {
+          "name": "OPT_CONNECTION",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "widgets_values_named": {
+        "Enable LC Color Match 🎨": true,
+        "Enable LC Sharpen Pro": true,
+        "Enable LC Image Adjust": true,
+        "Enable LC Vibrance": true,
+        "Enable LC Lift Gamma Gain": true,
+        "Enable LC Auto White Balance": true,
+        "Enable LC Image RGB": true,
+        "Enable LC Lens Effects": true,
+        "Enable LC Lens Profile": true,
+        "Enable LC Chromatic Aberration": true,
+        "Enable LC Bloom": true,
+        "Enable LC Vignette": true,
+        "Enable LC Film Stock (B&W)": true,
+        "Enable LC Film Stock (Color)": true,
+        "Enable LC Film Grain": true,
+        "Enable LC Image Desaturate": true,
+        "Enable LC Apply LUT": true,
+        "Enable LC Image Crop 🖼️🔪": true,
+        "Enable LC Text Overlay": true,
+        "Enable LC Watermark 💧": true,
+        "Enable LC Notify 🔊": true
+      },
+      "color": "#c3782d",
+      "bgcolor": "#af6419"
+    },
+    {
+      "id": 192,
+      "type": "LCLabel",
+      "pos": [
+        -8160,
+        -2020
+      ],
+      "size": [
+        752,
+        164
+      ],
+      "flags": {},
+      "order": 18,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "text": "Lonecat's",
+        "font": "Georgia",
+        "size": 136,
+        "bold": true,
+        "italic": false,
+        "color": "#50e070",
+        "align": "center",
+        "outline": false,
+        "outlineColor": "#000000",
+        "outlineWidth": 4,
+        "shadow": false,
+        "shadowBlur": 10,
+        "bg": false,
+        "bgColor": "#324B4B",
+        "radius": 12,
+        "padding": 8,
+        "angle": 0,
+        "width": 752,
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "24728b75a7291ed7d3ac57d6e23d906823392387",
+        "Node name for S&R": "LCLabel",
+        "_w": 752,
+        "_h": 164,
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "color": "#fff0",
+      "bgcolor": "#fff0"
+    },
+    {
+      "id": 191,
+      "type": "LCImageLabel",
+      "pos": [
+        -8410,
+        -2070
+      ],
+      "size": [
+        242.5,
+        242.5
+      ],
+      "flags": {},
+      "order": 19,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "imgW": 232.5,
+        "imgH": 232.5,
+        "angle": 0,
+        "size": 233,
+        "padding": 5,
+        "borderWidth": 0,
+        "borderColor": "#ffffff",
+        "borderRadius": 0,
+        "backgroundColor": "transparent",
+        "bgTransparent": true,
+        "syncImageRadius": true,
+        "imageRadius": 0,
+        "embeddedData": "data:image/webp;base64,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",
+        "_w": 242.5,
+        "_h": 242.5,
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "{\"filename\":\"Logo no background_00001_.png\",\"subfolder\":\"\"}"
+      ],
+      "widgets_values_named": {
+        "_image_path": "{\"filename\":\"Logo no background_00001_.png\",\"subfolder\":\"\"}"
+      },
+      "color": "#fff0",
+      "bgcolor": "#fff0"
+    },
+    {
+      "id": 190,
+      "type": "LCLabel",
+      "pos": [
+        -7640,
+        -1990
+      ],
+      "size": [
+        1276,
+        123
+      ],
+      "flags": {},
+      "order": 20,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "text": "🎨 Post Processing",
+        "font": "Ink Free",
+        "size": 100,
+        "bold": true,
+        "italic": false,
+        "color": "#ffffff",
+        "align": "center",
+        "outline": false,
+        "outlineColor": "#000000",
+        "outlineWidth": 4,
+        "shadow": false,
+        "shadowBlur": 10,
+        "bg": false,
+        "bgColor": "#324B4B",
+        "radius": 12,
+        "padding": 8,
+        "angle": 0,
+        "width": 1276,
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "24728b75a7291ed7d3ac57d6e23d906823392387",
+        "Node name for S&R": "LCLabel",
+        "_w": 1276,
+        "_h": 123,
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "color": "#fff0",
+      "bgcolor": "#fff0"
+    },
+    {
+      "id": 186,
+      "type": "LCSeed",
+      "pos": [
+        -9890,
+        -290
+      ],
+      "size": [
+        270,
+        90
+      ],
+      "flags": {},
+      "order": 21,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "seed",
+          "type": "INT",
+          "links": [
+            328
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "64722d90691001b309dac05307126f6e93a402fc",
+        "Node name for S&R": "LCSeed",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        9734136287535067000,
+        "randomize"
+      ],
+      "widgets_values_named": {
+        "base_seed": 9734136287535067000,
+        "seed_mode": "randomize"
+      },
+      "color": "#28281E",
+      "bgcolor": "#28281E"
+    },
+    {
+      "id": 187,
+      "type": "SetNode",
+      "pos": [
+        -9540,
+        -290
+      ],
+      "size": [
+        210,
+        60
+      ],
+      "flags": {},
+      "order": 31,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "INT",
+          "type": "INT",
+          "link": 328
+        }
+      ],
+      "outputs": [
+        {
+          "name": "INT",
+          "type": "INT",
+          "links": null
+        }
+      ],
+      "title": "Set_Seed",
+      "properties": {
+        "Node name for S&R": "SetNode",
+        "aux_id": "kijai/ComfyUI-KJNodes",
+        "previousName": "Seed",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "Seed"
+      ],
+      "widgets_values_named": {
+        "Constant": "Seed"
+      },
+      "color": "#1b4669",
+      "bgcolor": "#29699c"
+    },
+    {
+      "id": 195,
+      "type": "GetNode",
+      "pos": [
+        -9890,
+        110
+      ],
+      "size": [
+        210,
+        60
+      ],
+      "flags": {},
+      "order": 22,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            331
+          ]
+        }
+      ],
+      "title": "Get_Pro Post",
+      "properties": {
+        "Node name for S&R": "GetNode",
+        "aux_id": "kijai/ComfyUI-KJNodes",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "Pro Post"
+      ],
+      "widgets_values_named": {
+        "Constant": "Pro Post"
+      },
+      "color": "#2a363b",
+      "bgcolor": "#3f5159"
+    },
+    {
+      "id": 196,
+      "type": "LCBatchImageComparer",
+      "pos": [
+        -9510,
+        60
+      ],
+      "size": [
+        830,
+        1100
+      ],
+      "flags": {
+        "pinned": false
+      },
+      "order": 33,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "Original 🖼️",
+          "name": "image_a",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 330
+        },
+        {
+          "label": "🎨 Post Processed",
+          "name": "image_b",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 331
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "64722d90691001b309dac05307126f6e93a402fc",
+        "Node name for S&R": "LCBatchImageComparer",
+        "comparer_mode": "Slide",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "color": "#324B4B",
+      "bgcolor": "#324B4B"
+    },
+    {
+      "id": 193,
+      "type": "LCLabel",
+      "pos": [
+        -6590,
+        -2020
+      ],
+      "size": [
+        459,
+        176
+      ],
+      "flags": {},
+      "order": 23,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "text": "Nodes\n",
+        "font": "Permanent Marker",
+        "size": 146,
+        "bold": true,
+        "italic": false,
+        "color": "#999999",
+        "align": "center",
+        "outline": false,
+        "outlineColor": "#000000",
+        "outlineWidth": 4,
+        "shadow": false,
+        "shadowBlur": 10,
+        "bg": false,
+        "bgColor": "#324B4B",
+        "radius": 12,
+        "padding": 8,
+        "angle": 0,
+        "width": 458,
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "24728b75a7291ed7d3ac57d6e23d906823392387",
+        "Node name for S&R": "LCLabel",
+        "_w": 459,
+        "_h": 176,
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "color": "#fff0",
+      "bgcolor": "#fff0"
+    },
+    {
+      "id": 194,
+      "type": "LCLabel",
+      "pos": [
+        -6160,
+        -2030
+      ],
+      "size": [
+        269.15622936999245,
+        260.1911422080889
+      ],
+      "flags": {},
+      "order": 24,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "text": "V5",
+        "font": "Segoe UI",
+        "size": 166,
+        "bold": true,
+        "italic": false,
+        "color": "#ffe63c",
+        "align": "center",
+        "outline": true,
+        "outlineColor": "#ff3232",
+        "outlineWidth": 11,
+        "shadow": false,
+        "shadowBlur": 21,
+        "bg": false,
+        "bgColor": "#324B4B",
+        "radius": 12,
+        "padding": 8,
+        "angle": 20,
+        "width": 0,
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "24728b75a7291ed7d3ac57d6e23d906823392387",
+        "Node name for S&R": "LCLabel",
+        "_w": 269.15622936999245,
+        "_h": 260.1911422080889,
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "color": "#fff0",
+      "bgcolor": "#fff0"
+    },
+    {
+      "id": 189,
+      "type": "SetNode",
+      "pos": [
+        -9420,
+        -860
+      ],
+      "size": [
+        210,
+        60
+      ],
+      "flags": {},
+      "order": 34,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "link": 329
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "title": "Set_Org pic",
+      "properties": {
+        "Node name for S&R": "SetNode",
+        "aux_id": "kijai/ComfyUI-KJNodes",
+        "previousName": "Org pic",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "Org pic"
+      ],
+      "widgets_values_named": {
+        "Constant": "Org pic"
+      },
+      "color": "#2a363b",
+      "bgcolor": "#3f5159"
+    },
+    {
+      "id": 184,
+      "type": "GetNode",
+      "pos": [
+        -8860,
+        -250
+      ],
+      "size": [
+        210,
+        60
+      ],
+      "flags": {
+        "collapsed": false
+      },
+      "order": 25,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            324
+          ]
+        }
+      ],
+      "title": "Get_Org pic",
+      "properties": {
+        "Node name for S&R": "GetNode",
+        "aux_id": "kijai/ComfyUI-KJNodes",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "Org pic"
+      ],
+      "widgets_values_named": {
+        "Constant": "Org pic"
+      },
+      "color": "#2a363b",
+      "bgcolor": "#3f5159"
+    },
+    {
+      "id": 197,
+      "type": "GetNode",
+      "pos": [
+        -9890,
+        -20
+      ],
+      "size": [
+        210,
+        60
+      ],
+      "flags": {
+        "collapsed": false
+      },
+      "order": 26,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            330
+          ]
+        }
+      ],
+      "title": "Get_Org pic",
+      "properties": {
+        "Node name for S&R": "GetNode",
+        "aux_id": "kijai/ComfyUI-KJNodes",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "Org pic"
+      ],
+      "widgets_values_named": {
+        "Constant": "Org pic"
+      },
+      "color": "#2a363b",
+      "bgcolor": "#3f5159"
+    },
+    {
+      "id": 146,
+      "type": "LCTextOverlay",
+      "pos": [
+        -7240,
+        1080
+      ],
+      "size": [
+        300,
+        640
+      ],
+      "flags": {},
+      "order": 71,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 290
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            274,
+            279
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "4ac98869e5f9ef0a5382ec86d105271257c09267",
+        "Node name for S&R": "LCTextOverlay",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        },
+        "aux_id": "lonecatone23/ComfyUI_LC123_nodes",
+        "lc_preview_meta": [
+          {
+            "filename": "lc_before_temp_poirb_00002_.png",
+            "subfolder": "",
+            "type": "temp"
+          }
+        ],
+        "lc_overlay_text": "Tell me what you want...\nwhat you really.... really want"
+      },
+      "widgets_values": [
+        "Tell me what you want...\nwhat you really.... really want",
+        "Arial",
+        45,
+        255,
+        255,
+        255,
+        51.1,
+        62.2,
+        "center-bottom"
+      ],
+      "widgets_values_named": {
+        "text": "Tell me what you want...\nwhat you really.... really want",
+        "font": "Arial",
+        "font_size": 45,
+        "color_r": 255,
+        "color_g": 255,
+        "color_b": 255,
+        "x_percent": 51.1,
+        "y_percent": 62.2,
+        "alignment": "center-bottom"
+      },
+      "color": "#324B4B",
+      "bgcolor": "#324B4B"
+    },
+    {
+      "id": 188,
+      "type": "LoadImage",
+      "pos": [
+        -9920,
+        -860
+      ],
+      "size": [
+        420,
+        490
+      ],
+      "flags": {},
+      "order": 27,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            329
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.34.0",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        "Lonecats Anima_2026-09-22_00001.png",
+        "image"
+      ],
+      "widgets_values_named": {
+        "image": "Lonecats Anima_2026-09-22_00001.png",
+        "upload": "image"
+      },
+      "color": "#233",
+      "bgcolor": "#355"
+    }
+  ],
+  "links": [
+    [
+      239,
+      182,
+      0,
+      119,
+      0,
+      "IMAGE"
+    ],
+    [
+      240,
+      138,
+      0,
+      119,
+      1,
+      "IMAGE"
+    ],
+    [
+      241,
+      135,
+      0,
+      120,
+      0,
+      "*"
+    ],
+    [
+      242,
+      138,
+      0,
+      121,
+      0,
+      "IMAGE"
+    ],
+    [
+      243,
+      138,
+      0,
+      123,
+      0,
+      "IMAGE"
+    ],
+    [
+      244,
+      138,
+      0,
+      124,
+      0,
+      "IMAGE"
+    ],
+    [
+      245,
+      136,
+      0,
+      126,
+      0,
+      "IMAGE"
+    ],
+    [
+      246,
+      137,
+      0,
+      127,
+      0,
+      "IMAGE"
+    ],
+    [
+      247,
+      138,
+      0,
+      129,
+      0,
+      "IMAGE"
+    ],
+    [
+      248,
+      128,
+      1,
+      129,
+      1,
+      "MASK"
+    ],
+    [
+      249,
+      157,
+      0,
+      130,
+      0,
+      "IMAGE"
+    ],
+    [
+      250,
+      149,
+      0,
+      130,
+      1,
+      "IMAGE"
+    ],
+    [
+      251,
+      141,
+      0,
+      130,
+      2,
+      "IMAGE"
+    ],
+    [
+      252,
+      131,
+      0,
+      130,
+      3,
+      "MASK"
+    ],
+    [
+      253,
+      140,
+      1,
+      131,
+      0,
+      "MASK"
+    ],
+    [
+      254,
+      130,
+      2,
+      132,
+      0,
+      "IMAGE"
+    ],
+    [
+      255,
+      130,
+      1,
+      133,
+      0,
+      "MASK"
+    ],
+    [
+      256,
+      179,
+      0,
+      135,
+      0,
+      "IMAGE"
+    ],
+    [
+      257,
+      172,
+      0,
+      135,
+      2,
+      "IMAGE"
+    ],
+    [
+      258,
+      164,
+      0,
+      135,
+      4,
+      "IMAGE"
+    ],
+    [
+      259,
+      151,
+      0,
+      135,
+      6,
+      "IMAGE"
+    ],
+    [
+      260,
+      144,
+      0,
+      135,
+      8,
+      "IMAGE"
+    ],
+    [
+      261,
+      136,
+      0,
+      135,
+      10,
+      "IMAGE"
+    ],
+    [
+      262,
+      126,
+      0,
+      135,
+      12,
+      "IMAGE"
+    ],
+    [
+      263,
+      181,
+      0,
+      135,
+      14,
+      "IMAGE"
+    ],
+    [
+      264,
+      175,
+      0,
+      135,
+      16,
+      "IMAGE"
+    ],
+    [
+      265,
+      165,
+      0,
+      135,
+      18,
+      "IMAGE"
+    ],
+    [
+      266,
+      152,
+      0,
+      135,
+      20,
+      "IMAGE"
+    ],
+    [
+      267,
+      145,
+      0,
+      135,
+      22,
+      "IMAGE"
+    ],
+    [
+      268,
+      137,
+      0,
+      135,
+      24,
+      "IMAGE"
+    ],
+    [
+      269,
+      127,
+      0,
+      135,
+      26,
+      "IMAGE"
+    ],
+    [
+      270,
+      180,
+      0,
+      135,
+      28,
+      "IMAGE"
+    ],
+    [
+      271,
+      173,
+      0,
+      135,
+      30,
+      "IMAGE"
+    ],
+    [
+      272,
+      166,
+      0,
+      135,
+      32,
+      "IMAGE"
+    ],
+    [
+      273,
+      153,
+      0,
+      135,
+      34,
+      "IMAGE"
+    ],
+    [
+      274,
+      146,
+      0,
+      135,
+      36,
+      "IMAGE"
+    ],
+    [
+      275,
+      129,
+      0,
+      135,
+      38,
+      "*"
+    ],
+    [
+      276,
+      121,
+      0,
+      135,
+      40,
+      "*"
+    ],
+    [
+      277,
+      144,
+      0,
+      136,
+      0,
+      "IMAGE"
+    ],
+    [
+      278,
+      145,
+      0,
+      137,
+      0,
+      "IMAGE"
+    ],
+    [
+      279,
+      146,
+      0,
+      138,
+      0,
+      "IMAGE"
+    ],
+    [
+      280,
+      128,
+      0,
+      138,
+      1,
+      "IMAGE"
+    ],
+    [
+      281,
+      148,
+      0,
+      139,
+      0,
+      "IMAGE"
+    ],
+    [
+      282,
+      158,
+      0,
+      139,
+      1,
+      "UPSCALE_MODEL"
+    ],
+    [
+      283,
+      167,
+      0,
+      139,
+      2,
+      "MASK"
+    ],
+    [
+      284,
+      157,
+      0,
+      140,
+      0,
+      "IMAGE"
+    ],
+    [
+      285,
+      147,
+      0,
+      141,
+      0,
+      "IMAGE"
+    ],
+    [
+      286,
+      157,
+      0,
+      142,
+      0,
+      "IMAGE"
+    ],
+    [
+      287,
+      130,
+      0,
+      142,
+      1,
+      "IMAGE"
+    ],
+    [
+      288,
+      151,
+      0,
+      144,
+      0,
+      "IMAGE"
+    ],
+    [
+      289,
+      152,
+      0,
+      145,
+      0,
+      "IMAGE"
+    ],
+    [
+      290,
+      153,
+      0,
+      146,
+      0,
+      "IMAGE"
+    ],
+    [
+      291,
+      157,
+      0,
+      147,
+      0,
+      "IMAGE"
+    ],
+    [
+      292,
+      162,
+      1,
+      147,
+      1,
+      "INT"
+    ],
+    [
+      293,
+      174,
+      0,
+      148,
+      0,
+      "IMAGE"
+    ],
+    [
+      294,
+      167,
+      0,
+      148,
+      1,
+      "MASK"
+    ],
+    [
+      295,
+      154,
+      0,
+      149,
+      0,
+      "IMAGE"
+    ],
+    [
+      296,
+      164,
+      0,
+      151,
+      0,
+      "IMAGE"
+    ],
+    [
+      297,
+      165,
+      0,
+      152,
+      0,
+      "IMAGE"
+    ],
+    [
+      298,
+      166,
+      0,
+      153,
+      0,
+      "IMAGE"
+    ],
+    [
+      299,
+      157,
+      0,
+      154,
+      0,
+      "IMAGE"
+    ],
+    [
+      300,
+      162,
+      1,
+      154,
+      1,
+      "INT"
+    ],
+    [
+      301,
+      142,
+      0,
+      155,
+      0,
+      "IMAGE"
+    ],
+    [
+      302,
+      157,
+      0,
+      155,
+      1,
+      "IMAGE"
+    ],
+    [
+      303,
+      155,
+      0,
+      156,
+      0,
+      "*"
+    ],
+    [
+      304,
+      174,
+      0,
+      159,
+      0,
+      "IMAGE"
+    ],
+    [
+      305,
+      174,
+      0,
+      161,
+      0,
+      "IMAGE"
+    ],
+    [
+      306,
+      148,
+      0,
+      161,
+      2,
+      "IMAGE"
+    ],
+    [
+      307,
+      139,
+      0,
+      161,
+      4,
+      "IMAGE"
+    ],
+    [
+      308,
+      157,
+      0,
+      162,
+      0,
+      "IMAGE"
+    ],
+    [
+      309,
+      159,
+      0,
+      163,
+      0,
+      "IMAGE"
+    ],
+    [
+      310,
+      176,
+      0,
+      163,
+      1,
+      "BOOLEAN"
+    ],
+    [
+      311,
+      167,
+      0,
+      163,
+      2,
+      "MASK"
+    ],
+    [
+      312,
+      176,
+      0,
+      163,
+      3,
+      "BOOLEAN"
+    ],
+    [
+      313,
+      172,
+      0,
+      164,
+      0,
+      "IMAGE"
+    ],
+    [
+      314,
+      175,
+      0,
+      165,
+      0,
+      "IMAGE"
+    ],
+    [
+      315,
+      173,
+      0,
+      166,
+      0,
+      "IMAGE"
+    ],
+    [
+      316,
+      159,
+      1,
+      167,
+      0,
+      "MASK"
+    ],
+    [
+      317,
+      139,
+      0,
+      169,
+      0,
+      "IMAGE"
+    ],
+    [
+      318,
+      179,
+      0,
+      172,
+      0,
+      "IMAGE"
+    ],
+    [
+      319,
+      180,
+      0,
+      173,
+      0,
+      "IMAGE"
+    ],
+    [
+      320,
+      170,
+      0,
+      174,
+      0,
+      "IMAGE"
+    ],
+    [
+      321,
+      181,
+      0,
+      175,
+      0,
+      "IMAGE"
+    ],
+    [
+      322,
+      161,
+      0,
+      177,
+      0,
+      "*"
+    ],
+    [
+      323,
+      182,
+      0,
+      179,
+      0,
+      "IMAGE"
+    ],
+    [
+      324,
+      184,
+      0,
+      179,
+      1,
+      "IMAGE"
+    ],
+    [
+      325,
+      127,
+      0,
+      180,
+      0,
+      "IMAGE"
+    ],
+    [
+      326,
+      183,
+      0,
+      180,
+      1,
+      "INT"
+    ],
+    [
+      327,
+      126,
+      0,
+      181,
+      0,
+      "IMAGE"
+    ],
+    [
+      328,
+      186,
+      0,
+      187,
+      0,
+      "INT"
+    ],
+    [
+      329,
+      188,
+      0,
+      189,
+      0,
+      "IMAGE"
+    ],
+    [
+      330,
+      197,
+      0,
+      196,
+      0,
+      "IMAGE"
+    ],
+    [
+      331,
+      195,
+      0,
+      196,
+      1,
+      "IMAGE"
+    ]
+  ],
+  "groups": [
+    {
+      "id": 1,
+      "title": "# Lighting Control 🔦",
+      "bounding": [
+        -6410,
+        -1690,
+        1300,
+        1000
+      ],
+      "color": "#ffffff",
+      "flags": {}
+    },
+    {
+      "id": 5,
+      "title": "🎨 Post Processing",
+      "bounding": [
+        -8500,
+        -630,
+        3280,
+        2380
+      ],
+      "color": "#3f789e",
+      "flags": {}
+    },
+    {
+      "id": 2,
+      "title": "📷 Effects",
+      "bounding": [
+        -8490,
+        310,
+        2180,
+        680
+      ],
+      "color": "#444",
+      "flags": {}
+    },
+    {
+      "id": 3,
+      "title": "✨ Image Effects",
+      "bounding": [
+        -8490,
+        1010,
+        2180,
+        720
+      ],
+      "color": "#8AA",
+      "flags": {}
+    },
+    {
+      "id": 4,
+      "title": "⚖️ Balance, 🔴🟢🔵 Adjust , 🔪 Sharpen",
+      "bounding": [
+        -8490,
+        -450,
+        2180,
+        730
+      ],
+      "color": "#A88",
+      "flags": {}
+    },
+    {
+      "id": 6,
+      "title": "# Skin Realism Suite",
+      "bounding": [
+        -8500,
+        -1730,
+        1700,
+        880
+      ],
+      "color": "#b58b2a",
+      "flags": {}
+    },
+    {
+      "id": 7,
+      "title": "Lighting 🔦",
+      "bounding": [
+        -6750,
+        -1730,
+        1650,
+        1050
+      ],
+      "color": "#8AA",
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ue_links": [],
+    "k2cf_state_id": "k2cf_1785113348833_apxfftyz2ud",
+    "ds": {
+      "scale": 0.14641000000000226,
+      "offset": [
+        14382.734395285222,
+        3236.875190265925
+      ]
+    },
+    "links_added_by_ue": [],
+    "frontendVersion": "1.51.9",
+    "VHS_latentpreview": false,
+    "VHS_latentpreviewrate": 0,
+    "VHS_MetadataImage": true,
+    "VHS_KeepIntermediate": true
+  },
+  "version": 0.4,
+  "seed_widgets": {
+    "180": 4,
+    "181": 4
+  }
+}

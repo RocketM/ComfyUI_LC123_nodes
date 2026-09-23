@@ -1,4 +1,26 @@
-"""LC Image Pass / LC Mask Pass — identity with enable mute."""
+"""
+LC Image Pass / LC Mask Pass -- identity with enable mute.
+
+`enable` off used to only work when it stayed a plain widget: the JS side reads that widget's value and mutes the
+node (mode 2), so the engine skips it and downstream optional sockets see nothing. Wire a BOOLEAN into `enable`
+instead and the widget's own value never updates -- the frontend never knows the wired value, so it can't mute --
+and `run()` had a bug on top of that: both branches returned the same thing, so `enable` never did anything at the
+Python level either. The result was that a wired `enable=False` was silently ignored and the real value always
+passed through.
+
+Fixed here: `run()` now actually returns a blocked signal when `enable` is off, checked at execution time, so it
+is correct however `enable` is set -- widget or wire. The JS mute is left in place for a plain widget: it still
+skips the node running at all, which is a nice-to-have, but the fix above is the part that makes this node correct.
+"""
+
+try:  # ComfyUI: skip downstream nodes without an error, the same way LC Preview Image/Mask do
+    from comfy_execution.graph import ExecutionBlocker as _Blocker
+except Exception:  # pragma: no cover
+    _Blocker = None
+
+
+def _blocked():
+    return _Blocker(None) if _Blocker is not None else None
 
 
 def _as_bool(v, default=True):
@@ -29,7 +51,7 @@ class LCImagePass:
     FUNCTION = "run"
     DESCRIPTION = (
         "Identity IMAGE. Wire on a side tap, not the main series. "
-        "enable off (widget or BOOLEAN) mutes the node so downstream optional sockets see no feed."
+        "enable off (widget or a wired BOOLEAN) blocks the output so downstream optional sockets see no feed."
     )
 
     @classmethod
@@ -45,7 +67,7 @@ class LCImagePass:
 
     def run(self, image, enable=True):
         if not _as_bool(enable, True):
-            return (image,)
+            return (_blocked(),)
         return (image,)
 
 
@@ -58,8 +80,9 @@ class LCMaskPass:
     FUNCTION = "run"
     DESCRIPTION = (
         "Identity MASK for a bank tap. Leave Ultra live. "
-        "enable off mutes this node only — Color Match / Tone Match then run with mask=None (full frame). "
-        "Do not put this on the only mask wire into Skin Beauty / Skin Upscale if those must stay masked."
+        "enable off (widget or a wired BOOLEAN) blocks the output — Color Match / Tone Match then run with "
+        "mask=None (full frame). Do not put this on the only mask wire into Skin Beauty / Skin Upscale if those "
+        "must stay masked."
     )
 
     @classmethod
@@ -75,7 +98,7 @@ class LCMaskPass:
 
     def run(self, mask, enable=True):
         if not _as_bool(enable, True):
-            return (mask,)
+            return (_blocked(),)
         return (mask,)
 
 

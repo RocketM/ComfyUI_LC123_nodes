@@ -1,6 +1,19 @@
 """
-🌱LC Seed — standalone INT seed with seed_mode (fixed / randomize / increment / decrement).
-Works on partial node runs. Widget is base_seed so ComfyUI does not inject control_after_generate.
+🌱LC Seed — standalone INT seed, rgthree Seed-style. One widget, no seed_mode: type a number for a fixed
+seed, or -1 for a fresh random number every run. Widget is base_seed (not "seed") so ComfyUI does not
+inject its own control_after_generate UI on top of this.
+
+-1 is a sentinel, not a real seed -- the actual value used is resolved here and reported back to the
+node's face (web/lc_seed.js) via the `ui` message, same as before.
+
+Capped to JS_SAFE_MAX (2**53 - 1, JavaScript's Number.MAX_SAFE_INTEGER) rather than the full 64-bit range:
+any integer bigger than that is not exactly representable as an IEEE-754 double, and a resolved seed has
+to cross into JS twice -- once over JSON in the `ui` message the browser uses to build the seed history,
+and once if it's ever typed into or displayed by the widget itself. Past 2**53 both of those silently round
+to the nearest representable double instead of erroring, so the number the history shows (and the number a
+user could type back in) is not necessarily the number that was actually used. A generation seed only needs
+enough entropy to avoid collisions -- 2**53 possible values is still astronomically more than that needs --
+so there's no reason to keep the full 64-bit range and its silent corruption risk.
 """
 
 from __future__ import annotations
@@ -8,17 +21,14 @@ from __future__ import annotations
 import random
 import time
 
+RANDOMIZE = -1
+JS_SAFE_MAX = (1 << 53) - 1  # Number.MAX_SAFE_INTEGER -- see module docstring
 
-def _resolve_seed(seed: int, seed_mode: str) -> int:
-    mode = (seed_mode or "fixed").lower().strip()
-    s = int(seed) & 0xFFFFFFFFFFFFFFFF
-    if mode == "randomize":
-        return random.randint(0, 0xFFFFFFFFFFFFFFFF)
-    if mode == "increment":
-        return (s + 1) & 0xFFFFFFFFFFFFFFFF
-    if mode == "decrement":
-        return (s - 1) & 0xFFFFFFFFFFFFFFFF
-    return s
+
+def _resolve_seed(base_seed: int) -> int:
+    if int(base_seed) == RANDOMIZE:
+        return random.randint(0, JS_SAFE_MAX)
+    return max(0, min(int(base_seed), JS_SAFE_MAX))
 
 
 class LCSeed:
@@ -28,14 +38,13 @@ class LCSeed:
             "required": {
                 "base_seed": ("INT", {
                     "default": 0,
-                    "min": 0,
-                    "max": 0xFFFFFFFFFFFFFFFF,
-                    "tooltip": "Base seed value. seed_mode decides how it changes each run.",
-                }),
-                "seed_mode": (["fixed", "randomize", "increment", "decrement"], {
-                    "default": "randomize",
-                    "tooltip": "fixed: reuse base_seed. randomize / increment / decrement: every run "
-                               "(full queue or this node only).",
+                    "min": RANDOMIZE,
+                    "max": JS_SAFE_MAX,
+                    "tooltip": "A number = that exact fixed seed, reused every run. -1 = a fresh random "
+                               "number every run. Use the node's own buttons rather than typing -1 by "
+                               "hand: 'Randomize Each Time' sets this to -1, 'New Fixed Random' rolls one "
+                               "number now and writes it here as a real fixed seed. Capped below 2**64 on "
+                               "purpose -- see the module docstring.",
                 }),
             },
         }
@@ -44,17 +53,19 @@ class LCSeed:
     RETURN_NAMES = ("seed",)
     FUNCTION = "emit"
     CATEGORY = "LC123/utils"
-    DESCRIPTION = "Utility seed. seed_mode works when you queue only this node."
+    DESCRIPTION = (
+        "Utility seed. Type a fixed number, or use the node's face: 'Randomize Each Time', 'New Fixed "
+        "Random', manual entry, or pick one of the last 10 seeds this node actually ran with."
+    )
 
     @classmethod
-    def IS_CHANGED(cls, base_seed, seed_mode="fixed"):
-        mode = (seed_mode or "fixed").lower().strip()
-        if mode == "randomize":
+    def IS_CHANGED(cls, base_seed):
+        if int(base_seed) == RANDOMIZE:
             return time.time()
-        return f"{int(base_seed)}:{mode}"
+        return int(base_seed)
 
-    def emit(self, base_seed, seed_mode="fixed"):
-        used = _resolve_seed(base_seed, seed_mode)
+    def emit(self, base_seed):
+        used = _resolve_seed(base_seed)
         return {
             "ui": {"seed": [used]},
             "result": (used,),

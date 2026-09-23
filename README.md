@@ -6,7 +6,7 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 - **Civitai:** [lonecatone23](https://civitai.com/user/lonecatone23)
 - **Instagram:** [synth.studio.models](https://www.instagram.com/synth.studio.models/)
 - **Support:** [Buy me a ☕](https://ko-fi.com/lonecatone)
-- **Version:** 1.34.4 · **116 Python nodes** · **4 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel)
+- **Version:** 1.35.0 · **117 Python nodes** · **4 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel)
 
 > Small tools that remove friction: less wire mess, fewer clicks, clearer workflows.
 
@@ -73,6 +73,33 @@ Preview nodes that stay quiet when nothing arrives. The core previews complain w
 
 ---
 
+## LC LoRA Loader 🎚️
+
+A multi-row LoRA loader modeled on rgthree's Power Lora Loader, rebuilt to fix three things in that node: it did not render in Nodes 2.0, it re-centred on a cross-page paste, and its Info menu item never showed anything.
+
+- **Rows:** enable, pick the file, set a strength. Drag the ⋮⋮ handle to reorder
+- **Strength control:** rgthree's own ◀ number ▶ layout, not a native spinner -- click an arrow to step by 0.05, click-drag the number itself left/right to scrub it continuously, or click it with no drag to type an exact value
+- **model and clip are both optional:** leave one unconnected for a model-only or clip-only chain
+- **➕ Add LoRA / ✕ per row**, plus Select all / Deselect all / Remove all in the right-click menu
+- **ℹ Info:** reads the LoRA file's own metadata for trigger words, no network call. Turn the button off for every node at once in **Settings → LC123 → Performance → LoRA loader info button**
+- Rows disabled or at 0 strength are skipped; a row pointing at a file that's been moved or deleted is skipped rather than failing the whole graph
+- Built as real HTML in one DOM widget (like LC Label / LC Preview), so it works the same in Nodes classic and Nodes 2.0, and never touches the node's position — nothing resets on a copy/paste across workflows
+- **Folder-drill-down picker:** click a row's file field to open a folder browser (subfolders nest however deep your library goes) with a search box that fuzzy-matches across the whole library, same interaction as rgthree's own LoRA chooser
+
+![LC LoRA Loader strength control and Info popover](assets/readme/lc_lora_loader_strength_and_info.png)
+
+---
+
+## LC LoRA Loader Stack 🎚️ / LC Apply LoRA Stack 🎚️
+
+A split version of LC LoRA Loader, modeled on Comfyroll's CR LoRA Stack / CR Apply LoRA Stack: build the row list once, apply it to more than one model/clip pair (a multi-model merge workflow, for example) instead of rebuilding the same rows on a loader per model.
+
+- **LC LoRA Loader Stack:** the exact same face as LC LoRA Loader — rows, subfolder-grouped dropdown, Info button, drag to reorder — but with no sockets in, just a `LORA_STACK` out
+- **LC Apply LoRA Stack:** deliberately minimal — `model` / `clip` / `lora_stack` in, `model` / `clip` out, and a **bypass** switch that passes both straight through untouched when on
+- `LORA_STACK` is the standard community shape (a list of `(lora_name, strength_model, strength_clip)`), so it also plugs into other packs' apply nodes (Comfyroll, Efficiency Nodes, Impact Pack, ...)
+
+---
+
 ## LC Label 🏷️
 
 A text label for annotating a workflow, like the ones in the example workflows, with a rotate handle like Word or Paint. No title, no sockets, no execution.
@@ -105,6 +132,7 @@ This is a **UI-only** switch panel: smoother scrolling, lighter on-node previews
 | **Hide FX on-node previews** | Off | Hide all LC image FX on-node previews |
 | **Skin Beauty full preview override** | On | Skin Beauty stays full quality on-node |
 | **Recent colors** | On | Your last 8 custom colors show up in the right-click **Colors** menu. Adds its own 🎨 Custom picker if Custom Scripts isn't installed |
+| **LoRA loader info button** | On | Show the ℹ info button on each row of LC LoRA Loader |
 
 **Doesn't touch:** LC Image Compare · LC Dynamic Overlay · LC Image Split
 
@@ -213,8 +241,8 @@ Subjects + Scene + Camera + Lighting + Style + Palette
 | **LC Image Grid 🖼️** | Contact sheet: columns, gap, pad, outline, all yours to set. |
 | **LC Last Image Holder** | Holds the last image so you can clear it without a re-run. |
 | **LC Dynamic Overlay** | Overlays B on A; opacity kicks in after one queue. Outputs the **blended Image**. |
-| **LC Image Pass** | An identity pass for IMAGE. `enable` off mutes just this tap, so anything downstream watching an optional socket sees nothing. |
-| **LC Mask Pass** | Same idea for MASK: a bank tap. `enable` off mutes this tap only; Color / Tone Match then run with `mask=None` (full frame). |
+| **LC Image Pass** | An identity pass for IMAGE. `enable` off (widget or a wired BOOLEAN) blocks the output, so anything downstream watching an optional socket sees nothing. |
+| **LC Mask Pass** | Same idea for MASK: a bank tap. `enable` off (widget or a wired BOOLEAN) blocks the output; Color / Tone Match then run with `mask=None` (full frame). |
 | **LC Watermark 💧** | Image watermark with size, opacity, and drag-to-place. |
 | **LC Image Label 🖼️⚙️** | Chromeless sticker: drag an image onto the canvas (or double-click → Load Image) and it floats there, no title bar, no sockets, nothing to wire. Select it to rotate (round handle, snaps to 5° with a magnet at 0, 90 and 180; Shift = 15°, Alt = free), grow (corners) or stretch (sides, Shift keeps the proportions), with no size cap. Double-click for settings: width, height, angle, padding, border width/color/radius, background. It sits above the canvas, so nodes and links can't cover it. Pin it and it locks the same way LC Label does. Baked into the saved workflow as a small webp data URL, so the label survives sharing even after the original upload is gone. |
 
@@ -245,7 +273,9 @@ Hover any of these to wipe against the original. If your graph's heavy, dial the
 | **LC Skin Beauty ✨** / **LC Photo Style 📷** | See above. |
 | **LC Skin Upscale** | One CNN + a matte. `detail 1x` or `scale`. Wipe preview included. See above. |
 | **LC Apply LUT** | Reads `.cube` files from **`ComfyUI/models/luts/`**. Sample LUTs copy over from `assets/luts/` on load and never overwrite what's already there. |
-| **LC Text Overlay** | Text on an image: align left/center/right, drag it or use the widgets, your call. |
+| **LC Text Overlay** | Text on an image: align left/center/right, drag it or use the widgets, your call. Auto-shrinks to fit the image if the requested font size would run past the edge. |
+| **LC Phone Filters 📱** | The same 37 phone-app presets as WAS Node Suite's Image Style Filter (1977, Aden, Brooklyn, Xpro2, and the rest) -- pick a preset, dial strength, wipe to compare. |
+| **LC Directional Blur** | Motion-style blur along one angle/length. Drag the arrow on the node's face to set both at once, or double-click either readout to type an exact value. **strength** blends back toward the original -- the blur itself is a hard, full-strength smear over its length, so turn this down rather than the distance if it's too much. **taps** and **edge** match WAS Node Suite's Image Directional Blur: taps is how many samples are averaged along the path (low = a visibly stepped multi-exposure ghost, high = a smooth streak); edge is what the blur reads past the image border (hold the edge / mirror / empty -- empty darkens the border as the smear runs off it). On-node preview + wipe, same as the rest of the Image FX group. |
 
 ---
 
@@ -307,7 +337,7 @@ Hover any of these to wipe against the original. If your graph's heavy, dial the
 | **LC Any Empty Float** | Same test again, returns `empty` / `not_empty` as floats, 2 decimal places. |
 | **LC Int Split** | `total` splits into `a` + `b`. `split_point` is a fraction, **0–1**, not a raw count. |
 | **LC Seed Jump 🌱** | One seed + a jump value → six stepped seeds, no manual math. |
-| **🌱LC Seed** | A seed widget with seed_mode: fixed / randomize / increment / decrement. |
+| **🌱LC Seed** | One widget, rgthree Seed-style: type a number for a fixed seed, or use the buttons -- **Randomize Each Time** sets it to roll a fresh number every run, **New Fixed Random** rolls one number now and locks it in. A **seed history** dropdown remembers the last 10 seeds this node actually ran with (not just staged) -- picking one sets it as the new fixed seed. Capped at 2**53-1 (JavaScript's safe integer limit), not the full 64-bit range -- past that, a seed silently rounds to a different number crossing into the browser (history/UI), which looked like every random seed ending in a suspicious number of zeros. |
 | **LC Slider** | A plain slider (thin track, round knob, value) that looks and works the same in Nodes classic and Nodes 2.0. Double-click the value to type one. **min / max / step / decimals** are behind the faint gear on the node (also the right-click menu). Decimals 0 = INT, more = FLOAT. |
 | **LC Node Snapshot 📋** | Reads another node's widgets → value / dump / JSON, whichever you need. |
 | **LC Notify 🔊** | Plays a sound from `assets/sounds/` when the run hits it. Mode: always / on empty queue / **never**. The ▶ preview still works even when it's set to silent. |
@@ -315,6 +345,8 @@ Hover any of these to wipe against the original. If your graph's heavy, dial the
 | **LC Bypass Relay** | Autogrows left-hand `*` targets. Its `OPT_CONNECTION` plugs into **LC Bypasser** or **LC Mute**. Flip the hub off and every left-hand node gets the same bypass/mute treatment, together. One node does this. No separate Repeater required. |
 | **LC Stop 🛑** | Pauses the graph until you hit the button. |
 | **LC VRAM Cache Clear** | Clears VRAM / cache, then passes through. |
+
+![LC Seed's buttons and seed history dropdown](assets/readme/lc_seed_history.png)
 
 Canvas note: [`LC123_Save_Image_Note.md`](LC123_Save_Image_Note.md)
 

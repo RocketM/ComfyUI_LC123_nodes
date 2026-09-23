@@ -90,6 +90,8 @@ _load("lc_image_total_megapixels")
 _load("lc_lighting_v2")
 _load("lc_preview_nodes")
 _load("lc_label")
+_load("lc_lora_loader")
+_load("lc_lora_stack")
 _load("lc_image_crop")
 _load("lc_image_grid")
 _load("lc_image_tools")
@@ -115,6 +117,8 @@ _load("lc_change_step_count")
 _load("lc_sigma_curve")
 _load("lc_pass")
 _load("lc_bypass_relay")
+_load("lc_directional_blur")
+_load("lc_phone_filters")
 
 WEB_DIRECTORY = "./web"
 
