@@ -22,6 +22,7 @@ import folder_paths
 
 from .lc_pipe_io import PIPE_TYPE
 from .lc_civitai_hashes import collect_hashes, format_hash_fields, civitai_resources_payload
+from .lc_lora_metadata import collect_lora_metadata, append_lora_tags
 
 
 META_TYPE = "LC_SAVE_META"
@@ -478,6 +479,7 @@ class LCSaveImage:
             "hidden": {
                 "prompt": "PROMPT",
                 "extra_pnginfo": "EXTRA_PNGINFO",
+                "unique_id": "UNIQUE_ID",
             },
         }
 
@@ -505,6 +507,7 @@ class LCSaveImage:
         filename_prefix="",
         prompt=None,
         extra_pnginfo=None,
+        unique_id=None,
     ):
         fmt = str(format or "png").lower().strip()
         if fmt in ("jpg", "jpeg"):
@@ -518,6 +521,9 @@ class LCSaveImage:
         quality = int(max(1, min(100, quality)))
 
         meta = _as_meta(metadata)
+        lora_metadata = collect_lora_metadata(prompt, unique_id)
+        if embed_civitai:
+            meta['positive'] = append_lora_tags(_txt(meta.get('positive')), lora_metadata)
         prefix = _txt(filename_prefix)
         stem = _txt(filename) or "LC123"
         folder = _txt(path)
@@ -582,6 +588,8 @@ class LCSaveImage:
                             info.add_text(k, json.dumps(v) if not isinstance(v, str) else v)
                 if params:
                     info.add_text("parameters", params)
+                if embed_civitai:
+                    info.add_text("lora_metadata", json.dumps(lora_metadata, ensure_ascii=False))
                 air = _txt(meta.get("civitai_air"))
                 resources = civitai_resources_payload(air)
                 if resources:
