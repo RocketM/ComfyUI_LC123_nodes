@@ -71,7 +71,14 @@ def _join_path(*parts: str) -> str:
     return "/".join(chunks)
 
 
-def _build_parameters(meta: dict, width: int, height: int, hash_bits=None) -> str:
+def _build_parameters(
+    meta: dict,
+    width: int,
+    height: int,
+    hash_bits=None,
+    source_width: int | None = None,
+    source_height: int | None = None,
+) -> str:
     positive = _txt(meta.get("positive"))
     negative = _txt(meta.get("negative"))
     steps = meta.get("steps")
@@ -110,6 +117,11 @@ def _build_parameters(meta: dict, width: int, height: int, hash_bits=None) -> st
         except (TypeError, ValueError):
             bits.append(f"Seed: {seed}")
     bits.append(f"Size: {int(width)}x{int(height)}")
+    if (
+        source_width and source_height
+        and (int(source_width) != int(width) or int(source_height) != int(height))
+    ):
+        bits.append(f"Source size: {int(source_width)}x{int(source_height)}")
     if models:
         bits.append(f"Model: {models}")
     if denoise not in (None, "", 0, 0.0, "0"):
@@ -565,7 +577,16 @@ class LCSaveImage:
                     print(f"[LC123] resource hash skip: {e}")
                     hash_bits = None
             if embed_civitai:
-                params = _build_parameters(meta, width, height, hash_bits)
+                meta_width = int(meta.get("width") or 0)
+                meta_height = int(meta.get("height") or 0)
+                params = _build_parameters(
+                    meta,
+                    width,
+                    height,
+                    hash_bits,
+                    meta_width if meta_width > 0 else None,
+                    meta_height if meta_height > 0 else None,
+                )
 
             fname = f"{file_stem}_{counter:05d}.{ext}"
             dest = os.path.join(full_dir, fname)
