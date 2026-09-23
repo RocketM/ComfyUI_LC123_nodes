@@ -135,13 +135,15 @@ function patchHubSettle() {
 function hubMode(relay, g) {
   for (const hub of allNodes(g)) {
     if (!HUBS.has(hub.type)) continue;
-    if (hub._lcHubReady === false) continue;
+    if (hub._lcHubReady === false || hub._lcStabilizing) continue;
     const pairs = Math.floor((hub.inputs?.length || 0) / 2);
     for (let p = 0; p < pairs; p++) {
       const o = originOf(g, hub.inputs[p * 2]);
       if (!o || o.id !== relay.id) continue;
       const w = hub.widgets?.[p];
-      const on = !w || w.value !== false;
+      // Connections can arrive before the hub has rebuilt its toggle widgets.
+      if (!w) return null;
+      const on = w.value !== false;
       if (on) return LIVE;
       return hub.type === "LC Mute" || hub._lcOffMode === MUTE ? MUTE : BYPASS;
     }
