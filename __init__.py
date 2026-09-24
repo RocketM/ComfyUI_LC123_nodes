@@ -56,6 +56,7 @@ _load("lc_index_switch")
 _load("lc_custom_combo")
 _load("lc_combo")
 _load("lc_invert_boolean")
+_load("lc_is_bypassed_or_muted")
 _load("lc_boolean")
 _load("lc_boolean_switch")
 _load("lc_prompt_builder")
@@ -120,6 +121,8 @@ _load("lc_bypass_relay")
 _load("lc_directional_blur")
 _load("lc_phone_filters")
 _load("lc_image_ref_pipe")
+_load("lc_image_batch_folder")
+_load("lc_show_any")
 
 WEB_DIRECTORY = "./web"
 

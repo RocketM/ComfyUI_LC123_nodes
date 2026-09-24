@@ -6,7 +6,7 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 - **Civitai:** [lonecatone23](https://civitai.com/user/lonecatone23)
 - **Instagram:** [synth.studio.models](https://www.instagram.com/synth.studio.models/)
 - **Support:** [Buy me a ☕](https://ko-fi.com/lonecatone)
-- **Version:** 1.39.0 · **123 Python nodes** · **4 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel)
+- **Version:** 1.40.0 · **126 Python nodes** · **4 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel)
 
 > Small tools that remove friction: less wire mess, fewer clicks, clearer workflows.
 
@@ -237,6 +237,7 @@ Subjects + Scene + Camera + Lighting + Style + Palette
 | **LC Image-Mask Resize 📐** | Image + mask only: no latent, no batch. **match_aspect_ratio** keeps the input ratio pinned to the longer settings side. **upscale_by:** none / multiplier (0.25) / megapixels (0.01). After a run, the actual **WxH** (e.g. `1024x1390`) gets drawn right on the node in a reserved footer, so you don't have to go hunting for it. |
 | **LC Image to Total Megapixels 📐** | Same scaling as the native **Scale Image to Total Pixels** (1.0 MP = 1024 x 1024, sizes snap to **resolution_steps**), plus **resolution** (longer side in pixels) and **megapixels** outputs. |
 | **LC Batch Image 🖼️** | Autogrow IMAGE slots into one batch. Muted or empty sockets get skipped, not counted. Mixed sizes follow whatever the first live image is. |
+| **LC Image Batch From Folder 📂** | Loads a whole folder as one batch in alphabetical order (img2 before img10). **folder_path** takes a full path or a folder name inside `ComfyUI/input`. Paste it however you like: with or without quotes, `/` or `\`, trailing slash, even a path to one of the images (it uses that image's folder). **max_images** caps how many load (0 = all) so low VRAM setups can test in chunks, and **start_index** picks where to start. Different sizes crop, pad or stretch to the first image. Outputs the batch, how many loaded, how many were found, and the file names. |
 | **LC Image Compare 🔎** | Batch A/B with one slider per pair. |
 | **LC Image Split 🖼️** | Saveable A\|B wipe: slider only, no drag. The output is the baked split, not the two halves. |
 | **LC Image Grid 🖼️** | Contact sheet: columns, gap, pad, outline, all yours to set. |
@@ -317,6 +318,7 @@ Hover any of these to wipe against the original. If your graph's heavy, dial the
 | **📝 LC Save Text** | Writes text to a file; sanitizes illegal path characters so you don't get a cryptic OS error. |
 | **LC Join Strings 🔗** | Joins N strings together. Empty slots skip the delimiter instead of leaving a stray one in. `\n` is allowed. |
 | **LC Show Text 🔤** | Displays text right on the node. |
+| **LC Show Any 🔤** | Wire in anything, it shows on the node, and the **same value** comes out the other side. An INT stays an INT and a sampler name stays a sampler name, so it can sit in the middle of a wire. Images, masks and latents show their size. |
 | **LC Text Replace ✂️** / **LC Text Remove 🔪** | Up to 20 pairs, and the node grows as you add more. |
 | **Civitai 🚩🔪** | Strips terms from `assets/lists/civitai_compliance_remove.txt`. Compliance with **your** platform's TOS is on you, not this node. |
 
@@ -332,6 +334,7 @@ Hover any of these to wipe against the original. If your graph's heavy, dial the
 | **LC Custom Combo Panel** | A compact remote for a combo hub elsewhere in the graph. |
 | **LC Combo Selector** | A dropdown that just mirrors another node's combo. |
 | **LC Boolean** / **Invert Boolean** | Coerces to true/false. Invert has no face widget. It just shows **true** / **false** plainly. Both carry a hidden `boolean` widget so Bypasser / Mute can read a live signal without you having to queue first (same contract as Flip). |
+| **LC Is Bypassed / Muted** | True if the node wired into `value` is currently bypassed OR muted. Wire anything -- only which node the wire comes from matters. Same live-signal contract as Invert Boolean, but reads the origin node's own mode instead of coercing a value, since a muted node never executes and couldn't otherwise report its own state. |
 | **LC Widget To String** | The KJ WidgetToString pattern. `any_input` unwired + `id` 0 + empty title = **dormant** (returns `""`). That's intentional, not broken. Wire `any_input`, or set an id/title, to actually read widgets. Supports comma-separated names, `return_all`, and float decimals. Utility green, `#324B4B`. |
 | **LC Boolean Switch** / **Flip** / **Value** | Pick or emit booleans. |
 | **LC Int Compare** / **LC Float Compare** | Largest or smallest of two values. |
