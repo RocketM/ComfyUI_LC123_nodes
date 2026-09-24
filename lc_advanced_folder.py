@@ -65,11 +65,11 @@ class LCAdvancedFolder:
             "required": {
                 "folder": ("STRING", {
                     "default": "MetaData",
-                    "tooltip": "Root folder / subfolder under the saver output path.",
+                    "tooltip": "Root folder / subfolder under the saver output path. Tokens like %model %seed %sampler are filled in by LC Save Image from its metadata (dropped if missing).",
                 }),
                 "prefix": ("STRING", {
                     "default": "Test",
-                    "tooltip": "Used in both the path segment and the filename.",
+                    "tooltip": "Used in both the path segment and the filename. Tokens like %model %seed %sampler are filled in by LC Save Image from its metadata (dropped if missing).",
                 }),
                 "suffix": ("STRING", {
                     "default": "",
@@ -126,7 +126,7 @@ class LCAdvancedFolder:
             path = ""
 
         # Create on disk under Comfy output (best-effort)
-        if path:
+        if path and "%" not in path:  # a %token path is made by LC Save Image once it is filled in
             try:
                 import folder_paths
                 out_root = folder_paths.get_output_directory()

@@ -6,7 +6,7 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 - **Civitai:** [lonecatone23](https://civitai.com/user/lonecatone23)
 - **Instagram:** [synth.studio.models](https://www.instagram.com/synth.studio.models/)
 - **Support:** [Buy me a ☕](https://ko-fi.com/lonecatone)
-- **Version:** 1.40.0 · **126 Python nodes** · **4 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel)
+- **Version:** 1.41.0 · **126 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
 
 > Small tools that remove friction: less wire mess, fewer clicks, clearer workflows.
 
@@ -114,6 +114,20 @@ A text label for annotating a workflow, like the ones in the example workflows, 
 
 ---
 
+## LC Note 📝
+
+A markdown note that speaks your reader's language. Write it once, translate it, and the translations ship inside the workflow.
+
+- The dropdown in the top of the note lists ComfyUI's 14 languages, each in its own script: ✏️ original · ✅ translated · ⚠️ the original changed since it was translated · ❌ not translated.
+- Pick a ❌ (or ⚠️) language and click **Translate now**. Nothing ever translates on its own, so edit the note as many times as you like before you ship it.
+- ⚠️ keeps showing the older translation until you re-translate it, so readers never get an empty note.
+- 💡 **Translating needs [LC Vision](https://github.com/lonecatone23/ComfyUI_LC_Vision_nodes) installed. Nothing to wire.** Reading and switching languages works for everyone with just LC123.
+- Readers' pick is remembered (**Settings → LC123 → Notes**), and every LC Note opens in it when that translation exists. The default follows ComfyUI's own language.
+- عربي, فارسی and עברית display right to left.
+- You can edit any translation by hand. Right-click the note to change which language is the original.
+
+---
+
 ## ⚙️ LC123 Performance (Settings)
 
 This is a **UI-only** switch panel: smoother scrolling, lighter on-node previews. It does **not** touch generation VRAM or socket output quality, so don't expect it to save you from an OOM.
@@ -133,6 +147,7 @@ This is a **UI-only** switch panel: smoother scrolling, lighter on-node previews
 | **Skin Beauty full preview override** | On | Skin Beauty stays full quality on-node |
 | **Recent colors** | On | Your last 8 custom colors show up in the right-click **Colors** menu. Adds its own 🎨 Custom picker if Custom Scripts isn't installed |
 | **LoRA loader info button** | On | Show the ℹ info button on each row of LC LoRA Loader |
+| **Notes → Note language** | Same as ComfyUI | The language LC Notes open in. Picking a language on any note changes this too |
 
 **Doesn't touch:** LC Image Compare · LC Dynamic Overlay · LC Image Split
 
@@ -313,6 +328,7 @@ Hover any of these to wipe against the original. If your graph's heavy, dial the
 |------|----------------|
 | **LC Easy Folder 📂** | A combined prefix for the native Save Image node, or wire it straight into LC Save Image's `filename_prefix`. |
 | **LC Advanced Folder 📂** | Splits filename and path apart if you need that level of control. |
+| 💡 **Name tokens** | Type **%model %seed %steps %cfg %sampler %scheduler %denoise %width %height** anywhere in Easy Folder, Advanced Folder or LC Save Image's own filename / path, e.g. `Krea2/%model/Test_%seed`. **LC Save Image** fills them in from the **LC Save Metadata** pipe (`%seed` or `%seed%` both work). No metadata, or that value isn't in it? The token just drops out and the leftover `_` gets tidied up. ComfyUI's own `%date:yyyy-MM-dd%` style tokens still work too. |
 | **LC Save Metadata 🏷️** | Optional **LC_PIPE in** (no pipe out, this is an endpoint). The pipe fills prompts, seed, steps (`total_steps`), CFG (`cfg_1`), sampler, scheduler, size, and denoise for you. Widgets override whenever they're set (seed `-1`, steps/cfg `0` = defer to the pipe). **models** is a plain `Model 1, Model 2` string. **civitai_air** takes the primary AIR tag or a Civitai URL, written out as `civitaiResources` JSON. |
 | **LC Save Image 💾** | Takes a `filename` + `path` under the Comfy output folder. PNG gets the workflow, `parameters`, `civitaiResources`, and AutoV2 hashes all embedded. JPEG/WebP only get a short comment. That's a format limitation, not a bug. Hash files come from your live loaders. Muted (2) and bypassed (4) nodes get skipped, same for any LoRA sitting at `on: false`. If you've changed widgets recently, re-drop old Save Image nodes rather than trust the stale copy. |
 | **📝 LC Save Text** | Writes text to a file; sanitizes illegal path characters so you don't get a cryptic OS error. |

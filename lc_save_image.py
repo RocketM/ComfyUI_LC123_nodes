@@ -61,6 +61,45 @@ def _pipe_get(pipe, *keys):
     return None
 
 
+# %model %seed ... in filename / path / Easy Folder / Advanced Folder text, filled from the
+# metadata pipe. %name and %name% both work. Missing value or no metadata = the token is dropped.
+_TOKEN_KEYS = {
+    "model": "models", "modelname": "models", "checkpoint": "models", "ckpt": "models",
+    "seed": "seed", "steps": "steps", "cfg": "cfg",
+    "sampler": "sampler", "sampler_name": "sampler", "scheduler": "scheduler",
+    "denoise": "denoise", "width": "width", "height": "height",
+}
+_TOKEN_RX = re.compile(r"%(" + "|".join(sorted(_TOKEN_KEYS, key=len, reverse=True)) + r")(?![A-Za-z0-9])%?", re.I)
+
+
+def _token_value(name: str, meta: dict) -> str:
+    v = meta.get(_TOKEN_KEYS[name.lower()])
+    if v is None or v == "":
+        return ""
+    if _TOKEN_KEYS[name.lower()] == "models":
+        first = str(v).split(",")[0].strip().replace("\\", "/").rsplit("/", 1)[-1]
+        v = re.sub(r"\.(safetensors|ckpt|pt|pth|gguf|sft|bin)$", "", first, flags=re.I)
+    elif isinstance(v, float):
+        v = f"{v:g}"
+    return re.sub(r'[<>:"/\\|?*\x00-\x1f]', "_", str(v)).strip()
+
+
+def _fill_tokens(text: str, meta: dict) -> str:
+    if not text or "%" not in text:
+        return text
+    out, n = _TOKEN_RX.subn(lambda m: _token_value(m.group(1), meta), text)
+    if not n:
+        return text  # no LC tokens: leave the name alone (ComfyUI's own %date:...% etc. still work)
+    # tidy what a dropped token leaves behind: "Test__x", "_-", empty folders, trailing "_"
+    segs = []
+    for seg in re.split(r"[\\/]", out):
+        seg = re.sub(r"([_\-. ])[_\-. ]+", r"\1", seg).strip("_- .")
+        if seg:
+            segs.append(seg)
+    lead = "/" if out.startswith(("/", "\\")) else ""
+    return lead + "/".join(segs)
+
+
 def _join_path(*parts: str) -> str:
     chunks = []
     for p in parts:
@@ -406,14 +445,14 @@ class LCSaveImage:
                     "STRING",
                     {
                         "default": "LC123",
-                        "tooltip": "File stem. Easy Folder can still be wired if you prefer one combined prefix.",
+                        "tooltip": "File stem. Easy Folder can still be wired if you prefer one combined prefix. %model %seed %steps %cfg %sampler %scheduler %denoise %width %height are filled in from the metadata socket; missing ones are dropped.",
                     },
                 ),
                 "path": (
                     "STRING",
                     {
                         "default": "",
-                        "tooltip": "Subfolder under Comfy output. Empty = output root. Separators normalized.",
+                        "tooltip": "Subfolder under Comfy output. Empty = output root. Separators normalized. Name tokens like %model work here too.",
                     },
                 ),
                 "format": (
@@ -518,9 +557,9 @@ class LCSaveImage:
         quality = int(max(1, min(100, quality)))
 
         meta = _as_meta(metadata)
-        prefix = _txt(filename_prefix)
-        stem = _txt(filename) or "LC123"
-        folder = _txt(path)
+        prefix = _fill_tokens(_txt(filename_prefix), meta)
+        stem = _fill_tokens(_txt(filename), meta) or "LC123"
+        folder = _fill_tokens(_txt(path), meta)
         if prefix and (not _txt(filename) or filename == "LC123"):
             combined = prefix
         else:
