@@ -1,70 +1,51 @@
-# LC123 Performance Settings ⚙️
+# LC123 Settings ⚙️
 
-> **UI only** — smoother scrolling and lighter on-node previews.  
-> These settings do **not** change generation VRAM, model load, or output image quality on the sockets.
+**Where are they?** Open **Settings** (the gear), then **LC123**. There are two sections: **Notes** and **Performance**.
 
----
-
-## Where to find them
-
-1. Open **ComfyUI Settings** (gear).
-2. In the sidebar, open **LC123**.
-3. Open **Performance**.
-
-If you don’t see the full list: restart ComfyUI, then **Ctrl+F5** (hard refresh) so the updated `web/lc_performance_settings.js` loads.
+- 💡 Missing a setting? Restart ComfyUI, then press **Ctrl+F5** so the browser loads the new files.
 
 ---
 
-## What each option does
+### 📝 Notes
+
+**Note language**
+- Default: **Same as ComfyUI**
+- The language every LC Note opens in.
+- Only notes that already have that translation switch. The rest stay in their original language.
+
+**Convert all notes**
+- One click turns every **Markdown Note** and **Note** in the open workflow into an **LC Note**.
+- A note written as English, then `---`, then Chinese becomes one LC Note with both languages.
+- Position, size and color are kept.
+- ⚠️ Save the workflow afterwards. If you reload without saving, the conversion is gone.
+
+---
+
+### ⚡ Performance
+
+These only change what you see on the canvas. Generation, VRAM, **Save Image** and every **IMAGE** output stay full resolution. (A lighter preview never means a lighter image.)
 
 | Setting | Default | What it does |
-|--------|---------|----------------|
-| **Remove wipe** | Off | Turns off hover A/B wipe on **image FX** nodes. Last result still shows. |
-| **Half-resolution previews** | Off | Draws FX previews at **half** the node’s image area (less GPU/CPU work while panning). |
-| **Clamp longest side** | Off | Downscales the **on-node** preview bitmap so the longest side ≤ **Max edge**. |
-| **Max edge (px)** | 768 | Used only when **Clamp longest side** is on. Try 512–1024 on heavy graphs. |
-| **No preview when collapsed** | On | Collapsed FX nodes skip drawing previews (less work while scrolling). |
-| **Hide FX on-node previews** | Off | Hides all LC **image FX** on-node previews. Socket outputs are unchanged. |
-| **Skin Beauty full preview override** | On | **LC Skin Beauty** keeps a **full-quality** on-node preview even if half-res / clamp are on (for zooming skin detail). Wipe still follows **Remove wipe**. |
+|---|---|---|
+| **Remove wipe** | Off | Turns off the hover A/B wipe on LC image FX nodes. The last result still shows. |
+| **Half-resolution previews** | Off | Draws FX previews at half size. Less work while panning. |
+| **Clamp longest side** | Off | Shrinks on-node previews so the longest side fits **Max edge**. |
+| **Max edge (px)** | 768 | Only used when **Clamp longest side** is on. Range 256 to 2048. Try 512 on heavy graphs. |
+| **No preview when collapsed** | On | Collapsed FX nodes skip drawing their preview. |
+| **Hide FX on-node previews** | Off | Hides every LC image FX preview. |
+| **Recent colors** | On | Keeps your last 8 custom colors in the right-click **Colors** menu. Adds a Custom picker if Custom Scripts is not installed. |
+| **Skin Beauty full preview override** | On | **LC Skin Beauty** keeps a full-quality preview even with half-res or clamp on, so you can still zoom into skin. Wipe still follows **Remove wipe**. |
+| **LoRA loader info button** | On | Shows the ℹ button on each **LC LoRA Loader** row. Trigger words come from the LoRA file itself (no internet). Turn off to declutter. |
+
+**Never affected:** **LC Image Compare 🔎**, **LC Image Split 🖼️** and **LC Dynamic Overlay** keep their full preview and wipe no matter what.
+
+**Suggested setups**
+- **Normal use:** leave everything at default.
+- **Laggy graph:** turn on **Half-resolution previews** and **Clamp longest side** (Max edge 512). Keep **No preview when collapsed** on.
+- **Lightest canvas:** turn on **Hide FX on-node previews**. Use **Image Compare** or **Image Split** when you need to see a before/after.
+- 💡 Changes apply on the next redraw. Pan the canvas a little, no restart needed.
 
 ---
 
-## What is *not* affected
+"True Nothing is. Permitted Everything is"- Yoda Auditore, Assassin's Wars
 
-These stay fully interactive and are **not** driven by the Performance toggles:
-
-- **LC Image Compare 🔎**
-- **LC Dynamic Overlay**
-- **LC Image Split 🖼️**
-
-Generation, Save Image, and every **IMAGE** output socket still use full resolution.
-
----
-
-## Suggested setups
-
-### Default (shipped)
-Leave everything at default: full FX previews, wipe on, Skin Beauty override on.
-
-### Heavy graph / laggy scroll
-1. Turn **Half-resolution previews** **On**  
-2. Turn **Clamp longest side** **On** (Max edge **512** or **768**)  
-3. Keep **No preview when collapsed** **On**  
-4. Leave **Skin Beauty full preview override** **On** if you still inspect skin on the node  
-
-### Maximum UI lightness
-1. **Hide FX on-node previews** **On**  
-2. Or use **Remove wipe** + half-res + clamp  
-3. Use **Image Compare** / **Image Split** when you need a wipe  
-
----
-
-## Notes
-
-- Changes apply on the next canvas redraw (panning or queue is enough; no reinstall needed).
-- Optional SAM / LayerStyle / big models are separate from these settings; they still use their own VRAM.
-- Pack files: `web/lc_performance_settings.js`, `web/lc_image_preview.js`
-
----
-
-*Lonecat’s LC123 — less friction, more making.*

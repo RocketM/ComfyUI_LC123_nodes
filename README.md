@@ -6,7 +6,7 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 - **Civitai:** [lonecatone23](https://civitai.com/user/lonecatone23)
 - **Instagram:** [synth.studio.models](https://www.instagram.com/synth.studio.models/)
 - **Support:** [Buy me a ☕](https://ko-fi.com/lonecatone)
-- **Version:** 1.41.0 · **126 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
+- **Version:** 1.41.1 · **126 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
 
 > Small tools that remove friction: less wire mess, fewer clicks, clearer workflows.
 
@@ -125,6 +125,11 @@ A markdown note that speaks your reader's language. Write it once, translate it,
 - Readers' pick is remembered (**Settings → LC123 → Notes**), and every LC Note opens in it when that translation exists. The default follows ComfyUI's own language.
 - عربي, فارسی and עברית display right to left.
 - You can edit any translation by hand. Right-click the note to change which language is the original.
+- **The title follows the language too.** Original on screen: `⚙️ Settings`. A translation on screen: `⚙️ Settings/ ⚙️ 设置`. Translate now does the title along with the note. If there's no translated title (or it's a name that doesn't translate) you get the same words twice, so you know it's not an error.
+- **Renaming always changes the original title**, whatever language is on screen (with a translation showing, the part before the `/` is the original). Translations then show ⚠️ until you re-translate, same as editing the text.
+- **✏️ follows your ComfyUI language.** A new LC Note is written in whatever language your ComfyUI is set to, so a Spanish ComfyUI starts it as Español ✏️. Right-click the note to change it.
+- 💡 The **◀ ▶ arrows** only flip between languages the note actually has, so with English and Chinese they just go back and forth. To translate a new one, open the list.
+- **Convert all notes** (**Settings → LC123 → Notes**) turns every Markdown Note and Note in the open workflow into an LC Note, keeping position, size and color. A note written as English, then `---`, then Chinese comes out as one LC Note with both languages. Save the workflow afterwards to keep it.
 
 ---
 
