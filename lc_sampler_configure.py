@@ -351,6 +351,7 @@ class LCSamplerConfigurePipe:
         comfy.samplers.KSampler.SAMPLERS,
         comfy.samplers.KSampler.SCHEDULERS,
         "INT",
+        "LATENT",
     )
     RETURN_NAMES = (
         "pipe",
@@ -362,6 +363,7 @@ class LCSamplerConfigurePipe:
         "sampler_name",
         "scheduler",
         "detailer_steps",
+        "latent",
     )
     FUNCTION = "unpack"
     CATEGORY = "LC123/sampling"
@@ -383,6 +385,7 @@ class LCSamplerConfigurePipe:
             pipe.get("sampler_name"),
             pipe.get("scheduler"),
             int(pipe.get("detailer_steps") or 0),
+            pipe.get("latent"),
         )
 
 

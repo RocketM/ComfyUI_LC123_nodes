@@ -9,6 +9,7 @@ chunk: Model hash, Lora hashes, and the Hashes JSON object.
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 import re
 from urllib.parse import parse_qs, urlparse
@@ -238,6 +239,24 @@ def _collect_from_prompt(prompt, skip_ids=None) -> list[tuple[str, str | None]]:
                 add(val, hint)
             for m in _LORA_TAG.finditer(val):
                 add(m.group(1), "loras")
+            # LC LoRA Loader (and LC LoRA Loader Stack) keep their whole row list in ONE STRING
+            # widget as a JSON array -- e.g. '[{"on": true, "lora": "x.safetensors", ...}]' --
+            # unlike rgthree's Power Lora Loader, which stores each row as its own real dict in
+            # widgets_values. Neither pattern above matches a JSON-encoded string (it doesn't end
+            # in a model extension, and it isn't an A1111 <lora:...> tag), so without this, every
+            # LoRA picked in LC LoRA Loader was invisible here: no hash, no Civitai resource entry.
+            stripped = val.strip()
+            if stripped[:1] in ("[", "{"):
+                try:
+                    parsed = json.loads(stripped)
+                except (ValueError, TypeError):
+                    parsed = None
+                if parsed is not None:
+                    take_value(parsed, hint)
+            return
+        if isinstance(val, (list, tuple)):
+            for item in val:
+                take_value(item, hint)
             return
         if isinstance(val, dict):
             if not _lora_enabled(val):
