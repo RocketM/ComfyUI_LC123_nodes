@@ -8,7 +8,7 @@
 import { app } from "../../scripts/app.js";
 import { lcApplyLaunchColor } from "./lc_color.js";
 
-const COLOR = "#28281E";
+const COLOR = "#822305";
 const WIDTH = 270;
 const DEFAULT_H = 130; // title + base_seed + 2 buttons + history combo
 const RANDOMIZE = -1;

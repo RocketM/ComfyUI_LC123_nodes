@@ -90,7 +90,7 @@ const COLORS = {
     LCCustomComboPanel: { color: "#28281E", bgcolor: "#28281E" },
     LCIndexSwitch: { color: "#28281E", bgcolor: "#28281E" },
     LCNodeSnapshot: { color: "#28281E", bgcolor: "#28281E" },
-    LCSeed: { color: "#28281E", bgcolor: "#28281E" },
+    LCSeed: { color: "#822305", bgcolor: "#822305" },
 
     // Image / catch-all (#324B4B)
     LCBatchImageComparer: { color: "#324B4B", bgcolor: "#324B4B" },

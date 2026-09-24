@@ -6,7 +6,7 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 - **Civitai:** [lonecatone23](https://civitai.com/user/lonecatone23)
 - **Instagram:** [synth.studio.models](https://www.instagram.com/synth.studio.models/)
 - **Support:** [Buy me a ☕](https://ko-fi.com/lonecatone)
-- **Version:** 1.35.0 · **117 Python nodes** · **4 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel)
+- **Version:** 1.39.0 · **123 Python nodes** · **4 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel)
 
 > Small tools that remove friction: less wire mess, fewer clicks, clearer workflows.
 
@@ -230,7 +230,8 @@ Subjects + Scene + Camera + Lighting + Style + Palette
 |------|----------------|
 | **📐 Aspect Ratio Simplifier** | Size from image, mask, or preset. Resizes both image and mask together. Crop / stretch / pad / total pixels. Spits out an empty latent too. Default upscale is **lanczos**. |
 | **📐 Aspect Ratio Simplifier (pipe)** | Same node, plus a pipe out for Get/Set chaining. |
-| **LC Aspect Ratio Pipe (In/Edit)** | Unpacks the aspect pipe → image, mask, width, height, latent, batch, resolution. |
+| **LC Aspect Ratio Pipe (In/Edit)** | Packs image, mask, width, height, latent, batch, resolution into a pipe, or edits one you feed in. Only the sockets you wire overwrite, everything else on the pipe passes through. |
+| **LC Aspect Ratio Pipe Out** | Unpacks the aspect pipe → image, mask, width, height, latent, batch, resolution. 💡This is the node that used to be called Pipe (In/Edit), your old workflows still load it. |
 | **LC Get Image 📐** | Megapixels, width, height, batch, aspect, longer-side resolution. |
 | **LC Dimension Resize 📐** | One value in, add / sub / mul / div both sides from it; rounded outputs. |
 | **LC Image-Mask Resize 📐** | Image + mask only: no latent, no batch. **match_aspect_ratio** keeps the input ratio pinned to the longer settings side. **upscale_by:** none / multiplier (0.25) / megapixels (0.01). After a run, the actual **WxH** (e.g. `1024x1390`) gets drawn right on the node in a reserved footer, so you don't have to go hunting for it. |
@@ -287,7 +288,7 @@ Hover any of these to wipe against the original. If your graph's heavy, dial the
 | **LC Sampler Configure (pipe)** | Same node, with an optional pipe in / pipe out added. |
 | **LC Sampler Configure Simple** | Single CFG: no step_swap, no cfg_2, for when you don't need the complexity. |
 | **LC Sampler Configure Simple (pipe)** | Simple version + pipe in/out. |
-| **LC Sampler Configure Pipe Out** | Unpacks an LC_PIPE straight into sampler sockets. |
+| **LC Sampler Configure Pipe Out** | Unpacks an LC_PIPE straight into sampler sockets, plus **latent** at the bottom. |
 | **LC Split Sigma Scheduler** | Splits one noise schedule across two models. |
 | **LC Split Sigmas (Advanced)** | Two sigma curves + two models + denoise; falls back to model 1 if model 2 is missing. |
 | **LC Basic Scheduler** | Scheduler + steps → sigmas. No denoise involved. |
@@ -298,6 +299,8 @@ Hover any of these to wipe against the original. If your graph's heavy, dial the
 | **LC Pipe (in/edit)** / **Pipe Out** / **Detail Pipe Out** | Bundle or unpack models, clips, VAEs, prompts, seed, steps, the works. |
 | **LC MiniMax H3 Pipe** | Packs / edits H3 refs. Up top: **fl2va_model**, **fl2va_clip**, **ref2va_model**, **ref2va_clip**, video_vae, audio_vae, width, height, length, frame_rate, then ref_image_0… / ref_video_0…, fixed sockets, no autogrow here. Pipe in accepts a full H3 pipe merge **or** an Aspect Ratio Simplifier / LC Pipe (in which case it only takes **width + height**). |
 | **LC MiniMax H3 Pipe Out** | Same sockets, unpacked. `ref_image_0` is `<Picture 1>`, which is MiniMax's `ref_image_0`. 💡Don't let the off-by-one naming trip you up. |
+| **LC Image Ref Pipe In** | Up to 16 reference images on one wire. Starts with **image_1**, and a new socket shows up as you fill the last one, same growth as **Text Encode Qwen Image 2.1**. |
+| **LC Image Ref Pipe Out** | **pipe** passes through first, then **image_1…image_16** in the same slots they went in on. Sockets grow to match the pipe in. Empty slots come out empty, and the Qwen 2.1 encoder skips them. |
 | **Prompt to Conditioning** / **+ Zero** | Turns a string into conditioning. |
 | **LC Positive / LC Negative** | Pre-colored positive & negative boxes. |
 

@@ -119,6 +119,7 @@ _load("lc_pass")
 _load("lc_bypass_relay")
 _load("lc_directional_blur")
 _load("lc_phone_filters")
+_load("lc_image_ref_pipe")
 
 WEB_DIRECTORY = "./web"
 

@@ -579,14 +579,68 @@ class LCAspectRatioPipe:
         )
 
 
+_ASPECT_SLOTS = [
+    ("image", "IMAGE"),
+    ("mask", "MASK"),
+    ("width", "INT"),
+    ("height", "INT"),
+    ("latent", "LATENT"),
+    ("batch", "INT"),
+    ("resolution", "INT"),
+]
+
+
+class LCAspectRatioPipeIn:
+    """Pack / edit: optional pipe in + aspect fields in → pipe out. Only wired fields overwrite."""
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        optional = {
+            "pipe": ("LC_PIPE", {
+                "tooltip": "Existing LC_PIPE to edit (optional). Every other key on it passes through.",
+            }),
+        }
+        for key, kind in _ASPECT_SLOTS:
+            if kind == "INT":
+                optional[key] = ("INT", {"default": 0, "min": 0, "max": 0xFFFFFFFF, "forceInput": True,
+                                         "tooltip": f"{key}. Overwrites the pipe's {key} when wired."})
+            else:
+                optional[key] = (kind, {"tooltip": f"{key}. Overwrites the pipe's {key} when wired."})
+        return {"required": {}, "optional": optional}
+
+    RETURN_TYPES = ("LC_PIPE",)
+    RETURN_NAMES = ("pipe",)
+    FUNCTION = "pack"
+    CATEGORY = "LC123/image"
+    DESCRIPTION = (
+        "Packs image, mask, width, height, latent, batch and resolution into an LC_PIPE, or edits an "
+        "existing one. Only wired sockets overwrite; everything else on the pipe passes through. "
+        "Resolution fills in as max(width, height) when width/height are wired and resolution is not."
+    )
+
+    def pack(self, pipe=None, **kwargs):
+        out = dict(pipe) if isinstance(pipe, dict) else {}
+        out["_type"] = "LC_PIPE"
+        for key, _kind in _ASPECT_SLOTS:
+            val = kwargs.get(key)
+            if val is not None:
+                out[key] = val
+        if kwargs.get("resolution") is None and (kwargs.get("width") is not None or kwargs.get("height") is not None):
+            out["resolution"] = int(max(int(out.get("width") or 0), int(out.get("height") or 0)))
+        return (out,)
+
+
 NODE_CLASS_MAPPINGS = {
     "AspectRatioSimplifier": AspectRatioSimplifier,
     "LCAspectRatioPipeOut": LCAspectRatioPipeOut,
     "LCAspectRatioPipe": LCAspectRatioPipe,
+    "LCAspectRatioPipeIn": LCAspectRatioPipeIn,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "AspectRatioSimplifier": "📐 LC Aspect Ratio Simplifier",
     "LCAspectRatioPipeOut": "📐 LC Aspect Ratio Simplifier (pipe)",
-    "LCAspectRatioPipe": "LC Aspect Ratio Pipe (In/Edit)",
+    # class key predates the In/Edit node; it has always been the unpacker
+    "LCAspectRatioPipe": "LC Aspect Ratio Pipe Out",
+    "LCAspectRatioPipeIn": "LC Aspect Ratio Pipe (In/Edit)",
 }
