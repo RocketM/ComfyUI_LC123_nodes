@@ -1,0 +1,108 @@
+{
+  "_about": "LC Looks: one look name sets matching values on every Look node. Python reads the names, web/lc_looks.js applies the values. Custom = leave the sliders alone.",
+  "looks": ["Natural", "Portrait", "Cinematic", "Golden hour", "Vintage", "Dreamy", "Landscape", "Night", "B&W"],
+  "nodes": {
+    "LCDepthFX": {
+      "Natural":     {"haze": 0.10, "haze_distance": 0.40, "haze_warmth": 0.0,  "dof_blur": 0.15, "focus_range": 0.15, "bokeh": 0.2, "light_wrap": 0.15},
+      "Portrait":    {"haze": 0.06, "haze_distance": 0.50, "haze_warmth": 0.1,  "dof_blur": 0.55, "focus_range": 0.08, "bokeh": 0.5, "light_wrap": 0.30},
+      "Cinematic":   {"haze": 0.18, "haze_distance": 0.30, "haze_warmth": -0.2, "dof_blur": 0.40, "focus_range": 0.10, "bokeh": 0.6, "light_wrap": 0.35},
+      "Golden hour": {"haze": 0.35, "haze_distance": 0.30, "haze_warmth": 0.7,  "dof_blur": 0.35, "focus_range": 0.12, "bokeh": 0.6, "light_wrap": 0.50},
+      "Vintage":     {"haze": 0.15, "haze_distance": 0.35, "haze_warmth": 0.3,  "dof_blur": 0.30, "focus_range": 0.12, "bokeh": 0.3, "light_wrap": 0.25},
+      "Dreamy":      {"haze": 0.40, "haze_distance": 0.20, "haze_warmth": 0.2,  "dof_blur": 0.50, "focus_range": 0.10, "bokeh": 0.7, "light_wrap": 0.60},
+      "Landscape":   {"haze": 0.45, "haze_distance": 0.45, "haze_warmth": -0.3, "dof_blur": 0.0,  "focus_range": 0.30, "bokeh": 0.0, "light_wrap": 0.10},
+      "Night":       {"haze": 0.15, "haze_distance": 0.40, "haze_warmth": -0.5, "dof_blur": 0.35, "focus_range": 0.10, "bokeh": 0.9, "light_wrap": 0.30},
+      "B&W":         {"haze": 0.12, "haze_distance": 0.35, "haze_warmth": 0.0,  "dof_blur": 0.25, "focus_range": 0.12, "bokeh": 0.4, "light_wrap": 0.20}
+    },
+    "LCBloom": {
+      "_by": "mode",
+      "Bloom": {
+        "Natural":     {"intensity": 0.25, "threshold": 0.80, "smoothing": 0.3, "radius": 1.0, "saturation": 0.8, "exposure": 1.0},
+        "Portrait":    {"intensity": 0.30, "threshold": 0.75, "smoothing": 0.4, "radius": 1.5, "saturation": 0.8, "exposure": 1.0},
+        "Cinematic":   {"intensity": 0.45, "threshold": 0.70, "smoothing": 0.4, "radius": 2.0, "saturation": 0.9, "exposure": 1.0},
+        "Golden hour": {"intensity": 0.60, "threshold": 0.60, "smoothing": 0.5, "radius": 2.5, "saturation": 1.2, "exposure": 1.0},
+        "Vintage":     {"intensity": 0.50, "threshold": 0.65, "smoothing": 0.5, "radius": 2.0, "saturation": 0.7, "exposure": 1.0},
+        "Dreamy":      {"intensity": 0.90, "threshold": 0.50, "smoothing": 0.6, "radius": 3.0, "saturation": 0.9, "exposure": 1.0},
+        "Landscape":   {"intensity": 0.20, "threshold": 0.85, "smoothing": 0.3, "radius": 1.5, "saturation": 1.0, "exposure": 1.0},
+        "Night":       {"intensity": 0.80, "threshold": 0.60, "smoothing": 0.4, "radius": 2.0, "saturation": 1.3, "exposure": 1.0},
+        "B&W":         {"intensity": 0.35, "threshold": 0.75, "smoothing": 0.4, "radius": 1.5, "saturation": 0.0, "exposure": 1.0}
+      },
+      "Pro-Mist": {
+        "Natural":     {"intensity": 0.15, "threshold": 0.60, "smoothing": 0.5, "radius": 2.0, "saturation": 0.8, "exposure": 1.0},
+        "Portrait":    {"intensity": 0.30, "threshold": 0.55, "smoothing": 0.5, "radius": 2.5, "saturation": 0.9, "exposure": 1.0},
+        "Cinematic":   {"intensity": 0.30, "threshold": 0.50, "smoothing": 0.5, "radius": 3.0, "saturation": 0.9, "exposure": 1.0},
+        "Golden hour": {"intensity": 0.50, "threshold": 0.45, "smoothing": 0.6, "radius": 3.0, "saturation": 1.1, "exposure": 1.0},
+        "Vintage":     {"intensity": 0.45, "threshold": 0.50, "smoothing": 0.6, "radius": 3.0, "saturation": 0.7, "exposure": 1.0},
+        "Dreamy":      {"intensity": 0.80, "threshold": 0.40, "smoothing": 0.7, "radius": 4.0, "saturation": 0.9, "exposure": 1.0},
+        "Landscape":   {"intensity": 0.10, "threshold": 0.70, "smoothing": 0.4, "radius": 2.0, "saturation": 0.9, "exposure": 1.0},
+        "Night":       {"intensity": 0.50, "threshold": 0.50, "smoothing": 0.5, "radius": 3.0, "saturation": 1.1, "exposure": 1.0},
+        "B&W":         {"intensity": 0.25, "threshold": 0.50, "smoothing": 0.5, "radius": 3.0, "saturation": 0.0, "exposure": 1.0}
+      },
+      "Halation": {
+        "Natural":     {"intensity": 0.15, "threshold": 0.80, "smoothing": 0.3, "radius": 1.0, "saturation": 0.8, "exposure": 1.0},
+        "Portrait":    {"intensity": 0.20, "threshold": 0.78, "smoothing": 0.3, "radius": 1.2, "saturation": 0.8, "exposure": 1.0},
+        "Cinematic":   {"intensity": 0.35, "threshold": 0.70, "smoothing": 0.4, "radius": 1.5, "saturation": 1.0, "exposure": 1.0},
+        "Golden hour": {"intensity": 0.40, "threshold": 0.70, "smoothing": 0.4, "radius": 1.5, "saturation": 1.0, "exposure": 1.0},
+        "Vintage":     {"intensity": 0.60, "threshold": 0.65, "smoothing": 0.4, "radius": 1.8, "saturation": 1.0, "exposure": 1.0},
+        "Dreamy":      {"intensity": 0.40, "threshold": 0.65, "smoothing": 0.5, "radius": 2.0, "saturation": 0.9, "exposure": 1.0},
+        "Landscape":   {"intensity": 0.10, "threshold": 0.85, "smoothing": 0.3, "radius": 1.0, "saturation": 0.8, "exposure": 1.0},
+        "Night":       {"intensity": 0.70, "threshold": 0.60, "smoothing": 0.4, "radius": 1.5, "saturation": 1.1, "exposure": 1.0},
+        "B&W":         {"intensity": 0.30, "threshold": 0.75, "smoothing": 0.3, "radius": 1.2, "saturation": 0.0, "exposure": 1.0}
+      }
+    },
+    "LCLensProfile": {
+      "Natural":     {"lens": "Sony FE 55mm f/1.8", "strength": 0.3},
+      "Portrait":    {"lens": "Nikon AF-S 85mm f/1.4", "strength": 0.5},
+      "Cinematic":   {"lens": "Sigma 35mm f/1.4 Art", "strength": 0.6},
+      "Golden hour": {"lens": "Canon EF 50mm f/1.8", "strength": 0.5},
+      "Vintage":     {"lens": "Vintage Helios 44-2", "strength": 0.9},
+      "Dreamy":      {"lens": "Vintage Helios 44-2", "strength": 0.6},
+      "Landscape":   {"lens": "Sony FE 24-70mm f/2.8", "strength": 0.3},
+      "Night":       {"lens": "Sigma 35mm f/1.4 Art", "strength": 0.7},
+      "B&W":         {"lens": "Canon EF 50mm f/1.8", "strength": 0.6}
+    },
+    "LCVignette": {
+      "Natural":     {"intensity": 0.12, "midpoint": 0.60, "roundness": 1.0, "feather": 0.45, "cos4_falloff": true, "tint_r": 1.0,  "tint_g": 1.0, "tint_b": 1.0},
+      "Portrait":    {"intensity": 0.22, "midpoint": 0.55, "roundness": 0.9, "feather": 0.45, "cos4_falloff": true, "tint_r": 1.0,  "tint_g": 1.0, "tint_b": 1.0},
+      "Cinematic":   {"intensity": 0.30, "midpoint": 0.50, "roundness": 0.8, "feather": 0.40, "cos4_falloff": true, "tint_r": 1.0,  "tint_g": 1.0, "tint_b": 1.05},
+      "Golden hour": {"intensity": 0.25, "midpoint": 0.55, "roundness": 0.9, "feather": 0.50, "cos4_falloff": true, "tint_r": 1.05, "tint_g": 1.0, "tint_b": 0.95},
+      "Vintage":     {"intensity": 0.45, "midpoint": 0.45, "roundness": 0.8, "feather": 0.35, "cos4_falloff": true, "tint_r": 1.05, "tint_g": 1.0, "tint_b": 0.9},
+      "Dreamy":      {"intensity": -0.15, "midpoint": 0.55, "roundness": 1.0, "feather": 0.60, "cos4_falloff": true, "tint_r": 1.0, "tint_g": 1.0, "tint_b": 1.0},
+      "Landscape":   {"intensity": 0.10, "midpoint": 0.65, "roundness": 1.0, "feather": 0.50, "cos4_falloff": true, "tint_r": 1.0,  "tint_g": 1.0, "tint_b": 1.0},
+      "Night":       {"intensity": 0.40, "midpoint": 0.45, "roundness": 0.8, "feather": 0.35, "cos4_falloff": true, "tint_r": 0.95, "tint_g": 1.0, "tint_b": 1.1},
+      "B&W":         {"intensity": 0.35, "midpoint": 0.50, "roundness": 0.9, "feather": 0.40, "cos4_falloff": true, "tint_r": 1.0,  "tint_g": 1.0, "tint_b": 1.0}
+    },
+    "LCFilmStockColor": {
+      "Natural":     {"film_stock": "Neg / Kodak Portra 160", "strength": 0.35},
+      "Portrait":    {"film_stock": "Neg / Kodak Portra 400", "strength": 0.6},
+      "Cinematic":   {"film_stock": "Neg / Cinestill 800T", "strength": 0.45},
+      "Golden hour": {"film_stock": "Neg / Kodak Gold 200", "strength": 0.65},
+      "Vintage":     {"film_stock": "Neg / Fuji Superia 400", "strength": 0.75},
+      "Dreamy":      {"film_stock": "Neg / Kodak Portra 400", "strength": 0.5},
+      "Landscape":   {"film_stock": "Slide / Fuji Velvia 50", "strength": 0.5},
+      "Night":       {"film_stock": "Neg / Cinestill 800T", "strength": 0.75},
+      "B&W":         {"film_stock": "Neg / Kodak Portra 400", "strength": 0.0}
+    },
+    "LCFilmStockBW": {
+      "Natural":     {"film_stock": "Fuji Acros 100", "color_filter": "None", "strength": 1.0},
+      "Portrait":    {"film_stock": "Ilford Delta 100", "color_filter": "Yellow", "strength": 1.0},
+      "Cinematic":   {"film_stock": "Kodak Tri-X 400", "color_filter": "Orange", "strength": 1.0},
+      "Golden hour": {"film_stock": "Ilford HP5 Plus 400", "color_filter": "Yellow", "strength": 1.0},
+      "Vintage":     {"film_stock": "Kodak Tri-X 400", "color_filter": "None", "strength": 1.0},
+      "Dreamy":      {"film_stock": "Ilford Pan F Plus 50", "color_filter": "Yellow", "strength": 1.0},
+      "Landscape":   {"film_stock": "Fuji Acros 100", "color_filter": "Red", "strength": 1.0},
+      "Night":       {"film_stock": "Ilford HP5 Plus 400", "color_filter": "None", "strength": 1.0},
+      "B&W":         {"film_stock": "Kodak Tri-X 400", "color_filter": "Yellow", "strength": 1.0}
+    },
+    "LCFilmGrain": {
+      "Natural":     {"grain_size": 1.0, "strength": 0.25, "radius_variation": 0.0,  "color_grain": 0.0,  "softness": 0.8},
+      "Portrait":    {"grain_size": 0.9, "strength": 0.20, "radius_variation": 0.0,  "color_grain": 0.0,  "softness": 0.9},
+      "Cinematic":   {"grain_size": 1.3, "strength": 0.40, "radius_variation": 0.1,  "color_grain": 0.1,  "softness": 0.8},
+      "Golden hour": {"grain_size": 1.2, "strength": 0.35, "radius_variation": 0.1,  "color_grain": 0.15, "softness": 0.8},
+      "Vintage":     {"grain_size": 1.8, "strength": 0.60, "radius_variation": 0.2,  "color_grain": 0.2,  "softness": 0.7},
+      "Dreamy":      {"grain_size": 1.2, "strength": 0.30, "radius_variation": 0.1,  "color_grain": 0.0,  "softness": 1.0},
+      "Landscape":   {"grain_size": 0.9, "strength": 0.20, "radius_variation": 0.0,  "color_grain": 0.0,  "softness": 0.8},
+      "Night":       {"grain_size": 1.6, "strength": 0.55, "radius_variation": 0.15, "color_grain": 0.25, "softness": 0.8},
+      "B&W":         {"grain_size": 1.5, "strength": 0.50, "radius_variation": 0.15, "color_grain": 0.0,  "softness": 0.8}
+    }
+  }
+}

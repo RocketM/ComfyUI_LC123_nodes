@@ -16,6 +16,27 @@ from .lc_image_helpers import (
 )
 
 
+def _load_looks():
+    try:
+        import json, os
+        with open(os.path.join(os.path.dirname(__file__), "web", "lc_looks.json"), encoding="utf-8") as f:
+            return list(json.load(f)["looks"])
+    except Exception:
+        return []
+
+
+LOOKS = _load_looks() + ["Custom"]
+
+
+def _look_input(default="Custom"):
+    """The shared Look dropdown. Always added LAST so saved workflows keep their slider values."""
+    return (LOOKS, {
+        "default": default,
+        "tooltip": "Pick the same look on LC Depth FX, Bloom, Lens Profile, Vignette, Film Stock and Film Grain "
+                   "and they match. Custom = your own sliders. Moving a slider switches to Custom.",
+    })
+
+
 def _preview(self, result_tensor, source_tensor=None):
     """Attach after (and optional before) preview images for on-node compare wipe."""
     out = {"ui": {}, "result": (result_tensor,)}
@@ -213,10 +234,13 @@ class LCAutoWhiteBalance(PreviewImage):
 # ---------------------------------------------------------------------------
 class LCClarity(PreviewImage):
     """
-    Dual-path: mid-tone clarity + edge sharpen.
-    Photorealism-first local contrast + edge sharpen.
-    Guided+box hybrid high-pass; auto halo rises with sharpen; strong skin gate.
-    Presets fill widgets (JS). strength = overall mix vs original (default 1.0).
+    Sharpen Pro. Three stages on luminance only (color is never touched):
+      sharpen  = capture sharpening by deconvolution (undoes softness instead of drawing outlines)
+      texture  = mid-size detail (pores, fabric, hair, hatching)
+      clarity  = large-scale local contrast on an edge-aware base (no dark rings)
+    halo caps how far any pixel may overshoot its neighbours. Flat areas are left alone
+    based on the noise measured in each image, so gradients and flat anime fills stay clean.
+    Presets fill widgets (JS).
     """
 
     @classmethod
@@ -234,108 +258,54 @@ class LCClarity(PreviewImage):
                         "Crisp",
                         "Lineart",
                         "Anime sharp",
+                        "Illustration",
                         "Custom",
                     ],
                     {
                         "default": "Natural",
-                        "tooltip": "Starting preset. Customize below by moving the sliders.",
+                        "tooltip": "Starting preset. Moving any slider switches this to Custom.",
                     },
                 ),
-                "clarity": (
-                    "FLOAT",
-                    {
-                        "default": 0.40,
-                        "min": 0.0,
-                        "max": 1.0,
-                        "step": 0.01,
-                        "tooltip": "0 = off. Mid-tone local contrast (structure / punch).",
-                    },
-                ),
-                "sharpen": (
-                    "FLOAT",
-                    {
-                        "default": 0.12,
-                        "min": 0.0,
-                        "max": 1.0,
-                        "step": 0.01,
-                        "tooltip": "0 = off. Edge / high-frequency sharpen (unsharp-style).",
-                    },
-                ),
-                "strength": (
-                    "FLOAT",
-                    {
-                        "default": 1.0,
-                        "min": 0.0,
-                        "max": 1.0,
-                        "step": 0.01,
-                        "tooltip": "Overall mix with the original. 0 = original, 1 = full effect. Default 1 — use clarity/sharpen for dose.",
-                    },
-                ),
-                "halo": (
-                    "FLOAT",
-                    {
-                        "default": 0.55,
-                        "min": 0.0,
-                        "max": 1.0,
-                        "step": 0.01,
-                        "tooltip": "0 = no clamp (strong edges). 1 = strong clamp — reduces bright/dark fringes around edges.",
-                    },
-                ),
-                "skin_protect": (
-                    "FLOAT",
-                    {
-                        "default": 0.65,
-                        "min": 0.0,
-                        "max": 1.0,
-                        "step": 0.01,
-                        "tooltip": "0 = off. Reduces clarity/sharpen on skin hues.",
-                    },
-                ),
-                "radius": (
-                    "FLOAT",
-                    {
-                        "default": 0.35,
-                        "min": 0.0,
-                        "max": 1.0,
-                        "step": 0.01,
-                        "tooltip": "0 = fine detail scale … 1 = broader structure (clarity blur size).",
-                    },
-                ),
+                "clarity": ("FLOAT", {
+                    "default": 0.30, "min": 0.0, "max": 1.0, "step": 0.01,
+                    "tooltip": "Large-scale local contrast (punch, depth). 0 = off.",
+                }),
+                "sharpen": ("FLOAT", {
+                    "default": 0.35, "min": 0.0, "max": 1.0, "step": 0.01,
+                    "tooltip": "Capture sharpening. Undoes softness (deconvolution) instead of drawing outlines. 0 = off.",
+                }),
+                "strength": ("FLOAT", {
+                    "default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01,
+                    "tooltip": "Mix with the original. 0 = original, 1 = full effect.",
+                }),
+                "halo": ("FLOAT", {
+                    "default": 0.60, "min": 0.0, "max": 1.0, "step": 0.01,
+                    "tooltip": "Halo control. 1 = edges can not overshoot their neighbours (no bright/dark rims). 0 = allow punchy overshoot.",
+                }),
+                "skin_protect": ("FLOAT", {
+                    "default": 0.50, "min": 0.0, "max": 1.0, "step": 0.01,
+                    "tooltip": "Less texture and clarity on skin. Eyes, lashes and lips still get sharpened. 0 = off (use 0 for anime and lineart).",
+                }),
+                "radius": ("FLOAT", {
+                    "default": 0.35, "min": 0.0, "max": 1.0, "step": 0.01,
+                    "tooltip": "Detail size. Low = fine lines and hair. High = softer images and broader structure. Scales with resolution.",
+                }),
                 "blend_mode": (
-                    [
-                        "Soft Light",
-                        "Hard Light",
-                        "Overlay",
-                        "Multiply",
-                        "Vivid Light",
-                        "Linear Light",
-                        "Addition",
-                    ],
-                    {
-                        "default": "Soft Light",
-                        "tooltip": "How the clarity layer is blended into luma. Soft Light is safest.",
-                    },
+                    ["Soft Light", "Hard Light", "Overlay", "Multiply", "Vivid Light", "Linear Light", "Addition"],
+                    {"default": "Soft Light", "tooltip": "How clarity is blended. Soft Light is the most natural, Overlay and Hard Light punch harder."},
                 ),
-                "shadow_protect": (
-                    "FLOAT",
-                    {
-                        "default": 0.35,
-                        "min": 0.0,
-                        "max": 1.0,
-                        "step": 0.01,
-                        "tooltip": "0 = full effect in shadows. 1 = strongly reduce effect in dark areas.",
-                    },
-                ),
-                "highlight_protect": (
-                    "FLOAT",
-                    {
-                        "default": 0.30,
-                        "min": 0.0,
-                        "max": 1.0,
-                        "step": 0.01,
-                        "tooltip": "0 = full effect in highlights. 1 = strongly reduce effect in bright areas.",
-                    },
-                ),
+                "shadow_protect": ("FLOAT", {
+                    "default": 0.25, "min": 0.0, "max": 1.0, "step": 0.01,
+                    "tooltip": "Less effect in dark areas (keeps shadow noise down). 0 = full effect.",
+                }),
+                "highlight_protect": ("FLOAT", {
+                    "default": 0.25, "min": 0.0, "max": 1.0, "step": 0.01,
+                    "tooltip": "Less effect in bright areas. 0 = full effect.",
+                }),
+                "texture": ("FLOAT", {
+                    "default": 0.25, "min": 0.0, "max": 1.0, "step": 0.01,
+                    "tooltip": "Mid-size detail: pores, fabric, fur, pencil hatching. 0 = off.",
+                }),
             }
         }
 
@@ -345,185 +315,187 @@ class LCClarity(PreviewImage):
     CATEGORY = "LC123/image"
     OUTPUT_NODE = True
     DESCRIPTION = (
-        "Sharpen Pro — clarity (mid-tone contrast) + edge sharpen. "
-        "Presets fill the sliders. Halo clamps fringes; skin_protect softens faces. "
-        "Strength mixes with the original (default 1)."
+        "Sharpen Pro: capture sharpening (deconvolution), texture and clarity on luminance only. "
+        "Halo control stops rims, flat areas stay clean. Presets fill the sliders."
     )
 
-    def _smoothstep(self, edge0, edge1, x):
+    @staticmethod
+    def _smoothstep(edge0, edge1, x):
         t = torch.clamp((x - edge0) / (edge1 - edge0 + 1e-6), 0.0, 1.0)
         return t * t * (3.0 - 2.0 * t)
 
-    def _skin_weight(self, image):
-        """Rough skin probability 0–1 from RGB (same idea as Photo Style / Color Match)."""
-        r, g, b = image[..., 0], image[..., 1], image[..., 2]
-        mx = torch.maximum(torch.maximum(r, g), b)
-        mn = torch.minimum(torch.minimum(r, g), b)
-        d = mx - mn + 1e-6
-        # hue-ish: skin ~ red-orange dominance
-        skin = (r > g * 0.85) & (r > b * 0.95) & (g > b * 0.7)
-        sat = d / (mx + 1e-6)
-        mid = (mx > 0.12) & (mx < 0.92)
-        w = torch.zeros_like(r)
-        w = torch.where(skin & mid, torch.clamp((sat - 0.05) / 0.35, 0, 1) * torch.clamp((0.65 - sat) / 0.25, 0, 1), w)
-        # soft gate on redness
-        red_dom = torch.clamp((r - g) * 4.0, 0, 1) * torch.clamp((r - b) * 2.5, 0, 1)
-        w = torch.maximum(w, red_dom * torch.clamp((mx - 0.1) / 0.3, 0, 1) * mid.float())
-        return w.unsqueeze(-1)
+    @staticmethod
+    def _gblur(t, sigma):
+        """Separable gaussian on BCHW, replicate edges."""
+        if sigma < 0.2:
+            return t
+        r = max(1, int(math.ceil(sigma * 3.0)))
+        r = min(r, (min(t.shape[2], t.shape[3]) - 1) // 2 or 1)
+        c = torch.arange(-r, r + 1, device=t.device, dtype=t.dtype)
+        k = torch.exp(-(c * c) / (2.0 * sigma * sigma))
+        k = k / k.sum()
+        ch = t.shape[1]
+        t = F.conv2d(F.pad(t, (r, r, 0, 0), mode="replicate"), k.view(1, 1, 1, -1).expand(ch, 1, 1, -1), groups=ch)
+        return F.conv2d(F.pad(t, (0, 0, r, r), mode="replicate"), k.view(1, 1, -1, 1).expand(ch, 1, -1, 1), groups=ch)
 
-    def _box_blur_luma(self, luma_bchw, radius_px):
-        r = int(max(0, round(radius_px)))
+    @staticmethod
+    def _box(t, r):
+        r = int(max(0, round(r)))
         if r < 1:
-            return luma_bchw
-        k = torch.ones(2 * r + 1, device=luma_bchw.device, dtype=luma_bchw.dtype) / float(2 * r + 1)
-        kh = k.view(1, 1, 1, -1)
-        kv = k.view(1, 1, -1, 1)
-        h = F.conv2d(F.pad(luma_bchw, (r, r, 0, 0), mode="replicate"), kh)
-        return F.conv2d(F.pad(h, (0, 0, r, r), mode="replicate"), kv)
+            return t
+        return F.avg_pool2d(F.pad(t, (r, r, r, r), mode="replicate"), 2 * r + 1, stride=1)
 
+    def _guided(self, p, r, eps):
+        """Self-guided filter (He et al.): edge-preserving blur, the base for halo-free clarity."""
+        mean = self._box(p, r)
+        var = (self._box(p * p, r) - mean * mean).clamp(min=0.0)
+        a = var / (var + eps)
+        b = mean - a * mean
+        return self._box(a, r) * p + self._box(b, r)
 
-    def _guided_filter_luma(self, luma_bchw, radius_px, eps=1e-4):
-        """
-        Fast self-guided filter on single-channel BCHW luma (He et al.).
-        Edge-preserving low-pass — better high-pass for USM than box blur.
-        """
-        r = float(max(1.0, radius_px))
-        I = luma_bchw
-        mean_I = self._box_blur_luma(I, r)
-        mean_II = self._box_blur_luma(I * I, r)
-        var_I = (mean_II - mean_I * mean_I).clamp(min=0.0)
-        # a, b for self-guided (p = I)
-        a = var_I / (var_I + float(eps))
-        b = mean_I - a * mean_I
-        mean_a = self._box_blur_luma(a, r)
-        mean_b = self._box_blur_luma(b, r)
-        return mean_a * I + mean_b
+    def _deconvolve(self, y, sigma, iters):
+        """Richardson-Lucy with a gaussian blur model, on linear luminance."""
+        obs = y.clamp(min=1e-4)
+        est = obs
+        for _ in range(iters):
+            conv = self._gblur(est, sigma).clamp(min=1e-4)
+            est = (est * self._gblur(obs / conv, sigma)).clamp(0.0, 2.0)
+        return est
 
-    def _blend_clarity(self, luma, sharp, blend_mode):
+    @staticmethod
+    def _to_lin(x):
+        return torch.where(x <= 0.04045, x / 12.92, ((x + 0.055) / 1.055).clamp(min=0) ** 2.4)
+
+    @staticmethod
+    def _to_srgb(x):
+        x = x.clamp(min=0)
+        return torch.where(x <= 0.0031308, x * 12.92, 1.055 * x ** (1 / 2.4) - 0.055)
+
+    @staticmethod
+    def _blend_clarity(luma, layer, blend_mode):
         if blend_mode == "Soft Light":
             return torch.where(
-                sharp < 0.5,
-                2 * luma * sharp + luma ** 2 * (1 - 2 * sharp),
-                torch.sqrt(luma.clamp(min=1e-6)) * (2 * sharp - 1) + 2 * luma * (1 - sharp),
+                layer < 0.5,
+                2 * luma * layer + luma ** 2 * (1 - 2 * layer),
+                torch.sqrt(luma.clamp(min=1e-6)) * (2 * layer - 1) + 2 * luma * (1 - layer),
             )
         if blend_mode == "Overlay":
-            return torch.where(luma < 0.5, 2 * luma * sharp, 1 - 2 * (1 - luma) * (1 - sharp))
+            return torch.where(luma < 0.5, 2 * luma * layer, 1 - 2 * (1 - luma) * (1 - layer))
         if blend_mode == "Hard Light":
-            return torch.where(sharp < 0.5, 2 * luma * sharp, 1 - 2 * (1 - luma) * (1 - sharp))
+            return torch.where(layer < 0.5, 2 * luma * layer, 1 - 2 * (1 - luma) * (1 - layer))
         if blend_mode == "Multiply":
-            return torch.clamp(2 * luma * sharp, 0, 1)
+            return torch.clamp(2 * luma * layer, 0, 1)
         if blend_mode == "Vivid Light":
             return torch.where(
-                sharp < 0.5,
-                1 - (1 - luma) / (2 * sharp + 1e-6),
-                luma / (2 * (1 - sharp) + 1e-6),
-            )
+                layer < 0.5,
+                1 - (1 - luma) / (2 * layer + 1e-6),
+                luma / (2 * (1 - layer) + 1e-6),
+            ).clamp(0, 1)
         if blend_mode == "Linear Light":
-            return torch.clamp(luma + 2.0 * sharp - 1.0, 0, 1)
-        # Addition
-        return torch.clamp(luma + sharp - 0.5, 0, 1)
+            return torch.clamp(luma + 2.0 * layer - 1.0, 0, 1)
+        return torch.clamp(luma + layer - 0.5, 0, 1)
 
     def run(
         self,
         image,
-        preset="Subtle",
-        clarity=0.28,
-        sharpen=0.12,
+        preset="Natural",
+        clarity=0.30,
+        sharpen=0.35,
         strength=1.0,
-        halo=0.45,
-        skin_protect=0.55,
+        halo=0.60,
+        skin_protect=0.50,
         radius=0.35,
         blend_mode="Soft Light",
-        shadow_protect=0.35,
-        highlight_protect=0.30,
+        shadow_protect=0.25,
+        highlight_protect=0.25,
+        texture=0.25,
     ):
         cl = float(max(0.0, min(1.0, clarity)))
         sh = float(max(0.0, min(1.0, sharpen)))
+        tx = float(max(0.0, min(1.0, texture)))
         st = float(max(0.0, min(1.0, strength)))
-        if st <= 0 or (cl <= 1e-6 and sh <= 1e-6):
+        rad = float(max(0.0, min(1.0, radius)))
+        if st <= 0 or (cl <= 1e-6 and sh <= 1e-6 and tx <= 1e-6):
             return _preview(self, image, image)
 
-        device = image.device
-        dtype = image.dtype
-        # Rec.709-ish luma
-        luma = (
-            image[..., 0] * 0.2126
-            + image[..., 1] * 0.7152
-            + image[..., 2] * 0.0722
-        ).unsqueeze(-1)
-        chroma = image / (luma + 1e-6)
+        src_device = image.device
+        try:
+            import comfy.model_management as mm
+            dev = mm.get_torch_device()
+        except Exception:
+            dev = src_device
+        x = image.to(dev, torch.float32)
+        b, h, w, _ = x.shape
+        scale = max(0.5, min(h, w) / 1024.0)
 
-        h, w = image.shape[1], image.shape[2]
-        # Photographic local-contrast scale (not thin cartoon edges)
-        r_px = 2.0 + float(radius) * min(h, w) * 0.022
-        r_px = max(2.0, min(72.0, r_px))
+        nchw = x.permute(0, 3, 1, 2)
+        wts = torch.tensor([0.2126, 0.7152, 0.0722], device=dev).view(1, 3, 1, 1)
+        y_lin = (self._to_lin(nchw) * wts).sum(1, keepdim=True)
+        lp = self._to_srgb(y_lin)  # perceptual luminance, B1HW
 
-        luma_c = luma.permute(0, 3, 1, 2)
-        # Hybrid low-pass: enough box for visible residual, guided to calm rings
-        eps_c = 3.0e-2 * (0.4 + float(radius))
-        guided = self._guided_filter_luma(luma_c, r_px, eps=eps_c)
-        boxed = self._box_blur_luma(luma_c, r_px)
-        blurred = (0.45 * guided + 0.55 * boxed).permute(0, 2, 3, 1)
+        # Noise floor per image, from the finest band (robust MAD). Anything below it is left alone.
+        fine = (lp - self._gblur(lp, 0.8))[:, :, ::2, ::2].abs().reshape(b, -1)
+        sn = (fine.median(dim=1).values / 0.6745).clamp(min=0.0015).view(b, 1, 1, 1)
+        s_loc = 1.5 * scale
+        m1 = self._gblur(lp, s_loc)
+        lstd = (self._gblur(lp * lp, s_loc) - m1 * m1).clamp(min=0).sqrt()
+        detail_mask = self._smoothstep(1.5 * sn, 5.0 * sn, lstd)
 
-        detail = luma - blurred
-        ha = float(max(0.0, min(1.0, halo)))
-        # Auto-raise effective halo when sharpen is high (stops Crisp-style outlines)
-        ha_eff = max(ha, min(1.0, 0.25 + 0.55 * sh))
-        max_amp = 0.70 * (1.0 - 0.55 * ha_eff)
-        detail = max_amp * torch.tanh(detail / (max_amp * 0.55 + 1e-6))
+        skin = None
+        if skin_protect > 0 and (tx > 0 or cl > 0):
+            try:
+                from .lc_skin_beauty import _auto_skin_mask
+                arr = x.detach().cpu().numpy()
+                skin = torch.from_numpy(np.stack([_auto_skin_mask(a, 0.55, 0.45) for a in arr])).to(dev).unsqueeze(1)
+            except Exception:
+                skin = None
+        skin_keep = 1.0 if skin is None else (1.0 - float(skin_protect) * 0.85 * skin)
 
+        new = lp
+        # 1. Capture sharpening: deconvolution undoes the blur instead of adding outlines
+        if sh > 0:
+            sigma = max(0.6, (0.5 + 1.5 * rad) * scale)
+            iters = 4 + int(round(26 * sh))
+            est = self._to_srgb(self._deconvolve(y_lin, sigma, iters))
+            new = new + (est - lp) * detail_mask * min(1.0, 0.5 + sh)
+
+        # 2. Texture: mid band, noise-thresholded
+        if tx > 0:
+            s1 = 0.7 * scale
+            s2 = (2.5 + 3.0 * rad) * scale
+            band = self._gblur(new, s1) - self._gblur(new, s2)
+            band = band * self._smoothstep(1.0 * sn, 3.0 * sn, band.abs())
+            new = new + band * (2.2 * tx) * skin_keep
+
+        # Halo control: nothing may overshoot its neighbourhood by more than a set amount
+        hr = max(1, int(round(1.0 * scale)))
+        k = 2 * hr + 1
+        lo = -F.max_pool2d(F.pad(-lp, (hr, hr, hr, hr), mode="replicate"), k, stride=1)
+        hi = F.max_pool2d(F.pad(lp, (hr, hr, hr, hr), mode="replicate"), k, stride=1)
+        over = 0.004 + 0.14 * (1.0 - float(halo))
+        new = torch.maximum(torch.minimum(new, hi + over), lo - over)
+
+        # 3. Clarity: local contrast against an edge-aware base, so no dark rings around subjects
+        if cl > 0:
+            rc = (6.0 + 34.0 * rad) * scale
+            base = self._guided(new, rc, 4e-3)
+            layer = (0.5 + (new - base) * 2.0).clamp(0.0, 1.0)
+            blended = self._blend_clarity(new, layer, blend_mode)
+            mid = (1.0 - (2.0 * new - 1.0) ** 2).clamp(0.25, 1.0)
+            new = torch.lerp(new, blended, (cl * mid * skin_keep).clamp(0, 1))
+
+        # Tonal protection
         sp = float(max(0.0, min(1.0, shadow_protect)))
         hp = float(max(0.0, min(1.0, highlight_protect)))
-        y = luma
-        sh_mask = 1.0 - sp * 0.90 * (1.0 - self._smoothstep(0.04, 0.34, y))
-        hi_mask = 1.0 - hp * 0.90 * self._smoothstep(0.66, 0.95, y)
-        region = (sh_mask * hi_mask).clamp(0, 1)
+        region = (1.0 - sp * 0.9 * (1.0 - self._smoothstep(0.04, 0.34, lp))) * \
+                 (1.0 - hp * 0.9 * self._smoothstep(0.66, 0.95, lp))
+        delta = (new - lp) * region
 
-        skin_w = self._skin_weight(image)
-        sk = float(max(0.0, min(1.0, skin_protect)))
-        # Stronger skin attenuation for realism / influencer faces
-        skin_mask = 1.0 - sk * 0.94 * skin_w
-        region = region * skin_mask
-
-        # Visible but photographic — not illustration gain
-        cl_eff = min(1.0, cl * 1.35)
-        sh_eff = min(1.0, sh * 1.15)
-
-        out_luma = luma
-        if cl > 1e-6:
-            sharp_layer = (0.5 + detail).clamp(0.0, 1.0)
-            blended = self._blend_clarity(luma, sharp_layer, blend_mode)
-            # Mostly blend-mode path; light linear add only (avoids plastic outlines)
-            out_luma = torch.lerp(out_luma, blended, cl_eff * region)
-            out_luma = out_luma + detail * (0.35 * cl) * region
-            out_luma = out_luma.clamp(0, 1)
-
-        if sh > 1e-6:
-            r_s = max(1.2, r_px * 0.28)
-            eps_s = 2.0e-2 * (0.4 + float(radius))
-            guided_s = self._guided_filter_luma(luma_c, r_s, eps=eps_s)
-            boxed_s = self._box_blur_luma(luma_c, r_s)
-            fine = (0.50 * guided_s + 0.50 * boxed_s).permute(0, 2, 3, 1)
-            edge = luma - fine
-            max_e = 0.32 * (1.0 - 0.62 * ha_eff)
-            edge = max_e * torch.tanh(edge / (max_e * 0.80 + 1e-6))
-            # Gate out micro-noise (AI skin grain → black dots)
-            noise_gate = self._smoothstep(0.015, 0.055, edge.abs())
-            edge = edge * noise_gate
-            sharp_luma = (out_luma + edge * (1.15 * sh_eff)).clamp(0, 1)
-            out_luma = torch.lerp(out_luma, sharp_luma, min(1.0, sh_eff) * region)
-
-        out_luma = out_luma.clamp(0, 1)
-        rgb_from_luma = (out_luma * chroma).clamp(0.0, 1.0)
-        edge_strength = (out_luma - luma).abs()
-        fringe = self._smoothstep(0.015, 0.10, edge_strength)
-        # Prefer original at strong edges (hair / background) for realism
-        result = torch.lerp(rgb_from_luma, torch.lerp(image, rgb_from_luma, 0.82), 1.0 - 0.50 * fringe)
-        result = result.clamp(0.0, 1.0)
-
+        # Luminance-only: the same brightness change on all three channels keeps color untouched
+        out = (nchw + delta).clamp(0.0, 1.0)
         if st < 1.0:
-            result = torch.lerp(image, result, st)
-
+            out = torch.lerp(nchw, out, st)
+        result = out.permute(0, 2, 3, 1).to(src_device, image.dtype)
         return _preview(self, result, image)
 
 
@@ -550,8 +522,9 @@ class LCLensFX(PreviewImage):
     FUNCTION = "run"
     CATEGORY = "LC123/image"
     OUTPUT_NODE = True
+    DEPRECATED = True  # hidden from search; saved workflows still load and run
     DESCRIPTION = (
-        "Quick lens-style effects: chromatic aberration, vignette, and grain in one node. On-node preview with before/after wipe."
+        "Deprecated: use LC Lens Profile, LC Vignette and LC Film Grain. Still works in saved workflows."
     )
 
     def run(self, image, chromatic_aberration, vignette, grain_amount, grain_scale, seed):
@@ -719,6 +692,7 @@ class LCFilmGrain(PreviewImage):
                 "softness": ("FLOAT", {
                     "default": 0.8, "min": 0.4, "max": 2.0, "step": 0.1,
                 }),
+                "look": _look_input(),
             },
         }
 
@@ -731,7 +705,7 @@ class LCFilmGrain(PreviewImage):
         "Film grain overlay with amount, contrast, scale, and mono vs color grain. On-node preview with before/after wipe."
     )
 
-    def run(self, image, grain_size, strength, radius_variation, color_grain, seed, softness=0.8):
+    def run(self, image, grain_size, strength, radius_variation, color_grain, seed, softness=0.8, look="Custom"):
         if strength <= 0:
             return _preview(self, image, image)
         device = image.device
@@ -906,6 +880,7 @@ class LCVignette(PreviewImage):
                 "tint_r": ("FLOAT", {"default": 1.0, "min": 0.5, "max": 1.5, "step": 0.05}),
                 "tint_g": ("FLOAT", {"default": 1.0, "min": 0.5, "max": 1.5, "step": 0.05}),
                 "tint_b": ("FLOAT", {"default": 1.05, "min": 0.5, "max": 1.5, "step": 0.05}),
+                "look": _look_input(),
             },
         }
 
@@ -919,7 +894,7 @@ class LCVignette(PreviewImage):
     )
 
     def run(self, image, intensity, midpoint=0.5, roundness=1.0, feather=0.4,
-            cos4_falloff=True, tint_r=1.0, tint_g=1.0, tint_b=1.0):
+            cos4_falloff=True, tint_r=1.0, tint_g=1.0, tint_b=1.0, look="Custom"):
         if abs(intensity) < 0.01:
             return _preview(self, image, image)
         arrays = tensor_to_np(image)
@@ -946,6 +921,70 @@ class LCVignette(PreviewImage):
 # ---------------------------------------------------------------------------
 # LC Bloom
 # ---------------------------------------------------------------------------
+def _lin(x):
+    return torch.where(x <= 0.04045, x / 12.92, ((x + 0.055) / 1.055).clamp(min=0) ** 2.4)
+
+
+def _srgb(x):
+    x = x.clamp(min=0)
+    return torch.where(x <= 0.0031308, x * 12.92, 1.055 * x ** (1 / 2.4) - 0.055)
+
+
+def _shoulder(x, knee=0.8):
+    """Soft highlight roll-off instead of a hard clip (linear light)."""
+    return torch.where(x < knee, x, knee + (1.0 - knee) * torch.tanh((x - knee) / (1.0 - knee)))
+
+
+_LUMA_W = (0.2126, 0.7152, 0.0722)
+
+
+def _luma(t):
+    w = torch.tensor(_LUMA_W, device=t.device, dtype=t.dtype).view(1, 3, 1, 1)
+    return (t * w).sum(1, keepdim=True)
+
+
+def _glow_mask(x_srgb, threshold, smoothing):
+    luma = _luma(x_srgb)
+    lo = threshold * (1.0 - 0.5 * smoothing)
+    hi = min(1.0, threshold + 0.5 * smoothing * (1.0 - threshold)) + 1e-4
+    t = ((luma - lo) / (hi - lo)).clamp(0, 1)
+    return t * t * (3 - 2 * t)
+
+
+def _pro_mist(image, intensity, threshold, smoothing, radius, saturation, exposure):
+    """Black Pro-Mist style diffusion: warm glow from highlights plus gently softened contrast."""
+    blur = LCClarity._gblur
+    x = image.permute(0, 3, 1, 2).float()
+    lin = _lin(x)
+    base = min(x.shape[2], x.shape[3])
+    src = lin * _glow_mask(x, threshold, smoothing)
+    glow = sum(wt * blur(src, s * base * radius) for wt, s in ((0.5, 0.004), (0.3, 0.012), (0.2, 0.03)))
+    warm = torch.tensor([1.0, 0.93, 0.82], device=x.device).view(1, 3, 1, 1)
+    glow = glow * (1.0 + (warm - 1.0) * min(1.0, saturation))
+    gl = _luma(glow)
+    glow = gl + (glow - gl) * saturation
+    diffuse = blur(lin, 0.01 * base * radius)
+    lin = torch.lerp(lin, diffuse, min(0.5, 0.12 * intensity))
+    out = _shoulder(lin + glow * intensity * exposure * 0.6)
+    return _srgb(out).clamp(0, 1).permute(0, 2, 3, 1).to(image.dtype)
+
+
+def _halation(image, intensity, threshold, smoothing, radius, saturation, exposure):
+    """Film halation: a red-orange glow AROUND bright edges, not a red wash over them (no pink skin)."""
+    blur = LCClarity._gblur
+    x = image.permute(0, 3, 1, 2).float()
+    lin = _lin(x)
+    base = min(x.shape[2], x.shape[3])
+    mask = _glow_mask(x, threshold, smoothing)
+    energy = _luma(lin) * mask
+    glow = 0.6 * blur(energy, 0.006 * base * radius) + 0.4 * blur(energy, 0.015 * base * radius)
+    glow = glow * (1.0 - mask) ** 0.5
+    red = torch.tensor([1.0, 0.32, 0.10], device=x.device).view(1, 3, 1, 1)
+    color = 1.0 + (red - 1.0) * max(0.0, min(1.5, saturation))
+    out = _shoulder(lin + glow * color * intensity * exposure * 1.2, 0.9)
+    return _srgb(out).clamp(0, 1).permute(0, 2, 3, 1).to(image.dtype)
+
+
 class LCBloom(PreviewImage):
     @classmethod
     def INPUT_TYPES(cls):
@@ -958,7 +997,15 @@ class LCBloom(PreviewImage):
                 "radius": ("FLOAT", {"default": 1.0, "min": 0.1, "max": 5.0, "step": 0.1}),
                 "saturation": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 2.0, "step": 0.05}),
                 "exposure": ("FLOAT", {"default": 1.0, "min": 0.1, "max": 4.0, "step": 0.05}),
-            }
+                "mode": (["Bloom", "Pro-Mist", "Halation"], {
+                    "default": "Bloom",
+                    "tooltip": "Bloom = glow from bright areas. Pro-Mist = a diffusion filter in front of the lens "
+                               "(soft glow, gentler contrast). Halation = the red-orange glow film gets around bright edges.",
+                }),
+            },
+            "optional": {
+                "look": _look_input(),
+            },
         }
 
     RETURN_TYPES = ("IMAGE",)
@@ -970,7 +1017,10 @@ class LCBloom(PreviewImage):
         "Bloom / glow from bright areas. Threshold, radius, intensity. On-node preview + wipe."
     )
 
-    def run(self, image, intensity, threshold, smoothing, radius, saturation, exposure):
+    def run(self, image, intensity, threshold, smoothing, radius, saturation, exposure, mode="Bloom", look="Custom"):
+        if mode in ("Pro-Mist", "Halation") and intensity > 0:
+            fx = _pro_mist if mode == "Pro-Mist" else _halation
+            return _preview(self, fx(image, intensity, threshold, smoothing, radius, saturation, exposure), image)
         if intensity <= 0:
             return _preview(self, image, image)
         device = image.device
@@ -1476,6 +1526,7 @@ class LCFilmStockBW(PreviewImage):
             "optional": {
                 "contrast": ("FLOAT", {"default": 0.0, "min": -1.0, "max": 1.0, "step": 0.05}),
                 "exposure_shift": ("FLOAT", {"default": 0.0, "min": -3.0, "max": 3.0, "step": 0.25}),
+                "look": _look_input(),
             },
         }
 
@@ -1488,7 +1539,7 @@ class LCFilmStockBW(PreviewImage):
         "Black-and-white film stock look from presets. Strength blends the effect. On-node preview + wipe."
     )
 
-    def run(self, image, film_stock, color_filter, strength, contrast=0.0, exposure_shift=0.0):
+    def run(self, image, film_stock, color_filter, strength, contrast=0.0, exposure_shift=0.0, look="Custom"):
         if strength <= 0:
             return _preview(self, image, image)
         stock = _BW_STOCKS[film_stock]
@@ -1506,10 +1557,12 @@ class LCFilmStockBW(PreviewImage):
             if abs(exposure_shift) > 0.01:
                 bw = np.clip(bw * (2.0 ** exposure_shift), 0, 1)
             bw = _char_curve(bw, toe, shoulder, slope)
+            bw = linear_to_srgb(bw)
+            # fog is a small base density on the print, so it goes on in display space
+            # (added in linear it became 10-19% grey and blacks could never reach black)
             fog = stock["fog"]
             if fog > 0:
                 bw = bw * (1.0 - fog) + fog
-            bw = linear_to_srgb(bw)
             result = np.stack([bw, bw, bw], axis=-1).astype(np.float32)
             out.append(blend(original, result, strength))
         return _preview(self, np_to_tensor(out), image)
@@ -1531,6 +1584,7 @@ class LCFilmStockColor(PreviewImage):
                 "override_toe": ("FLOAT", {"default": -1.0, "min": -1.0, "max": 5.0, "step": 0.1}),
                 "override_shoulder": ("FLOAT", {"default": -1.0, "min": -1.0, "max": 5.0, "step": 0.1}),
                 "override_gamma": ("FLOAT", {"default": -1.0, "min": -1.0, "max": 3.0, "step": 0.05}),
+                "look": _look_input(),
             },
         }
 
@@ -1543,7 +1597,7 @@ class LCFilmStockColor(PreviewImage):
         "Color film stock look from presets (toe/shoulder/gamma). Strength blends. On-node preview + wipe."
     )
 
-    def run(self, image, film_stock, strength, override_toe=-1.0, override_shoulder=-1.0, override_gamma=-1.0):
+    def run(self, image, film_stock, strength, override_toe=-1.0, override_shoulder=-1.0, override_gamma=-1.0, look="Custom"):
         if strength <= 0:
             return _preview(self, image, image)
         s = _COLOR_STOCKS[film_stock]
@@ -1585,6 +1639,7 @@ class LCLensProfile(PreviewImage):
             },
             "optional": {
                 "strength": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 2.0, "step": 0.1}),
+                "look": _look_input(),
             },
         }
 
@@ -1597,7 +1652,7 @@ class LCLensProfile(PreviewImage):
         "Apply or correct a named lens profile (aberrations character). Strength scales the effect. On-node preview with before/after wipe."
     )
 
-    def run(self, image, lens, mode, strength=1.0):
+    def run(self, image, lens, mode, strength=1.0, look="Custom"):
         if strength < 0.01:
             return _preview(self, image, image)
         p = _LENS_PROFILES[lens]
@@ -1787,7 +1842,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "LCImageAdjust": "LC Image Adjust",
     "LCAutoWhiteBalance": "LC Auto White Balance",
     "LCClarity": "LC Sharpen Pro",
-    "LCLensFX": "LC Lens Effects",
+    "LCLensFX": "LC Lens FX (deprecated)",
     "LCLiftGammaGain": "LC Lift Gamma Gain",
     "LCImageRGB": "LC Image RGB",
     "LCFilmGrain": "LC Film Grain",

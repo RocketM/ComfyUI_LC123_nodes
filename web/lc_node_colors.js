@@ -33,6 +33,7 @@ const COLORS = {
     LCFilmGrain: { color: "#324B4B", bgcolor: "#324B4B" },
     LCApplyLUT: { color: "#324B4B", bgcolor: "#324B4B" },
     LCBloom: { color: "#324B4B", bgcolor: "#324B4B" },
+    LCDepthFX: { color: "#324B4B", bgcolor: "#324B4B" },
     LCImageDenoise: { color: "#324B4B", bgcolor: "#324B4B" },
     LCColorMatch: { color: "#324B4B", bgcolor: "#324B4B" },
     LCLensProfile: { color: "#324B4B", bgcolor: "#324B4B" },

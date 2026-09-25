@@ -15,6 +15,7 @@ Registered class IDs (64):
 - `LCBasicScheduler`
 - `LCBatchImageComparer`
 - `LCBloom`
+- `LCDepthFX`
 - `LCBoolean`
 - `LCChromaticAberration`
 - `LCCivitaiStrip`

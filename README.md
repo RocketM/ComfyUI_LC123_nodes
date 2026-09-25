@@ -6,7 +6,7 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 - **Civitai:** [lonecatone23](https://civitai.com/user/lonecatone23)
 - **Instagram:** [synth.studio.models](https://www.instagram.com/synth.studio.models/)
 - **Support:** [Buy me a ☕](https://ko-fi.com/lonecatone)
-- **Version:** 1.41.1 · **126 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
+- **Version:** 1.42.0 · **127 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
 
 > Small tools that remove friction: less wire mess, fewer clicks, clearer workflows.
 
@@ -213,13 +213,56 @@ Full list: [`LC_Photo_Style_Note.md`](LC_Photo_Style_Note.md)
 
 ## 🔪 LC Sharpen Pro
 
-Built for photorealism first: clarity + edge work, a guided + box hybrid high-pass, automatic halo control, and skin protection so faces don't turn crispy.
+Rebuilt from the ground up in 1.42.0. It works on brightness only, so colors never shift, and it runs in three stages:
 
-Presets: **Natural, Subtle, Portrait, Product, Landscape, Crisp** plus the art-side pair, **Lineart, Anime sharp**. Touch any slider after picking a preset and it flips to **Custom**.
+- **sharpen:** capture sharpening by deconvolution. It undoes softness instead of drawing outlines around everything.
+- **texture:** mid-size detail like pores, fur, fabric and pencil hatching.
+- **clarity:** large-scale punch on an edge-aware base, so no dark rings around your subject.
+- **halo:** how far an edge may overshoot its neighbors. 1 = no rims at all.
+- Flat areas are left alone based on the noise measured in each image, so anime fills and smooth gradients stay clean.
 
-- Realism / portraits: start with **Natural** or **Portrait**. Raise **clarity** before you touch **sharpen**. Keep **halo** and **skin_protect** up on faces. That's what keeps skin from looking like plastic.
-- **Crisp** is meant to read as photo snap, not ink outlines. If it looks like a comic, back off.
-- **strength** 1.0 = full effect. Use the bypasser if you want a hard off, not strength 0.
+Presets: **Natural, Subtle, Portrait, Product, Landscape, Crisp** plus the art side, **Lineart, Anime sharp, Illustration**. Touch any slider after picking a preset and it flips to **Custom**.
+
+- 💡 Line art, anime and illustration: keep **skin_protect** at 0 (the art presets already do).
+- ⚠️ Old workflows load and run as saved, but they use the new engine, so expect a cleaner, stronger result.
+
+---
+
+## 🌫️ LC Depth FX + Looks 🎞️
+
+What a real camera does to a scene, in the order light actually travels. Wire a depth map from **LC Depth Anything** (LC MaskMaker) and you get the stuff AI images are missing.
+
+**LC Depth FX 🌫️**
+- **haze:** distant areas fade toward a haze color taken from the image itself, not a flat gray fog.
+- **light_wrap:** bright background light bleeds over the subject's edges. Kills the cut-out sticker look.
+- **dof_blur:** depth of field that grows with distance from focus. The subject never smears into the background, and small lights turn into real bokeh discs.
+- **auto_focus** finds the subject in the upper middle of the frame. A curtain or railing at the side gets ignored.
+- The depth direction is detected automatically, so no Invert node.
+
+**LC Bloom** now has a **mode**:
+- **Bloom:** the same glow as before, old workflows render exactly the same.
+- **Pro-Mist:** a diffusion filter in front of the lens. Soft warm glow, gentler contrast.
+- **Halation:** the red-orange glow film gets around bright edges, not a pink wash over everything.
+
+**Looks:** Natural, Portrait, Cinematic, Golden hour, Vintage, Dreamy, Landscape, Night, B&W.
+- Pick the same look on **Depth FX, Bloom, Lens Profile, Vignette, Film Stock (Color / B&W)** and **Film Grain** and they're built to match. Click it and forget it.
+- Moving any slider switches that node to **Custom**. A node on Custom is never touched.
+- Old workflows load as **Custom** with every value exactly as saved.
+- 💡 The B&W look drives **LC Film Stock (B&W)**. On the Color stock node it turns itself off.
+
+**The order** (light path: scene, lens, film):
+1. LC Image Denoise / LC Skin Upscale
+2. LC Skin Beauty
+3. LC Sharpen Pro (before the blur, never after)
+4. LC Depth FX
+5. Color: LC Auto White Balance, Color / Tone Match, Lift Gamma Gain, Vibrance or LUT
+6. LC Bloom (Pro-Mist)
+7. LC Lens Profile (or LC Chromatic Aberration)
+8. LC Bloom (Halation)
+9. LC Film Stock
+10. LC Film Grain, always last
+
+- 💡 **LC Phone Look** replaces steps 6 to 10. Use one path or the other.
 
 ---
 
@@ -279,14 +322,15 @@ Hover any of these to wipe against the original. If your graph's heavy, dial the
 | **LC Image Adjust** | Brightness, contrast, saturation, hue. |
 | **LC Auto White Balance** | Auto WB, no fuss. |
 | **LC Sharpen Pro** | See above. |
-| **LC Lens Effects** / **LC Lens Profile** | Lens-style FX. |
+| **LC Lens Profile** | Lens-style FX. (**LC Lens FX (deprecated)** is hidden from search but still runs in old workflows.) |
 | **LC Lift Gamma Gain** | Color-wheel style lift / gamma / gain. |
 | **LC Image RGB** | Per-channel RGB control. |
 | **LC Film Grain** | Grain overlay. A little goes a long way. |
-| **LC Film Stock (B&W)** / **(Color)** | Stock film looks. |
+| **LC Film Stock (B&W)** / **(Color)** | Stock film looks. B&W blacks are real black since 1.42.0 (they used to sit at 10-19% grey). |
 | **LC Vibrance** | Smart saturation: won't blow out skin the way normal saturation does. |
 | **LC Vignette** | Edge darkening. |
-| **LC Bloom** | Soft glow. |
+| **LC Bloom** | Glow, Pro-Mist or Halation (see **Looks** above). |
+| **LC Depth FX 🌫️** | Haze, light wrap and depth of field from a depth map. See above. |
 | **LC Chromatic Aberration** | RGB fringe. |
 | **LC Image Denoise** | Denoise that actually tries to preserve detail instead of smearing it. |
 | **LC Color Match 🎨** | Matches a reference via AdaIN / mean-std, with **skin_protect** so faces don't shift with everything else. Optional **mask**: white = match, black = keep the original pixel. No mask = full frame, same as your old graphs already expect. |
