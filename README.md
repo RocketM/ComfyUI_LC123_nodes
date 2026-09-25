@@ -6,7 +6,7 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 - **Civitai:** [lonecatone23](https://civitai.com/user/lonecatone23)
 - **Instagram:** [synth.studio.models](https://www.instagram.com/synth.studio.models/)
 - **Support:** [Buy me a ☕](https://ko-fi.com/lonecatone)
-- **Version:** 1.42.0 · **127 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
+- **Version:** 1.42.1 · **127 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
 
 > Small tools that remove friction: less wire mess, fewer clicks, clearer workflows.
 
@@ -233,10 +233,12 @@ Presets: **Natural, Subtle, Portrait, Product, Landscape, Crisp** plus the art s
 What a real camera does to a scene, in the order light actually travels. Wire a depth map from **LC Depth Anything** (LC MaskMaker) and you get the stuff AI images are missing.
 
 **LC Depth FX 🌫️**
-- **haze:** distant areas fade toward a haze color taken from the image itself, not a flat gray fog.
+- **haze:** the far distance loses contrast toward its own color, like real air. The subject in focus is never touched, and a dark room stays dark.
 - **light_wrap:** bright background light bleeds over the subject's edges. Kills the cut-out sticker look.
 - **dof_blur:** depth of field that grows with distance from focus. The subject never smears into the background, and small lights turn into real bokeh discs.
-- **auto_focus** finds the subject in the upper middle of the frame. A curtain or railing at the side gets ignored.
+- **auto_focus** finds the subject and focuses on the top of it (the head). A curtain or railing at the side gets ignored.
+- **focus_mask** (optional): wire a face or person mask from LC MaskMaker and focus lands exactly there.
+- **bokeh:** isolated lights out of focus turn into discs. Sun glinting off a whole city stays faint, a handful of street lights blooms.
 - The depth direction is detected automatically, so no Invert node.
 
 **LC Bloom** now has a **mode**:

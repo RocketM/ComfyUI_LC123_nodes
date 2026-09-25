@@ -3,15 +3,15 @@
   "looks": ["Natural", "Portrait", "Cinematic", "Golden hour", "Vintage", "Dreamy", "Landscape", "Night", "B&W"],
   "nodes": {
     "LCDepthFX": {
-      "Natural":     {"haze": 0.10, "haze_distance": 0.40, "haze_warmth": 0.0,  "dof_blur": 0.15, "focus_range": 0.15, "bokeh": 0.2, "light_wrap": 0.15},
-      "Portrait":    {"haze": 0.06, "haze_distance": 0.50, "haze_warmth": 0.1,  "dof_blur": 0.55, "focus_range": 0.08, "bokeh": 0.5, "light_wrap": 0.30},
-      "Cinematic":   {"haze": 0.18, "haze_distance": 0.30, "haze_warmth": -0.2, "dof_blur": 0.40, "focus_range": 0.10, "bokeh": 0.6, "light_wrap": 0.35},
-      "Golden hour": {"haze": 0.35, "haze_distance": 0.30, "haze_warmth": 0.7,  "dof_blur": 0.35, "focus_range": 0.12, "bokeh": 0.6, "light_wrap": 0.50},
-      "Vintage":     {"haze": 0.15, "haze_distance": 0.35, "haze_warmth": 0.3,  "dof_blur": 0.30, "focus_range": 0.12, "bokeh": 0.3, "light_wrap": 0.25},
-      "Dreamy":      {"haze": 0.40, "haze_distance": 0.20, "haze_warmth": 0.2,  "dof_blur": 0.50, "focus_range": 0.10, "bokeh": 0.7, "light_wrap": 0.60},
-      "Landscape":   {"haze": 0.45, "haze_distance": 0.45, "haze_warmth": -0.3, "dof_blur": 0.0,  "focus_range": 0.30, "bokeh": 0.0, "light_wrap": 0.10},
-      "Night":       {"haze": 0.15, "haze_distance": 0.40, "haze_warmth": -0.5, "dof_blur": 0.35, "focus_range": 0.10, "bokeh": 0.9, "light_wrap": 0.30},
-      "B&W":         {"haze": 0.12, "haze_distance": 0.35, "haze_warmth": 0.0,  "dof_blur": 0.25, "focus_range": 0.12, "bokeh": 0.4, "light_wrap": 0.20}
+      "Natural":     {"haze": 0.15, "haze_distance": 0.4, "haze_warmth": 0.0, "dof_blur": 0.1, "focus_range": 0.15, "bokeh": 0.2, "light_wrap": 0.1},
+      "Portrait":    {"haze": 0.1, "haze_distance": 0.5, "haze_warmth": 0.1, "dof_blur": 0.35, "focus_range": 0.08, "bokeh": 0.4, "light_wrap": 0.2},
+      "Cinematic":   {"haze": 0.25, "haze_distance": 0.3, "haze_warmth": -0.2, "dof_blur": 0.25, "focus_range": 0.1, "bokeh": 0.45, "light_wrap": 0.25},
+      "Golden hour": {"haze": 0.35, "haze_distance": 0.3, "haze_warmth": 0.7, "dof_blur": 0.22, "focus_range": 0.12, "bokeh": 0.45, "light_wrap": 0.35},
+      "Vintage":     {"haze": 0.25, "haze_distance": 0.35, "haze_warmth": 0.3, "dof_blur": 0.18, "focus_range": 0.12, "bokeh": 0.25, "light_wrap": 0.2},
+      "Dreamy":      {"haze": 0.45, "haze_distance": 0.2, "haze_warmth": 0.2, "dof_blur": 0.3, "focus_range": 0.1, "bokeh": 0.5, "light_wrap": 0.45},
+      "Landscape":   {"haze": 0.6, "haze_distance": 0.45, "haze_warmth": -0.3, "dof_blur": 0.0, "focus_range": 0.3, "bokeh": 0.0, "light_wrap": 0.05},
+      "Night":       {"haze": 0.15, "haze_distance": 0.4, "haze_warmth": -0.5, "dof_blur": 0.22, "focus_range": 0.1, "bokeh": 0.6, "light_wrap": 0.2},
+      "B&W":         {"haze": 0.2, "haze_distance": 0.35, "haze_warmth": 0.0, "dof_blur": 0.15, "focus_range": 0.12, "bokeh": 0.3, "light_wrap": 0.15}
     },
     "LCBloom": {
       "_by": "mode",
