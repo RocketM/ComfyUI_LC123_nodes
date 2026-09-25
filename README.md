@@ -6,7 +6,7 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 - **Civitai:** [lonecatone23](https://civitai.com/user/lonecatone23)
 - **Instagram:** [synth.studio.models](https://www.instagram.com/synth.studio.models/)
 - **Support:** [Buy me a ☕](https://ko-fi.com/lonecatone)
-- **Version:** 1.42.2 · **127 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
+- **Version:** 1.42.3 · **127 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
 
 > Small tools that remove friction: less wire mess, fewer clicks, clearer workflows.
 
@@ -110,7 +110,7 @@ A text label for annotating a workflow, like the ones in the example workflows, 
 - **Pin it** (right-click → Pin) and it locks: clicks pass straight through to whatever is under it, and the only way to select it again is Ctrl+drag a box around it
 - **Settings:** double-click, same dialog style as LC Image Label. Text, font, size, bold / italic, align, color, outline, shadow, background fill
 - **Never buried:** it is drawn as HTML above the canvas, so nodes and links can't cover it. Clicks pass through to the canvas, so it moves, pins and selects like any node
-- **Fonts:** Bebas Neue, Oswald, Permanent Marker and Pacifico ship with the pack (`web/fonts`, licenses included), plus the usual system fonts. Each one is shown in its own typeface in the dropdown
+- **Fonts:** 14 ship with the pack: Bebas Neue, Oswald, Permanent Marker, Pacifico, Lobster, Great Vibes, Abril Fatface, Cinzel Decorative, UnifrakturMaguntia (blackletter), Monoton (neon), Bangers (comic), Creepster (horror), Rubik Glitch and Press Start 2P (pixel) (`web/fonts`, licenses included), plus the usual system fonts. Each one is shown in its own typeface in the dropdown
 
 ---
 

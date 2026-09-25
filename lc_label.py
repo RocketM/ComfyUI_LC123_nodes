@@ -6,7 +6,7 @@ and a color, drag the rotate handle like the one in Word or Paint, drag a corner
 
 The label is drawn as HTML on top of the canvas so it never gets buried under nodes or links. All of the behavior
 lives in web/lc_label.js (settings dialog on double-click, like LC Image Label); this file is only the backend stub
-ComfyUI requires. Fonts bundled in web/fonts (Bebas Neue, Oswald, Pacifico: SIL OFL 1.1; Permanent Marker: Apache 2.0).
+ComfyUI requires. Fonts bundled in web/fonts (Permanent Marker: Apache 2.0; all others SIL OFL 1.1, license files next to them).
 """
 
 NODE_NAME = "LCLabel"
