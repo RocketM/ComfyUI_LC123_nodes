@@ -77,11 +77,11 @@ class LCEasyFolder:
             "required": {
                 "folder": ("STRING", {
                     "default": "Drafts",
-                    "tooltip": "Base folder under the Comfy output directory. Separator is appended automatically.",
+                    "tooltip": "Base folder under the Comfy output directory. Separator is appended automatically. Tokens like %model %seed %sampler are filled in by LC Save Image from its metadata (dropped if missing).",
                 }),
                 "prefix": ("STRING", {
                     "default": "Test",
-                    "tooltip": "Filename prefix.",
+                    "tooltip": "Filename prefix. Tokens like %model %seed %sampler are filled in by LC Save Image from its metadata (dropped if missing).",
                 }),
                 "suffix": ("STRING", {
                     "default": "",
@@ -117,14 +117,15 @@ class LCEasyFolder:
         name = "_".join(parts) if parts else "image"
 
         if folder:
-            # Ensure folder exists under Comfy output dir
-            try:
-                import folder_paths
-                out_root = folder_paths.get_output_directory()
-                full = os.path.join(out_root, folder.replace("/", os.sep).replace("\\", os.sep))
-                os.makedirs(full, exist_ok=True)
-            except Exception:
-                pass
+            # Ensure folder exists under Comfy output dir (a %token folder is made by LC Save Image once it is filled in)
+            if "%" not in folder:
+                try:
+                    import folder_paths
+                    out_root = folder_paths.get_output_directory()
+                    full = os.path.join(out_root, folder.replace("/", os.sep).replace("\\", os.sep))
+                    os.makedirs(full, exist_ok=True)
+                except Exception:
+                    pass
             result = f"{folder}{sep}{name}"
         else:
             result = name

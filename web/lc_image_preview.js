@@ -20,6 +20,7 @@ const NODE_CLASSES = new Set([
   "LCVibrance",
   "LCVignette",
   "LCBloom",
+  "LCDepthFX",
   "LCImageDenoise",
   "LCColorMatch",
   "LCToneMatch",

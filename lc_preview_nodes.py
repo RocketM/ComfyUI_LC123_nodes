@@ -26,6 +26,38 @@ except Exception:  # pragma: no cover
     _Blocker = None
 
 
+def _prefer_previews():
+    """Show LC previews as soon as their input is ready.
+
+    ComfyUI runs whichever ready OUTPUT_NODE comes first in its list. The LC image FX nodes are output nodes
+    too (for their wipe preview), so in a big post chain a preview kept losing that pick and only showed up
+    at the end of the run. Nodes flagged LC_PREVIEW_FIRST now win the pick. Anything else is left to ComfyUI.
+    """
+    try:
+        from comfy_execution.graph import ExecutionList
+    except Exception:
+        return
+    orig = getattr(ExecutionList, "ux_friendly_pick_node", None)
+    if orig is None or getattr(orig, "_lc_preview_first", False):
+        return
+
+    def pick(self, node_list):
+        try:
+            for node_id in node_list:
+                cls = _nodes.NODE_CLASS_MAPPINGS.get(self.dynprompt.get_node(node_id)["class_type"])
+                if getattr(cls, "LC_PREVIEW_FIRST", False):
+                    return node_id
+        except Exception:
+            pass
+        return orig(self, node_list)
+
+    pick._lc_preview_first = True
+    ExecutionList.ux_friendly_pick_node = pick
+
+
+_prefer_previews()
+
+
 def _blocked():
     return _Blocker(None) if _Blocker is not None else None
 
@@ -42,6 +74,7 @@ class _LCPreviewBase(_nodes.PreviewImage):
     CATEGORY = "LC123/image"
     FUNCTION = "preview"
     OUTPUT_NODE = True
+    LC_PREVIEW_FIRST = True  # see _prefer_previews
 
     def _ui(self, images):
         res = self.save_images(images, filename_prefix="LC.preview")

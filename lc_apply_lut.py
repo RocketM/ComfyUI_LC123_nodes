@@ -142,12 +142,16 @@ class LCApplyLUT(PreviewImage):
                 "image": ("IMAGE",),
                 "lut_name": (
                     names,
-                    {"tooltip": "Folder: ComfyUI/models/luts/  — put .cube files there"},
+                    {
+                        # shipped sample, a gentle start; falls back to the first file if it was removed
+                        "default": "LC_Crushed_Blacks.cube" if "LC_Crushed_Blacks.cube" in names else names[0],
+                        "tooltip": "Folder: ComfyUI/models/luts/  — put .cube files there",
+                    },
                 ),
                 "strength": (
                     "FLOAT",
                     {
-                        "default": 1.0,
+                        "default": 0.3,
                         "min": 0.0,
                         "max": 2.0,
                         "step": 0.01,
