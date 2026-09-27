@@ -22,7 +22,7 @@ import folder_paths
 
 from .lc_pipe_io import PIPE_TYPE
 from .lc_civitai_hashes import collect_hashes, format_hash_fields, civitai_resources_payload
-from .lc_lora_metadata import collect_lora_metadata, append_lora_tags
+from .lc_lora_metadata import collect_lora_metadata, format_lora_fields
 
 
 META_TYPE = "LC_SAVE_META"
@@ -573,8 +573,6 @@ class LCSaveImage:
 
         meta = _as_meta(metadata)
         lora_metadata = collect_lora_metadata(prompt, unique_id)
-        if embed_civitai:
-            meta['positive'] = append_lora_tags(_txt(meta.get('positive')), lora_metadata)
         prefix = _fill_tokens(_txt(filename_prefix), meta)
         stem = _fill_tokens(_txt(filename), meta) or "LC123"
         folder = _fill_tokens(_txt(path), meta)
@@ -610,8 +608,8 @@ class LCSaveImage:
             buckets = None
             if hash_resources or embed_civitai:
                 try:
-                    buckets = collect_hashes(prompt, extra_pnginfo)
-                    hash_bits = format_hash_fields(buckets)
+                    buckets = collect_hashes(prompt, extra_pnginfo, unique_id)
+                    hash_bits = (*format_hash_fields(buckets), *format_lora_fields(lora_metadata, buckets))
                 except Exception as e:
                     print(f"[LC123] resource hash skip: {e}")
                     hash_bits = None

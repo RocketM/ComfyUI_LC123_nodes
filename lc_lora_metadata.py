@@ -8,7 +8,6 @@ import json
 import math
 import os
 import re
-from collections import Counter
 
 from .lc_lora_weights import row_strengths
 
@@ -65,7 +64,13 @@ def _image_ancestors(prompt, save_node_id):
         if nid in visited or nid not in prompt:
             continue
         visited.add(nid)
-        pending.extend(prompt[nid].get('inputs', {}).values())
+        inputs = prompt[nid].get('inputs', {})
+        if prompt[nid].get('class_type') == 'BooleanSwitchNode':
+            state = _resolve(inputs.get('state'), prompt)
+            if isinstance(state, bool):
+                pending.append(inputs.get('on_true' if state else 'on_false'))
+                continue
+        pending.extend(inputs.values())
     return visited
 
 
@@ -125,20 +130,26 @@ def collect_lora_metadata(prompt, save_node_id=None):
     }
 
 
-def append_lora_tags(positive, metadata):
-    """Append model-weight tags to the save-only text; retain duplicate slots."""
-    existing = Counter(re.findall(r'<lora:[^>]+>', positive, flags=re.I))
-    tags = []
+def format_lora_fields(metadata, buckets):
+    """A1111 AddNet fields carry weights without modifying the positive prompt."""
+    hashes = dict(buckets.get('lora') or [])
+    fields = []
+    index = 0
     for item in metadata['loras']:
         weight = item['strength_model']
-        if not item['nonzero_or_unresolved'] or item['scope'] != 'image_upstream' or weight is None:
+        digest = hashes.get(item['name'])
+        if not item['nonzero_or_unresolved'] or item['scope'] != 'image_upstream' or weight is None or not digest:
             continue
-        # Delimiter-bearing names remain available in the structured record.
-        if any(c in item['name'] for c in ':<>\n\r'):
-            continue
-        tag = f"<lora:{item['name']}:{weight:g}>"
-        if existing[tag]:
-            existing[tag] -= 1
-        else:
-            tags.append(tag)
-    return '\n'.join(part for part in (positive, ' '.join(tags)) if part)
+        index += 1
+        # Civitai's AddNet name parser accepts only ASCII letters, digits, dots and underscores.
+        # The hash identifies the resource; Lora hashes keeps the original filename.
+        name = re.sub(r'[^a-zA-Z0-9_.]', '_', item['name'])
+        fields.extend([
+            f'AddNet Module {index}: LoRA',
+            f'AddNet Model {index}: {name}({digest})',
+            f'AddNet Weight {index}: {weight:g}',
+            f'AddNet Weight A {index}: {weight:g}',
+        ])
+        if item['strength_clip'] is not None:
+            fields.append(f"AddNet Weight B {index}: {item['strength_clip']:g}")
+    return ['AddNet Enabled: True', *fields] if fields else []
