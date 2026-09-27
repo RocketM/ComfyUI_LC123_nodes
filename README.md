@@ -107,8 +107,8 @@ Open **Settings** (the gear) and pick **LC123 Settings ⚙️**. These are **UI 
 | Setting | Default | What it does |
 |--------|---------|--------|
 | **Note language** | Same as ComfyUI | The language every LC Note opens in (when it has that translation) |
+| **Translate all notes** | button | Translates every LC Note in the open workflow into your Note language (needs LC Vision) |
 | **Link cards** | On | `@[card](https://…)` lines show as link cards. Off = plain links |
-| **Convert all notes** | button | Turns every Markdown Note and Note in the open workflow into an LC Note |
 
 **Optimization**
 
@@ -147,7 +147,7 @@ A markdown note that speaks your reader's language. Write it once, translate it,
 - The dropdown at the top lists ComfyUI's 14 languages, each in its own script: ✏️ original · ✅ translated · ⚠️ the original changed since it was translated · ❌ not translated.
 - **The language every LC Note opens in** is set in Settings > LC123 Settings ⚙️ > Notes > **Note language**. *Same as ComfyUI* follows your ComfyUI language. A note without that translation shows its original.
 
-![Note language, Link cards and Convert all notes in Settings > LC123 Settings > Notes](assets/readme/lc_note_language_setting.webp)
+![Note language and Link cards in Settings > LC123 Settings > Notes](assets/readme/lc_note_language_setting.webp)
 
 - Pick a ❌ (or ⚠️) language and click **Translate now**. Nothing ever translates on its own, so edit as much as you like before you ship it.
 - ⚠️ keeps showing the older translation until you re-translate, so readers never get an empty note.
@@ -157,7 +157,7 @@ A markdown note that speaks your reader's language. Write it once, translate it,
 - **✏️ follows your ComfyUI language.** A Spanish ComfyUI starts a new note as Español ✏️. Right-click the note to change which language is the original.
 - The **◀ ▶ arrows** only flip between languages the note actually has. To translate a new one, open the list.
 - عربي, فارسی and עברית display right to left. You can edit any translation by hand.
-- **Convert all notes** (Settings > LC123 Settings ⚙️ > Notes) turns every Markdown Note and Note in the open workflow into an LC Note, keeping position, size and color. English, then `---`, then Chinese comes out as one LC Note with both languages. ⚠️ Save the workflow afterwards.
+- **Translate all notes** (Settings > LC123 Settings ⚙️ > Notes) translates every LC Note in the open workflow, subgraphs too, into your Note language in one go. Notes already in that language or with an up-to-date translation are skipped; ⚠️ ones are redone. Only LC Notes are touched. Needs LC Vision. ⚠️ Save the workflow afterwards.
 - **Link cards.** Put a link on a line of its own as `@[card](https://…)` and it shows as a card: the page's picture, site, title and description. `@[card: Download here](https://…)` adds your own caption. Click the card to open the page. Normal links stay normal links.
     - Works for GitHub, CivitAI, YouTube (videos, Shorts and channels), Instagram and most sites that share a preview.
     - ComfyUI reads each card's page once to get its title and picture, and the picture loads from that site. Only public web addresses, never your own machine or network. Turn cards off in Settings > LC123 Settings ⚙️ > Notes > **Link cards**.

@@ -16,6 +16,7 @@
     - Every workflow tab keeps its own. Switch tabs and the tool follows that tab (on in one, off in the other, no mix-ups).
     - Turning it on or off counts as a change to the workflow, so you get the unsaved dot.
 - Nodes snap to **Node lines**, groups snap to **Group lines**. A line lights up when you get close.
+- Works on the classic canvas and in **Nodes 2.0**.
 - **Snap distance** is ComfyUI's own **Snap to grid size** (Settings > Lite Graph > Canvas). Smaller grid = tighter snap. New lines land on that grid too.
     - **Shift** while dragging hands the drag to ComfyUI's own grid snap (no line snap). With **Always snap to grid** on, a line snap still wins on the axis it caught.
 
@@ -45,26 +46,29 @@
 - Get close and rings pulse out of the socket. Closer = bigger and brighter.
 - **Connection FX reach (px):** how close the cursor has to be before the rings start. Default 160.
 - **Connection FX zoomed-out glow (%):** zoomed out, every valid socket glows brighter so you can find it. Default 60.
+- Classic canvas only. With **Nodes 2.0** on it stays out of the way.
 
 ---
 
 ### 📝 Notes
 
 **Note language**
-- Default: **Same as ComfyUI**
-- The language every LC Note opens in.
-- Only notes that already have that translation switch. The rest stay in their original language.
+- LC notes will open in the default language set for Comfy if they have already been translated to that
+
+**Translate all notes**
+- One click translates every **LC Note** in the open workflow (subgraphs too) into your **Note language**, one after another, then shows them in it.
+- Notes already written in that language, or with an up-to-date translation, are skipped. Out-of-date translations (⚠️) are redone.
+- Only LC Notes are touched. Other notes are left alone.
+- Needs **LC Vision** installed (nothing to wire).
+- ⚠️ Save the workflow afterwards to keep the translations.
 
 **Link cards**
 - Default: **On**
 - A line with just `@[card](https://…)` in an LC Note shows the page as a card: picture, site, title and description. `@[card: caption](https://…)` adds your own caption.
-- ComfyUI reads each card's page once, and the picture loads from that site. Off = cards show as plain links.
-
-**Convert all notes**
-- One click turns every **Markdown Note** and **Note** in the open workflow into an **LC Note**.
-- A note written as English, then `---`, then Chinese becomes one LC Note with both languages.
-- Position, size and color are kept.
-- ⚠️ Save the workflow afterwards. If you reload without saving, the conversion is gone.
+- Put each card on a line of its own, with a blank line before and after it. Without the blank lines they stay plain links.
+- Double-click the note to edit: the cards step aside so you can change the `@[card](…)` text. They come back when you click away.
+- Wide pictures (banners) get a wider slot so they show whole.
+- ComfyUI reads each card's page once, and the picture loads from that site. Only public web addresses, never your own machine or network. Off = cards show as plain links.
 
 ---
 

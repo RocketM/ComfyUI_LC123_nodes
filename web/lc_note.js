@@ -301,6 +301,7 @@ app.registerExtension({
   settings: [
     {
       id: SETTING,
+      sortOrder: 30, // Notes section order: Note language, Translate all notes, Link cards
       name: "Note language",
       type: "combo",
       defaultValue: "auto",
@@ -315,6 +316,7 @@ app.registerExtension({
     },
     {
       id: CARD_SETTING,
+      sortOrder: 10,
       name: "Link cards",
       type: "boolean",
       defaultValue: true,
@@ -325,25 +327,41 @@ app.registerExtension({
       category: ["LC123 Settings ⚙️", "Notes", "Link cards"],
     },
     {
-      id: "LC123.Notes.ConvertAll",
-      name: "Convert all notes",
-      category: ["LC123 Settings ⚙️", "Notes", "Convert all notes"],
+      id: "LC123.Notes.TranslateAll",
+      sortOrder: 20,
+      name: "Translate all notes",
+      category: ["LC123 Settings ⚙️", "Notes", "Translate all notes"],
       defaultValue: "",
       tooltip:
-        "Turns every Markdown Note and Note in the open workflow into an LC Note. " +
-        "A note written as English, then ---, then Chinese becomes one LC Note with both languages. " +
-        "Position, size and color are kept. Save the workflow afterwards to keep it.",
+        "Translates every LC Note in the open workflow (subgraphs too) into the Note language above, one after " +
+        "another, then shows them in it. Notes already in that language, or with an up-to-date translation, are skipped. " +
+        "Needs LC Vision installed. Only LC Notes are touched; other notes are left alone. Save the workflow afterwards to keep it.",
       type: () => {
+        const IDLE = "Translate all notes in this workflow";
         const b = document.createElement("button");
         b.type = "button"; // a plain <button> is a submit button: inside the settings form it reloads ComfyUI
-        b.textContent = "Convert all notes in this workflow";
+        b.textContent = IDLE;
         b.className = "p-button p-component p-button-sm";
-        b.onclick = (e) => {
+        let busy = false;
+        b.onclick = async (e) => {
           e.preventDefault();
           e.stopPropagation();
-          const n = convertAllNotes();
-          b.textContent = n ? `Converted ${n} note${n === 1 ? "" : "s"} ✅` : "No notes to convert";
-          setTimeout(() => (b.textContent = "Convert all notes in this workflow"), 3000);
+          if (busy) return;
+          busy = true;
+          b.disabled = true;
+          try {
+            const r = await translateAllNotes((i, n, name) => (b.textContent = `Translating ${i} of ${n} to ${name}…`));
+            if (r.error) b.textContent = r.error;
+            else if (!r.total) b.textContent = "No LC Notes in this workflow";
+            else if (!r.done && !r.failed) b.textContent = `All notes are already in ${r.name} ✅`;
+            else b.textContent = `Translated ${r.done} to ${r.name} ✅` + (r.failed ? ` · ${r.failed} failed` : "");
+          } finally {
+            busy = false;
+            b.disabled = false;
+            setTimeout(() => {
+              if (!busy) b.textContent = IDLE;
+            }, 6000);
+          }
         };
         return b;
       },
@@ -440,43 +458,15 @@ app.registerExtension({
   },
 });
 
-// ---------------------------------------------------------------- convert old notes
+// ---------------------------------------------------------------- titles saved before they were per-language
 
-const CJK = /[぀-ヿ㐀-䶿一-鿿가-힯豈-﫿＀-￯]/g;
+const CJK =/[぀-ヿ㐀-䶿一-鿿가-힯豈-﫿＀-￯]/g;
 const LATIN = /[A-Za-z]/g;
 
 function cjkShare(s) {
   const c = (s.match(CJK) || []).length;
   const l = (s.match(LATIN) || []).length;
   return c + l ? c / (c + l) : 0;
-}
-
-/** "English --- Chinese" -> {en, zh}. English notes can have their own --- breaks, so it splits at the
- *  rule line with no Chinese above it and the most Chinese below it. */
-function splitBilingual(text) {
-  const lines = String(text || "").split("\n");
-  let best = null;
-  for (let i = 0; i < lines.length; i++) {
-    if (!/^\s*(-{3,}|\*{3,}|_{3,})\s*$/.test(lines[i])) continue;
-    const before = lines.slice(0, i).join("\n").trim();
-    const after = lines.slice(i + 1).join("\n").trim();
-    const share = cjkShare(after);
-    if (before && after && cjkShare(before) < 0.05 && share > 0.3 && (!best || share > best.share)) {
-      best = { en: before, zh: after, share };
-    }
-  }
-  if (best) return { en: best.en, zh: best.zh };
-  const all = String(text || "").trim();
-  return cjkShare(all) > 0.3 ? { zh: all } : { en: all };
-}
-
-const CJK_LOCALES = new Set(["zh", "zh-TW", "ja", "ko"]);
-
-/** Original language for a one-language note: the author's ComfyUI language, unless the script disagrees. */
-function authorLang(isCjkText) {
-  const loc = comfyLocale();
-  if (isCjkText) return CJK_LOCALES.has(loc) ? loc : "zh";
-  return CJK_LOCALES.has(loc) ? "en" : loc;
 }
 
 /** "⚙️ Settings/ ⚙️ 设置" -> {en, zh}; a one-language title -> {en} or {zh}. */
@@ -497,44 +487,36 @@ function allGraphs() {
   return [root, ...subs].filter(Boolean);
 }
 
-function convertAllNotes() {
-  let count = 0;
-  for (const g of allGraphs()) {
-    for (const old of [...(g._nodes || [])]) {
-      if (old.type !== "MarkdownNote" && old.type !== "Note") continue;
-      const parts = splitBilingual(old.widgets?.[0]?.value);
-      const note = LiteGraph.createNode(TYPE);
-      if (!note) continue;
-      const bilingual = parts.en !== undefined && parts.zh !== undefined;
-      // one-language notes: the author's ComfyUI language is the original (Chinese text is still read as Chinese)
-      const source = bilingual ? "en" : authorLang(parts.zh !== undefined);
-      const texts = { [source]: { text: bilingual ? parts.en : parts.en ?? parts.zh } };
-      const titles = {};
-      let t = null;
-      if (old.title && old.title !== old.constructor?.title && old.title !== "Note" && old.title !== "Markdown Note") {
-        t = splitTitle(old.title);
-        titles[source] = bilingual ? t.en || String(old.title).trim() : String(old.title).trim();
-        if (bilingual && t.zh) titles.zh = t.zh;
-      }
-      if (bilingual) texts.zh = { text: parts.zh, src: hash(parts.en), srcTitle: titles.en || "" };
-      note.properties.lc_note = { source, texts, titles };
-      note._lcConfigured = true;
-      note.pos = [...old.pos];
-      note.size = [...old.size];
-      if (old.color) note.color = old.color;
-      if (old.bgcolor) note.bgcolor = old.bgcolor;
-      g.add(note);
-      g.remove(old);
-      note._lcShown = source;
-      show(note, pickLang(note), true);
-      count++;
-    }
+/** Translate every LC Note in the open workflow (subgraphs too) into the Note language, one after another, with the
+ *  same translator as each note's own button. Notes already in that language, or with an up-to-date translation, are
+ *  skipped; afterwards every note that has the language shows it. Only LC Notes are touched. */
+async function translateAllNotes(progress) {
+  const code = readerLang();
+  const name = BY_CODE[code]?.[1] || code;
+  if (!(await translatorStatus())) return { error: "Needs LC Vision installed to translate", name };
+  const notes = [];
+  for (const g of allGraphs()) for (const n of g._nodes || []) if (n.type === TYPE) notes.push(n);
+  const todo = notes.filter((n) => {
+    const d = data(n);
+    const st = status(n, code);
+    return d.source !== code && (d.texts[d.source]?.text || "").trim() && (st === "missing" || st === "stale");
+  });
+  let done = 0;
+  let failed = 0;
+  for (const n of todo) {
+    progress?.(done + failed + 1, todo.length, name);
+    await translateNow(n, code); // it reports its own failures
+    if (status(n, code) === "ok") done++;
+    else failed++;
   }
-  if (count) {
-    app.graph.setDirtyCanvas(true, true);
-    app.extensionManager?.workflow?.activeWorkflow?.changeTracker?.checkState?.();
+  for (const n of notes) if (data(n).texts[code] || data(n).source === code) show(n, code);
+  if (done) {
+    app.graph?.setDirtyCanvas?.(true, true);
+    const ct = app.extensionManager?.workflow?.activeWorkflow?.changeTracker;
+    if (typeof ct?.captureCanvasState === "function") ct.captureCanvasState();
+    else ct?.checkState?.();
   }
-  return count;
+  return { name, done, failed, total: notes.length };
 }
 
 function pickLang(node) {
