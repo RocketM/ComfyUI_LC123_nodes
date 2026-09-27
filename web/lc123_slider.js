@@ -260,6 +260,40 @@ function ensureStyle() {
 .lc-sl input.lc-edit{flex:0 0 auto;width:64px;font:inherit;text-align:right;color:#fff;background:#111;border:1px solid #666;border-radius:3px;padding:1px 3px}
 .lc-sl .lc-gear{flex:0 0 auto;opacity:.25;cursor:pointer;font-size:12px;line-height:1;padding:2px}
 .lc-sl:hover .lc-gear{opacity:.8}
+`;
+  document.head.appendChild(st);
+  ensureVueStyle();
+}
+
+// Nodes 2.0 only. :has() rules make the browser re-check them on every DOM change, so they are added only once Nodes
+// 2.0 is on (checked once a second until then). A frontend that cannot tell gets them right away, as before.
+let vueStyleWatch = null;
+function vueNodesOn() {
+  let flag = window.LiteGraph?.vueNodesMode;
+  if (flag !== true) {
+    try {
+      const s = app.extensionManager?.setting?.get?.("Comfy.VueNodes.Enabled");
+      if (s != null) flag = !!s;
+    } catch (_) {}
+  }
+  return flag !== false;
+}
+function ensureVueStyle() {
+  if (document.getElementById("lc123-slider-vue-style")) return;
+  if (!vueNodesOn()) {
+    if (!vueStyleWatch) {
+      vueStyleWatch = setInterval(() => {
+        if (!vueNodesOn()) return;
+        clearInterval(vueStyleWatch);
+        vueStyleWatch = null;
+        ensureVueStyle();
+      }, 1000);
+    }
+    return;
+  }
+  const st = document.createElement("style");
+  st.id = "lc123-slider-vue-style";
+  st.textContent = `
 /* Nodes 2.0: the face sits on the same row as the output socket, so the node is one short row. The widget area is
    click-through except the slider, the value and the gear, which leaves the socket free to connect. */
 .lg-node:has(.lc-sl) .lg-node-widgets{margin-top:-24px;pointer-events:none}
@@ -277,9 +311,12 @@ function layoutFace(node) {
   const w = Math.max(80, (node.size?.[0] || NODE_SIZE[0]) - 20);
   const host = ui.wrap.parentElement;
   if (host) {
-    host.style.width = w + "px";
-    host.style.maxWidth = w + "px";
-    host.style.boxSizing = "border-box";
+    // runs every frame: write only what differs (the frontend may reset the width itself, so compare the live style)
+    const px = w + "px";
+    const hs = host.style;
+    if (hs.width !== px) hs.width = px;
+    if (hs.maxWidth !== px) hs.maxWidth = px;
+    if (hs.boxSizing !== "border-box") hs.boxSizing = "border-box";
   }
 }
 

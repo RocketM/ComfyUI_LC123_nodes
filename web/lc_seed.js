@@ -41,12 +41,23 @@ function pushHistory(node, value) {
   if (hist[0] === value) return;
   hist.unshift(value);
   if (hist.length > HISTORY_MAX) hist.length = HISTORY_MAX;
+  syncHistoryValues(node);
 }
 
 function historyOptions(node) {
   const hist = getHistory(node);
   if (!hist.length) return [HISTORY_PLACEHOLDER];
   return [HISTORY_PLACEHOLDER, ...hist.map((v) => String(v))];
+}
+
+/** The history combo keeps a plain values array (a values function is deprecated): refill it in place
+ * whenever the history changes or is restored from a saved workflow. */
+function syncHistoryValues(node) {
+  const w = node.widgets?.find((x) => x.name === "seed history");
+  if (!w?.options) return;
+  const next = historyOptions(node);
+  if (Array.isArray(w.options.values)) w.options.values.splice(0, w.options.values.length, ...next);
+  else w.options.values = next;
 }
 
 function ensureExtraWidgets(node) {
@@ -90,7 +101,7 @@ function ensureExtraWidgets(node) {
       historyWidget.value = HISTORY_PLACEHOLDER;
       node.setDirtyCanvas?.(true, true);
     },
-    { values: () => historyOptions(node), serialize: false }
+    { values: historyOptions(node), serialize: false }
   );
 }
 
@@ -115,27 +126,31 @@ app.registerExtension({
       requestAnimationFrame(() => applyChrome(this));
       return r;
     };
-  },
-  async setup() {
-    const api = app.api;
-    if (!api?.addEventListener) return;
 
-    api.addEventListener("executed", ({ detail }) => {
+    // saved history lives in node.properties, which a workflow restores after creation
+    const onConfigure = nodeType.prototype.onConfigure;
+    nodeType.prototype.onConfigure = function () {
+      const r = onConfigure?.apply(this, arguments);
       try {
-        const id = detail?.node;
-        if (id == null) return;
-        const node = app.graph?.getNodeById?.(Number(id));
-        if (!node || (node.comfyClass !== "LCSeed" && node.type !== "LCSeed")) return;
+        syncHistoryValues(this);
+      } catch (_) {}
+      return r;
+    };
 
+    // per-node executed hook: ComfyUI resolves the execution id (also "12:5" style ids inside subgraphs)
+    const onExecuted = nodeType.prototype.onExecuted;
+    nodeType.prototype.onExecuted = function (output) {
+      const r = onExecuted?.apply(this, arguments);
+      try {
+        const node = this;
         stripAutoSeedControl(node);
 
         const seedW = node.widgets?.find((w) => w.name === "base_seed");
-        if (!seedW) return;
+        if (!seedW) return r;
 
-        const out = detail?.output;
         let used = null;
-        if (out?.seed && out.seed.length) used = Number(out.seed[0]);
-        if (used == null || Number.isNaN(used)) return;
+        if (output?.seed && output.seed.length) used = Number(output.seed[0]);
+        if (used == null || Number.isNaN(used)) return r;
 
         // Deliberately do NOT write `used` back into base_seed here: while base_seed is the -1
         // sentinel, overwriting it with the resolved number would destroy the sentinel after just one
@@ -145,6 +160,7 @@ app.registerExtension({
         pushHistory(node, used);
         node.setDirtyCanvas?.(true, true);
       } catch (_) {}
-    });
+      return r;
+    };
   },
 });

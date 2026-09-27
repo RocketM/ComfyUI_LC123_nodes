@@ -188,16 +188,31 @@ function hookHub(node) {
 }
 
 function getHub(panel) {
-  const inp = (panel.inputs || []).find((i) => i?.name === "hub");
-  if (!inp?.link) return null;
-  const link = app.graph?.links?.[inp.link];
-  const origin = link && app.graph.getNodeById?.(link.origin_id);
+  const graph = panel.graph ?? app.graph;
+  const idx = (panel.inputs || []).findIndex((i) => i?.name === "hub");
+  if (idx < 0) return null;
+  let link = null;
+  try {
+    if (typeof panel.isInputConnected === "function") {
+      if (!panel.isInputConnected(idx)) return null;
+      link = panel.getInputLink(idx);
+    } else {
+      const id = panel.inputs[idx].link;
+      if (!id) return null;
+      link = graph?.links?.[id];
+    }
+  } catch (_) {
+    return null;
+  }
+  const origin = link && graph?.getNodeById?.(link.origin_id);
   const t = origin?.comfyClass || origin?.type;
   return t === HUB || t === "LC Custom Combo" ? origin : null;
 }
 
-function syncPanel(panel) {
+/** `fromDraw`: the periodic sync from onDrawForeground only requests a redraw when something changed. */
+function syncPanel(panel, fromDraw = false) {
   applyDefaultColorOnce(panel);
+  let changed = false;
 
   const hub = getHub(panel);
   const list = hub ? filled(hub) : [""];
@@ -225,18 +240,29 @@ function syncPanel(panel) {
       },
       { values: list }
     );
+    changed = true;
   }
 
+  if (cw.type !== "combo") changed = true;
   cw.type = "combo";
   cw.options = cw.options || {};
   // Always refresh values from hub (dynamic)
+  const prevVals = cw.options.values;
+  if (!Array.isArray(prevVals) || prevVals.length !== list.length || prevVals.some((v, i) => v !== list[i])) {
+    changed = true;
+  }
   cw.options.values = list.slice();
   const hv = hub && wget(hub, "choice")?.value;
-  cw.value = list.includes(hv) ? hv : list[0];
+  const nextValue = list.includes(hv) ? hv : list[0];
+  if (cw.value !== nextValue) changed = true;
+  cw.value = nextValue;
 
   if (panel.size) {
+    const w0 = panel.size[0];
+    const h0 = panel.size[1];
     panel.size[0] = Math.max(220, panel.size[0] || 220);
     if (!panel._lcUserSized) panel.size[1] = 64;
+    if (panel.size[0] !== w0 || panel.size[1] !== h0) changed = true;
   }
   if (!panel._lcResizeHooked) {
     panel._lcResizeHooked = true;
@@ -247,15 +273,23 @@ function syncPanel(panel) {
       return o;
     };
   }
+  if (fromDraw && !changed) return;
   panel.setDirtyCanvas?.(true, true);
   app.canvas?.setDirty?.(true, true);
 }
 
 function refreshAllPanels() {
   if (!app.graph?.nodes) return;
-  for (const n of app.graph.nodes) {
-    const t = n.comfyClass || n.type;
-    if (t === PANEL || t === "LC Custom Combo Panel") syncPanel(n);
+  // the root graph plus every subgraph definition (panels inside subgraphs follow their hub too)
+  const graphs = [app.graph];
+  try {
+    for (const sg of app.graph.subgraphs?.values?.() || []) graphs.push(sg);
+  } catch (_) {}
+  for (const g of graphs) {
+    for (const n of g?.nodes || []) {
+      const t = n.comfyClass || n.type;
+      if (t === PANEL || t === "LC Custom Combo Panel") syncPanel(n);
+    }
   }
 }
 
@@ -275,7 +309,7 @@ function hookPanel(node) {
       const now = Date.now();
       if (!this._lcPanelNext || now >= this._lcPanelNext) {
         this._lcPanelNext = now + 300;
-        syncPanel(this);
+        syncPanel(this, true);
       }
       return prevDraw?.apply(this, arguments);
     };

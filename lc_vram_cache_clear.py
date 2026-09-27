@@ -25,8 +25,11 @@ class LCVRAMCacheClear:
     RETURN_NAMES = ("any",)
     FUNCTION = "clear"
     CATEGORY = "LC123/utils"
+    # an output node, so it also runs on its own branch with nothing connected after it
+    OUTPUT_NODE = True
     DESCRIPTION = (
-        "Pass-through *any* node that clears GPU/model cache when it runs. Place between heavy stages."
+        "Pass-through *any* node that clears GPU/model cache when it runs. Place between heavy stages, "
+        "or on its own branch off a heavy stage."
     )
 
     def clear(self, any):

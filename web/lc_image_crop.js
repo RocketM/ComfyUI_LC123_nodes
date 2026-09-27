@@ -201,6 +201,7 @@ function drawPreview(node, ctx) {
   if (!layout) return;
   const img = node._lcCropImg;
   const c = readCrop(node);
+  if (window.LC123Perf?.skipImage?.(ctx, layout.dx, layout.dy, layout.dw, layout.dh)) return;
   ctx.save();
   ctx.drawImage(img, layout.dx, layout.dy, layout.dw, layout.dh);
   const r = cropToRect(layout, c);
@@ -265,11 +266,20 @@ function processDrag(node, px, py) {
   node.setDirtyCanvas?.(true, true);
 }
 
+/** Tell ComfyUI's change tracker a drag edit happened (undo step + unsaved-changes dot). */
+function markWorkflowChanged() {
+  try {
+    const ct = app.extensionManager?.workflow?.activeWorkflow?.changeTracker;
+    ct?.captureCanvasState ? ct.captureCanvasState() : ct?.checkState?.();
+  } catch (_) {}
+}
+
 function endDrag() {
   if (_activeCropNode) {
     _activeCropNode._lcDrag = null;
     _activeCropNode.setDirtyCanvas?.(true, true);
     _activeCropNode = null;
+    markWorkflowChanged();
   }
 }
 
@@ -355,11 +365,13 @@ app.registerExtension({
       return r;
     };
 
+    // chain whatever handlers were already on the prototype when the crop box does not take the event
+    const onMouseDown = nodeType.prototype.onMouseDown;
     nodeType.prototype.onMouseDown = function (e, pos) {
       const layout = imageLayout(this);
-      if (!layout) return false;
+      if (!layout) return onMouseDown ? onMouseDown.apply(this, arguments) : false;
       const hit = hitTest(layout, readCrop(this), pos[0], pos[1]);
-      if (!hit) return false;
+      if (!hit) return onMouseDown ? onMouseDown.apply(this, arguments) : false;
       this._lcDrag = {
         mode: hit.type,
         handle: hit.id || null,
@@ -371,18 +383,20 @@ app.registerExtension({
       return true;
     };
 
+    const onMouseMove = nodeType.prototype.onMouseMove;
     nodeType.prototype.onMouseMove = function (e, pos) {
-      if (!this._lcDrag) return false;
+      if (!this._lcDrag) return onMouseMove ? onMouseMove.apply(this, arguments) : false;
       processDrag(this, pos[0], pos[1]);
       return true;
     };
 
+    const onMouseUp = nodeType.prototype.onMouseUp;
     nodeType.prototype.onMouseUp = function () {
       if (this._lcDrag) {
         endDrag();
         return true;
       }
-      return false;
+      return onMouseUp ? onMouseUp.apply(this, arguments) : false;
     };
 
     const onResize = nodeType.prototype.onResize;

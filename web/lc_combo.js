@@ -354,8 +354,13 @@ app.registerExtension({
         ctx.fillText(this._lcStatus, 10, this.size[1] - 6);
         ctx.restore();
       }
+      // isOutputConnected avoids the deprecated output.links getter on newer frontends
+      const outConnected =
+        typeof this.isOutputConnected === "function"
+          ? this.isOutputConnected(0)
+          : this.outputs?.[0]?.links?.length;
       if (
-        this.outputs?.[0]?.links?.length &&
+        outConnected &&
         !this._lcOptions &&
         (!this._lcRetry || Date.now() - this._lcRetry > 2000)
       ) {

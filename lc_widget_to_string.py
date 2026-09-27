@@ -35,8 +35,6 @@ class LCWidgetToString:
     def IS_CHANGED(cls, id=0, node_title="", any_input=None, **kwargs):
         if _dormant(id, node_title, any_input):
             return 0
-        if any_input is not None and (int(id or 0) != 0 or (node_title or "").strip()):
-            return float("NaN")
         return float("NaN")
 
     @classmethod

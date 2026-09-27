@@ -105,10 +105,39 @@ function hookPreset(node) {
   }
 }
 
+// What each slider does, in plain words. Only the label on screen changes: the internal names (and so saved
+// workflows, presets and API prompts) stay exactly the same.
+const LABELS = {
+  preset: "preset",
+  strength: "strength (sliders + blend)",
+  coolness: "cool tone (less yellow)",
+  brightness: "brighten skin",
+  rosy: "rosy tint",
+  evenness: "even out tone",
+  shadow_lift: "lift skin shadows",
+  smooth: "smooth skin",
+  texture_preserve: "keep pore texture",
+  saturation: "skin saturation",
+  highlight_protect: "protect highlights",
+  mask_sensitivity: "skin detection reach",
+  mask_feather: "mask edge softness",
+  device: "run on",
+};
+
+function applyLabels(node) {
+  for (const w of node.widgets || []) {
+    if (LABELS[w.name]) w.label = LABELS[w.name];
+  }
+  for (const inp of node.inputs || []) {
+    if (inp?.widget && LABELS[inp.name] && !inp.label) inp.label = LABELS[inp.name]; // a widget turned into a socket
+  }
+}
+
 app.registerExtension({
   name: "LC123.SkinBeauty",
   nodeCreated(node) {
     if (node.comfyClass !== TYPE && node.type !== TYPE) return;
     hookPreset(node);
+    applyLabels(node);
   },
 });

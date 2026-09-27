@@ -25,35 +25,30 @@ app.registerExtension({
       requestAnimationFrame(() => stripAutoSeedControl(this));
       return r;
     };
-  },
-  async setup() {
-    const api = app.api;
-    if (!api?.addEventListener) return;
 
-    api.addEventListener("executed", ({ detail }) => {
+    // per-node executed hook: ComfyUI resolves the execution id (also "12:5" style ids inside subgraphs)
+    const onExecuted = nodeType.prototype.onExecuted;
+    nodeType.prototype.onExecuted = function (output) {
+      const r = onExecuted?.apply(this, arguments);
       try {
-        const id = detail?.node;
-        if (id == null) return;
-        const node = app.graph?.getNodeById?.(Number(id));
-        if (!node || (node.comfyClass !== "LCWildcard" && node.type !== "LCWildcard")) return;
-
+        const node = this;
         stripAutoSeedControl(node);
 
         const modeW = node.widgets?.find((w) => w.name === "seed_mode");
         const seedW = node.widgets?.find((w) => w.name === "base_seed");
-        if (!seedW) return;
+        if (!seedW) return r;
 
         const mode = (modeW?.value || "fixed").toString().toLowerCase();
-        if (mode === "fixed") return;
+        if (mode === "fixed") return r;
 
-        const out = detail?.output;
         let used = null;
-        if (out?.seed && out.seed.length) used = Number(out.seed[0]);
+        if (output?.seed && output.seed.length) used = Number(output.seed[0]);
         if (used != null && !Number.isNaN(used)) {
           seedW.value = used;
           node.setDirtyCanvas?.(true, true);
         }
       } catch (_) {}
-    });
+      return r;
+    };
   },
 });

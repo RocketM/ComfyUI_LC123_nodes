@@ -1,7 +1,7 @@
 """
-Local AutoV2 hashes for Civitai resource linking.
+Local AutoV2 hashes for CivitAI resource linking.
 
-Civitai does not credit a checkpoint / CLIP / LoRA from the filename alone.
+CivitAI does not credit a checkpoint / CLIP / LoRA from the filename alone.
 It matches the first 10 hex chars of SHA-256 (AutoV2) in the PNG ``parameters``
 chunk: Model hash, Lora hashes, and the Hashes JSON object.
 """
@@ -72,17 +72,33 @@ _WIDGET_HINT = {
 }
 
 
+# In-process AutoV2 cache: (path, size, mtime) -> AutoV2. A changed file gets a
+# new key, so a stale entry is never returned.
+_AUTOV2_CACHE: dict = {}
+_AUTOV2_CACHE_MAX = 512
+
+
 def autov2(path: str) -> str | None:
     """Return AutoV2 (sha256[:10].upper()). Cache full hex next to the file."""
     if not path or not os.path.isfile(path):
         return None
+    try:
+        st = os.stat(path)
+        key = (os.path.normcase(os.path.abspath(path)), st.st_size, st.st_mtime_ns)
+    except OSError:
+        return None
+    cached = _AUTOV2_CACHE.get(key)
+    if cached:
+        return cached
     sidecar = os.path.splitext(path)[0] + ".sha256"
     digest = None
     if os.path.isfile(sidecar):
         try:
-            with open(sidecar, "r", encoding="utf-8", errors="replace") as f:
-                digest = f.read().strip().split()[0]
-        except OSError:
+            # model file newer than its sidecar = sidecar is stale, rehash
+            if os.path.getmtime(sidecar) >= st.st_mtime:
+                with open(sidecar, "r", encoding="utf-8", errors="replace") as f:
+                    digest = f.read().strip().split()[0]
+        except (OSError, IndexError):
             digest = None
     if not digest or len(digest) < 10:
         h = hashlib.sha256()
@@ -95,7 +111,11 @@ def autov2(path: str) -> str | None:
                 f.write(digest)
         except OSError:
             pass
-    return digest[:10].upper()
+    result = digest[:10].upper()
+    if len(_AUTOV2_CACHE) >= _AUTOV2_CACHE_MAX:
+        _AUTOV2_CACHE.clear()
+    _AUTOV2_CACHE[key] = result
+    return result
 
 
 def _resolve(name: str, prefer: str | None = None) -> tuple[str | None, str | None]:
@@ -140,23 +160,6 @@ def _resolve(name: str, prefer: str | None = None) -> tuple[str | None, str | No
     return None, None
 
 
-def _walk_strings(obj, out: list):
-    if isinstance(obj, str):
-        if _FILE_EXT.search(obj) or obj.startswith("<lora:"):
-            out.append(obj)
-        return
-    if isinstance(obj, dict):
-        for k, v in obj.items():
-            if k in ("prompt", "extra_pnginfo", "workflow"):
-                _walk_strings(v, out)
-            else:
-                _walk_strings(v, out)
-        return
-    if isinstance(obj, (list, tuple)):
-        for v in obj:
-            _walk_strings(v, out)
-
-
 def _hint_for_key(key: str) -> str | None:
     k = str(key or "").lower()
     if k in _WIDGET_HINT:
@@ -179,21 +182,25 @@ def _hint_for_key(key: str) -> str | None:
 
 
 def _lora_enabled(entry) -> bool:
-    """Power Lora / similar slot: honor on/enabled and skip zero strength."""
+    """Power Lora / similar slot: honor on/enabled and skip only when every
+    strength present is zero (model 0 + clip 1 still applies the LoRA)."""
     if not isinstance(entry, dict):
         return True
     if "on" in entry and not entry.get("on"):
         return False
     if "enabled" in entry and not entry.get("enabled"):
         return False
-    for k in ("strength", "strength_model", "strength_clip"):
-        if k in entry:
-            try:
-                if float(entry.get(k) or 0) == 0.0:
-                    return False
-            except (TypeError, ValueError):
-                pass
-    return True
+    present = [k for k in ("strength", "strength_model", "strength_clip") if k in entry]
+    if not present:
+        return True
+    for k in present:
+        try:
+            if float(entry.get(k) or 0) != 0.0:
+                return True
+        except (TypeError, ValueError):
+            # unreadable strength: assume it applies
+            return True
+    return False
 
 
 def _hint_from_class(class_type: str) -> str | None:
@@ -239,7 +246,7 @@ def _collect_from_prompt(prompt, skip_ids=None) -> list[tuple[str, str | None]]:
             # unlike rgthree's Power Lora Loader, which stores each row as its own real dict in
             # widgets_values. Neither pattern above matches a JSON-encoded string (it doesn't end
             # in a model extension, and it isn't an A1111 <lora:...> tag), so without this, every
-            # LoRA picked in LC LoRA Loader was invisible here: no hash, no Civitai resource entry.
+            # LoRA picked in LC LoRA Loader was invisible here: no hash, no CivitAI resource entry.
             stripped = val.strip()
             if stripped[:1] in ("[", "{"):
                 try:
@@ -325,11 +332,16 @@ def collect_hashes(prompt=None, extra_pnginfo=None) -> dict:
 
     candidates = _collect_from_prompt(prompt, skip_ids)
     if isinstance(wf, dict) and isinstance(wf.get("nodes"), list):
+        # only workflow nodes that actually run (their id is in the prompt);
+        # nodes cut off from any output are not in the prompt
+        run_ids = {str(k) for k in prompt.keys()} if isinstance(prompt, dict) else None
         fake_prompt = {}
         for i, n in enumerate(wf["nodes"]):
             if not isinstance(n, dict):
                 continue
             if n.get("mode") in (2, 4):
+                continue
+            if run_ids is not None and str(n.get("id", i)) not in run_ids:
                 continue
             fake_prompt[str(n.get("id", i))] = {
                 "class_type": n.get("type"),
@@ -363,8 +375,8 @@ def collect_hashes(prompt=None, extra_pnginfo=None) -> dict:
             # A UNETLoader ("Load Diffusion Model") IS the base model on a diffusion-only
             # architecture (Krea2, Flux, ...) -- it just never resolves via the classic
             # single-file "checkpoints" folder that sets kind=="model" above. Without this,
-            # a UNET-loaded base model never got the bare "model" key Civitai's parser
-            # actually keys the primary resource off, only "unet:Name" -- Civitai never had
+            # a UNET-loaded base model never got the bare "model" key CivitAI's parser
+            # actually keys the primary resource off, only "unet:Name" -- CivitAI never had
             # a way to auto-link it. Same pattern as the vae branch just below.
             hashes_json.setdefault("model", digest)
             hashes_json[f"unet:{label}"] = digest
@@ -409,16 +421,16 @@ def _positive_int(value) -> int | None:
 
 def civitai_resources_payload(air: str) -> list:
     """
-    Build the ``Civitai resources`` array Civitai's parser actually reads:
+    Build the ``CivitAI resources`` array CivitAI's parser actually reads:
     ``[{"type": "checkpoint", "modelVersionId": 128713, "air": "urn:air:..."}]``.
     A bare AIR or URL string on its own (the old shape here -- ``{"air": ...}``
-    or ``{"url": ...}``) isn't a field Civitai's parser recognizes: it keys a
+    or ``{"url": ...}``) isn't a field CivitAI's parser recognizes: it keys a
     resource off ``type`` + ``modelVersionId``, so without those two an entry
     is worse than useless and gets silently ignored -- which is exactly why a
-    custom merge with no Civitai-known hash could never get credited before.
+    custom merge with no CivitAI-known hash could never get credited before.
 
     Accepts a full AIR URN (``urn:air:<eco>:<type>:civitai:<modelId>@<versionId>``),
-    a Civitai model URL with ``?modelVersionId=``, or a bare model-version ID.
+    a CivitAI model URL with ``?modelVersionId=``, or a bare model-version ID.
     """
     air = (air or "").strip()
     if not air:
@@ -473,8 +485,8 @@ def format_hash_fields(buckets: dict) -> tuple[str, str, str, str]:
     primary = models[0][1] if models else (unets[0][1] if unets else "")
     model_hash = f"Model hash: {primary}" if primary else ""
 
-    # Classic A1111/Civitai field, same status as "Model hash:" -- never emitted before,
-    # so a custom/non-Civitai-known VAE had no way to get credited even though its hash
+    # Classic A1111/CivitAI field, same status as "Model hash:" -- never emitted before,
+    # so a custom/non-CivitAI-known VAE had no way to get credited even though its hash
     # was already sitting in the Hashes JSON blob.
     vaes = buckets.get("vae") or []
     vae_hash = f"VAE hash: {vaes[0][1]}" if vaes else ""
@@ -484,8 +496,6 @@ def format_hash_fields(buckets: dict) -> tuple[str, str, str, str]:
     if loras:
         inner = ", ".join(f"{name}: {digest}" for name, digest in loras)
         lora_part = f'Lora hashes: "{inner}"'
-
-    import json
 
     hj = buckets.get("hashes_json") or {}
     hashes_part = f"Hashes: {json.dumps(hj, separators=(',', ':'))}" if hj else ""

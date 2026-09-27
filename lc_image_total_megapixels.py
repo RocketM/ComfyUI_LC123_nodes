@@ -1,8 +1,8 @@
 """
 LC Image to Total Megapixels
 ----------------------------
-Same scaling as the native "Scale Image to Total Pixels" (megapixels are counted as 1024 x 1024 pixels,
-sizes snap to resolution_steps), with two extra outputs: the resulting resolution (longer side in pixels)
+Scales like the native "Scale Image to Total Pixels" (sizes snap to resolution_steps), but a megapixel is
+1,000,000 pixels here, the same count LC Get Image reports (the native node uses 1024 x 1024). Two extra outputs: the resulting resolution (longer side in pixels)
 and the resulting megapixels.
 """
 
@@ -22,7 +22,7 @@ class LCImageToTotalMegapixels:
                 "upscale_method": (UPSCALE_METHODS, {"default": "lanczos", "tooltip": "Resampling method."}),
                 "megapixels": ("FLOAT", {
                     "default": 1.0, "min": 0.01, "max": 16.0, "step": 0.01,
-                    "tooltip": "Target size in megapixels, counted like the native node (1.0 = 1024 x 1024 pixels). The aspect ratio is kept.",
+                    "tooltip": "Target size in megapixels (1.0 = 1,000,000 pixels, the same count LC Get Image uses). The aspect ratio is kept.",
                 }),
                 "resolution_steps": ("INT", {
                     "default": 1, "min": 1, "max": 256,
@@ -42,7 +42,7 @@ class LCImageToTotalMegapixels:
 
     def scale(self, image, upscale_method, megapixels, resolution_steps):
         samples = image.movedim(-1, 1)
-        total = megapixels * 1024 * 1024
+        total = megapixels * 1_000_000
         scale_by = math.sqrt(total / (samples.shape[3] * samples.shape[2]))
         step = max(1, int(resolution_steps))
         width = max(step, round(samples.shape[3] * scale_by / step) * step)
@@ -52,7 +52,7 @@ class LCImageToTotalMegapixels:
         out = out.movedim(1, -1)
 
         resolution = int(max(width, height))
-        result_mp = round((int(width) * int(height)) / (1024.0 * 1024.0), 2)
+        result_mp = round((int(width) * int(height)) / 1_000_000.0, 2)
         return (out, resolution, float(result_mp))
 
 

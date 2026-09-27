@@ -25,6 +25,21 @@ import comfy.utils
 
 NODE_NAME = "LCLoraLoader"
 
+def _cached_lora(prev: dict, used: dict, path: str):
+    """Load a LoRA file, reusing the copy kept from the last run (like core LoraLoader's
+    self.loaded_lora) so a strength change does not reload it from disk. Keyed by path + mtime,
+    so an overwritten file is reloaded. Only entries used this run are carried forward."""
+    try:
+        key = (path, os.path.getmtime(path))
+    except OSError:
+        key = (path, None)
+    hit = used.get(key) or prev.get(key)
+    if hit is None:
+        hit = comfy.utils.load_torch_file(path, safe_load=True, return_metadata=True)
+    used[key] = hit
+    return hit
+
+
 
 class LCLoraLoader:
     CATEGORY = "LC123/loaders"
@@ -55,7 +70,8 @@ class LCLoraLoader:
             rows = []
 
         out_model, out_clip = model, clip
-        cache: dict[str, tuple] = {}
+        prev = getattr(self, "_lora_cache", None) or {}
+        used: dict = {}
 
         for row in rows:
             if not isinstance(row, dict) or not row.get("on"):
@@ -73,14 +89,12 @@ class LCLoraLoader:
                 # failing the whole graph, same as the referenced LoRA-file-missing case in the stock loader
                 continue
 
-            if path in cache:
-                lora, lora_metadata = cache[path]
-            else:
-                lora, lora_metadata = comfy.utils.load_torch_file(path, safe_load=True, return_metadata=True)
-                cache[path] = (lora, lora_metadata)
+            lora, lora_metadata = _cached_lora(prev, used, path)
 
             out_model, out_clip = comfy.sd.load_lora_for_models(out_model, out_clip, lora, strength, strength, lora_metadata=lora_metadata)
 
+        # keep only the LoRAs used in this run (bounded by the node's own rows)
+        self._lora_cache = used
         return (out_model, out_clip)
 
 

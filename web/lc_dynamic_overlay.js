@@ -44,15 +44,22 @@ function loadImg(url) {
   });
 }
 
-async function metaToCanvas(meta) {
+// the decoded Image is drawn directly: no second full-resolution canvas copy kept per image
+async function metaToImage(meta) {
   const url = viewUrl(meta);
   if (!url) return null;
-  const img = await loadImg(url);
-  const c = document.createElement("canvas");
-  c.width = img.naturalWidth;
-  c.height = img.naturalHeight;
-  c.getContext("2d").drawImage(img, 0, 0);
-  return c;
+  return loadImg(url);
+}
+
+const imgW = (img) => img.naturalWidth || img.width;
+const imgH = (img) => img.naturalHeight || img.height;
+
+/** Tell ComfyUI's change tracker a knob edit happened (undo step + unsaved-changes dot). */
+function markWorkflowChanged() {
+  try {
+    const ct = app.extensionManager?.workflow?.activeWorkflow?.changeTracker;
+    ct?.captureCanvasState ? ct.captureCanvasState() : ct?.checkState?.();
+  } catch (_) {}
 }
 
 function hideWidget(widget) {
@@ -221,10 +228,16 @@ app.registerExtension({
 
       const self = this;
       const saved = [this.size?.[0], this.size?.[1]];
+      // latest run wins: a slower earlier load never replaces a newer preview
+      const token = (self._lcLoadToken = (self._lcLoadToken || 0) + 1);
       (async () => {
         try {
-          if (images[0]) self._lc.a = await metaToCanvas(images[0]);
-          if (images[1]) self._lc.b = await metaToCanvas(images[1]);
+          const a = images[0] ? await metaToImage(images[0]) : null;
+          if (token !== self._lcLoadToken) return;
+          if (a) self._lc.a = a;
+          const b = images[1] ? await metaToImage(images[1]) : null;
+          if (token !== self._lcLoadToken) return;
+          if (b) self._lc.b = b;
           const ow = (self.widgets || []).find((w) => w.name === "opacity");
           if (ow) {
             self._lc.opacity = Math.max(0, Math.min(1, Number(ow.value) || 0));
@@ -297,8 +310,8 @@ app.registerExtension({
       ctx.lineWidth = 1;
       ctx.strokeRect(PAD, imgY, boxW, boxH);
 
-      if (s.a) {
-        const fit = fitRect(s.a.width, s.a.height, boxW, boxH);
+      if (s.a && !window.LC123Perf?.tooSmall?.(boxW, boxH)) {
+        const fit = fitRect(imgW(s.a), imgH(s.a), boxW, boxH);
         const sx = PAD + fit.ox;
         const sy = imgY + fit.oy;
         ctx.save();
@@ -309,8 +322,8 @@ app.registerExtension({
           s.a,
           0,
           0,
-          s.a.width,
-          s.a.height,
+          imgW(s.a),
+          imgH(s.a),
           sx,
           sy,
           fit.drawW,
@@ -322,8 +335,8 @@ app.registerExtension({
             s.b,
             0,
             0,
-            s.b.width,
-            s.b.height,
+            imgW(s.b),
+            imgH(s.b),
             sx,
             sy,
             fit.drawW,
@@ -379,6 +392,12 @@ app.registerExtension({
     const origMove = nodeType.prototype.onMouseMove;
     nodeType.prototype.onMouseMove = function (e, pos) {
       if (this._lc?.dragging) {
+        // the button was released outside the node (no mouseup reached us): end the drag here
+        if (e && typeof e.buttons === "number" && (e.buttons & 1) === 0) {
+          this._lc.dragging = false;
+          markWorkflowChanged();
+          return origMove?.apply(this, arguments);
+        }
         const d = this._lc.draw;
         if (d) this._lcSetOpacity(angleToOpacity(pos[0] - d.cx, pos[1] - d.cy));
         return true;
@@ -390,6 +409,7 @@ app.registerExtension({
     nodeType.prototype.onMouseUp = function (e, pos) {
       if (this._lc?.dragging) {
         this._lc.dragging = false;
+        markWorkflowChanged();
         return true;
       }
       return origUp?.apply(this, arguments);

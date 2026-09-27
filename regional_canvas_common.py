@@ -2,6 +2,7 @@
 import base64
 import io
 import json
+import time
 
 import numpy as np
 import torch
@@ -394,7 +395,71 @@ def _tensor_to_png_b64(image):
         return None
 
 
-_CANVAS_CONTINUE = {}
+def _current_client_id():
+    try:
+        from server import PromptServer
+        return getattr(PromptServer.instance, "client_id", None)
+    except Exception:
+        return None
+
+
+class _CanvasContinueStore(dict):
+    """Pending Apply payloads. Stored under (client_id, node_id) when the Apply
+    request names its client, else (None, node_id). Lookups by a plain node_id
+    (the anima / krea2 nodes do `uid in _CANVAS_CONTINUE` and `.pop(uid)`) try the
+    running prompt's client first, then the client-less key. Entries expire after
+    TTL seconds and the store never holds more than MAX entries."""
+
+    TTL = 600.0
+    MAX = 64
+
+    def _prune(self):
+        now = time.monotonic()
+        for k in [k for k, v in dict.items(self) if now - v.get("_t", now) > self.TTL]:
+            dict.pop(self, k, None)
+
+    def _find(self, node_id):
+        if isinstance(node_id, tuple):
+            return node_id if dict.__contains__(self, node_id) else None
+        cid = _current_client_id()
+        for key in (((cid, node_id),) if cid else ()) + ((None, node_id),):
+            if dict.__contains__(self, key):
+                return key
+        return None
+
+    def put(self, node_id, value, client_id=None):
+        self._prune()
+        key = (client_id or None, node_id)
+        dict.pop(self, key, None)  # re-insert last so eviction drops the oldest
+        while len(self) >= self.MAX:
+            dict.pop(self, next(iter(self)))
+        entry = dict(value)
+        entry["_t"] = time.monotonic()
+        dict.__setitem__(self, key, entry)
+
+    def __setitem__(self, node_id, value):
+        self.put(node_id, value)
+
+    def __contains__(self, node_id):
+        self._prune()
+        return self._find(node_id) is not None
+
+    def get(self, node_id, default=None):
+        self._prune()
+        key = self._find(node_id)
+        return dict.get(self, key) if key is not None else default
+
+    def pop(self, node_id, *default):
+        self._prune()
+        key = self._find(node_id)
+        if key is None:
+            if default:
+                return default[0]
+            raise KeyError(node_id)
+        return dict.pop(self, key)
+
+
+_CANVAS_CONTINUE = _CanvasContinueStore()
 
 
 def _register_apply_route():
@@ -415,10 +480,12 @@ def _register_apply_route():
         node_id = str(data.get("node_id", "")).strip()
         if not node_id:
             return web.json_response({"ok": False, "error": "missing node_id"}, status=400)
-        _CANVAS_CONTINUE[node_id] = {
+        # client id if the caller sends one (body or ?clientId=), else node id only
+        client_id = str(data.get("client_id") or request.rel_url.query.get("clientId") or "").strip() or None
+        _CANVAS_CONTINUE.put(node_id, {
             "canvas_data": data.get("canvas_data"),
             "ts": data.get("ts"),
-        }
+        }, client_id)
         return web.json_response({"ok": True, "node_id": node_id})
 
     PromptServer.instance._irc_canvas_routes = True

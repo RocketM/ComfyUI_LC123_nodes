@@ -23,13 +23,26 @@ function hideWidget(widget) {
   widget.serialize = true;
 }
 
-function canvasBackupKey(node) {
+// The old key was type:id only, so another workflow's node with the same id could hand back the wrong mask.
+// The key now includes the workflow's id (saved in the workflow file) when there is one.
+function legacyBackupKey(node) {
   return `${ARC_BACKUP_PREFIX}${node.type}:${node.id}`;
 }
 
-function readCanvasBackup(node) {
+function canvasBackupKey(node) {
+  const g = node.graph ?? app.graph;
+  const wf = (g?.rootGraph ?? g)?.id;
+  return wf ? `${ARC_BACKUP_PREFIX}${wf}:${node.type}:${node.id}` : legacyBackupKey(node);
+}
+
+// This workflow's own backup rescues paint that was never saved (safe: the key is specific to this workflow).
+// The old type:id key is shared by every workflow, so it is only used when the node has no saved canvas value at all.
+function readCanvasBackup(node, allowLegacy) {
   try {
-    return localStorage.getItem(canvasBackupKey(node)) || "";
+    const own = canvasBackupKey(node);
+    const legacy = legacyBackupKey(node);
+    if (own !== legacy) return localStorage.getItem(own) || (allowLegacy ? localStorage.getItem(legacy) : "") || "";
+    return allowLegacy ? localStorage.getItem(legacy) || "" : "";
   } catch (_) {
     return "";
   }
@@ -38,6 +51,10 @@ function readCanvasBackup(node) {
 function writeCanvasBackup(node, payload) {
   try {
     localStorage.setItem(canvasBackupKey(node), payload || "");
+    // a cleared canvas also clears an old-key backup, so it cannot come back through the fallback above
+    if (!payload && canvasBackupKey(node) !== legacyBackupKey(node) && localStorage.getItem(legacyBackupKey(node))) {
+      localStorage.setItem(legacyBackupKey(node), "");
+    }
   } catch (_) {}
 }
 
@@ -159,6 +176,17 @@ app.registerExtension({
         if (index < 0) return;
         workflowNode.widgets_values = workflowNode.widgets_values || [];
         workflowNode.widgets_values[index] = value;
+      }
+      // is the canvas_data value absent from a saved node (not just an empty string)? Same slot mapping as below.
+      function serializedCanvasMissing(info) {
+        const named = info?.widgets_values_named;
+        if (named && typeof named === "object" && Object.prototype.hasOwnProperty.call(named, "canvas_data")) {
+          return named.canvas_data == null;
+        }
+        const index = serializedWidgets().findIndex((widget) => widget.name === "canvas_data");
+        if (index < 0) return true;
+        const values = Array.isArray(info?.widgets_values) ? info.widgets_values : [];
+        return values[index] == null;
       }
       function writeSerializedValues(workflowNode) {
         savePrompts();
@@ -428,6 +456,14 @@ app.registerExtension({
       let hasCanvasContent = false;
       let isRestoringCanvas = false;
       let lastDisplayStyle = { width: "", height: "" };
+      // saveData re-encodes the mask (pixel scan + PNG + JSON) only after it changed; every mask write sets this
+      let maskDirty = true;
+      let savedPayload = "";
+      let savedPainted = false;
+      let lastBackup = { key: null, payload: null };
+      function setSizeLabel(text) {
+        if (sizeLabel && sizeLabel.textContent !== text) sizeLabel.textContent = text;
+      }
       let canvasResizeObserver = null;
       function visibleCanvasBox() {
         return canvasBox.isConnected && canvasBox.clientWidth > 16 && canvasBox.clientHeight > 16;
@@ -462,7 +498,7 @@ app.registerExtension({
       function syncSizeWidgetsToCanvas() {
         if (widthW && canvas.width) widthW.value = canvas.width;
         if (heightW && canvas.height) heightW.value = canvas.height;
-        if (sizeLabel && canvas.width && canvas.height) sizeLabel.textContent = formatResolution(canvas.width, canvas.height);
+        if (sizeLabel && canvas.width && canvas.height) setSizeLabel(formatResolution(canvas.width, canvas.height));
       }
       function syncCanvasSize(keep = false, force = false) {
         const { w, h } = dims();
@@ -481,20 +517,32 @@ app.registerExtension({
           clearTimeout(saveTimer);
           saveTimer = null;
         }
-        const painted = maskHasPaint();
+        // ComfyUI serializes after most clicks: reuse the last encoding while the mask is unchanged
+        if (maskDirty || !savedPayload) {
+          savedPainted = maskHasPaint();
+          savedPayload = JSON.stringify({
+            version: 2,
+            width: maskCanvas.width,
+            height: maskCanvas.height,
+            data_url: maskCanvas.toDataURL("image/png"),
+          });
+          maskDirty = false;
+        }
+        const painted = savedPainted;
         markCanvasSizeInitialized();
-        const payload = JSON.stringify({
-          version: 2,
-          width: maskCanvas.width,
-          height: maskCanvas.height,
-          data_url: maskCanvas.toDataURL("image/png"),
-        });
+        const payload = savedPayload;
         if (canvasData) canvasData.value = payload;
         node.properties.arcCanvasData = payload;
         if (options.clearBackup) {
           writeCanvasBackup(node, "");
+          lastBackup = { key: canvasBackupKey(node), payload: "" };
         } else if (painted || canvasEdited || hasCanvasContent || options.forceBackup) {
-          writeCanvasBackup(node, payload);
+          // the same payload already stored under the same key is not written again
+          const key = canvasBackupKey(node);
+          if (lastBackup.key !== key || lastBackup.payload !== payload) {
+            writeCanvasBackup(node, payload);
+            lastBackup = { key, payload };
+          }
         }
         hasCanvasContent = painted || canvasEdited || hasCanvasContent;
         markDirty();
@@ -530,6 +578,7 @@ app.registerExtension({
         if (heightW) heightW.value = h;
         canvas.width = w;
         canvas.height = h;
+        maskDirty = true;
         maskCanvas.width = w;
         maskCanvas.height = h;
         ctx.imageSmoothingEnabled = false;
@@ -576,13 +625,13 @@ app.registerExtension({
         w = safeDimension(w, canvas.width || 1024);
         h = safeDimension(h, canvas.height || 1024);
         if (!force && w === lastWidth && h === lastHeight && canvas.width === w && canvas.height === h) {
-          if (sizeLabel) sizeLabel.textContent = formatResolution(w, h);
+          setSizeLabel(formatResolution(w, h));
           return false;
         }
         if (widthW) widthW.value = w;
         if (heightW) heightW.value = h;
         resizeCanvasPreserve(w, h, true);
-        if (sizeLabel) sizeLabel.textContent = formatResolution(w, h);
+        setSizeLabel(formatResolution(w, h));
         return true;
       }
       function getLinkedOrigin(name) {
@@ -969,6 +1018,7 @@ app.registerExtension({
             d[i + 3] = 255;
           }
           maskCtx.putImageData(img, 0, 0);
+          maskDirty = true;
         } catch (_) {}
       }
       function strokePath(targetCtx, points, color, alpha = 1) {
@@ -1011,6 +1061,7 @@ app.registerExtension({
         strokePath(ctx, points, activeColor, s);
         // Authoritative mask: pure region * global strength (no stacking above pure)
         strokePath(maskCtx, points, strengthColor(activeColor, s), 1);
+        maskDirty = true;
       }
 
       let drawing = false;
@@ -1082,6 +1133,7 @@ app.registerExtension({
         const prev = history.pop();
         if (!prev) return;
         maskCtx.putImageData(prev.mask, 0, 0);
+        maskDirty = true;
         canvasEdited = maskHasPaint();
         redrawDisplay();
         saveData();
@@ -1092,6 +1144,7 @@ app.registerExtension({
         hasCanvasContent = false;
         maskCtx.fillStyle = "#ffffff";
         maskCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
+        maskDirty = true;
         redrawDisplay();
         saveData({ clearBackup: true });
       });
@@ -1113,6 +1166,7 @@ app.registerExtension({
               lastWidth = w;
               lastHeight = h;
               canvas.width = w; canvas.height = h;
+              maskDirty = true;
               maskCanvas.width = w; maskCanvas.height = h;
               ctx.imageSmoothingEnabled = false;
               maskCtx.imageSmoothingEnabled = false;
@@ -1135,7 +1189,10 @@ app.registerExtension({
         }
       }
 
-      const existing = canvasData?.value || node.properties.arcCanvasData || readCanvasBackup(node);
+      // no saved canvas: this workflow's own backup brings back unsaved paint; the shared old-style backup only
+      // when the node carries no canvas value at all
+      const existing = canvasData?.value || node.properties.arcCanvasData
+        || readCanvasBackup(node, !canvasData && node.properties.arcCanvasData == null);
       if (existing) {
         if (!restoreCanvasFromText(existing)) resetCanvas(false);
       } else {
@@ -1261,7 +1318,10 @@ app.registerExtension({
           ? String(workflowProperties.arcCanvasData || "")
           : String(canvasData?.value || "");
         if (hasWorkflowCanvasData || !serializedCanvas) node.properties.arcCanvasData = serializedCanvas;
-        const existingCanvas = serializedCanvas || readCanvasBackup(node);
+        // empty saved canvas: this workflow's own backup (unsaved paint); the shared old-style backup only when the
+        // workflow carries no canvas value at all (see readCanvasBackup)
+        const existingCanvas = serializedCanvas
+          || readCanvasBackup(node, !hasWorkflowCanvasData && serializedCanvasMissing(workflowInfo));
         const payloadSize = canvasPayloadDimensions(existingCanvas);
         const workflowSizeVersion = Number(workflowProperties.arcCanvasSizeVersion || 0);
         const legacyWidgetSize = Number(workflowWidgetValues[0]) === 300
@@ -1313,6 +1373,9 @@ app.registerExtension({
         saveData();
         clearInterval(sizePoll);
         clearInterval(sourcePoll);
+        // the api listener and the undo snapshots would otherwise keep this node (and its canvases) alive
+        if (app.api) app.api.removeEventListener("anima.canvas.update", onAnimaCanvasUpdate);
+        history.length = 0;
         window.removeEventListener("blur", saveData);
         document.removeEventListener("visibilitychange", flushOnVisibilityChange);
         canvasResizeObserver?.disconnect?.();

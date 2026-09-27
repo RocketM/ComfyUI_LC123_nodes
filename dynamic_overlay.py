@@ -23,6 +23,8 @@ from PIL import Image
 
 import folder_paths
 
+from .lc_image_helpers import attach_alpha
+
 
 def _to_nchw(img: torch.Tensor) -> torch.Tensor:
     if img.ndim == 3:
@@ -112,8 +114,19 @@ class LCDynamicOverlay:
     def overlay(self, image_a, image_b, opacity: float):
         opacity = float(max(0.0, min(1.0, opacity)))
 
+        # Mixed RGB / RGBA inputs: the result follows A (the base). An RGBA B over an RGB A loses its
+        # alpha; an RGB B over an RGBA A blends the color and A's alpha comes back untouched.
+        a_alpha = None
+        if image_a.shape[-1] == 4 and image_b.shape[-1] == 3:
+            a_alpha = _to_nchw(image_a[..., 3:4])
+            image_a = image_a[..., :3]
+        elif image_a.shape[-1] == 3 and image_b.shape[-1] == 4:
+            image_b = image_b[..., :3]
+
         a = _to_nchw(image_a)
         b = _to_nchw(image_b)
+        if a_alpha is not None:
+            a_alpha, _ = _match_batch(a_alpha, b)
         a, b = _match_batch(a, b)
 
         _, _, ah, aw = a.shape
@@ -121,7 +134,6 @@ class LCDynamicOverlay:
 
         # Coverage: 1 where fitted B was drawn, 0 on letterbox pad.
         # Prevents black pad pixels from darkening image A.
-        b_sum = b_fit.abs().sum(dim=1, keepdim=True)
         # Rebuild coverage from fit geometry (zeros outside placed B)
         _, _, bh0, bw0 = b.shape
         scale = min(aw / max(bw0, 1), ah / max(bh0, 1))
@@ -136,6 +148,8 @@ class LCDynamicOverlay:
         alpha = opacity * cover
         out = (a * (1.0 - alpha) + b_fit * alpha).clamp(0.0, 1.0)
         out_bhwc = _to_bhwc(out)
+        if a_alpha is not None:
+            out_bhwc = attach_alpha(out_bhwc, _to_bhwc(a_alpha))
         a_bhwc = _to_bhwc(a)
         b_bhwc = _to_bhwc(b_fit)
 

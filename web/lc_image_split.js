@@ -96,6 +96,7 @@ class LCImageSplitPreview {
     const origDraw = node.onDrawForeground;
     node.onDrawForeground = function (ctx) {
       origDraw?.apply(this, arguments);
+      if (this.flags?.collapsed) return;
       this.lcImageSplitPreview?.draw(ctx);
     };
 
@@ -112,7 +113,10 @@ class LCImageSplitPreview {
     if (!message) return;
     const aMeta = message.a_images?.[0];
     const bMeta = message.b_images?.[0];
+    // latest run wins: a slower earlier load never replaces a newer preview
+    const token = (this._loadToken = (this._loadToken || 0) + 1);
     const [a, b] = await Promise.all([loadImg(aMeta), loadImg(bMeta)]);
+    if (token !== this._loadToken) return;
     if (a) this.imgA = a;
     if (b) this.imgB = b;
     app.canvas?.setDirty?.(true, true);
@@ -179,7 +183,7 @@ class LCImageSplitPreview {
 
     // B full
     if (b) {
-      ctx.drawImage(b, ox, oy, dw, dh);
+      if (!window.LC123Perf?.skipImage?.(ctx, ox, oy, dw, dh)) ctx.drawImage(b, ox, oy, dw, dh);
     } else {
       ctx.fillStyle = "#222";
       ctx.fillRect(ox, oy, dw, dh);
@@ -191,7 +195,7 @@ class LCImageSplitPreview {
       ctx.beginPath();
       ctx.rect(ox, oy, Math.max(0, cut - ox), dh);
       ctx.clip();
-      ctx.drawImage(a, ox, oy, dw, dh);
+      if (!window.LC123Perf?.tooSmall?.(dw, dh)) ctx.drawImage(a, ox, oy, dw, dh);
       ctx.restore();
     }
 

@@ -39,12 +39,32 @@ const MIN_W = 280;
 let loraListPromise = null;
 function getLoraList() {
   if (!loraListPromise) {
-    loraListPromise = fetch("/object_info/LoraLoader")
-      .then((r) => r.json())
-      .then((info) => info?.LoraLoader?.input?.required?.lora_name?.[0] || [])
-      .catch(() => []);
+    const p = api
+      .fetchApi("/object_info/LoraLoader")
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then((info) => {
+        const spec = info?.LoraLoader?.input?.required?.lora_name;
+        const list = Array.isArray(spec?.[0]) ? spec[0] : spec?.[0] === "COMBO" ? spec[1]?.options : null;
+        return Array.isArray(list) ? list : [];
+      })
+      .catch(() => [])
+      .then((list) => {
+        // a failed or empty answer is not remembered: the next open asks the server again
+        if (!list.length && loraListPromise === p) loraListPromise = null;
+        return list;
+      });
+    loraListPromise = p;
   }
   return loraListPromise;
+}
+
+// ComfyUI "Refresh Node Definitions" (R): forget the cached list and folder tree so new LoRA files show up
+function resetLoraCache() {
+  loraListPromise = null;
+  loraTreeCache = null;
 }
 
 // A folder can nest arbitrarily deep ("Qwen/Lightning & Model loras/image lightning loRa"), which a plain
@@ -67,7 +87,7 @@ function buildLoraTree(list) {
     }
     node.files.push(name);
   }
-  loraTreeCache = root;
+  if (list.length) loraTreeCache = root; // an empty (failed) list is not cached
   return root;
 }
 
@@ -220,11 +240,15 @@ function ensureChipStyle() {
 const infoCache = new Map();
 function fetchLoraInfo(name) {
   if (infoCache.has(name)) return Promise.resolve(infoCache.get(name));
-  return fetch(`/lc123/lora_loader/info?lora=${encodeURIComponent(name)}`)
-    .then((r) => r.json())
+  return api
+    .fetchApi(`/lc123/lora_loader/info?lora=${encodeURIComponent(name)}`)
+    .then((r) => {
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.json();
+    })
     .then((data) => {
-      infoCache.set(name, data);
-      return data;
+      if (data && !data.error) infoCache.set(name, data); // errors are retried on the next open
+      return data || { error: "empty response" };
     })
     .catch((e) => ({ error: String(e) }));
 }
@@ -339,7 +363,9 @@ function showInfoPopover(anchorEl, name) {
     } else {
       if (data.base_model) {
         const p = document.createElement("div");
-        p.innerHTML = `<b>Base model:</b> ${data.base_model}`;
+        const b = document.createElement("b");
+        b.textContent = "Base model:";
+        p.append(b, document.createTextNode(` ${data.base_model}`));
         p.style.marginBottom = "6px";
         pop.appendChild(p);
       }
@@ -836,6 +862,10 @@ app.registerExtension({
     if (!NODES.has(node.comfyClass || node.type)) return;
     ensureFace(node);
     renderRows(node);
+  },
+
+  async refreshComboInNodes() {
+    resetLoraCache();
   },
 
   async setup() {

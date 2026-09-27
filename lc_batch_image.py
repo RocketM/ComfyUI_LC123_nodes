@@ -49,6 +49,9 @@ def _match(t: torch.Tensor, h: int, w: int, c: int) -> torch.Tensor:
             t = t[..., :3]
         elif t.shape[-1] == 4 and c == 4:
             pass
+        elif c == 4 and t.shape[-1] in (1, 3):
+            rgb = t.repeat(1, 1, 1, 3) if t.shape[-1] == 1 else t
+            t = torch.cat([rgb, torch.ones_like(rgb[..., :1])], dim=-1)  # fully opaque, not the blue channel
         elif t.shape[-1] < c:
             pad = c - t.shape[-1]
             t = torch.cat([t, t[..., -1:].repeat(1, 1, 1, pad)], dim=-1)

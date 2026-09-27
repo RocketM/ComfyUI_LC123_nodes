@@ -436,6 +436,42 @@ def process_frame(
 
 
 # ---------------------------------------------------------------------------
+# GPU path (lc_skin_beauty_gpu.py mirrors the maths above in torch)
+# ---------------------------------------------------------------------------
+_BYTES_PER_PIXEL = 160  # measured peak of the torch path, ~400 MB for a 1792x1440 frame
+
+
+def _pick_device(choice: str, pixels: int):
+    """None = numpy on the CPU (the original path)."""
+    import torch
+
+    if choice == "cpu" or not torch.cuda.is_available():
+        return None
+    dev = torch.device("cuda")
+    if choice == "gpu":
+        return dev
+    try:  # auto: only when the frame's working set fits three times over in free VRAM
+        free, _total = torch.cuda.mem_get_info(dev)
+        return dev if free > 3 * _BYTES_PER_PIXEL * max(1, pixels) + (512 << 20) else None
+    except Exception:
+        return None
+
+
+def _process_on(dev, rgb, mask_in, strength, coolness, brightness, rosy, evenness, shadow_lift, smooth,
+                texture_preserve, saturation, highlight_protect, mask_sensitivity, mask_feather):
+    import torch
+
+    from .lc_skin_beauty_gpu import process_frame_torch
+
+    with torch.inference_mode():
+        x = torch.from_numpy(rgb).to(dev)
+        m = torch.from_numpy(np.asarray(mask_in, dtype=np.float32)).to(dev) if mask_in is not None else None
+        out, skin = process_frame_torch(x, m, strength, coolness, brightness, rosy, evenness, shadow_lift, smooth,
+                                        texture_preserve, saturation, highlight_protect, mask_sensitivity, mask_feather)
+        return out.float().cpu().numpy(), skin.float().cpu().numpy()
+
+
+# ---------------------------------------------------------------------------
 # Comfy node
 # ---------------------------------------------------------------------------
 class LCSkinBeauty(PreviewImage):
@@ -458,7 +494,7 @@ class LCSkinBeauty(PreviewImage):
                         "min": 0.0,
                         "max": 2.0,
                         "step": 0.05,
-                        "tooltip": "How much of the effect to apply. 0 = original image, 1 = full, above 1 = stronger.",
+                        "tooltip": "How much of the effect to apply. 0 = original image, 1 = full, above 1 = stronger. Below 1 it scales the sliders AND the blend, so it drops faster than a straight mix: 0.5 gives roughly a quarter of the full effect.",
                     },
                 ),
                 "coolness": (
@@ -579,6 +615,15 @@ class LCSkinBeauty(PreviewImage):
                         "tooltip": "Optional external skin mask (higher precision). Combined with auto mask.",
                     },
                 ),
+                "device": (
+                    ["auto", "gpu", "cpu"],
+                    {
+                        "default": "auto",
+                        "tooltip": "Where the skin maths runs. gpu is about 250x faster but borrows ~150 MB of VRAM per megapixel while it runs. "
+                        "auto uses the GPU only when there is plenty of free VRAM, otherwise the CPU (the old behavior). "
+                        "cpu = never touch VRAM. The result is the same either way.",
+                    },
+                ),
             },
         }
 
@@ -609,6 +654,7 @@ class LCSkinBeauty(PreviewImage):
         mask_sensitivity=0.55,
         mask_feather=0.45,
         mask=None,
+        device="auto",
     ):
         if image is None:
             raise ValueError(
@@ -622,18 +668,34 @@ class LCSkinBeauty(PreviewImage):
             import torch
 
             if hasattr(mask, "detach"):
-                mt = mask.detach().cpu().numpy().astype(np.float32)
+                mt = mask.detach().float().cpu().numpy().astype(np.float32)
+                if mt.ndim == 2:
+                    mt = mt[None]  # a single HxW mask (no batch dimension) used to be split into rows
                 mask_frames = [mt[i] for i in range(mt.shape[0])]
             elif isinstance(mask, (list, tuple)):
                 mask_frames = mask
 
         out_imgs = []
         out_masks = []
+        dev = _pick_device(device, frames[0].shape[0] * frames[0].shape[1] if len(frames) else 0)
         for i, fr in enumerate(frames):
             rgb = np.clip(fr[..., :3], 0, 1).astype(np.float32)
             mi = None
             if mask_frames is not None:
                 mi = mask_frames[min(i, len(mask_frames) - 1)]
+            if dev is not None:
+                try:
+                    processed, skin = _process_on(dev, rgb, mi, strength, coolness, brightness, rosy, evenness, shadow_lift,
+                                                  smooth, texture_preserve, saturation, highlight_protect,
+                                                  mask_sensitivity, mask_feather)
+                    if fr.shape[-1] == 4:
+                        processed = np.concatenate([processed, fr[..., 3:4]], axis=-1)
+                    out_imgs.append(processed)
+                    out_masks.append(skin)
+                    continue
+                except Exception as e:  # out of VRAM (or no working GPU): finish on the CPU, same result
+                    print(f"[LC Skin Beauty] GPU path failed ({type(e).__name__}), using the CPU")
+                    dev = None
             processed, skin = process_frame(
                 rgb,
                 mi,

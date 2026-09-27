@@ -8,6 +8,7 @@
  */
 
 import { app } from "../../scripts/app.js";
+import { NODE_PROPERTY_EVENT, graphEventsAvailable } from "./lc_graph_events.js";
 
 const NODE_CLASS = "LCInvertBoolean";
 
@@ -82,7 +83,7 @@ function resolveBoolean(graph, input, depth = 0) {
 function rawUpstream(node) {
   const inp = (node.inputs || []).find((i) => i && i.name === "value") || node.inputs?.[0];
   if (!inp || inp.link == null) return null;
-  return resolveBoolean(app.graph, inp);
+  return resolveBoolean(node.graph ?? app.graph, inp); // the node's own graph, so it also works inside a subgraph
 }
 
 function hideWidget(w) {
@@ -115,6 +116,31 @@ function syncLive(node) {
   return node._lcBool;
 }
 
+// re-read one node and redraw it only when the value changed
+function refresh(node) {
+  const prev = node._lcBool;
+  syncLive(node);
+  if (prev !== node._lcBool) node.setDirtyCanvas?.(true, true);
+}
+
+// live instances, so the timer costs nothing in a workflow without this node
+const live = new Set();
+
+// Node property changes (mode, title...) are announced on each graph (root or subgraph) as "node:property:changed":
+// one listener per graph re-reads this graph's instances at once. Upstream widget values have no such event, which
+// is what the timer below is for.
+const hookedGraphs = new WeakSet();
+function hookGraph(graph) {
+  if (!graphEventsAvailable(graph) || hookedGraphs.has(graph)) return;
+  hookedGraphs.add(graph);
+  graph.events.addEventListener(NODE_PROPERTY_EVENT, () => {
+    if (!live.size) return;
+    for (const n of live) {
+      if (n.graph === graph) refresh(n);
+    }
+  });
+}
+
 app.registerExtension({
   name: "LC123.InvertBoolean",
 
@@ -129,6 +155,7 @@ app.registerExtension({
       for (const w of this.widgets || []) {
         if (w.name === "value" || w.name === "boolean") hideWidget(w);
       }
+      live.add(this);
       ensureHiddenBoolean(this);
       this.size = this.size || [270, 50];
       this.size[0] = Math.max(this.size[0] || 0, 180);
@@ -142,7 +169,8 @@ app.registerExtension({
       const r = onDrawFG?.apply(this, arguments);
       if (this.flags?.collapsed) return r;
 
-      const out = syncLive(this);
+      // drawn from the cached value: events, connection changes and the timer keep it current
+      const out = this._lcBool === undefined ? syncLive(this) : this._lcBool;
       const label = out === null ? "—" : out ? "true" : "false";
       const color = out === null ? "#888" : out ? "#6c6" : "#c66";
 
@@ -165,18 +193,42 @@ app.registerExtension({
       this.setDirtyCanvas?.(true, true);
       return r;
     };
+
+    const onAdded = nodeType.prototype.onAdded;
+    nodeType.prototype.onAdded = function () {
+      const r = onAdded?.apply(this, arguments);
+      live.add(this);
+      hookGraph(this.graph);
+      return r;
+    };
+
+    const onConfigure = nodeType.prototype.onConfigure;
+    nodeType.prototype.onConfigure = function () {
+      const r = onConfigure?.apply(this, arguments);
+      live.add(this);
+      hookGraph(this.graph);
+      // links may still be loading: forget the cached value so the first draw (or the next tick) reads it fresh
+      this._lcBool = undefined;
+      return r;
+    };
+
+    const onRemoved = nodeType.prototype.onRemoved;
+    nodeType.prototype.onRemoved = function () {
+      const r = onRemoved?.apply(this, arguments);
+      live.delete(this);
+      return r;
+    };
   },
 
   async setup() {
+    // Kept at 200 ms: an upstream toggle's value has no change event. Walks the live set (subgraphs included) and
+    // returns at once when there is no instance.
     setInterval(() => {
-      const graph = app.graph;
-      if (!graph?._nodes) return;
-      for (const n of graph._nodes) {
-        if (n.type === NODE_CLASS || n.comfyClass === NODE_CLASS) {
-          const prev = n._lcBool;
-          syncLive(n);
-          if (prev !== n._lcBool) n.setDirtyCanvas?.(true, true);
-        }
+      if (!live.size) return;
+      for (const n of live) {
+        if (!n.graph) continue;
+        hookGraph(n.graph);
+        refresh(n);
       }
     }, 200);
   },

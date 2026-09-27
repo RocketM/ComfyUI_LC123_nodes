@@ -17,6 +17,7 @@ requires plus the one route that serves the uploaded image back to the
 node for its live-loaded preview.
 """
 
+import asyncio
 import os
 
 NODE_NAME = "LCImageLabel"
@@ -65,14 +66,24 @@ try:
             base_dir = folder_paths.get_temp_directory() if folder_type == "temp" else folder_paths.get_output_directory()
             filepath = os.path.join(base_dir, subfolder, filename) if subfolder else os.path.join(base_dir, filename)
             filepath = os.path.abspath(filepath)
+            base_abs = os.path.abspath(base_dir)
 
-            if not filepath.startswith(os.path.abspath(base_dir)):
+            # real containment check (startswith let "temp_evil" pass for "temp")
+            try:
+                inside = os.path.commonpath([base_abs, filepath]) == base_abs
+            except ValueError:  # different drives
+                inside = False
+            if not inside:
                 return web.Response(status=403, text="Access denied")
             if not os.path.isfile(filepath):
                 return web.Response(status=404, text="File not found")
 
-            with open(filepath, "rb") as f:
-                data = f.read()
+            def _read():
+                with open(filepath, "rb") as f:
+                    return f.read()
+
+            # read off the event loop so a big file does not stall the server
+            data = await asyncio.to_thread(_read)
 
             ext = os.path.splitext(filename)[1].lower()
             content_types = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp"}

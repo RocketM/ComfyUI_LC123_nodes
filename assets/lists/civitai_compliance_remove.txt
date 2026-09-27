@@ -1,5 +1,5 @@
-# Civitai-oriented prompt strip list (one term per line)
-# Lines starting with # are ignored. Case-insensitive substring removal.
+# CivitAI-oriented prompt strip list (one term per line)
+# Lines starting with # are ignored. Case-insensitive, whole words and phrases only ("child" never touches "children").
 # Edit this file to match your needs. Restart ComfyUI after big edits if the node caches paths only.
 #
 # See assets/lists/README_civitai_compliance.txt for disclaimer.
@@ -27,14 +27,34 @@ young
 late teens or
 youthful
 teenage
+# whole-word matching needs the other forms spelled out (substring matching used to catch these by accident)
+children
+childlike
+child-like
+childish
+lolis
+shotas
+underaged
+preteens
+pre-teens
+pedophiles
+paedophiles
+pedophilia
+paedophilia
+teenager
+teenagers
 
 # --- Non-consent / sexual violence ---
 rape
 raped
 raping
 rapist
+rapists
+rapes
 noncon
 non-con
+nonconsensual
+non-consensual
 forced sex
 
 # --- Incest ---
@@ -74,4 +94,6 @@ snuff
 # --- Hate / extremist markers (minimal set; extend as needed) ---
 neonazi
 nazi
+nazis
+neonazis
 kkk

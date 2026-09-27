@@ -28,7 +28,7 @@ under half a second).
 import numpy as np
 from nodes import PreviewImage
 
-from .lc_image_helpers import tensor_to_np, np_to_tensor
+from .lc_image_helpers import tensor_to_np, np_to_tensor, preview_frames
 
 MAX_DISTANCE = 500.0
 
@@ -43,10 +43,10 @@ def _preview(self, result_tensor, source_tensor=None):
     """Attach after (and before) preview images for the shared on-node wipe (web/lc_image_preview.js)."""
     out = {"ui": {}, "result": (result_tensor,)}
     try:
-        after = self.save_images(result_tensor, filename_prefix="lc_after")
+        after = self.save_images(preview_frames(result_tensor), filename_prefix="lc_after")
         out["ui"]["lc_preview"] = after["ui"]["images"]
         if source_tensor is not None:
-            before = self.save_images(source_tensor, filename_prefix="lc_before")
+            before = self.save_images(preview_frames(source_tensor), filename_prefix="lc_before")
             out["ui"]["lc_before"] = before["ui"]["images"]
     except Exception:
         pass
@@ -100,20 +100,28 @@ def _make_line_kernel(angle_deg: float, length: float, taps: int):
     return kernel / s
 
 
-def _fft_convolve_same(channel: np.ndarray, kernel: np.ndarray, edge: str) -> np.ndarray:
-    """2D convolution, same-size output, edge-padded per `edge` (see EDGES / _EDGE_PAD_MODES)."""
+def _kernel_spectrum(kernel: np.ndarray, ph: int, pw: int) -> np.ndarray:
+    """FFT of the kernel laid out on the padded (ph, pw) canvas. Same for every frame and channel of a batch."""
+    kh, kw = kernel.shape
+    kfull = np.zeros((ph, pw), dtype=np.float64)
+    kfull[:kh, :kw] = kernel
+    kfull = np.roll(kfull, (-(kh // 2), -(kw // 2)), axis=(0, 1))  # center the kernel's own center at index (0,0)
+    return np.fft.rfft2(kfull)
+
+
+def _fft_convolve_same(channel: np.ndarray, kernel: np.ndarray, edge: str, kspec=None) -> np.ndarray:
+    """2D convolution, same-size output, edge-padded per `edge` (see EDGES / _EDGE_PAD_MODES).
+    `kspec` is the precomputed _kernel_spectrum for this padded size (built here when not given)."""
     kh, kw = kernel.shape
     pad_h, pad_w = kh // 2, kw // 2
     pad_mode = _EDGE_PAD_MODES.get(edge, "reflect")
     pad_kwargs = {"constant_values": 0.0} if pad_mode == "constant" else {}
     padded = np.pad(channel, ((pad_h, pad_h), (pad_w, pad_w)), mode=pad_mode, **pad_kwargs)
     ph, pw = padded.shape
+    if kspec is None:
+        kspec = _kernel_spectrum(kernel, ph, pw)
 
-    kfull = np.zeros((ph, pw), dtype=np.float64)
-    kfull[:kh, :kw] = kernel
-    kfull = np.roll(kfull, (-pad_h, -pad_w), axis=(0, 1))  # center the kernel's own center at index (0,0)
-
-    spec = np.fft.rfft2(padded) * np.fft.rfft2(kfull)
+    spec = np.fft.rfft2(padded) * kspec
     conv = np.fft.irfft2(spec, s=padded.shape)
     h, w = channel.shape
     return conv[pad_h:pad_h + h, pad_w:pad_w + w]
@@ -192,10 +200,14 @@ class LCDirectionalBlur(PreviewImage):
         if kernel is None:
             return _preview(self, image, image)
 
+        # frames share one size, so the kernel's FFT is taken once for the whole batch
+        kh, kw = kernel.shape
+        h, w = arrays[0].shape[:2]
+        kspec = _kernel_spectrum(kernel, h + 2 * (kh // 2), w + 2 * (kw // 2))
         out = []
         for img in arrays:
             img = np.clip(img, 0.0, 1.0).astype(np.float64)
-            channels = [_fft_convolve_same(img[..., c], kernel, edge) for c in range(img.shape[-1])]
+            channels = [_fft_convolve_same(img[..., c], kernel, edge, kspec) for c in range(img.shape[-1])]
             blurred = np.stack(channels, axis=-1)
             if strength < 1.0:
                 blurred = img * (1.0 - strength) + blurred * strength

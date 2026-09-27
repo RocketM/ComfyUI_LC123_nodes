@@ -18,12 +18,16 @@ import numpy as np
 import folder_paths
 from nodes import PreviewImage
 
-from .lc_image_helpers import tensor_to_np, np_to_tensor
+from .lc_image_helpers import tensor_to_np, np_to_tensor, preview_frames, _alpha_safe
 
 _dir_luts = os.path.join(folder_paths.models_dir, "luts")
 os.makedirs(_dir_luts, exist_ok=True)
 if "luts" not in folder_paths.folder_names_and_paths:
     folder_paths.folder_names_and_paths["luts"] = ([_dir_luts], {".cube"})
+
+
+class _LUT1DError(ValueError):
+    """A 1D .cube: reported to the user instead of being misread as a 3D lattice."""
 
 
 def _parse_cube(path: str):
@@ -38,6 +42,11 @@ def _parse_cube(path: str):
             if not line or line.startswith("#"):
                 continue
             up = line.upper()
+            if up.startswith("LUT_1D_SIZE"):
+                raise _LUT1DError(
+                    f"{os.path.basename(path)} is a 1D LUT (LUT_1D_SIZE). LC Apply LUT only reads 3D .cube LUTs "
+                    "(LUT_3D_SIZE)."
+                )
             if up.startswith("TITLE") or up.startswith("LUT_1D") or up.startswith("LUT_3D_INPUT"):
                 continue
             if up.startswith("LUT_3D_SIZE"):
@@ -67,6 +76,26 @@ def _parse_cube(path: str):
     # File order: R fastest, then G, then B → reshape (B, G, R, 3)
     table = table[:expected].reshape(size, size, size, 3)
     return size, table, domain_min.astype(np.float32), domain_max.astype(np.float32)
+
+
+# Parsed LUTs keyed on (path, mtime, size): a queued run does not re-read the same .cube, an edited file is re-read.
+_CUBE_CACHE = {}
+_CUBE_CACHE_MAX = 8
+
+
+def _load_cube(path: str):
+    st = os.stat(path)
+    key = (os.path.abspath(path), st.st_mtime_ns, st.st_size)
+    hit = _CUBE_CACHE.get(key)
+    if hit is not None:
+        return hit
+    parsed = _parse_cube(path)
+    for old in [k for k in _CUBE_CACHE if k[0] == key[0]]:
+        del _CUBE_CACHE[old]
+    while len(_CUBE_CACHE) >= _CUBE_CACHE_MAX:
+        del _CUBE_CACHE[next(iter(_CUBE_CACHE))]
+    _CUBE_CACHE[key] = parsed
+    return parsed
 
 
 def _trilinear_lut(img, table):
@@ -118,10 +147,10 @@ def _trilinear_lut(img, table):
 def _preview(self, result_tensor, source_tensor=None):
     out = {"ui": {}, "result": (result_tensor,)}
     try:
-        after = self.save_images(result_tensor, filename_prefix="lc_after")
+        after = self.save_images(preview_frames(result_tensor), filename_prefix="lc_after")
         out["ui"]["lc_preview"] = after["ui"]["images"]
         if source_tensor is not None:
-            before = self.save_images(source_tensor, filename_prefix="lc_before")
+            before = self.save_images(preview_frames(source_tensor), filename_prefix="lc_before")
             out["ui"]["lc_before"] = before["ui"]["images"]
     except Exception:
         pass
@@ -178,6 +207,7 @@ class LCApplyLUT(PreviewImage):
         "Strength 0–2 (1 = full LUT, >1 overdrives). Leave log OFF for typical creative LUTs."
     )
 
+    @_alpha_safe
     def run(self, image, lut_name, strength, log):
         if strength <= 0 or not lut_name or lut_name.startswith("(no"):
             return _preview(self, image, image)
@@ -195,7 +225,9 @@ class LCApplyLUT(PreviewImage):
                 return _preview(self, image, image)
 
         try:
-            size, table, dmin, dmax = _parse_cube(lut_path)
+            size, table, dmin, dmax = _load_cube(lut_path)
+        except _LUT1DError:
+            raise
         except Exception as e:
             print(f"[LC Apply LUT] parse error: {e}")
             return _preview(self, image, image)

@@ -13,7 +13,7 @@
 // load-workflow-from-PNG feature and wipes the graph -- see the
 // window-capture note in onNodeCreated.
 import { app } from "../../scripts/app.js";
-import { getLayer, isSelected, screenCentre, setCentreFromScreen, commit, dragHandle, hitRotated, clientToGraph, snapAngle, vueClickThrough } from "./lc_overlay_common.js";
+import { getLayer, isSelected, screenCentre, setCentreFromScreen, commit, dragHandle, hitRotated, clientToGraph, snapAngle, vueClickThrough, frameRects } from "./lc_overlay_common.js";
 
 const lcImageLabelState = {
     processingMouseDown: false,
@@ -28,9 +28,9 @@ let ilLoopOn = false;
 function ilStart() {
     if (ilLoopOn) return;
     ilLoopOn = true;
-    const tick = () => {
+    const tick = (ts) => {
         if (!ilNodes.size) { ilLoopOn = false; return; }
-        for (const n of ilNodes) ilRender(n);
+        for (const n of ilNodes) ilRender(n, ts);
         requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
@@ -149,18 +149,28 @@ function ilLayout(node, topLeft = false) {
     app.canvas?.setDirty?.(true, true);
 }
 
-function ilRender(node) {
+// the loaded image's data URL length, measured once per image instead of every frame (same value the signature
+// always used: nothing for no image, else the src length)
+function ilSrcLen(v, img) {
+    if (!img) return img;
+    if (v.srcImg !== img) {
+        v.srcImg = img;
+        v.srcLen = img.src && img.src.length;
+    }
+    return v.srcLen;
+}
+
+function ilRender(node, ts) {
     const v = node.__il;
     if (!v) return;
     const c = app.canvas;
     if (!c || !node.graph || node.graph !== c.graph) { v.box.style.display = "none"; return; }
     const p = node.properties;
-    const sig = JSON.stringify([p.imgW, p.imgH, p.angle, p.padding, p.borderWidth, p.borderColor, p.borderRadius, p.backgroundColor, p.bgTransparent, p.syncImageRadius, p.imageRadius, node.imageLoaded, node.cachedImage && node.cachedImage.src && node.cachedImage.src.length]);
+    const sig = JSON.stringify([p.imgW, p.imgH, p.angle, p.padding, p.borderWidth, p.borderColor, p.borderRadius, p.backgroundColor, p.bgTransparent, p.syncImageRadius, p.imageRadius, node.imageLoaded, ilSrcLen(v, node.cachedImage)]);
     if (sig !== v.sig) { v.sig = sig; ilLayout(node); }
     const ds = c.ds;
     const s = ds.scale;
-    const cr = c.canvas.getBoundingClientRect();
-    const lr = getLayer().getBoundingClientRect();
+    const [cr, lr] = frameRects(ts);
     const ex = Number.isFinite(p._w) ? p._w : node.size[0];
     const ey = Number.isFinite(p._h) ? p._h : node.size[1];
     const cx = (node.pos[0] + ex / 2 + ds.offset[0]) * s + (cr.left - lr.left);
@@ -448,7 +458,9 @@ app.registerExtension({
             }
         };
 
+        const onRemoved = nodeType.prototype.onRemoved;
         nodeType.prototype.onRemoved = function () {
+            onRemoved?.apply(this, arguments);
             ilNodes.delete(this);
             try { this.__il?.box.remove(); } catch (_) {}
             this.__il = null;
@@ -858,7 +870,8 @@ app.registerExtension({
         const oldGetNodeOnPos = LGraph.prototype.getNodeOnPos;
         LGraph.prototype.getNodeOnPos = function (x, y, nodes_list) {
             const e = lcImageLabelState.lastCanvasMouseEvent;
-            if (nodes_list && lcImageLabelState.processingMouseDown && e && e.type.includes("down") && e.button === 0) {
+            // only copy and filter the list when some label is actually pinned
+            if (nodes_list && lcImageLabelState.processingMouseDown && e && e.type.includes("down") && e.button === 0 && [...ilNodes].some((n) => n.flags && n.flags.pinned)) {
                 // a pinned label ignores left clicks entirely: they reach the node under it. Ctrl+drag a box to select it.
                 nodes_list = [...nodes_list].filter((n) => !(n.comfyClass === "LCImageLabel" && n.flags && n.flags.pinned));
             }

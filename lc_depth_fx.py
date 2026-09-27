@@ -60,6 +60,16 @@ def _level_weights(c, radii):
     return ws
 
 
+def _match_depth_batch(depth, b):
+    """One depth map per image: 1 depth covers every image, extra depths are dropped, a short batch repeats its last."""
+    n = depth.shape[0]
+    if n == b:
+        return depth
+    if n > b:
+        return depth[:b]
+    return torch.cat([depth, depth[-1:].expand(b - n, -1, -1, -1)], dim=0)
+
+
 def _prep_depth(depth, h, w, direction):
     """-> distance map B1HW, 0 = nearest, 1 = farthest."""
     d = depth[..., :3].mean(-1, keepdim=True).permute(0, 3, 1, 2).float()
@@ -145,7 +155,7 @@ class LCDepthFX(PreviewImage):
         b, _, h, w = x.shape
         base = min(h, w)
         lin = _lin(x)
-        dist = _prep_depth(depth_map.to(dev), h, w, depth_direction)
+        dist = _prep_depth(_match_depth_batch(depth_map, b).to(dev), h, w, depth_direction)
 
         # focus: the nearer part of the frame's middle (the subject), or the manual depth
         if focus_mask is not None:
@@ -279,7 +289,7 @@ class LCDepthFX(PreviewImage):
             # lone lights bloom; tight clusters (sky through hair, glitter) would only stack into a haze
             iso = 1.0 / (1.0 + 30.0 * _gblur(points, 0.5 * rb))
             pts = points * iso * behind * _smooth(0.05, 0.3, coc_n)
-            src = _lin(x)
+            lit = _lin(x)  # its own name: `src` is the original image, needed below for alpha and the wipe
             b_radii = [0.0] + [rb * f for f in (0.35, 0.65, 1.0)]
             bw = _level_weights(coc_n * rb, b_radii)
             col = torch.zeros_like(lin)
@@ -290,7 +300,7 @@ class LCDepthFX(PreviewImage):
                 r = b_radii[k]
                 pk = pts * bw[k]
                 c = _disc_blur(pk, r)
-                col = col + _disc_blur(src * pk, r)
+                col = col + _disc_blur(lit * pk, r)
                 cov = cov + c
                 # one light spread over a disc gets its brightness back, so each disc reads as a solid disc
                 alpha = alpha + c * min(400.0, math.pi * r * r / pt_area)

@@ -2,7 +2,8 @@
 LC Sigma Curve
 --------------
 No MODEL. Fake top = sigma_max widget.
-Built-in scheduler names + user JSON under assets/sigma_curves/.
+Built-in scheduler names + saved JSON curves. New saves go to
+<user dir>/LC123/sigma_curves/; curves already in web/sigma_curves/ still load.
 Working curve is a comma list. First edit → preset becomes Custom.
 """
 
@@ -16,8 +17,20 @@ import re
 import torch
 
 _PACK = os.path.dirname(os.path.abspath(__file__))
-_CURVE_DIR = os.path.join(_PACK, "web", "sigma_curves")
-_WEB_CURVE_DIR = _CURVE_DIR
+# Built-in / older saved curves shipped in the pack (read only now).
+_WEB_CURVE_DIR = os.path.join(_PACK, "web", "sigma_curves")
+
+
+def _user_curve_dir() -> str:
+    try:
+        import folder_paths
+        return os.path.join(folder_paths.get_user_directory(), "LC123", "sigma_curves")
+    except Exception:
+        return _WEB_CURVE_DIR  # no user dir API: old location
+
+
+# New user curves are written here once (outside the pack, survives updates).
+_CURVE_DIR = _user_curve_dir()
 
 _BUILTINS = (
     "simple",
@@ -52,7 +65,6 @@ def _sanitize(name: str) -> str:
 
 
 def _list_saved() -> list[str]:
-    _ensure_dir()
     names = set()
     for folder in (_CURVE_DIR, _WEB_CURVE_DIR):
         try:
@@ -353,30 +365,32 @@ _GITS_SHAPE = (
 )
 
 
-def _load_saved(name: str) -> list[float] | None:
+def _find_curve_file(name: str) -> str | None:
+    """Path of a saved curve, user folder first (newest save wins), then web/sigma_curves."""
     want = (_sanitize(name) + ".json").lower()
-    for folder in (_WEB_CURVE_DIR, _CURVE_DIR):
+    if want == "index.json":
+        return None
+    for folder in (_CURVE_DIR, _WEB_CURVE_DIR):
         try:
             for fn in os.listdir(folder):
                 if fn.lower() == want:
-                    path = os.path.join(folder, fn)
-                    with open(path, "r", encoding="utf-8") as f:
-                        data = json.load(f)
-                    raw = data.get("sigmas", data)
-                    return parse_curve(raw)
-        except (OSError, json.JSONDecodeError):
+                    return os.path.join(folder, fn)
+        except OSError:
             continue
     return None
 
 
-def _write_index():
-    names = _list_saved()
-    for folder in (_CURVE_DIR, _WEB_CURVE_DIR):
-        try:
-            with open(os.path.join(folder, "index.json"), "w", encoding="utf-8") as f:
-                json.dump({"curves": names}, f)
-        except OSError:
-            pass
+def _load_saved(name: str) -> list[float] | None:
+    path = _find_curve_file(name)
+    if not path:
+        return None
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return None
+    raw = data.get("sigmas", data)
+    return parse_curve(raw)
 
 
 def _save_curve(name: str, vals: list[float], source: str, steps: int) -> str:
@@ -389,12 +403,64 @@ def _save_curve(name: str, vals: list[float], source: str, steps: int) -> str:
         "steps": int(steps),
     }
     path = os.path.join(_CURVE_DIR, safe + ".json")
-    web_path = os.path.join(_WEB_CURVE_DIR, safe + ".json")
-    for dest in (path, web_path):
-        with open(dest, "w", encoding="utf-8") as f:
-            json.dump(payload, f, indent=2)
-    _write_index()
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(payload, f, indent=2)
     return path
+
+
+# web/lc_sigma_curve.js fetches /extensions/<pack>/sigma_curves/index.json and
+# <name>.json. That URL is a static route onto web/sigma_curves, which no longer
+# gets new saves, so serve both folders from a more specific route (aiohttp
+# resolves the longer path before the static /extensions/<pack> prefix, and
+# custom routes are added before the extension static routes anyway).
+try:
+    from aiohttp import web as _web
+    from server import PromptServer as _PromptServer
+
+    async def _lc_sigma_curve_file(request):
+        fn = os.path.basename(request.match_info.get("filename", ""))
+        if not fn.lower().endswith(".json"):
+            return _web.Response(status=404, text="not found")
+        if fn.lower() == "index.json":
+            return _web.json_response({"curves": _list_saved()})
+        path = _find_curve_file(fn[:-5])
+        if not path:
+            return _web.Response(status=404, text="curve not found")
+        return _web.FileResponse(path, headers={"Cache-Control": "no-cache"})
+
+    for _prefix in sorted({"ComfyUI_LC123_nodes", "comfyui_lc123_nodes", os.path.basename(_PACK)}):
+        _PromptServer.instance.routes.get(f"/extensions/{_prefix}/sigma_curves/{{filename}}")(_lc_sigma_curve_file)
+except Exception:
+    pass
+
+
+def _plot_preview(vals: list[float]):
+    """The curve as a small picture (same look as the on-node graph): steps across, sigma up."""
+    from PIL import Image, ImageDraw
+
+    from .lc_image_helpers import save_temp_preview
+
+    w, h, pad = 512, 300, 34
+    img = Image.new("RGB", (w, h), (27, 31, 36))
+    d = ImageDraw.Draw(img)
+    top = max(vals) if vals else 1.0
+    top = top if top > 0 else 1.0
+    n = max(1, len(vals) - 1)
+    x_at = lambda i: pad + (w - 2 * pad) * i / n
+    y_at = lambda v: h - pad - (h - 2 * pad) * (v / top)
+    for k in range(5):  # grid
+        y = pad + (h - 2 * pad) * k / 4
+        d.line([(pad, y), (w - pad, y)], fill=(48, 54, 61))
+        d.text((4, y - 6), f"{top * (1 - k / 4):.2f}", fill=(140, 150, 160))
+    d.line([(pad, h - pad), (w - pad, h - pad)], fill=(90, 98, 108))
+    pts = [(x_at(i), y_at(v)) for i, v in enumerate(vals)]
+    if len(pts) > 1:
+        d.line(pts, fill=(56, 189, 248), width=3)
+    for x, y in pts:
+        d.ellipse([x - 3, y - 3, x + 3, y + 3], fill=(255, 255, 255))
+    d.text((pad, h - pad + 8), f"{n} steps", fill=(180, 188, 196))
+    d.text((w - pad - 90, h - pad + 8), f"last {vals[-1]:.3f}" if vals else "", fill=(180, 188, 196))
+    return save_temp_preview(img, "lc_sigma_plot")
 
 
 class LCSigmaCurve:
@@ -475,14 +541,14 @@ class LCSigmaCurve:
                     "STRING",
                     {
                         "default": "",
-                        "tooltip": "Filename under assets/sigma_curves/ (no extension).",
+                        "tooltip": "Filename under user/LC123/sigma_curves/ (no extension).",
                     },
                 ),
                 "save_curve": (
                     "BOOLEAN",
                     {
                         "default": False,
-                        "tooltip": "On run, write save_name.json into assets/sigma_curves/.",
+                        "tooltip": "On run, write save_name.json into user/LC123/sigma_curves/.",
                     },
                 ),
             },
@@ -504,7 +570,7 @@ class LCSigmaCurve:
         "Interactive sigma list. No MODEL — sigma_max is the fake top. "
         "total_steps can be converted to an input. "
         "Built-in names rebuild; Custom keeps a comma-list sculpt. "
-        "Descending = falling only. Save writes assets/sigma_curves/<name>.json. "
+        "Descending = falling only. Save writes user/LC123/sigma_curves/<name>.json. "
         "Preset from_input reads optional sigmas after a run. Custom is never rebuilt on the next queue."
     )
 
@@ -581,8 +647,13 @@ class LCSigmaCurve:
             except OSError as e:
                 print(f"[LC123] sigma curve save failed: {e}")
 
+        ui = {"curve": [text]}
+        try:
+            ui["lc_plot"] = [_plot_preview(vals)]  # Nodes 2.0 shows this; the classic graph ignores it
+        except Exception as e:
+            print(f"[LC123] sigma curve plot preview failed: {e}")
         return {
-            "ui": {"curve": [text]},
+            "ui": ui,
             "result": (torch.FloatTensor(vals), text),
         }
 

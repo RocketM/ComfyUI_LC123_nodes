@@ -102,14 +102,19 @@ function resolveBoolean(graph, input, depth = 0) {
   return null;
 }
 
+// writes only what differs (the 1 s tick calls this for every row)
 function setWidgetLocked(w, locked) {
   if (!w) return;
-  w._lcLocked = !!locked;
-  w.disabled = !!locked;
+  if (w._lcLocked !== !!locked) w._lcLocked = !!locked;
+  if (w.disabled !== !!locked) w.disabled = !!locked;
   const base = (w._lcNameClean || w.name || "").replace(/^\s*🔒\s*/, "");
-  w._lcNameClean = base;
-  w.name = locked ? `🔒 ${base}` : base;
+  if (w._lcNameClean !== base) w._lcNameClean = base;
+  const name = locked ? `🔒 ${base}` : base;
+  if (w.name !== name) w.name = name;
 }
+
+// live hubs and panels, so the 1 s tick costs nothing in a workflow without one
+const live = new Set();
 
 function nodeHubTargets(hub, graph) {
   const out = [];
@@ -204,17 +209,29 @@ app.registerExtension({
       }
 
       onNodeCreated() {
+        live.add(this);
         if (!this.title || /^unnamed$/i.test(String(this.title))) {
           this.title = this.constructor.title || HUB_TYPE;
         }
         this.scheduleStabilize(30);
       }
       onConfigure() {
+        live.add(this);
         if (!this.title || /^unnamed$/i.test(String(this.title))) {
           this.title = this.constructor.title || HUB_TYPE;
         }
         this.scheduleStabilize(80);
         this.scheduleStabilize(300);
+      }
+      onAdded() {
+        const r = super.onAdded?.(...arguments);
+        live.add(this);
+        return r;
+      }
+      onRemoved() {
+        const r = super.onRemoved?.(...arguments);
+        live.delete(this);
+        return r;
       }
 
       onResize(size) {
@@ -237,7 +254,7 @@ app.registerExtension({
       }
 
       stabilize() {
-        const graph = app.graph;
+        const graph = this.graph ?? app.graph; // own graph: also works inside a subgraph
         const inputs = this.inputs || [];
         const targets = [];
         const enables = [];
@@ -271,7 +288,7 @@ app.registerExtension({
 
       syncWidgets() {
         if (!this.widgets) this.widgets = [];
-        const graph = app.graph;
+        const graph = this.graph ?? app.graph;
         const pairCount = Math.floor((this.inputs?.length || 0) / 2);
         let filled = 0;
         for (let p = 0; p < pairCount; p++) {
@@ -326,7 +343,7 @@ app.registerExtension({
         const e = this.inputs?.[pair * 2 + 1];
         if (e?.link != null) return;
         if (this.widgets?.[pair]?._lcLocked) return;
-        const graph = app.graph;
+        const graph = this.graph ?? app.graph;
         const t = this.inputs?.[pair * 2];
         const origin = getLinkedOrigin(graph, t);
         if (!origin) return;
@@ -362,7 +379,7 @@ app.registerExtension({
 
       /** Update * slot labels when a linked node is renamed (no rewire needed). */
       refreshSlotNames() {
-        const graph = app.graph;
+        const graph = this.graph ?? app.graph;
         if (!graph || !this.inputs) return;
         let changed = false;
         const pairCount = Math.floor(this.inputs.length / 2);
@@ -402,7 +419,7 @@ app.registerExtension({
       }
 
       applyModes() {
-        const graph = app.graph;
+        const graph = this.graph ?? app.graph;
         if (!graph) return;
         const pairCount = Math.floor((this.inputs?.length || 0) / 2);
         for (let p = 0; p < pairCount; p++) {
@@ -422,7 +439,7 @@ app.registerExtension({
           }
           changeMode(origin, enabled ? MODE_ALWAYS : this._lcOffMode ?? MODE_BYPASS);
           if (this.widgets?.[p]) {
-            this.widgets[p].value = enabled;
+            if (this.widgets[p].value !== enabled) this.widgets[p].value = enabled;
             setWidgetLocked(this.widgets[p], driven);
           }
         }
@@ -544,11 +561,23 @@ app.registerExtension({
       }
 
       onNodeCreated() {
+        live.add(this);
         this.scheduleStabilize(30);
       }
       onConfigure() {
+        live.add(this);
         this.scheduleStabilize(80);
         this.scheduleStabilize(300);
+      }
+      onAdded() {
+        const r = super.onAdded?.(...arguments);
+        live.add(this);
+        return r;
+      }
+      onRemoved() {
+        const r = super.onRemoved?.(...arguments);
+        live.delete(this);
+        return r;
       }
 
       onResize(size) {
@@ -561,7 +590,8 @@ app.registerExtension({
 
       getHub() {
         const hubInp = (this.inputs || []).find((i) => i && i.name === "hub");
-        return resolveHub(getLinkedOrigin(app.graph, hubInp), app.graph);
+        const graph = this.graph ?? app.graph;
+        return resolveHub(getLinkedOrigin(graph, hubInp), graph);
       }
 
       scheduleStabilize(ms = 20) {
@@ -581,7 +611,7 @@ app.registerExtension({
         if (!hub) return [];
         if (isNodeHub(hub.type)) {
           this._lcKind = "node";
-          return nodeHubTargets(hub, app.graph);
+          return nodeHubTargets(hub, hub.graph ?? this.graph ?? app.graph);
         }
         if (hub.type === GROUPS_TYPE) {
           this._lcKind = "group";
@@ -593,7 +623,7 @@ app.registerExtension({
 
       syncFromHub() {
         if (!this.widgets) this.widgets = [];
-        const graph = app.graph;
+        const graph = this.graph ?? app.graph;
         const targets = this.getTargets();
 
         while (this.widgets.length < targets.length) {
@@ -762,7 +792,7 @@ app.registerExtension({
 
       applyModes() {
         const targets = this.getTargets();
-        const graph = app.graph;
+        const graph = this.graph ?? app.graph;
         for (let p = 0; p < targets.length; p++) {
           const item = targets[p];
           const driven = item.enableInput?.link != null;
@@ -840,20 +870,26 @@ app.registerExtension({
   },
 
   async setup() {
+    // walks the root and, when a subgraph is open, the one on screen (graph order kept: with two hubs on one node the
+    // last one still wins); returns at once when there is no hub or panel
     setInterval(() => {
-      const graph = app.graph;
-      if (!graph?._nodes) return;
-      for (const n of graph._nodes) {
-        if (isNodeHub(n.type)) {
-          try {
-            n.refreshSlotNames?.();
-            n.applyModes?.();
-          } catch (_) {}
-        } else if (n.type === PANEL_TYPE) {
-          try {
-            // Labels/count only — never applyModes here (avoids flicker)
-            n.refreshFromHubLight?.();
-          } catch (_) {}
+      if (!live.size) return;
+      const graphs = [app.graph];
+      if (app.canvas?.graph && app.canvas.graph !== app.graph) graphs.push(app.canvas.graph);
+      for (const graph of graphs) {
+        if (!graph?._nodes) continue;
+        for (const n of graph._nodes) {
+          if (isNodeHub(n.type)) {
+            try {
+              n.refreshSlotNames?.();
+              n.applyModes?.();
+            } catch (_) {}
+          } else if (n.type === PANEL_TYPE) {
+            try {
+              // Labels/count only — never applyModes here (avoids flicker)
+              n.refreshFromHubLight?.();
+            } catch (_) {}
+          }
         }
       }
     }, 1000);

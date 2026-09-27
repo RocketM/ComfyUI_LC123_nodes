@@ -34,19 +34,23 @@ class LCIsBypassedOrMuted:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "value": (
-                    any_type,
-                    {
-                        "tooltip": "Wire anything from the node you want to watch -- the type doesn't "
-                        "matter, only which node the wire comes from.",
-                    },
-                ),
                 "is_bypassed_or_muted": (
                     "BOOLEAN",
                     {
                         "default": False,
                         "tooltip": "Internal: kept in sync live by this node's own face. Not meant to "
                         "be set by hand.",
+                    },
+                ),
+            },
+            # A socket, not a widget. Optional so the prompt still validates when the
+            # watched node is muted/bypassed and the frontend drops its link.
+            "optional": {
+                "value": (
+                    any_type,
+                    {
+                        "tooltip": "Wire anything from the node you want to watch -- the type doesn't "
+                        "matter, only which node the wire comes from.",
                     },
                 ),
             },

@@ -100,6 +100,12 @@ class LCAdvancedFolder:
         "Split filename + path outputs for Image Saver Simple style nodes. Optional prefix-in-path and timestamp format."
     )
 
+    @classmethod
+    def IS_CHANGED(cls, timestamp="%Y-%m-%d", **kwargs):
+        # Re-run only when the stamp text would change (e.g. a new day), so
+        # the output is not stuck on the stamp from the first run.
+        return _stamp(timestamp)
+
     def build(self, folder, prefix, suffix, timestamp, path_separator, include_prefix_in_path=True):
         sep = _pick_sep(path_separator)
         folder = _sanitize(folder)
@@ -129,9 +135,11 @@ class LCAdvancedFolder:
         if path and "%" not in path:  # a %token path is made by LC Save Image once it is filled in
             try:
                 import folder_paths
-                out_root = folder_paths.get_output_directory()
-                full = os.path.join(out_root, path.replace("/", os.sep).replace("\\", os.sep))
-                os.makedirs(full, exist_ok=True)
+                out_root = os.path.abspath(folder_paths.get_output_directory())
+                full = os.path.abspath(os.path.join(out_root, path.replace("/", os.sep).replace("\\", os.sep)))
+                # only create folders inside the output dir (no ../ or absolute escapes)
+                if os.path.commonpath([out_root, full]) == out_root:
+                    os.makedirs(full, exist_ok=True)
             except Exception:
                 pass
 

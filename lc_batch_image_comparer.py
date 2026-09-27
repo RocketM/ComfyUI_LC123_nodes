@@ -37,9 +37,6 @@ class LCBatchImageComparer(PreviewImage):
     RETURN_NAMES = ("images",)
     FUNCTION = "compare"
     CATEGORY = "LC123/image"
-    DESCRIPTION = (
-        "Compare two image batches side-by-side with one pair slider. Fixed layout."
-    )
     OUTPUT_NODE = True
     DESCRIPTION = (
         "Stable Image Comparer for large batches. "
@@ -79,9 +76,13 @@ class LCBatchImageComparer(PreviewImage):
             result["ui"]["b_images"] = saved["ui"]["images"]
 
         # Pass the first image of A through so the node can still be chained
-        # if desired (matches rgthree behaviour).
+        # if desired (matches rgthree behaviour). With only B wired, pass B through
+        # instead of None. Nothing wired stays (None,): an unwired compare node on a
+        # canvas must not fail the whole queue.
         if image_a is not None and len(image_a) > 0:
             result["result"] = (image_a,)
+        elif image_b is not None and len(image_b) > 0:
+            result["result"] = (image_b,)
 
         return result
 

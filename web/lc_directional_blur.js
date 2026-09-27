@@ -37,6 +37,14 @@ function ensureStyle() {
   document.head.appendChild(st);
 }
 
+/** Tell ComfyUI's change tracker an edit happened (undo step + unsaved-changes dot). */
+function markWorkflowChanged() {
+  try {
+    const ct = app.extensionManager?.workflow?.activeWorkflow?.changeTracker;
+    ct?.captureCanvasState ? ct.captureCanvasState() : ct?.checkState?.();
+  } catch (_) {}
+}
+
 function readConfig(node) {
   const angle = num(findWidget(node, "angle")?.value, 0);
   const distance = num(findWidget(node, "distance")?.value, 0);
@@ -173,6 +181,7 @@ function startEditValue(node, which) {
         writeConfig(node, next.angle, next.distance);
         applyFace(node);
         node.setDirtyCanvas?.(true, true);
+        markWorkflowChanged();
       }
     }
   };
@@ -228,9 +237,12 @@ function attachFace(node) {
     setFromDrag(node, e.clientX, e.clientY);
   };
   const onUp = () => {
+    const wasDragging = dragging;
     dragging = false;
     window.removeEventListener("pointermove", onMove);
     window.removeEventListener("pointerup", onUp);
+    window.removeEventListener("pointercancel", onUp);
+    if (wasDragging) markWorkflowChanged();
   };
   canvas.addEventListener("pointerdown", (e) => {
     e.preventDefault();
@@ -239,6 +251,7 @@ function attachFace(node) {
     setFromDrag(node, e.clientX, e.clientY);
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
   });
 
   try {
