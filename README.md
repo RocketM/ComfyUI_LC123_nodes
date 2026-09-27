@@ -147,7 +147,7 @@ A markdown note that speaks your reader's language. Write it once, translate it,
 - The dropdown at the top lists ComfyUI's 14 languages, each in its own script: ✏️ original · ✅ translated · ⚠️ the original changed since it was translated · ❌ not translated.
 - **The language every LC Note opens in** is set in Settings > LC123 Settings ⚙️ > Notes > **Note language**. *Same as ComfyUI* follows your ComfyUI language. A note without that translation shows its original.
 
-![Note language and Link cards in Settings > LC123 Settings > Notes](assets/readme/lc_note_language_setting.webp)
+![Note language, Translate all notes and Link cards in Settings > LC123 Settings > Notes](assets/readme/lc_note_language_setting.webp)
 
 - Pick a ❌ (or ⚠️) language and click **Translate now**. Nothing ever translates on its own, so edit as much as you like before you ship it.
 - ⚠️ keeps showing the older translation until you re-translate, so readers never get an empty note.
