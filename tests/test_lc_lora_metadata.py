@@ -209,5 +209,43 @@ class LCLoraMetadataTests(unittest.TestCase):
         self.assertEqual(metadata.format_lora_fields(data, {}), [])
 
 
+    def test_verified_lora_version_and_stale_sidecar(self):
+        import hashlib
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'character.safetensors'
+            path.write_bytes(b'character weights')
+            sidecar = path.with_suffix('.civitai.info')
+            info = {'id': 3153756, 'modelId': 2797846, 'model': {'type': 'LORA'},
+                    'files': [{'hashes': {'SHA256': hashlib.sha256(path.read_bytes()).hexdigest()}}]}
+            sidecar.write_text(json.dumps(info), encoding='utf-8')
+            data = metadata.collect_lora_metadata(graph([{'on': True, 'lora': 'character.safetensors', 'strength': 0.8}]), '3')
+            with patch.object(hashes, '_resolve', return_value=(str(path), 'lora')):
+                expected = [{'type': 'lora', 'modelId': 2797846, 'modelVersionId': 3153756, 'weight': 0.8}]
+                self.assertEqual(hashes.lora_resources_payload(data), expected)
+                self.assertEqual(hashes.lora_resources_payload(data), expected)
+                data['loras'][0]['scope'] = 'configured_only'
+                self.assertEqual(hashes.lora_resources_payload(data), [])
+                data['loras'][0]['scope'] = 'image_upstream'
+                data['loras'][0]['nonzero_or_unresolved'] = False
+                self.assertEqual(hashes.lora_resources_payload(data), [])
+                data['loras'][0]['nonzero_or_unresolved'] = True
+                path.write_bytes(b'changed model weights')
+                self.assertEqual(hashes.lora_resources_payload(data), [])
+                sidecar.write_text('bad json', encoding='utf-8')
+                self.assertEqual(hashes.lora_resources_payload(data), [])
+
+    def test_explicit_lora_resources_in_both_png_fields(self):
+        resources = [{'type': 'lora', 'modelId': 2797846, 'modelVersionId': 3153756, 'weight': 0.8}]
+        with tempfile.TemporaryDirectory() as tmp:
+            with patch.object(folders, 'get_output_directory', return_value=tmp, create=True), patch.object(folders, 'get_save_image_path', return_value=(tmp, 'test', 1, '', ''), create=True), patch.object(save, 'collect_hashes', return_value={}), patch.object(save, 'lora_resources_payload', return_value=resources):
+                save.LCSaveImage().save(np.zeros((1, 16, 24, 3), dtype=np.float32), metadata={'positive': 'clean', 'civitai_air': '3328902'}, prompt=graph([]), unique_id='3')
+            with Image.open(next(Path(tmp).glob('*.png'))) as image:
+                records = json.loads(image.info['civitaiResources'])
+                self.assertEqual(records[1], resources[0])
+                self.assertEqual(records[0]['modelVersionId'], 3328902)
+                self.assertIn('"modelVersionId":3153756,"weight":0.8', image.info['parameters'])
+                self.assertNotIn('<lora:', image.info['parameters'])
+
+
 if __name__ == '__main__':
     unittest.main()

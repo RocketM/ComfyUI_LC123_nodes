@@ -490,6 +490,57 @@ def civitai_resources_payload(air: str) -> list:
     return [item]
 
 
+# Identity is cached only while both the model file and its sidecar are unchanged.
+_LORA_RESOURCE_CACHE = {}
+
+
+def _lora_version(path):
+    for sidecar in (os.path.splitext(path)[0] + '.civitai.info', path + '.civitai.info'):
+        try:
+            model_stat, info_stat = os.stat(path), os.stat(sidecar)
+            signature = (model_stat.st_size, model_stat.st_mtime_ns, info_stat.st_size, info_stat.st_mtime_ns)
+            cached = _LORA_RESOURCE_CACHE.get((path, sidecar))
+            if cached and cached[0] == signature:
+                return cached[1]
+            with open(sidecar, encoding='utf-8-sig') as stream:
+                info = json.load(stream)
+            if not isinstance(info, dict) or str(info.get('model', {}).get('type', '')).lower() not in ('lora', 'locon'):
+                continue
+            version_id = _positive_int(info.get('id'))
+            model_id = _positive_int(info.get('modelId'))
+            if not version_id or not model_id:
+                continue
+            digest = hashlib.sha256()
+            with open(path, 'rb') as stream:
+                for chunk in iter(lambda: stream.read(1024 * 1024), b''):
+                    digest.update(chunk)
+            sha = digest.hexdigest().lower()
+            if not any(isinstance(f, dict) and str((f.get('hashes') or {}).get('SHA256', '')).lower() == sha
+                       for f in info.get('files', [])):
+                continue
+            result = {'type': 'lora', 'modelId': model_id, 'modelVersionId': version_id}
+            _LORA_RESOURCE_CACHE[(path, sidecar)] = (signature, result)
+            return result
+        except (OSError, ValueError, TypeError, AttributeError):
+            continue
+    return None
+
+
+def lora_resources_payload(metadata):
+    """Offline, hash-verified Civitai version identities for this image's active LoRAs."""
+    resources = []
+    for row in metadata.get('loras', []):
+        if row['scope'] != 'image_upstream' or not row['nonzero_or_unresolved'] or row['strength_model'] is None:
+            continue
+        path, kind = _resolve(row['filename'], 'loras')
+        if not path or kind != 'lora':
+            continue
+        identity = _lora_version(path)
+        if identity is not None:
+            resources.append({**identity, 'weight': row['strength_model']})
+    return resources
+
+
 def format_hash_fields(buckets: dict) -> tuple[str, str, str, str]:
     """
     Model hash, VAE hash, Lora hashes, and Hashes JSON line fragments.

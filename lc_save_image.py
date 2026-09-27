@@ -21,7 +21,7 @@ from PIL.PngImagePlugin import PngInfo
 import folder_paths
 
 from .lc_pipe_io import PIPE_TYPE
-from .lc_civitai_hashes import collect_hashes, format_hash_fields, civitai_resources_payload
+from .lc_civitai_hashes import collect_hashes, format_hash_fields, civitai_resources_payload, lora_resources_payload
 from .lc_lora_metadata import collect_lora_metadata, format_lora_fields
 
 
@@ -117,6 +117,7 @@ def _build_parameters(
     hash_bits=None,
     source_width: int | None = None,
     source_height: int | None = None,
+    resources=None,
 ) -> str:
     positive = _txt(meta.get("positive"))
     negative = _txt(meta.get("negative"))
@@ -168,10 +169,10 @@ def _build_parameters(
             bits.append(f"Denoising strength: {float(denoise):g}")
         except (TypeError, ValueError):
             pass
-    if air:
+    if resources is None:
         resources = civitai_resources_payload(air)
-        if resources:
-            bits.append("Civitai resources: " + json.dumps(resources, separators=(",", ":")))
+    if resources:
+        bits.append("Civitai resources: " + json.dumps(resources, separators=(",", ":")))
     if extra:
         bits.append(extra.lstrip(", "))
     if hash_bits:
@@ -573,6 +574,9 @@ class LCSaveImage:
 
         meta = _as_meta(metadata)
         lora_metadata = collect_lora_metadata(prompt, unique_id)
+        resources = civitai_resources_payload(_txt(meta.get('civitai_air')))
+        if embed_civitai:
+            resources.extend(lora_resources_payload(lora_metadata))
         prefix = _fill_tokens(_txt(filename_prefix), meta)
         stem = _fill_tokens(_txt(filename), meta) or "LC123"
         folder = _fill_tokens(_txt(path), meta)
@@ -623,6 +627,7 @@ class LCSaveImage:
                     hash_bits,
                     meta_width if meta_width > 0 else None,
                     meta_height if meta_height > 0 else None,
+                    resources=resources,
                 )
 
             fname = f"{file_stem}_{counter:05d}.{ext}"
@@ -649,10 +654,10 @@ class LCSaveImage:
                 if embed_civitai:
                     info.add_text("lora_metadata", json.dumps(lora_metadata, ensure_ascii=False))
                 air = _txt(meta.get("civitai_air"))
-                resources = civitai_resources_payload(air)
                 if resources:
                     info.add_text("civitaiResources", json.dumps(resources))
-                    info.add_text("civitai_air", air)
+                    if air:
+                        info.add_text("civitai_air", air)
                 if buckets and buckets.get("hashes_json"):
                     info.add_text("hashes", json.dumps(buckets["hashes_json"]))
                 save_kwargs["pnginfo"] = info
