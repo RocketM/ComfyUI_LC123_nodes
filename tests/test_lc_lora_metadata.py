@@ -67,7 +67,6 @@ class LCLoraMetadataTests(unittest.TestCase):
                 data = metadata.collect_lora_metadata(prompt, '3')
                 self.assertEqual(len(data['loras']), 1)
                 self.assertEqual((data['loras'][0]['strength_model'], data['loras'][0]['strength_clip']), (-0.6, 0.25))
-                self.assertEqual(metadata.append_lora_tags('', data), '<lora:generic:-0.6>')
 
     def test_generic_dictionary_slots_ignore_loader_name(self):
         for kind in ['Power Lora Loader (rgthree)', 'Power Lora Loader - WeiLin Panel', 'CustomAdapter']:
@@ -84,7 +83,6 @@ class LCLoraMetadataTests(unittest.TestCase):
                 rows = data['loras']
                 self.assertEqual([(r['strength_model'], r['strength_clip']) for r in rows], [(0, 0.8), (0.4, 0.4), (1, 1), (1, 1)])
                 self.assertEqual([r['nonzero_or_unresolved'] for r in rows], [True, True, False, False])
-                self.assertEqual(metadata.append_lora_tags('', data), '<lora:a:0> <lora:b:0.4>')
                 del prompt['1']['inputs']['clip']
                 rows = metadata.collect_lora_metadata(prompt, '3')['loras']
                 self.assertEqual([r['strength_clip'] for r in rows], [0, 0, 0, 0])
@@ -107,7 +105,6 @@ class LCLoraMetadataTests(unittest.TestCase):
         data = metadata.collect_lora_metadata(prompt, '3')
         self.assertEqual([r['strength_model'] for r in data['loras']], [0.65, 1, 0, -0.4, 1, 0])
         self.assertEqual([r['nonzero_or_unresolved'] for r in data['loras']], [True, False, False, True, True, False])
-        self.assertEqual(metadata.append_lora_tags('test', data), 'test\n<lora:active:0.65> <lora:negative:-0.4> <lora:default:1>')
         self.assertEqual(hashes._collect_from_prompt(prompt), [('active.safetensors', 'loras'), ('negative.safetensors', 'loras'), ('default.safetensors', 'loras')])
         self.assertEqual(hashes._collect_from_prompt(prompt, {'1'}), [])
 
@@ -130,7 +127,6 @@ class LCLoraMetadataTests(unittest.TestCase):
         prompt['1']['inputs']['lora_rows'] = ['4', 0]
         prompt['9'] = graph([{'on': True, 'lora': 'unrelated.safetensors', 'strength': 1}])['1']
         data = metadata.collect_lora_metadata(prompt, '3')
-        self.assertEqual(metadata.append_lora_tags('', data), '<lora:a:0.5> <lora:a:0.5>')
         self.assertEqual(data['loras'][-1]['scope'], 'configured_only')
 
     def test_workflow_hash_rows(self):
@@ -143,15 +139,74 @@ class LCLoraMetadataTests(unittest.TestCase):
         prompt = graph([{'on': True, 'lora': 'lc.safetensors', 'strength': 0.65}], clip=False)
         prompt['0'] = {'class_type': 'LoraLoader', 'inputs': {'lora_name': 'stock.safetensors', 'strength_model': 0.8, 'strength_clip': 0.2}}
         with tempfile.TemporaryDirectory() as tmp:
-            with patch.object(folders, 'get_output_directory', return_value=tmp, create=True), patch.object(folders, 'get_save_image_path', return_value=(tmp, 'test', 1, '', ''), create=True), patch.object(save, 'collect_hashes', return_value={}), patch.object(save, 'format_hash_fields', return_value=None):
+            with patch.object(folders, 'get_output_directory', return_value=tmp, create=True), patch.object(folders, 'get_save_image_path', return_value=(tmp, 'test', 1, '', ''), create=True), patch.object(save, 'collect_hashes', return_value={}), patch.object(save, 'format_hash_fields', return_value=()):
                 save.LCSaveImage().save(np.zeros((1, 16, 24, 3), dtype=np.float32), metadata={'positive': 'test', 'width': 832, 'height': 1216}, prompt=prompt, unique_id='3', hash_resources=False)
             with Image.open(next(Path(tmp).glob('*.png'))) as image:
                 self.assertEqual(image.size, (24, 16))
                 params = image.info['parameters']
-                for text in ['Size: 24x16', 'Source size: 832x1216', '<lora:lc:0.65>', '<lora:stock:0.8>']:
+                self.assertEqual(params.split('\nNegative prompt:')[0].split('\nSteps:')[0].split('\nSize:')[0], 'test')
+                self.assertNotIn('<lora:', params)
+                for text in ['Size: 24x16', 'Source size: 832x1216']:
                     self.assertIn(text, params)
                 rows = json.loads(image.info['lora_metadata'])['loras']
                 self.assertEqual((rows[0]['strength_model'], rows[0]['strength_clip']), (0.65, 0))
+
+
+    def test_scoped_hashes_and_primary_agreement(self):
+        prompt = graph([])
+        prompt['0'] = {'class_type': 'UNETLoader', 'inputs': {'unet_name': 'janima.safetensors'}}
+        prompt['9'] = {'class_type': 'CheckpointLoaderSimple', 'inputs': {'ckpt_name': 'other.safetensors'}}
+        workflow = {'workflow': {'nodes': [
+            {'id': 9, 'type': 'CheckpointLoaderSimple', 'widgets_values': ['other.safetensors']},
+            {'id': 10, 'type': 'UNETLoader', 'widgets_values': ['unused.safetensors']},
+        ]}}
+        calls = []
+        def resolve(name, hint):
+            calls.append(name)
+            return name, 'unet' if name == 'janima.safetensors' else 'model'
+        with patch.object(hashes, '_resolve', side_effect=resolve), patch.object(hashes, 'autov2', return_value='E85715BE65'):
+            result = hashes.collect_hashes(prompt, workflow, '3')
+        self.assertEqual(calls, ['janima.safetensors'])
+        self.assertEqual(result['hashes_json']['model'], 'E85715BE65')
+        self.assertEqual(hashes.format_hash_fields(result)[0], 'Model hash: E85715BE65')
+        result['model'] = [('other', 'BAD')]
+        self.assertEqual(hashes.format_hash_fields(result)[0], 'Model hash: E85715BE65')
+
+    def test_boolean_branch_scope(self):
+        prompt = graph([])
+        prompt['2']['inputs'] = {'image': ['4', 0]}
+        prompt['4'] = {'class_type': 'BooleanSwitchNode', 'inputs': {
+            'state': ['5', 0], 'on_true': ['1', 0], 'on_false': ['9', 0]}}
+        prompt['5'] = {'class_type': 'PrimitiveBoolean', 'inputs': {'value': True}}
+        prompt['9'] = {'class_type': 'CheckpointLoaderSimple', 'inputs': {}}
+        self.assertIn('1', metadata._image_ancestors(prompt, '3'))
+        self.assertNotIn('9', metadata._image_ancestors(prompt, '3'))
+
+    def test_save_keeps_manual_prompt_and_emits_addnet(self):
+        prompt = graph([{'on': True, 'lora': 'lc.safetensors', 'strength': 0.65}])
+        buckets = {'lora': [('lc', '123456ABCD')], 'hashes_json': {'lora:lc': '123456ABCD'}}
+        positive = 'test <lora:manually_written:0.2>'
+        with tempfile.TemporaryDirectory() as tmp:
+            with patch.object(folders, 'get_output_directory', return_value=tmp, create=True), patch.object(folders, 'get_save_image_path', return_value=(tmp, 'test', 1, '', ''), create=True), patch.object(save, 'collect_hashes', return_value=buckets) as collect:
+                save.LCSaveImage().save(np.zeros((1, 16, 24, 3), dtype=np.float32), metadata={'positive': positive, 'negative': 'bad', 'civitai_air': '3328902'}, prompt=prompt, unique_id='3')
+                collect.assert_called_once_with(prompt, None, '3')
+            with Image.open(next(Path(tmp).glob('*.png'))) as image:
+                params = image.info['parameters']
+                self.assertEqual(params.split('\nNegative prompt:')[0], positive)
+                self.assertNotIn('<lora:lc:', params)
+                self.assertIn('AddNet Weight A 1: 0.65', params)
+                self.assertIn('AddNet Weight B 1: 0.65', params)
+                self.assertEqual(image.info['civitai_air'], '3328902')
+
+    def test_addnet_strengths_without_prompt_tags(self):
+        prompt = graph([{'on': True, 'lora': 'my-lora.safetensors', 'strength': -0.4}])
+        data = metadata.collect_lora_metadata(prompt, '3')
+        fields = metadata.format_lora_fields(data, {'lora': [('my-lora', 'ABCD123456')]})
+        self.assertIn('AddNet Model 1: my_lora(ABCD123456)', fields)
+        self.assertIn('AddNet Weight 1: -0.4', fields)
+        self.assertIn('AddNet Weight A 1: -0.4', fields)
+        self.assertIn('AddNet Weight B 1: -0.4', fields)
+        self.assertEqual(metadata.format_lora_fields(data, {}), [])
 
 
 if __name__ == '__main__':

@@ -16,7 +16,7 @@ from urllib.parse import parse_qs, urlparse
 
 import folder_paths
 
-from .lc_lora_metadata import parse_lc_lora_rows
+from .lc_lora_metadata import parse_lc_lora_rows, _image_ancestors
 from .lc_lora_weights import row_strengths
 
 _FILE_EXT = re.compile(r"\.(safetensors|sft|gguf|ckpt|pt|bin|pth)$", re.I)
@@ -304,7 +304,7 @@ def _collect_from_prompt(prompt, skip_ids=None) -> list[tuple[str, str | None]]:
     return found
 
 
-def collect_hashes(prompt=None, extra_pnginfo=None) -> dict:
+def collect_hashes(prompt=None, extra_pnginfo=None, save_node_id=None) -> dict:
     """
     Return {
       'model': [(name, autov2), ...],
@@ -342,13 +342,21 @@ def collect_hashes(prompt=None, extra_pnginfo=None) -> dict:
             if n.get("mode") in (2, 4):
                 skip_ids.add(str(n.get("id", "")))
 
-    candidates = _collect_from_prompt(prompt, skip_ids)
+    # A save node only describes its image ancestry, never unrelated canvas branches.
+    # Without a known save root, retain the standalone helper's legacy scan.
+    scope = _image_ancestors(prompt or {}, save_node_id) if save_node_id is not None else None
+    if save_node_id is not None and scope is None:
+        scope = set()
+    scoped_prompt = prompt if scope is None else {k: v for k, v in (prompt or {}).items() if str(k) in scope}
+    candidates = _collect_from_prompt(scoped_prompt, skip_ids)
     if isinstance(wf, dict) and isinstance(wf.get("nodes"), list):
         fake_prompt = {}
         for i, n in enumerate(wf["nodes"]):
             if not isinstance(n, dict):
                 continue
             if n.get("mode") in (2, 4):
+                continue
+            if scope is not None and str(n.get("id", i)) not in scope:
                 continue
             fake_prompt[str(n.get("id", i))] = {
                 "class_type": n.get("type"),
@@ -487,9 +495,7 @@ def format_hash_fields(buckets: dict) -> tuple[str, str, str, str]:
     Model hash, VAE hash, Lora hashes, and Hashes JSON line fragments.
     Empty strings when nothing found.
     """
-    models = buckets.get("model") or []
-    unets = buckets.get("unet") or []
-    primary = models[0][1] if models else (unets[0][1] if unets else "")
+    primary = (buckets.get("hashes_json") or {}).get("model", "")
     model_hash = f"Model hash: {primary}" if primary else ""
 
     # Classic A1111/Civitai field, same status as "Model hash:" -- never emitted before,
