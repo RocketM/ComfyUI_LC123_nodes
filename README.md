@@ -15,7 +15,7 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 - For **Anima regional attention**, also grab [Sen-sou Anima Regional Conditioning](https://github.com/Sen-sou/Comfyui-Anima-Regional-Conditioning).
 
 **On this page**
-1. [Canvas tools](#-canvas-tools) (Align, Connection FX, Optimization report, Pin all)
+1. [Canvas tools](#-canvas-tools) (Align, Connection FX, Comfy Optimization Report, System & Model Optimization Report, Pin all)
 2. [Settings](#%EF%B8%8F-lc123-settings)
 3. [Notes, labels and previews](#-notes-labels-and-previews)
 4. [LoRA loaders](#%EF%B8%8F-lora-loaders)
@@ -44,6 +44,7 @@ Tools for the canvas itself, not nodes. Nothing here touches your generations.
 - **Rulers** appear on the top and left edge:
     - **Left click** a ruler: a **Node line** (blue). Nodes snap to it.
     - **Right click** a ruler: a **Group line** (orange). Groups snap to it.
+    - **LC Notes** snap to both, since a note can label a node or a group.
     - Click a line's marker again to remove it. Drag a marker to move it.
 - Lines stay invisible until you get close, then fade in. They save with the workflow.
 - **Snap distance is ComfyUI's own Snap to grid size** (Settings > Lite Graph > Canvas). Want it tighter? Make the grid smaller. New lines land on that grid too.
@@ -58,7 +59,7 @@ Tools for the canvas itself, not nodes. Nothing here touches your generations.
 - Zoomed out, every valid socket glows brighter so you can still find it.
 - Costs nothing unless you are holding a wire.
 
-**Optimization report 🩺**
+**Comfy Optimization Report 🩺**
 - Why is my canvas slow? This tells you.
 - It pans your canvas by itself for about 8 seconds, times what every pack in the open workflow draws and runs, and scans their files.
 - You get a list, biggest win first:
@@ -68,6 +69,22 @@ Tools for the canvas itself, not nodes. Nothing here touches your generations.
 - Only node packs used in the open workflow are analyzed. Nothing is changed. (Keep the mouse still while it runs.)
 - Open it from **Settings > LC123 Settings ⚙️ > Optimization**, or right-click the empty canvas.
 - 💡 On a big workflow, the usual winner is links: **Link Render Mode** set to Linear instead of Spline.
+
+**System & Model Optimization Report 🖥️**
+- Will this run on my machine, and which model files should I get? This tells you.
+- It tests your machine in about 10 seconds:
+    - **Hardware:** graphics card, VRAM, RAM, page file, drive speed, PCIe link.
+    - **Speed-ups:** Sage, Triton, Sol-Attn, Comfy Kitchen, fp8 / int8 / nvfp4, llama-cpp for LC Vision. Each one is actually run, not just looked up.
+    - *note:* Sage is checked against standard attention, so a Sage that runs but makes gray noise shows up as ⚠️.
+- ⚠️ problem · 💡 worth changing · ✅ works · ℹ️ info · ➖ not installed
+- **LC Vision model suggestion:** the Qwen3-VL size and quant for your card (Quality / Optimal / Fast), and the context size to set.
+- **When picking a model (includes custom models):** what file type to get on YOUR machine for Quality, Optimal and Fast, a size guide, and what to avoid. Works for finetunes and merges too.
+- **Model recommendations:** pick a model and a goal, get the exact files: download link, size, how close it is to bf16, time per step on your machine, and whether it fits. ✅ = you already have it.
+    - **All base models at a glance** lists every model at once.
+    - Models covered: MiniMax H3, Krea 2, LTX 2.5, LTX 2.3, Anima, Z-Image Turbo, Qwen-Image 2.1, Flux.2 Klein 9B, Ideogram 4.
+    - Measured on an RTX 5090 and an 8 GB RTX 5060 Laptop. Image models land within about 15 %; video models are rougher and it says so.
+- **Show last run** and **Copy report** work like the Comfy Optimization Report. It will not run while ComfyUI is generating.
+- Nothing is changed. Open it from **Settings > LC123 Settings ⚙️ > Optimization**, or right-click the empty canvas.
 
 **Pin (all) / Unpin (all) 📌**
 - Right-click any node, group or the empty canvas.
@@ -114,7 +131,8 @@ Open **Settings** (the gear) and pick **LC123 Settings ⚙️**. These are **UI 
 
 | Setting | Default | What it does |
 |--------|---------|--------|
-| **Optimization report** | button | See [Canvas tools](#-canvas-tools) |
+| **Comfy Optimization Report** | button | See [Canvas tools](#-canvas-tools) |
+| **System & Model Optimization Report** | button | See [Canvas tools](#-canvas-tools) |
 
 **Performance**
 
@@ -132,7 +150,7 @@ Open **Settings** (the gear) and pick **LC123 Settings ⚙️**. These are **UI 
 | **LoRA loader info button** | On | The ℹ button on each LC LoRA Loader row |
 
 - **LC Image Compare**, **LC Image Split** and **LC Dynamic Overlay** keep their full preview and wipe no matter what (only **Preview distance** switches them off when zoomed far out).
-- 💡 Laggy graph? Turn on **Half-resolution previews** and **Clamp longest side** (512). Still laggy? **Hide FX on-node previews**, then run the **Optimization report**.
+- 💡 Laggy graph? Turn on **Half-resolution previews** and **Clamp longest side** (512). Still laggy? **Hide FX on-node previews**, then run the **Comfy Optimization Report**.
 
 Full directions: [`LC123_Performance_Settings_Note.md`](LC123_Performance_Settings_Note.md)
 

@@ -1,0 +1,418 @@
+{
+ "id": "z_image_turbo",
+ "name": "Z-Image Turbo",
+ "kind": "image",
+ "params_b": 6,
+ "notes": [
+  "Text encoder must be Qwen3-4B (the model expects its width); save memory with its fp8 / fp4 / GGUF formats.",
+  "Plain fp8 (e4m3fn) is no faster than bf16."
+ ],
+ "components": {
+  "diffusion": {
+   "label": "Image model",
+   "role": "diffusion",
+   "variants": [
+    {
+     "file": "z_image_turbo_bf16.safetensors",
+     "format": "bf16",
+     "gb": 11.46,
+     "bits": 16,
+     "repo": "Comfy-Org/z_image_turbo",
+     "loader": "UNETLoader"
+    },
+    {
+     "file": "z_image_turbo_int8_convrot.safetensors",
+     "format": "int8_convrot",
+     "gb": 5.77,
+     "bits": 8,
+     "repo": "Comfy-Org/z_image_turbo",
+     "loader": "UNETLoader",
+     "default": true
+    },
+    {
+     "file": "z_image_turbo_nvfp4.safetensors",
+     "format": "nvfp4",
+     "gb": 4.2,
+     "bits": 4,
+     "repo": "Comfy-Org/z_image_turbo",
+     "loader": "UNETLoader"
+    },
+    {
+     "file": "z_image_turbo_fp8_e4m3fn.safetensors",
+     "format": "fp8_e4m3fn",
+     "gb": 5.73,
+     "bits": 8,
+     "repo": "T5B/Z-Image-Turbo-FP8",
+     "loader": "UNETLoader",
+     "community": true
+    },
+    {
+     "file": "z-image-turbo-Q8_0.gguf",
+     "format": "gguf_q8_0",
+     "gb": 6.72,
+     "bits": 8,
+     "repo": "unsloth/Z-Image-Turbo-GGUF",
+     "loader": "UnetLoaderGGUF",
+     "community": true
+    },
+    {
+     "file": "z-image-turbo-Q6_K.gguf",
+     "format": "gguf_q6_k",
+     "gb": 5.5,
+     "bits": 6,
+     "repo": "unsloth/Z-Image-Turbo-GGUF",
+     "loader": "UnetLoaderGGUF",
+     "community": true
+    },
+    {
+     "file": "z-image-turbo-Q5_K_M.gguf",
+     "format": "gguf_q5_k_m",
+     "gb": 5.19,
+     "bits": 5,
+     "repo": "unsloth/Z-Image-Turbo-GGUF",
+     "loader": "UnetLoaderGGUF",
+     "community": true
+    },
+    {
+     "file": "z-image-turbo-Q4_K_M.gguf",
+     "format": "gguf_q4_k_m",
+     "gb": 4.68,
+     "bits": 4,
+     "repo": "unsloth/Z-Image-Turbo-GGUF",
+     "loader": "UnetLoaderGGUF",
+     "community": true
+    },
+    {
+     "file": "z-image-turbo-Q3_K_M.gguf",
+     "format": "gguf_q3_k_m",
+     "gb": 3.9,
+     "bits": 3,
+     "repo": "unsloth/Z-Image-Turbo-GGUF",
+     "loader": "UnetLoaderGGUF",
+     "community": true
+    },
+    {
+     "file": "z-image-turbo-Q2_K.gguf",
+     "format": "gguf_q2_k",
+     "gb": 3.39,
+     "bits": 2,
+     "repo": "unsloth/Z-Image-Turbo-GGUF",
+     "loader": "UnetLoaderGGUF",
+     "community": true
+    }
+   ]
+  },
+  "text_encoder": {
+   "label": "Text encoder (Qwen3-4B)",
+   "role": "text_encoder",
+   "clip_type": "lumina2",
+   "variants": [
+    {
+     "file": "qwen_3_4b.safetensors",
+     "format": "bf16",
+     "gb": 7.49,
+     "bits": 16,
+     "repo": "Comfy-Org/z_image_turbo",
+     "loader": "CLIPLoader"
+    },
+    {
+     "file": "qwen_3_4b_fp8_mixed.safetensors",
+     "format": "fp8_mixed",
+     "gb": 5.24,
+     "bits": 8,
+     "repo": "Comfy-Org/z_image_turbo",
+     "loader": "CLIPLoader",
+     "default": true
+    },
+    {
+     "file": "qwen_3_4b_fp4_mixed.safetensors",
+     "format": "fp4_mixed",
+     "gb": 3.24,
+     "bits": 4,
+     "repo": "Comfy-Org/z_image_turbo",
+     "loader": "CLIPLoader"
+    },
+    {
+     "file": "Qwen3-4B-Q4_K_M.gguf",
+     "format": "gguf_q4_k_m",
+     "gb": 2.33,
+     "bits": 4,
+     "repo": "unsloth/Qwen3-4B-GGUF",
+     "loader": "CLIPLoaderGGUF",
+     "community": true
+    }
+   ]
+  },
+  "vae": {
+   "label": "VAE",
+   "role": "fixed",
+   "variants": [
+    {
+     "file": "ae.safetensors",
+     "format": "bf16",
+     "gb": 0.32,
+     "bits": 16,
+     "repo": "Comfy-Org/z_image_turbo",
+     "loader": "VAELoader",
+     "always": true
+    }
+   ]
+  }
+ },
+ "benchmarks": {
+  "workflow": "Comfy-Org image_z_image_turbo as API, 8 steps, res_multistep, cfg 1, TE qwen_3_4b_fp8_mixed",
+  "references": [
+   {
+    "machine": {
+     "gpu": "NVIDIA GeForce RTX 5090",
+     "vram_gb": 31.8,
+     "attention_sdpa_ms": 2.42,
+     "fp8_tflops": 399.8,
+     "note": ""
+    },
+    "runs": [
+     {
+      "file": "z_image_turbo_bf16.safetensors",
+      "megapixels": 1.0,
+      "step_s": 0.28
+     },
+     {
+      "file": "z_image_turbo_bf16.safetensors",
+      "megapixels": 2.0,
+      "step_s": 0.58
+     },
+     {
+      "file": "z_image_turbo_fp8_e4m3fn.safetensors",
+      "megapixels": 1.0,
+      "step_s": 0.3
+     },
+     {
+      "file": "z_image_turbo_fp8_e4m3fn.safetensors",
+      "megapixels": 2.0,
+      "step_s": 0.59
+     },
+     {
+      "file": "z_image_turbo_int8_convrot.safetensors",
+      "megapixels": 1.0,
+      "step_s": 0.14
+     },
+     {
+      "file": "z_image_turbo_int8_convrot.safetensors",
+      "megapixels": 2.0,
+      "step_s": 0.33
+     },
+     {
+      "file": "z_image_turbo_nvfp4.safetensors",
+      "megapixels": 1.0,
+      "step_s": 0.12
+     },
+     {
+      "file": "z_image_turbo_nvfp4.safetensors",
+      "megapixels": 2.0,
+      "step_s": 0.28
+     },
+     {
+      "file": "z-image-turbo-Q8_0.gguf",
+      "megapixels": 1.0,
+      "step_s": 0.31
+     },
+     {
+      "file": "z-image-turbo-Q8_0.gguf",
+      "megapixels": 2.0,
+      "step_s": 0.62
+     },
+     {
+      "file": "z-image-turbo-Q4_K_M.gguf",
+      "megapixels": 1.0,
+      "step_s": 0.39
+     },
+     {
+      "file": "z-image-turbo-Q4_K_M.gguf",
+      "megapixels": 2.0,
+      "step_s": 0.69
+     }
+    ]
+   },
+   {
+    "machine": {
+     "gpu": "NVIDIA GeForce RTX 5060 Laptop GPU",
+     "vram_gb": 8.0,
+     "attention_sdpa_ms": 17.2,
+     "fp8_tflops": 66.5,
+     "note": "64 GB RAM, PCIe Gen5 x8, no SageAttention"
+    },
+    "runs": [
+     {
+      "file": "z_image_turbo_bf16.safetensors",
+      "megapixels": 1.0,
+      "step_s": 2.72,
+      "peak_ram_gib": 33.45
+     },
+     {
+      "file": "z_image_turbo_bf16.safetensors",
+      "megapixels": 2.0,
+      "step_s": 5.73,
+      "peak_ram_gib": 33.47
+     },
+     {
+      "file": "z_image_turbo_fp8_e4m3fn.safetensors",
+      "megapixels": 1.0,
+      "step_s": 2.85,
+      "peak_ram_gib": 27.21
+     },
+     {
+      "file": "z_image_turbo_fp8_e4m3fn.safetensors",
+      "megapixels": 2.0,
+      "step_s": 5.77,
+      "peak_ram_gib": 27.24
+     },
+     {
+      "file": "z_image_turbo_int8_convrot.safetensors",
+      "megapixels": 1.0,
+      "step_s": 1.26,
+      "peak_ram_gib": 27.16
+     },
+     {
+      "file": "z_image_turbo_int8_convrot.safetensors",
+      "megapixels": 2.0,
+      "step_s": 2.98,
+      "peak_ram_gib": 27.27
+     },
+     {
+      "file": "z_image_turbo_nvfp4.safetensors",
+      "megapixels": 1.0,
+      "step_s": 1.05,
+      "peak_ram_gib": 26.28
+     },
+     {
+      "file": "z_image_turbo_nvfp4.safetensors",
+      "megapixels": 2.0,
+      "step_s": 2.52,
+      "peak_ram_gib": 26.47
+     },
+     {
+      "file": "z-image-turbo-Q8_0.gguf",
+      "megapixels": 1.0,
+      "step_s": 3.18,
+      "peak_ram_gib": 27.82
+     },
+     {
+      "file": "z-image-turbo-Q8_0.gguf",
+      "megapixels": 2.0,
+      "step_s": 6.2,
+      "peak_ram_gib": 29.28
+     },
+     {
+      "file": "z-image-turbo-Q4_K_M.gguf",
+      "megapixels": 1.0,
+      "step_s": 3.46,
+      "peak_ram_gib": 19.89
+     },
+     {
+      "file": "z-image-turbo-Q4_K_M.gguf",
+      "megapixels": 2.0,
+      "step_s": 6.48,
+      "peak_ram_gib": 20.43
+     }
+    ]
+   }
+  ]
+ },
+ "quality": {
+  "method": "single step from the same bf16 latent (steps 2, 4, 6 of 8), 3 prompts, LPIPS vs bf16",
+  "reference": "z_image_turbo_bf16.safetensors",
+  "files": {
+   "z_image_turbo_fp8_e4m3fn.safetensors": {
+    "lpips_avg": 0.0256,
+    "k2": {
+     "lpips": 0.0503,
+     "ssim": 0.955,
+     "psnr": 32.02
+    },
+    "k4": {
+     "lpips": 0.0205,
+     "ssim": 0.9811,
+     "psnr": 37.53
+    },
+    "k6": {
+     "lpips": 0.0059,
+     "ssim": 0.9929,
+     "psnr": 44.11
+    }
+   },
+   "z_image_turbo_int8_convrot.safetensors": {
+    "lpips_avg": 0.003,
+    "k2": {
+     "lpips": 0.006,
+     "ssim": 0.9935,
+     "psnr": 43.58
+    },
+    "k4": {
+     "lpips": 0.0023,
+     "ssim": 0.9965,
+     "psnr": 48.49
+    },
+    "k6": {
+     "lpips": 0.0007,
+     "ssim": 0.998,
+     "psnr": 53.26
+    }
+   },
+   "z_image_turbo_nvfp4.safetensors": {
+    "lpips_avg": 0.0536,
+    "k2": {
+     "lpips": 0.0996,
+     "ssim": 0.9105,
+     "psnr": 27.38
+    },
+    "k4": {
+     "lpips": 0.0463,
+     "ssim": 0.9589,
+     "psnr": 33.1
+    },
+    "k6": {
+     "lpips": 0.0148,
+     "ssim": 0.9849,
+     "psnr": 39.65
+    }
+   },
+   "z-image-turbo-Q8_0.gguf": {
+    "lpips_avg": 0.0015,
+    "k2": {
+     "lpips": 0.0028,
+     "ssim": 0.996,
+     "psnr": 47.01
+    },
+    "k4": {
+     "lpips": 0.0012,
+     "ssim": 0.9974,
+     "psnr": 51.24
+    },
+    "k6": {
+     "lpips": 0.0004,
+     "ssim": 0.9985,
+     "psnr": 55.18
+    }
+   },
+   "z-image-turbo-Q4_K_M.gguf": {
+    "lpips_avg": 0.0199,
+    "k2": {
+     "lpips": 0.0392,
+     "ssim": 0.9665,
+     "psnr": 33.22
+    },
+    "k4": {
+     "lpips": 0.0164,
+     "ssim": 0.9846,
+     "psnr": 38.49
+    },
+    "k6": {
+     "lpips": 0.004,
+     "ssim": 0.9946,
+     "psnr": 45.57
+    }
+   }
+  }
+ },
+ "source": "Hugging Face tree API sizes and Comfy-Org workflow templates, researched and measured 2026-09-28"
+}

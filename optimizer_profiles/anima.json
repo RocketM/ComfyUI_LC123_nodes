@@ -1,0 +1,488 @@
+{
+ "id": "anima",
+ "name": "Anima (2B)",
+ "kind": "image",
+ "notes": [
+  "Small model: fits almost any card in bf16. Quantized files mainly help 4 GB cards."
+ ],
+ "components": {
+  "diffusion": {
+   "label": "Image model",
+   "role": "diffusion",
+   "variants": [
+    {
+     "file": "anima-base-v1.0.safetensors",
+     "format": "bf16",
+     "gb": 3.89,
+     "bits": 16,
+     "repo": "circlestone-labs/Anima",
+     "loader": "UNETLoader",
+     "default": true
+    },
+    {
+     "file": "anima-base-v1.0-fp8.safetensors",
+     "format": "fp8",
+     "gb": 2.42,
+     "bits": 8,
+     "repo": "Bedovyy/Anima-FP8",
+     "loader": "UNETLoader",
+     "community": true
+    },
+    {
+     "file": "anima-base-v1.0-int8convrot.safetensors",
+     "format": "int8_convrot",
+     "gb": 2.47,
+     "bits": 8,
+     "repo": "Bedovyy/Anima-INT8",
+     "loader": "UNETLoader",
+     "community": true
+    },
+    {
+     "file": "anima-base-v1.0-nvfp4mixed.safetensors",
+     "format": "nvfp4",
+     "gb": 2.01,
+     "bits": 4,
+     "repo": "Bedovyy/Anima-FP8",
+     "loader": "UNETLoader",
+     "community": true
+    },
+    {
+     "file": "anima-base-v1.0-Q8_0.gguf",
+     "format": "gguf_q8_0",
+     "gb": 2.09,
+     "bits": 8,
+     "repo": "Abiray/Anima-base-v1.0-GGUF",
+     "loader": "UnetLoaderGGUF",
+     "community": true
+    },
+    {
+     "file": "anima-base-v1.0-Q6_K.gguf",
+     "format": "gguf_q6_k",
+     "gb": 1.62,
+     "bits": 6,
+     "repo": "Abiray/Anima-base-v1.0-GGUF",
+     "loader": "UnetLoaderGGUF",
+     "community": true
+    },
+    {
+     "file": "anima-base-v1.0-Q4_K_M.gguf",
+     "format": "gguf_q4_k_m",
+     "gb": 1.29,
+     "bits": 4,
+     "repo": "Abiray/Anima-base-v1.0-GGUF",
+     "loader": "UnetLoaderGGUF",
+     "community": true
+    },
+    {
+     "file": "anima-base-v1.0-mxfp8.safetensors",
+     "format": "mxfp8",
+     "gb": 2.48,
+     "bits": 8,
+     "repo": "Bedovyy/Anima-FP8",
+     "loader": "UNETLoader",
+     "community": true
+    },
+    {
+     "file": "anima-base-v1.0-Q5_K_M.gguf",
+     "format": "gguf_q5_k_m",
+     "gb": 1.45,
+     "bits": 5,
+     "repo": "Abiray/Anima-base-v1.0-GGUF",
+     "loader": "UnetLoaderGGUF",
+     "community": true
+    },
+    {
+     "file": "anima-base-v1.0-Q3_K_M.gguf",
+     "format": "gguf_q3_k_m",
+     "gb": 0.95,
+     "bits": 3,
+     "repo": "Abiray/Anima-base-v1.0-GGUF",
+     "loader": "UnetLoaderGGUF",
+     "community": true
+    }
+   ]
+  },
+  "text_encoder": {
+   "label": "Text encoder (Qwen3 0.6B)",
+   "role": "text_encoder",
+   "clip_type": "stable_diffusion",
+   "variants": [
+    {
+     "file": "qwen_3_06b_base.safetensors",
+     "format": "bf16",
+     "gb": 1.11,
+     "bits": 16,
+     "repo": "circlestone-labs/Anima",
+     "loader": "CLIPLoader",
+     "default": true
+    }
+   ]
+  },
+  "vae": {
+   "label": "VAE",
+   "role": "fixed",
+   "variants": [
+    {
+     "file": "qwen_image_vae.safetensors",
+     "format": "bf16",
+     "gb": 0.23,
+     "bits": 16,
+     "repo": "circlestone-labs/Anima",
+     "loader": "VAELoader",
+     "always": true
+    }
+   ]
+  }
+ },
+ "source": "Hugging Face tree API sizes and Comfy-Org workflow templates, researched 2026-09-27",
+ "benchmarks": {
+  "workflow": "Comfy-Org image_anima_base_v1 as API, 30 steps, cfg 4, euler/simple, qwen_3_06b_base TE",
+  "references": [
+   {
+    "machine": {
+     "gpu": "NVIDIA GeForce RTX 5090",
+     "attention_sdpa_ms": 2.42,
+     "fp8_tflops": 399.8
+    },
+    "runs": [
+     {
+      "file": "anima-base-v1.0.safetensors",
+      "megapixels": 1.0,
+      "step_s": 0.2
+     },
+     {
+      "file": "anima-base-v1.0.safetensors",
+      "megapixels": 2.0,
+      "step_s": 0.43
+     },
+     {
+      "file": "anima-base-v1.0-fp8.safetensors",
+      "megapixels": 1.0,
+      "step_s": 0.15
+     },
+     {
+      "file": "anima-base-v1.0-fp8.safetensors",
+      "megapixels": 2.0,
+      "step_s": 0.33
+     },
+     {
+      "file": "anima-base-v1.0-mxfp8.safetensors",
+      "megapixels": 1.0,
+      "step_s": 0.13
+     },
+     {
+      "file": "anima-base-v1.0-mxfp8.safetensors",
+      "megapixels": 2.0,
+      "step_s": 0.3
+     },
+     {
+      "file": "anima-base-v1.0-int8convrot.safetensors",
+      "megapixels": 1.0,
+      "step_s": 0.13
+     },
+     {
+      "file": "anima-base-v1.0-int8convrot.safetensors",
+      "megapixels": 2.0,
+      "step_s": 0.31
+     },
+     {
+      "file": "anima-base-v1.0-Q8_0.gguf",
+      "megapixels": 1.0,
+      "step_s": 0.21
+     },
+     {
+      "file": "anima-base-v1.0-Q8_0.gguf",
+      "megapixels": 2.0,
+      "step_s": 0.45
+     },
+     {
+      "file": "anima-base-v1.0-Q5_K_M.gguf",
+      "megapixels": 1.0,
+      "step_s": 0.46
+     },
+     {
+      "file": "anima-base-v1.0-Q5_K_M.gguf",
+      "megapixels": 2.0,
+      "step_s": 0.69
+     },
+     {
+      "file": "anima-base-v1.0-Q4_K_M.gguf",
+      "megapixels": 1.0,
+      "step_s": 0.42
+     },
+     {
+      "file": "anima-base-v1.0-Q4_K_M.gguf",
+      "megapixels": 2.0,
+      "step_s": 0.62
+     },
+     {
+      "file": "anima-base-v1.0-Q3_K_M.gguf",
+      "megapixels": 1.0,
+      "step_s": 0.51
+     },
+     {
+      "file": "anima-base-v1.0-Q3_K_M.gguf",
+      "megapixels": 2.0,
+      "step_s": 0.7
+     }
+    ]
+   },
+   {
+    "machine": {
+     "gpu": "NVIDIA GeForce RTX 5060 Laptop GPU",
+     "vram_gb": 8.0,
+     "attention_sdpa_ms": 17.2,
+     "fp8_tflops": 66.5,
+     "note": "64 GB RAM, PCIe Gen5 x8, no SageAttention"
+    },
+    "runs": [
+     {
+      "file": "anima-base-v1.0.safetensors",
+      "megapixels": 1.0,
+      "step_s": 1.84,
+      "peak_ram_gib": 20.3,
+      "peak_swap_gib": 0.08
+     },
+     {
+      "file": "anima-base-v1.0.safetensors",
+      "megapixels": 2.0,
+      "step_s": 3.97,
+      "peak_ram_gib": 20.36,
+      "peak_swap_gib": 0.08
+     },
+     {
+      "file": "anima-base-v1.0-fp8.safetensors",
+      "megapixels": 1.0,
+      "step_s": 1.26,
+      "peak_ram_gib": 18.82,
+      "peak_swap_gib": 0.08
+     },
+     {
+      "file": "anima-base-v1.0-fp8.safetensors",
+      "megapixels": 2.0,
+      "step_s": 2.95,
+      "peak_ram_gib": 19.0,
+      "peak_swap_gib": 0.08
+     },
+     {
+      "file": "anima-base-v1.0-mxfp8.safetensors",
+      "megapixels": 1.0,
+      "step_s": 1.1,
+      "peak_ram_gib": 19.16,
+      "peak_swap_gib": 0.08
+     },
+     {
+      "file": "anima-base-v1.0-mxfp8.safetensors",
+      "megapixels": 2.0,
+      "step_s": 2.64,
+      "peak_ram_gib": 19.2,
+      "peak_swap_gib": 0.08
+     },
+     {
+      "file": "anima-base-v1.0-int8convrot.safetensors",
+      "megapixels": 1.0,
+      "step_s": 1.14,
+      "peak_ram_gib": 18.93,
+      "peak_swap_gib": 0.08
+     },
+     {
+      "file": "anima-base-v1.0-int8convrot.safetensors",
+      "megapixels": 2.0,
+      "step_s": 2.7,
+      "peak_ram_gib": 18.93,
+      "peak_swap_gib": 0.08
+     },
+     {
+      "file": "anima-base-v1.0-Q8_0.gguf",
+      "megapixels": 1.0,
+      "step_s": 1.93,
+      "peak_ram_gib": 17.97,
+      "peak_swap_gib": 0.08
+     },
+     {
+      "file": "anima-base-v1.0-Q8_0.gguf",
+      "megapixels": 2.0,
+      "step_s": 4.06,
+      "peak_ram_gib": 18.36,
+      "peak_swap_gib": 0.08
+     },
+     {
+      "file": "anima-base-v1.0-Q5_K_M.gguf",
+      "megapixels": 1.0,
+      "step_s": 2.15,
+      "peak_ram_gib": 17.3,
+      "peak_swap_gib": 0.08
+     },
+     {
+      "file": "anima-base-v1.0-Q5_K_M.gguf",
+      "megapixels": 2.0,
+      "step_s": 4.32,
+      "peak_ram_gib": 17.71,
+      "peak_swap_gib": 0.08
+     },
+     {
+      "file": "anima-base-v1.0-Q4_K_M.gguf",
+      "megapixels": 1.0,
+      "step_s": 2.1,
+      "peak_ram_gib": 17.11,
+      "peak_swap_gib": 0.08
+     },
+     {
+      "file": "anima-base-v1.0-Q4_K_M.gguf",
+      "megapixels": 2.0,
+      "step_s": 4.26,
+      "peak_ram_gib": 17.63,
+      "peak_swap_gib": 0.08
+     },
+     {
+      "file": "anima-base-v1.0-Q3_K_M.gguf",
+      "megapixels": 1.0,
+      "step_s": 2.18,
+      "peak_ram_gib": 16.82,
+      "peak_swap_gib": 0.08
+     },
+     {
+      "file": "anima-base-v1.0-Q3_K_M.gguf",
+      "megapixels": 2.0,
+      "step_s": 4.35,
+      "peak_ram_gib": 17.2,
+      "peak_swap_gib": 0.08
+     }
+    ]
+   }
+  ]
+ },
+ "quality": {
+  "method": "single step from the same bf16 latent (steps 6, 15, 24 of 30), 3 prompts, LPIPS vs bf16",
+  "reference": "anima-base-v1.0.safetensors",
+  "files": {
+   "anima-base-v1.0-fp8.safetensors": {
+    "lpips_avg": 0.0374,
+    "k6": {
+     "lpips": 0.0496,
+     "ssim": 0.8504,
+     "psnr": 27.91
+    },
+    "k15": {
+     "lpips": 0.0459,
+     "ssim": 0.8904,
+     "psnr": 26.32
+    },
+    "k24": {
+     "lpips": 0.0166,
+     "ssim": 0.9639,
+     "psnr": 30.38
+    }
+   },
+   "anima-base-v1.0-mxfp8.safetensors": {
+    "lpips_avg": 0.0375,
+    "k6": {
+     "lpips": 0.0501,
+     "ssim": 0.8511,
+     "psnr": 28.14
+    },
+    "k15": {
+     "lpips": 0.0458,
+     "ssim": 0.8922,
+     "psnr": 26.4
+    },
+    "k24": {
+     "lpips": 0.0166,
+     "ssim": 0.9629,
+     "psnr": 30.19
+    }
+   },
+   "anima-base-v1.0-int8convrot.safetensors": {
+    "lpips_avg": 0.0216,
+    "k6": {
+     "lpips": 0.0335,
+     "ssim": 0.8816,
+     "psnr": 30.27
+    },
+    "k15": {
+     "lpips": 0.0242,
+     "ssim": 0.9275,
+     "psnr": 29.17
+    },
+    "k24": {
+     "lpips": 0.0072,
+     "ssim": 0.9804,
+     "psnr": 33.99
+    }
+   },
+   "anima-base-v1.0-Q8_0.gguf": {
+    "lpips_avg": 0.0204,
+    "k6": {
+     "lpips": 0.0337,
+     "ssim": 0.8813,
+     "psnr": 30.14
+    },
+    "k15": {
+     "lpips": 0.022,
+     "ssim": 0.9326,
+     "psnr": 29.62
+    },
+    "k24": {
+     "lpips": 0.0055,
+     "ssim": 0.9837,
+     "psnr": 35.14
+    }
+   },
+   "anima-base-v1.0-Q5_K_M.gguf": {
+    "lpips_avg": 0.0371,
+    "k6": {
+     "lpips": 0.0565,
+     "ssim": 0.8336,
+     "psnr": 27.02
+    },
+    "k15": {
+     "lpips": 0.0449,
+     "ssim": 0.8915,
+     "psnr": 26.52
+    },
+    "k24": {
+     "lpips": 0.0098,
+     "ssim": 0.9751,
+     "psnr": 32.71
+    }
+   },
+   "anima-base-v1.0-Q4_K_M.gguf": {
+    "lpips_avg": 0.0633,
+    "k6": {
+     "lpips": 0.1001,
+     "ssim": 0.7881,
+     "psnr": 23.82
+    },
+    "k15": {
+     "lpips": 0.0745,
+     "ssim": 0.8561,
+     "psnr": 24.57
+    },
+    "k24": {
+     "lpips": 0.0153,
+     "ssim": 0.9648,
+     "psnr": 30.74
+    }
+   },
+   "anima-base-v1.0-Q3_K_M.gguf": {
+    "lpips_avg": 0.1829,
+    "k6": {
+     "lpips": 0.2767,
+     "ssim": 0.7063,
+     "psnr": 19.2
+    },
+    "k15": {
+     "lpips": 0.2214,
+     "ssim": 0.7416,
+     "psnr": 20.77
+    },
+    "k24": {
+     "lpips": 0.0506,
+     "ssim": 0.9173,
+     "psnr": 26.18
+    }
+   }
+  }
+ },
+ "params_b": 2
+}

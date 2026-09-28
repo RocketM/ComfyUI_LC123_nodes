@@ -1,7 +1,7 @@
 /**
- * LC Optimization report: finds what slows down panning, zooming and dragging on the canvas, across every installed pack.
+ * Comfy Optimization Report: finds what slows down panning, zooming and dragging on the canvas, across every installed pack.
  *
- * Open it from Settings > LC123 > Optimization, or right-click the empty canvas > LC Optimization report.
+ * Open it from Settings > LC123 > Optimization, or right-click the empty canvas > Comfy Optimization Report.
  * 1. Live test: pans the canvas by itself for a few seconds (at your zoom, then zoomed out) and times
  *    every node draw, every animation loop and every timer, grouped by the pack it comes from.
  * 2. File scan: reads every pack's front-end files for patterns known to cost frame time.
@@ -564,7 +564,7 @@ function openWindow() {
   box.style.cssText =
     "width:min(920px,94vw);max-height:88vh;overflow:auto;background:#1e2227;color:#dfe3e8;border:1px solid #3a4048;border-radius:10px;padding:18px 22px;font:13px/1.45 system-ui,sans-serif;";
   box.innerHTML = `<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-      <div style="font-size:17px;font-weight:600;flex:1">LC Optimization report</div>
+      <div style="font-size:17px;font-weight:600;flex:1">Comfy Optimization Report</div>
       <button class="lc-opt-last p-button p-button-sm p-button-secondary" type="button" style="display:none">Show last run</button>
       <button class="lc-opt-copy p-button p-button-sm" type="button" disabled>Copy report</button>
       <button class="lc-opt-again p-button p-button-sm" type="button" disabled>Run again</button>
@@ -660,7 +660,7 @@ function openWindow() {
     h.push(`<div style="color:#9aa3ad;margin-bottom:10px">${rep.nodes} nodes, ${rep.links} links. Times are milliseconds. A smooth 60 fps frame has about 16 ms in total.</div>`);
     h.push(`<table style="width:100%;border-collapse:collapse;margin-bottom:14px">`);
     h.push(`<tr style="color:#9aa3ad;text-align:left"><th>Test</th><th>Frames per second</th><th>Canvas draw per frame</th><th>Nodes</th><th>Links</th><th>Groups</th></tr>`);
-    lines.push(`LC Optimization report: ${rep.nodes} nodes, ${rep.links} links`);
+    lines.push(`Comfy Optimization Report: ${rep.nodes} nodes, ${rep.links} links`);
     for (const ph of rep.phases) {
       const fps = ph.frames / ph.seconds;
       const per = ph.drawMs / Math.max(1, ph.draws);
@@ -728,21 +728,22 @@ app.registerExtension({
   settings: [
     {
       id: "LC123.Optimization.Report",
-      name: "Optimization report",
-      category: ["LC123 Settings ⚙️", "Optimization", "Optimization report"],
+      sortOrder: 20, // above the System & Model Optimization Report
+      name: "Comfy Optimization Report",
+      category: ["LC123 Settings ⚙️", "Optimization", "Comfy Optimization Report"],
       defaultValue: "",
       tooltip:
         "Pans the canvas by itself for a few seconds, times what every installed pack draws and runs, scans their files, and lists what slows the canvas down, biggest first. Nothing is changed.",
       type: () => {
         const b = document.createElement("button");
         b.type = "button";
-        b.textContent = "Open optimization report";
+        b.textContent = "Open Comfy Optimization Report";
         b.className = "p-button p-component p-button-sm";
         b.onclick = (e) => {
           e.preventDefault();
           e.stopPropagation();
           // close the settings dialog first so the live test can see the canvas
-          document.querySelector(".p-dialog-mask .p-dialog-close-button, .p-dialog .p-dialog-header-close")?.click();
+          document.querySelector('.p-dialog-mask .p-dialog-close-button, .p-dialog .p-dialog-header-close, [role="dialog"] button[aria-label="Close dialog"]')?.click(); // old and new settings dialog
           setTimeout(openWindow, 250);
         };
         return b;
@@ -750,7 +751,7 @@ app.registerExtension({
     },
   ],
   getCanvasMenuItems() {
-    return [null, { content: "LC Optimization report", callback: () => openWindow() }];
+    return [null, { content: "Comfy Optimization Report", callback: () => openWindow() }];
   },
 });
 

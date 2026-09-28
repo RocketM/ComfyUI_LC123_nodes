@@ -1,0 +1,303 @@
+{
+ "id": "qwen_image_21",
+ "name": "Qwen-Image 2.1",
+ "kind": "image",
+ "params_b": 7,
+ "notes": [
+  "unsloth's Qwen-Image-2.1-FP8 safetensors does not load in ComfyUI.",
+  "Only GGUFs tagged qwen_image (Abiray) load in ComfyUI-GGUF; unsloth / leejet ones are rejected."
+ ],
+ "components": {
+  "diffusion": {
+   "label": "Image model",
+   "role": "diffusion",
+   "variants": [
+    {
+     "file": "qwen_image_2.1_bf16.safetensors",
+     "format": "bf16",
+     "gb": 13.25,
+     "bits": 16,
+     "repo": "Comfy-Org/Qwen-Image-2.1",
+     "loader": "UNETLoader"
+    },
+    {
+     "file": "qwen_image_2.1_int8_convrot.safetensors",
+     "format": "int8_convrot",
+     "gb": 6.76,
+     "bits": 8,
+     "repo": "Comfy-Org/Qwen-Image-2.1",
+     "loader": "UNETLoader",
+     "default": true
+    },
+    {
+     "file": "qwen_image_2.1_Q8_0.gguf",
+     "format": "gguf_q8_0",
+     "gb": 7.07,
+     "bits": 8,
+     "repo": "Abiray/Qwen-Image-2.1-GGUF",
+     "loader": "UnetLoaderGGUF",
+     "community": true
+    },
+    {
+     "file": "qwen_image_2.1_Q6_K.gguf",
+     "format": "gguf_q6_k",
+     "gb": 5.48,
+     "bits": 6,
+     "repo": "Abiray/Qwen-Image-2.1-GGUF",
+     "loader": "UnetLoaderGGUF",
+     "community": true
+    },
+    {
+     "file": "qwen_image_2.1_Q5_K_M.gguf",
+     "format": "gguf_q5_k_m",
+     "gb": 4.67,
+     "bits": 5,
+     "repo": "Abiray/Qwen-Image-2.1-GGUF",
+     "loader": "UnetLoaderGGUF",
+     "community": true
+    },
+    {
+     "file": "qwen_image_2.1_Q4_K_M.gguf",
+     "format": "gguf_q4_k_m",
+     "gb": 3.9,
+     "bits": 4,
+     "repo": "Abiray/Qwen-Image-2.1-GGUF",
+     "loader": "UnetLoaderGGUF",
+     "community": true
+    },
+    {
+     "file": "qwen_image_2.1_Q3_K_M.gguf",
+     "format": "gguf_q3_k_m",
+     "gb": 2.97,
+     "bits": 3,
+     "repo": "Abiray/Qwen-Image-2.1-GGUF",
+     "loader": "UnetLoaderGGUF",
+     "community": true
+    }
+   ]
+  },
+  "text_encoder": {
+   "label": "Text encoder (Qwen3-VL-8B)",
+   "role": "text_encoder",
+   "clip_type": "qwen_image",
+   "variants": [
+    {
+     "file": "qwen3vl_8b_bf16.safetensors",
+     "format": "bf16",
+     "gb": 16.33,
+     "bits": 16,
+     "repo": "Comfy-Org/Qwen-Image-2.1",
+     "loader": "CLIPLoader"
+    },
+    {
+     "file": "qwen3vl_8b_int8_convrot.safetensors",
+     "format": "int8_convrot",
+     "gb": 8.71,
+     "bits": 8,
+     "repo": "Comfy-Org/Qwen-Image-2.1",
+     "loader": "CLIPLoader",
+     "default": true
+    },
+    {
+     "file": "qwen3vl_8b_w4a8.safetensors",
+     "format": "w4a8",
+     "gb": 5.88,
+     "bits": 4,
+     "repo": "Comfy-Org/Qwen-Image-2.1",
+     "loader": "CLIPLoader"
+    }
+   ]
+  },
+  "vae": {
+   "label": "VAE",
+   "role": "fixed",
+   "variants": [
+    {
+     "file": "qwen_image_2.1_vae_bf16.safetensors",
+     "format": "bf16",
+     "gb": 0.63,
+     "bits": 16,
+     "repo": "Comfy-Org/Qwen-Image-2.1",
+     "loader": "VAELoader",
+     "always": true
+    }
+   ]
+  }
+ },
+ "benchmarks": {
+  "workflow": "Comfy-Org image_qwen_image_2_1_t2i as API, 25 steps, euler, cfg 1",
+  "references": [
+   {
+    "machine": {
+     "gpu": "NVIDIA GeForce RTX 5090",
+     "vram_gb": 31.8,
+     "attention_sdpa_ms": 2.42,
+     "fp8_tflops": 399.8,
+     "note": ""
+    },
+    "runs": [
+     {
+      "file": "qwen_image_2.1_bf16.safetensors",
+      "megapixels": 1.0,
+      "step_s": 0.33
+     },
+     {
+      "file": "qwen_image_2.1_bf16.safetensors",
+      "megapixels": 2.0,
+      "step_s": 0.71
+     },
+     {
+      "file": "qwen_image_2.1_int8_convrot.safetensors",
+      "megapixels": 1.0,
+      "step_s": 0.15
+     },
+     {
+      "file": "qwen_image_2.1_int8_convrot.safetensors",
+      "megapixels": 2.0,
+      "step_s": 0.37
+     },
+     {
+      "file": "qwen_image_2.1_Q8_0.gguf",
+      "megapixels": 1.0,
+      "step_s": 0.37
+     },
+     {
+      "file": "qwen_image_2.1_Q8_0.gguf",
+      "megapixels": 2.0,
+      "step_s": 0.75
+     },
+     {
+      "file": "qwen_image_2.1_Q4_K_M.gguf",
+      "megapixels": 1.0,
+      "step_s": 0.43
+     },
+     {
+      "file": "qwen_image_2.1_Q4_K_M.gguf",
+      "megapixels": 2.0,
+      "step_s": 0.82
+     }
+    ]
+   },
+   {
+    "machine": {
+     "gpu": "NVIDIA GeForce RTX 5060 Laptop GPU",
+     "vram_gb": 8.0,
+     "attention_sdpa_ms": 17.2,
+     "fp8_tflops": 66.5,
+     "note": "64 GB RAM, PCIe Gen5 x8, no SageAttention"
+    },
+    "runs": [
+     {
+      "file": "qwen_image_2.1_bf16.safetensors",
+      "megapixels": 1.0,
+      "step_s": 3.25,
+      "peak_ram_gib": 37.04
+     },
+     {
+      "file": "qwen_image_2.1_bf16.safetensors",
+      "megapixels": 2.0,
+      "step_s": 7.06,
+      "peak_ram_gib": 37.08
+     },
+     {
+      "file": "qwen_image_2.1_int8_convrot.safetensors",
+      "megapixels": 1.0,
+      "step_s": 1.34,
+      "peak_ram_gib": 30.7
+     },
+     {
+      "file": "qwen_image_2.1_int8_convrot.safetensors",
+      "megapixels": 2.0,
+      "step_s": 3.42,
+      "peak_ram_gib": 30.71
+     },
+     {
+      "file": "qwen_image_2.1_Q8_0.gguf",
+      "megapixels": 1.0,
+      "step_s": 3.7,
+      "peak_ram_gib": 30.09
+     },
+     {
+      "file": "qwen_image_2.1_Q8_0.gguf",
+      "megapixels": 2.0,
+      "step_s": 7.54,
+      "peak_ram_gib": 24.23
+     },
+     {
+      "file": "qwen_image_2.1_Q4_K_M.gguf",
+      "megapixels": 1.0,
+      "step_s": 3.96,
+      "peak_ram_gib": 26.07
+     },
+     {
+      "file": "qwen_image_2.1_Q4_K_M.gguf",
+      "megapixels": 2.0,
+      "step_s": 7.8,
+      "peak_ram_gib": 25.82
+     }
+    ]
+   }
+  ]
+ },
+ "quality": {
+  "method": "single step from the same bf16 latent (steps 5, 12, 20 of 25), 3 prompts, LPIPS vs bf16",
+  "reference": "qwen_image_2.1_bf16.safetensors",
+  "files": {
+   "qwen_image_2.1_int8_convrot.safetensors": {
+    "lpips_avg": 0.0017,
+    "k5": {
+     "lpips": 0.0027,
+     "ssim": 0.991,
+     "psnr": 44.89
+    },
+    "k12": {
+     "lpips": 0.0016,
+     "ssim": 0.9937,
+     "psnr": 46.1
+    },
+    "k20": {
+     "lpips": 0.0009,
+     "ssim": 0.9962,
+     "psnr": 47.66
+    }
+   },
+   "qwen_image_2.1_Q8_0.gguf": {
+    "lpips_avg": 0.0014,
+    "k5": {
+     "lpips": 0.0021,
+     "ssim": 0.9928,
+     "psnr": 46.26
+    },
+    "k12": {
+     "lpips": 0.0013,
+     "ssim": 0.9949,
+     "psnr": 47.3
+    },
+    "k20": {
+     "lpips": 0.0007,
+     "ssim": 0.9969,
+     "psnr": 48.67
+    }
+   },
+   "qwen_image_2.1_Q4_K_M.gguf": {
+    "lpips_avg": 0.0098,
+    "k5": {
+     "lpips": 0.0156,
+     "ssim": 0.9643,
+     "psnr": 36.31
+    },
+    "k12": {
+     "lpips": 0.009,
+     "ssim": 0.9742,
+     "psnr": 38.33
+    },
+    "k20": {
+     "lpips": 0.0047,
+     "ssim": 0.9846,
+     "psnr": 40.54
+    }
+   }
+  }
+ },
+ "source": "Hugging Face tree API sizes and Comfy-Org workflow templates, researched and measured 2026-09-28"
+}

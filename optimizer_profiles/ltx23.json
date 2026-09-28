@@ -1,0 +1,311 @@
+{
+ "id": "ltx23",
+ "name": "LTX 2.3 (22B dev)",
+ "kind": "video",
+ "params_b": 22,
+ "notes": [
+  "Comfy's template uses the full fp8 checkpoint + distilled LoRA at 0.5 + Gemma 3 12B fp4 text encoder.",
+  "fp8 / int8 drift more here than on other models (LoRA on quantized weights?); the Q8 GGUF stays closest but is slow."
+ ],
+ "components": {
+  "diffusion": {
+   "label": "Video model",
+   "role": "diffusion",
+   "variants": [
+    {
+     "file": "ltx-2.3-22b-dev.safetensors",
+     "format": "bf16",
+     "gb": 42.98,
+     "bits": 16,
+     "repo": "Lightricks/LTX-2.3",
+     "loader": "CheckpointLoaderSimple",
+     "note": "full checkpoint incl. VAEs"
+    },
+    {
+     "file": "ltx-2.3-22b-dev-fp8.safetensors",
+     "format": "fp8",
+     "gb": 27.15,
+     "bits": 8,
+     "repo": "Lightricks/LTX-2.3-fp8",
+     "loader": "CheckpointLoaderSimple",
+     "default": true,
+     "note": "full checkpoint incl. VAEs"
+    },
+    {
+     "file": "ltx-2.3-22b-dev-nvfp4.safetensors",
+     "format": "nvfp4",
+     "gb": 20.21,
+     "bits": 4,
+     "repo": "Lightricks/LTX-2.3-nvfp4",
+     "loader": "CheckpointLoaderSimple"
+    },
+    {
+     "file": "ltx-2.3-22b-dev_transformer_only_int8_convrot.safetensors",
+     "format": "int8_convrot",
+     "gb": 20.03,
+     "bits": 8,
+     "repo": "Kijai/LTX2.3_comfy",
+     "loader": "UNETLoader",
+     "community": true,
+     "note": "transformer only"
+    },
+    {
+     "file": "ltx-2.3-22b-dev-Q8_0.gguf",
+     "format": "gguf_q8_0",
+     "gb": 21.2,
+     "bits": 8,
+     "repo": "unsloth/LTX-2.3-GGUF",
+     "loader": "UnetLoaderGGUF",
+     "community": true
+    },
+    {
+     "file": "ltx-2.3-22b-dev-Q4_K_M.gguf",
+     "format": "gguf_q4_k_m",
+     "gb": 13.35,
+     "bits": 4,
+     "repo": "unsloth/LTX-2.3-GGUF",
+     "loader": "UnetLoaderGGUF",
+     "community": true
+    },
+    {
+     "file": "ltx-2.3-22b-dev-Q2_K.gguf",
+     "format": "gguf_q2_k",
+     "gb": 7.71,
+     "bits": 2,
+     "repo": "unsloth/LTX-2.3-GGUF",
+     "loader": "UnetLoaderGGUF",
+     "community": true
+    }
+   ]
+  },
+  "text_encoder": {
+   "label": "Text encoder (Gemma 3 12B)",
+   "role": "text_encoder",
+   "clip_type": "LTXAVTextEncoderLoader",
+   "variants": [
+    {
+     "file": "gemma_3_12B_it.safetensors",
+     "format": "bf16",
+     "gb": 22.71,
+     "bits": 16,
+     "repo": "Comfy-Org/ltx-2",
+     "loader": "LTXAVTextEncoderLoader"
+    },
+    {
+     "file": "gemma_3_12B_it_fp8_scaled.safetensors",
+     "format": "fp8_scaled",
+     "gb": 12.3,
+     "bits": 8,
+     "repo": "Comfy-Org/ltx-2",
+     "loader": "LTXAVTextEncoderLoader"
+    },
+    {
+     "file": "gemma_3_12B_it_fp4_mixed.safetensors",
+     "format": "fp4_mixed",
+     "gb": 8.8,
+     "bits": 4,
+     "repo": "Comfy-Org/ltx-2",
+     "loader": "LTXAVTextEncoderLoader",
+     "default": true
+    },
+    {
+     "file": "gemma-3-12b-it-Q4_K_M.gguf",
+     "format": "gguf_q4_k_m",
+     "gb": 6.8,
+     "bits": 4,
+     "repo": "unsloth/gemma-3-12b-it-GGUF",
+     "loader": "CLIPLoaderGGUF",
+     "community": true
+    }
+   ]
+  },
+  "vae": {
+   "label": "LoRA and upscaler",
+   "role": "fixed",
+   "variants": [
+    {
+     "file": "ltx_2.3_22b_distilled_1.1_lora_dynamic_fro09_avg_rank_111_bf16.safetensors",
+     "format": "bf16",
+     "gb": 2.55,
+     "bits": 16,
+     "repo": "Comfy-Org/ltx-2.3",
+     "loader": "LoraLoaderModelOnly",
+     "always": true
+    },
+    {
+     "file": "ltx-2.3-spatial-upscaler-x2-1.1.safetensors",
+     "format": "bf16",
+     "gb": 0.93,
+     "bits": 16,
+     "repo": "Lightricks/LTX-2.3",
+     "loader": "LatentUpscaleModelLoader",
+     "always": true
+    }
+   ]
+  }
+ },
+ "benchmarks": {
+  "workflow": "Comfy-Org video_ltx2_3_t2v as API, enhancer off, 3 s; step_s = stage 1",
+  "references": [
+   {
+    "machine": {
+     "gpu": "NVIDIA GeForce RTX 5090",
+     "vram_gb": 31.8,
+     "attention_sdpa_ms": 2.42,
+     "fp8_tflops": 399.8,
+     "note": ""
+    },
+    "runs": [
+     {
+      "file": "ltx-2.3-22b-dev.safetensors",
+      "megapixels": 0.9,
+      "step_s": 0.61
+     },
+     {
+      "file": "ltx-2.3-22b-dev.safetensors",
+      "megapixels": 0.46,
+      "step_s": 0.55
+     },
+     {
+      "file": "ltx-2.3-22b-dev-fp8.safetensors",
+      "megapixels": 0.9,
+      "step_s": 0.44
+     },
+     {
+      "file": "ltx-2.3-22b-dev-fp8.safetensors",
+      "megapixels": 0.46,
+      "step_s": 0.45
+     },
+     {
+      "file": "ltx-2.3-22b-dev_transformer_only_int8_convrot.safetensors",
+      "megapixels": 0.9,
+      "step_s": 0.42
+     },
+     {
+      "file": "ltx-2.3-22b-dev_transformer_only_int8_convrot.safetensors",
+      "megapixels": 0.46,
+      "step_s": 0.43
+     },
+     {
+      "file": "ltx-2.3-22b-dev-Q8_0.gguf",
+      "megapixels": 0.9,
+      "step_s": 1.41
+     },
+     {
+      "file": "ltx-2.3-22b-dev-Q8_0.gguf",
+      "megapixels": 0.46,
+      "step_s": 1.26
+     }
+    ]
+   },
+   {
+    "machine": {
+     "gpu": "NVIDIA GeForce RTX 5060 Laptop GPU",
+     "vram_gb": 8.0,
+     "attention_sdpa_ms": 17.2,
+     "fp8_tflops": 66.5,
+     "note": "64 GB RAM, PCIe Gen5 x8, no SageAttention"
+    },
+    "runs": [
+     {
+      "file": "ltx-2.3-22b-dev-fp8.safetensors",
+      "megapixels": 0.9,
+      "step_s": 4.12,
+      "peak_ram_gib": 56.58
+     },
+     {
+      "file": "ltx-2.3-22b-dev-fp8.safetensors",
+      "megapixels": 0.46,
+      "step_s": 3.16,
+      "peak_ram_gib": 57.28
+     },
+     {
+      "file": "ltx-2.3-22b-dev_transformer_only_int8_convrot.safetensors",
+      "megapixels": 0.9,
+      "step_s": 2.9,
+      "peak_ram_gib": 52.59
+     },
+     {
+      "file": "ltx-2.3-22b-dev_transformer_only_int8_convrot.safetensors",
+      "megapixels": 0.46,
+      "step_s": 2.17,
+      "peak_ram_gib": 52.33
+     },
+     {
+      "file": "ltx-2.3-22b-dev-Q8_0.gguf",
+      "megapixels": 0.9,
+      "step_s": 28.43,
+      "peak_ram_gib": 58.75
+     },
+     {
+      "file": "ltx-2.3-22b-dev-Q8_0.gguf",
+      "megapixels": 0.46,
+      "step_s": 9.81,
+      "peak_ram_gib": 58.79
+     }
+    ]
+   }
+  ]
+ },
+ "quality": {
+  "method": "single step from the same bf16 latent (stage-1 sigmas 2, 4, 6 of 8), video frames, LPIPS vs bf16 checkpoint",
+  "reference": "ltx-2.3-22b-dev.safetensors",
+  "files": {
+   "ltx-2.3-22b-dev-fp8.safetensors": {
+    "lpips_avg": 0.0706,
+    "k2": {
+     "lpips": 0.1002,
+     "ssim": 0.8642,
+     "psnr": 26.41
+    },
+    "k4": {
+     "lpips": 0.0885,
+     "ssim": 0.8729,
+     "psnr": 23.1
+    },
+    "k6": {
+     "lpips": 0.023,
+     "ssim": 0.959,
+     "psnr": 25.86
+    }
+   },
+   "ltx-2.3-22b-dev_transformer_only_int8_convrot.safetensors": {
+    "lpips_avg": 0.0915,
+    "k2": {
+     "lpips": 0.1114,
+     "ssim": 0.8407,
+     "psnr": 25.09
+    },
+    "k4": {
+     "lpips": 0.1483,
+     "ssim": 0.8088,
+     "psnr": 21.53
+    },
+    "k6": {
+     "lpips": 0.0147,
+     "ssim": 0.9755,
+     "psnr": 28.22
+    }
+   },
+   "ltx-2.3-22b-dev-Q8_0.gguf": {
+    "lpips_avg": 0.0148,
+    "k2": {
+     "lpips": 0.0161,
+     "ssim": 0.9764,
+     "psnr": 34.2
+    },
+    "k4": {
+     "lpips": 0.0251,
+     "ssim": 0.9658,
+     "psnr": 29.77
+    },
+    "k6": {
+     "lpips": 0.0033,
+     "ssim": 0.994,
+     "psnr": 35.39
+    }
+   }
+  }
+ },
+ "source": "Hugging Face tree API sizes and Comfy-Org workflow templates, researched and measured 2026-09-28"
+}
