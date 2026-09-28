@@ -6,6 +6,7 @@
  */
 
 import { app } from "../../scripts/app.js";
+import { NODE_PROPERTY_EVENT, graphEventsAvailable } from "./lc_graph_events.js";
 
 const NODE_CLASS = "LCIsBypassedOrMuted";
 const MODE_NEVER = 2; // Comfy mute
@@ -27,9 +28,10 @@ function ensureHiddenBoolean(node) {
 function originOf(node) {
   const inp = (node.inputs || []).find((i) => i && i.name === "value") || node.inputs?.[0];
   if (!inp || inp.link == null) return null;
-  const link = app.graph?.links?.[inp.link];
+  const g = node.graph ?? app.graph; // the node's own graph, so it also works inside a subgraph
+  const link = g?.links?.[inp.link];
   if (!link) return null;
-  return app.graph.getNodeById?.(link.origin_id) || null;
+  return g.getNodeById?.(link.origin_id) || null;
 }
 
 function syncLive(node) {
@@ -40,6 +42,30 @@ function syncLive(node) {
   if (w.value !== result) w.value = result;
   node._lcResult = result;
   return result;
+}
+
+// re-read one node and redraw it only when the result changed
+function refresh(node) {
+  const prev = node._lcResult;
+  syncLive(node);
+  if (prev !== node._lcResult) node.setDirtyCanvas?.(true, true);
+}
+
+// live instances, so the timer costs nothing in a workflow without this node
+const live = new Set();
+
+// Mode changes are announced on each graph (root or subgraph) as "node:property:changed": one listener per graph
+// re-reads this graph's instances the moment any node's mode changes.
+const hookedGraphs = new WeakSet();
+function hookGraph(graph) {
+  if (!graphEventsAvailable(graph) || hookedGraphs.has(graph)) return;
+  hookedGraphs.add(graph);
+  graph.events.addEventListener(NODE_PROPERTY_EVENT, (e) => {
+    if (e?.detail?.property !== "mode" || !live.size) return;
+    for (const n of live) {
+      if (n.graph === graph) refresh(n);
+    }
+  });
 }
 
 app.registerExtension({
@@ -53,6 +79,7 @@ app.registerExtension({
       const r = onCreated?.apply(this, arguments);
       this.color = "#28281E";
       this.bgcolor = "#28281E";
+      live.add(this);
       ensureHiddenBoolean(this);
       this.size = this.size || [200, 50];
       this.size[0] = Math.max(this.size[0] || 0, 180);
@@ -66,7 +93,8 @@ app.registerExtension({
       const r = onDrawFG?.apply(this, arguments);
       if (this.flags?.collapsed) return r;
 
-      const out = syncLive(this);
+      // drawn from the cached result: mode events, connection changes and the fallback timer keep it current
+      const out = this._lcResult === undefined ? syncLive(this) : this._lcResult;
       const label = out ? "true" : "false";
       const color = out ? "#6c6" : "#c66";
 
@@ -89,18 +117,51 @@ app.registerExtension({
       this.setDirtyCanvas?.(true, true);
       return r;
     };
+
+    const onAdded = nodeType.prototype.onAdded;
+    nodeType.prototype.onAdded = function () {
+      const r = onAdded?.apply(this, arguments);
+      live.add(this);
+      hookGraph(this.graph);
+      return r;
+    };
+
+    const onConfigure = nodeType.prototype.onConfigure;
+    nodeType.prototype.onConfigure = function () {
+      const r = onConfigure?.apply(this, arguments);
+      live.add(this);
+      hookGraph(this.graph);
+      // links may still be loading: forget the cached result so the first draw (or the next tick) reads it fresh
+      this._lcResult = undefined;
+      setTimeout(() => {
+        if (this.graph) refresh(this);
+      }, 0);
+      return r;
+    };
+
+    const onRemoved = nodeType.prototype.onRemoved;
+    nodeType.prototype.onRemoved = function () {
+      const r = onRemoved?.apply(this, arguments);
+      live.delete(this);
+      return r;
+    };
   },
 
   async setup() {
+    // Safety net only: mode events and onConnectionsChange update the face at once. Graphs with events get a full
+    // re-read once a second; a frontend without graph events keeps the old 200 ms poll.
+    let lastFull = 0;
     setInterval(() => {
-      const graph = app.graph;
-      if (!graph?._nodes) return;
-      for (const n of graph._nodes) {
-        if (n.type === NODE_CLASS || n.comfyClass === NODE_CLASS) {
-          const prev = n._lcResult;
-          syncLive(n);
-          if (prev !== n._lcResult) n.setDirtyCanvas?.(true, true);
-        }
+      if (!live.size) return;
+      const now = Date.now();
+      const full = now - lastFull >= 1000;
+      if (full) lastFull = now;
+      for (const n of live) {
+        const g = n.graph;
+        if (!g) continue;
+        hookGraph(g);
+        if (g.events && !full) continue;
+        refresh(n);
       }
     }, 200);
   },

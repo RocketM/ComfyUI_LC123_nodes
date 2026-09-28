@@ -86,8 +86,11 @@ function resolveBoolean(graph, input, depth = 0) {
 function outputState(node) {
   const inp = node.inputs?.[0];
   if (!inp || inp.link == null) return null;
-  return resolveBoolean(app.graph, inp);
+  return resolveBoolean(node.graph ?? app.graph, inp); // the node's own graph, so it also works inside a subgraph
 }
+
+// live instances, so the timer costs nothing in a workflow without this node
+const live = new Set();
 
 app.registerExtension({
   name: "LC123.Boolean",
@@ -107,6 +110,8 @@ app.registerExtension({
         }
       }
       this._lcBool = null;
+      this._lcBoolStale = true;
+      live.add(this);
       if (!this._lcUserSized) {
         this.size = this.size || [270, 30];
         if ((this.size[0] || 0) < 270) this.size[0] = 270;
@@ -120,8 +125,12 @@ app.registerExtension({
       const r = onDrawFG?.apply(this, arguments);
       if (this.flags?.collapsed) return r;
 
-      const out = outputState(this);
-      this._lcBool = out;
+      // drawn from the cached value: the timer re-resolves it and redraws only on a change
+      if (this._lcBoolStale !== false) {
+        this._lcBool = outputState(this);
+        this._lcBoolStale = false;
+      }
+      const out = this._lcBool;
 
       const label = out === null ? "—" : out ? "true" : "false";
       const color = out === null ? "#888" : out ? "#6c6" : "#c66";
@@ -142,17 +151,46 @@ app.registerExtension({
     const onConn = nodeType.prototype.onConnectionsChange;
     nodeType.prototype.onConnectionsChange = function () {
       const r = onConn?.apply(this, arguments);
+      this._lcBoolStale = true;
       this.setDirtyCanvas?.(true, true);
+      return r;
+    };
+
+    const onAdded = nodeType.prototype.onAdded;
+    nodeType.prototype.onAdded = function () {
+      const r = onAdded?.apply(this, arguments);
+      live.add(this);
+      return r;
+    };
+
+    const onConfigure = nodeType.prototype.onConfigure;
+    nodeType.prototype.onConfigure = function () {
+      const r = onConfigure?.apply(this, arguments);
+      live.add(this);
+      this._lcBoolStale = true;
+      return r;
+    };
+
+    const onRemoved = nodeType.prototype.onRemoved;
+    nodeType.prototype.onRemoved = function () {
+      const r = onRemoved?.apply(this, arguments);
+      live.delete(this);
       return r;
     };
   },
 
   async setup() {
+    // Upstream widget values have no change event, so keep polling, but only redraw a node whose value changed
+    // (this used to redraw every LC Boolean every tick). Walks the live set, so subgraph nodes are covered too.
     setInterval(() => {
-      const graph = app.graph;
-      if (!graph?._nodes) return;
-      for (const n of graph._nodes) {
-        if (n.type === NODE_CLASS || n.comfyClass === NODE_CLASS) {
+      if (!live.size) return;
+      for (const n of live) {
+        if (!n.graph) continue;
+        const v = outputState(n);
+        const stale = n._lcBoolStale !== false;
+        n._lcBoolStale = false;
+        if (v !== n._lcBool || stale) {
+          n._lcBool = v;
           n.setDirtyCanvas?.(true, false);
         }
       }

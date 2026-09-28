@@ -207,6 +207,16 @@ function nodesInGroup(graph, group) {
   return result;
 }
 
+// live Groups Bypassers, so the timers cost nothing in a workflow without one
+const live = new Set();
+
+// what the node shows (sockets, rows, size): stabilize redraws only when this changed
+function faceSignature(node) {
+  const ins = (node.inputs || []).map((i) => (i ? `${i.name}|${i.type}|${i.link}` : "")).join(",");
+  const ws = (node.widgets || []).map((w) => (w ? `${w.name}|${w.value}|${w.disabled}` : "")).join(",");
+  return `${ins};${ws};${node.size?.[0]}x${node.size?.[1]}`;
+}
+
 function normalizeColor(c) {
   if (!c) return "";
   c = String(c).trim().toLowerCase().replace("#", "");
@@ -257,16 +267,25 @@ app.registerExtension({
       }
 
       onNodeCreated() {
+        live.add(this);
         this.scheduleStabilize(40);
       }
 
       onConfigure() {
+        live.add(this);
         this.scheduleStabilize(100);
         this.scheduleStabilize(400);
       }
 
       onAdded() {
+        live.add(this);
         this.scheduleStabilize(40);
+      }
+
+      onRemoved() {
+        const r = super.onRemoved?.(...arguments);
+        live.delete(this);
+        return r;
       }
 
       scheduleStabilize(ms = 20) {
@@ -274,7 +293,7 @@ app.registerExtension({
         this._lcTimer = setTimeout(() => {
           try {
             this.stabilize();
-            this.applyModes();
+            this.applyModes(true); // structure may have changed: apply every driven row now
           } catch (e) {
             console.warn("[LC Groups Bypasser]", e);
           }
@@ -329,7 +348,8 @@ app.registerExtension({
        * Widgets get a FIXED index callback at creation time (never rebound).
        */
       stabilize() {
-        const graph = app.graph;
+        const graph = this.graph ?? app.graph; // own graph: its links, also inside a subgraph
+        const before = faceSignature(this);
         const groups = this.listGroups();
         this._lcGroups = groups;
         if (!this.properties) this.properties = {};
@@ -454,7 +474,8 @@ app.registerExtension({
         if (!this.size) this.size = [270, minH];
         if (this.size[1] < minH) this.size[1] = minH;
 
-        this.setDirtyCanvas?.(true, true);
+        // the 5 s refresh used to redraw every time; now only when a socket, row or the size changed
+        if (faceSignature(this) !== before) this.setDirtyCanvas?.(true, true);
       }
 
       /**
@@ -510,9 +531,10 @@ app.registerExtension({
        * Manual rows are applied exclusively in onToggleWidget (no 300ms rewrite
        * that was causing lag + visual coupling).
        */
-      applyModes() {
-        const graph = app.graph;
+      applyModes(force = false) {
+        const graph = this.graph ?? app.graph;
         if (!graph) return;
+        const now = Date.now();
 
         for (let i = 0; i < (this._lcGroups || []).length; i++) {
           const inp = this.inputs?.[i];
@@ -522,6 +544,7 @@ app.registerExtension({
           const driven = inp?.link != null;
 
           if (!driven) {
+            w._lcApplied = null;
             if (w._lcLocked) setWidgetLocked(w, false);
             continue;
           }
@@ -529,7 +552,14 @@ app.registerExtension({
           const bv = resolveBoolean(graph, inp);
           if (bv === null) continue;
           if (w.value !== bv) w.value = bv;
-          this.setGroupEnabled(i, bv);
+          // A new value (or a different group in this row) is applied at once. The same value is re-applied about
+          // once a second, which re-checks group membership so a node dragged into the group is still caught.
+          const group = this._lcGroups[i];
+          const last = w._lcApplied;
+          if (force || !last || last.group !== group || last.value !== bv || now - last.t >= 1000) {
+            this.setGroupEnabled(i, bv);
+            w._lcApplied = { group, value: bv, t: now };
+          }
           setWidgetLocked(w, true);
         }
       }
@@ -636,27 +666,38 @@ app.registerExtension({
   },
 
   async setup() {
+    // the root and, when a subgraph is open, the one on screen
+    const tickGraphs = () => {
+      const out = [app.graph];
+      if (app.canvas?.graph && app.canvas.graph !== app.graph) out.push(app.canvas.graph);
+      return out;
+    };
+
     // Same cadence as LC Bypasser — applyModes only, no structure rebuild
     setInterval(() => {
-      const graph = app.graph;
-      if (!graph?._nodes) return;
-      for (const n of graph._nodes) {
-        if (n.type !== NODE_TYPE) continue;
-        try {
-          n.applyModes?.();
-        } catch (_) {}
+      if (!live.size) return;
+      for (const graph of tickGraphs()) {
+        if (!graph?._nodes) continue;
+        for (const n of graph._nodes) {
+          if (n.type !== NODE_TYPE) continue;
+          try {
+            n.applyModes?.();
+          } catch (_) {}
+        }
       }
     }, 300);
 
     // Occasional structure refresh for new groups (rare)
     setInterval(() => {
-      const graph = app.graph;
-      if (!graph?._nodes) return;
-      for (const n of graph._nodes) {
-        if (n.type !== NODE_TYPE) continue;
-        try {
-          n.stabilize?.();
-        } catch (_) {}
+      if (!live.size) return;
+      for (const graph of tickGraphs()) {
+        if (!graph?._nodes) continue;
+        for (const n of graph._nodes) {
+          if (n.type !== NODE_TYPE) continue;
+          try {
+            n.stabilize?.();
+          } catch (_) {}
+        }
       }
     }, 5000);
   },

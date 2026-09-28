@@ -26,6 +26,12 @@ def _match_size(a: np.ndarray, b: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     return a, b2.astype(np.float32)
 
 
+def _opaque_alpha(x: np.ndarray) -> np.ndarray:
+    if x.shape[-1] == 3:
+        return np.concatenate([x, np.ones(x.shape[:2] + (1,), dtype=x.dtype)], axis=-1)
+    return x
+
+
 def _split_frame(a: np.ndarray, b: np.ndarray, pos: float, divider: bool) -> np.ndarray:
     a, b = _match_size(a, b)
     h, w = a.shape[:2]
@@ -93,6 +99,12 @@ class LCImageSplit(PreviewImage):
     ):
         arrays_a = tensor_to_np(image_a)
         arrays_b = tensor_to_np(image_b)
+        # RGB on one side, RGBA on the other: the RGB side gets an opaque alpha, so the split works
+        # exactly like an RGBA | RGBA split (each half keeps its own alpha)
+        ca, cb = arrays_a[0].shape[-1], arrays_b[0].shape[-1]
+        if (ca, cb) in ((3, 4), (4, 3)):
+            arrays_a = [_opaque_alpha(x) for x in arrays_a]
+            arrays_b = [_opaque_alpha(x) for x in arrays_b]
         n = max(len(arrays_a), len(arrays_b))
         out = []
         for i in range(n):

@@ -57,9 +57,10 @@ function fixTextSocket(node) {
   // shape 7 = optional-looking; keep default for required
   for (let i = 1; i < texts.length; i++) {
     const extra = texts[i];
-    if (extra.link != null && app.graph) {
+    const graph = node.graph ?? app.graph;
+    if (extra.link != null && graph) {
       try {
-        app.graph.removeLink(extra.link);
+        graph.removeLink(extra.link);
       } catch (_) {}
     }
   }
@@ -81,12 +82,25 @@ function parkHidden(node) {
 function healMisdirectedLink(node) {
   const inputs = node.inputs || [];
   const textIdx = inputs.findIndex((i) => i?.name === "text");
-  if (textIdx < 0 || inputs[textIdx].link != null || !app.graph) return;
+  const graph = node.graph ?? app.graph; // the node's own graph, so it also works inside a subgraph
+  if (textIdx < 0 || inputs[textIdx].link != null || !graph) return;
   const hiddenNames = new Set((node.widgets || []).filter((w) => w?.hidden).map((w) => w.name));
   for (const inp of inputs) {
     if (!inp || inp.link == null || !hiddenNames.has(inp.name)) continue;
-    const link = app.graph.links?.get ? app.graph.links.get(inp.link) : app.graph.links?.[inp.link];
+    const link = graph.links?.get ? graph.links.get(inp.link) : graph.links?.[inp.link];
     if (!link) continue;
+    // Newer frontends ignore a direct input.link write (and a null write disconnects), so move the wire the
+    // supported way: connect the same origin output to text, then drop the hidden row's link (only once text
+    // really has it, so a refused connect never loses the wire).
+    const origin = graph.getNodeById?.(link.origin_id);
+    if (origin && typeof origin.connect === "function" && typeof node.disconnectInput === "function") {
+      origin.connect(link.origin_slot, node, textIdx);
+      const text = (node.inputs || []).find((i) => i?.name === "text");
+      const hiddenIdx = (node.inputs || []).indexOf(inp);
+      if (text?.link != null && hiddenIdx >= 0 && inp.link != null) node.disconnectInput(hiddenIdx);
+      return;
+    }
+    // older frontends: rewrite the link in place
     link.target_slot = textIdx;
     inputs[textIdx].link = inp.link;
     inp.link = null;
@@ -265,8 +279,9 @@ app.registerExtension({
         const inp = this.inputs[index];
         // LiteGraph usually replaces; if two links somehow exist, drop older
         if (inp && inp.link != null && link_info && app.graph) {
-          // ensure only this link
-          inp.link = link_info.id ?? link_info;
+          // ensure only this link (only when it differs: newer frontends ignore the write, and it already matches)
+          const id = link_info.id ?? link_info;
+          if (inp.link !== id) inp.link = id;
         }
       }
       fixTextSocket(this);

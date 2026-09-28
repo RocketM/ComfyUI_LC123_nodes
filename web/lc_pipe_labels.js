@@ -36,8 +36,9 @@ function applyLabels(node) {
   if (!node) return;
   for (const inp of node.inputs || []) {
     if (inp?.name && LABEL[inp.name]) {
-      inp.label = LABEL[inp.name];
-      inp.localized_name = LABEL[inp.name];
+      // a label the user typed is kept; only an empty or default one is filled in
+      if (!inp.label || inp.label === inp.name || inp.label === LABEL[inp.name]) inp.label = LABEL[inp.name];
+      if (!inp.localized_name || inp.localized_name === inp.name) inp.localized_name = LABEL[inp.name];
     }
   }
   for (const out of node.outputs || []) {

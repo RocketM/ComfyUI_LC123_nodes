@@ -459,6 +459,8 @@ class LCRelight:
         norms_in = _image_np(normal_map)
         depths_in = _image_np(depth_map)
         b, h, w, _ = img.shape
+        # the mask is the same for every frame, resize it once
+        mb = _mask_np(mask, h, w) if (mask is not None and mask_enabled) else None
 
         out_frames = []
         debug = []
@@ -471,7 +473,6 @@ class LCRelight:
 
             dbg = np.ones((h, w), dtype=np.float32)
             if mask is not None and mask_enabled:
-                mb = _mask_np(mask, h, w)
                 if mb is not None:
                     m = mb[min(i, mb.shape[0] - 1)]
                     vnorm, feather = _virtual_normals_from_mask(m, 0.45)

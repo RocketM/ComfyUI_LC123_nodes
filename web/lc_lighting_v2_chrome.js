@@ -378,9 +378,29 @@ function installStage(node) {
       ctx.fillText(l.id, p.px, p.py);
     }
 
-    readout.innerHTML = lights()
-      .map((l) => `<span style="color:${l.color}">●</span> ${l.id}  x ${Number(l.x).toFixed(2)}  y ${Number(l.y).toFixed(2)}  z ${Number(l.z).toFixed(2)}  ${l.type}`)
-      .join("<br>");
+    // built from DOM nodes: widget values come from the workflow file and must never be parsed as HTML
+    const rows = [];
+    lights().forEach((l, i) => {
+      if (i) rows.push(document.createElement("br"));
+      const dot = document.createElement("span");
+      dot.style.color = String(l.color);
+      dot.textContent = "●";
+      rows.push(dot);
+      rows.push(document.createTextNode(` ${l.id}  x ${Number(l.x).toFixed(2)}  y ${Number(l.y).toFixed(2)}  z ${Number(l.z).toFixed(2)}  ${l.type}`));
+    });
+    readout.replaceChildren(...rows);
+  }
+
+  // while dragging, widget callbacks and pointer moves only request a redraw: it runs once per animation frame
+  let redrawQueued = false;
+  function queueRedraw() {
+    if (redrawQueued) return;
+    redrawQueued = true;
+    requestAnimationFrame(() => {
+      redrawQueued = false;
+      redraw();
+      app.canvas?.setDirty?.(true, true);
+    });
   }
 
   canvas.addEventListener("pointerdown", (ev) => {
@@ -407,8 +427,7 @@ function installStage(node) {
       setWval(node, `light${dragging}_x`, x);
       setWval(node, `light${dragging}_y`, y);
     }
-    redraw();
-    app.canvas?.setDirty?.(true, true);
+    queueRedraw();
     ev.preventDefault();
     ev.stopPropagation();
   });
@@ -420,6 +439,7 @@ function installStage(node) {
     try {
       canvas.releasePointerCapture?.(ev.pointerId);
     } catch (_) {}
+    redraw();
   };
   canvas.addEventListener("pointerup", end);
   canvas.addEventListener("pointercancel", end);
@@ -454,7 +474,8 @@ function installStage(node) {
         const pw = widget(node, "preset");
         if (pw && pw.value !== "custom") pw.value = "custom";
       }
-      redraw();
+      if (dragging) queueRedraw();
+      else redraw();
       if (visNames.has(name)) syncVisibility(node);
       return out;
     };

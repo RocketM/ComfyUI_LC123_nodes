@@ -43,36 +43,45 @@ function syncInputs(node) {
     if (inp?.name) byName.set(inp.name, inp);
   }
 
+  // Disconnect links that would fall off the visible set (while their slot index is still valid)
+  for (let i = MAX_INPUTS; i > count; i--) {
+    const old = byName.get(inputName(i));
+    const idx = old ? node.inputs.indexOf(old) : -1;
+    if (idx < 0) continue;
+    const linked = typeof node.isInputConnected === "function" ? node.isInputConnected(idx) : old.link != null;
+    if (!linked) continue;
+    try {
+      if (typeof node.disconnectInput === "function") node.disconnectInput(idx);
+      else (node.graph ?? app.graph)?.removeLink(old.link);
+    } catch (_) {}
+  }
+
   const next = [];
+  const missing = [];
+  let gap = false;
   for (let i = 1; i <= count; i++) {
     const name = inputName(i);
     if (byName.has(name)) {
+      if (missing.length) gap = true;
       const inp = byName.get(name);
       inp.type = "STRING";
       if (inp.shape == null) inp.shape = 7; // optional
       next.push(inp);
     } else {
-      next.push({
-        name,
-        type: "STRING",
-        link: null,
-        shape: 7,
-      });
+      missing.push(name);
     }
   }
 
-  // Disconnect links that would fall off the visible set
-  for (let i = count + 1; i <= MAX_INPUTS; i++) {
-    const name = inputName(i);
-    const old = byName.get(name);
-    if (old?.link != null && app.graph) {
-      try {
-        app.graph.removeLink(old.link);
-      } catch (_) {}
+  if (!gap && typeof node.addInput === "function") {
+    // new sockets are real input slots (addInput), appended in order after the kept ones
+    node.inputs = next;
+    for (const name of missing) node.addInput(name, "STRING", { shape: 7 });
+  } else {
+    for (const name of missing) {
+      next.splice(parseInt(name.slice(7), 10) - 1, 0, { name, type: "STRING", link: null, shape: 7 });
     }
+    node.inputs = next;
   }
-
-  node.inputs = next;
   fitSize(node);
   node.setDirtyCanvas?.(true, true);
 }

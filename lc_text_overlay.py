@@ -5,13 +5,14 @@ Draw text on an image. alignment = left/center/right. x/y = position (y = top of
 Curated fonts (real file paths + browser-friendly family names).
 """
 
+import functools
 from pathlib import Path
 
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 from nodes import PreviewImage
 
-from .lc_image_helpers import tensor_to_np, np_to_tensor
+from .lc_image_helpers import tensor_to_np, np_to_tensor, preview_frames
 
 
 def _coerce_overlay_text(text):
@@ -34,10 +35,10 @@ def _coerce_overlay_text(text):
 def _preview(self, result_tensor, source_tensor=None):
     out = {"ui": {}, "result": (result_tensor,)}
     try:
-        after = self.save_images(result_tensor, filename_prefix="lc_after")
+        after = self.save_images(preview_frames(result_tensor), filename_prefix="lc_after")
         out["ui"]["lc_preview"] = after["ui"]["images"]
         if source_tensor is not None:
-            before = self.save_images(source_tensor, filename_prefix="lc_before")
+            before = self.save_images(preview_frames(source_tensor), filename_prefix="lc_before")
             out["ui"]["lc_before"] = before["ui"]["images"]
     except Exception:
         pass
@@ -70,9 +71,25 @@ _FONT_CANDIDATES = [
     ("DejaVu Sans Mono", "DejaVu Sans Mono, monospace", ["DejaVuSansMono.ttf"]),
     ("Liberation Sans", "Liberation Sans, Arial, sans-serif", ["LiberationSans-Regular.ttf"]),
     ("Liberation Serif", "Liberation Serif, Times, serif", ["LiberationSerif-Regular.ttf"]),
+    # bundled with the pack (web/fonts), the same set LC Label uses
+    ("Bebas Neue", '"Bebas Neue", sans-serif', ["BebasNeue-Regular.ttf"]),
+    ("Oswald", "Oswald, sans-serif", ["Oswald-Variable.ttf"]),
+    ("Permanent Marker", '"Permanent Marker", cursive', ["PermanentMarker-Regular.ttf"]),
+    ("Pacifico", "Pacifico, cursive", ["Pacifico-Regular.ttf"]),
+    ("Lobster", "Lobster, cursive", ["Lobster-Regular.ttf"]),
+    ("Great Vibes", '"Great Vibes", cursive', ["GreatVibes-Regular.ttf"]),
+    ("Abril Fatface", '"Abril Fatface", serif', ["AbrilFatface-Regular.ttf"]),
+    ("Cinzel Decorative", '"Cinzel Decorative", serif', ["CinzelDecorative-Regular.ttf"]),
+    ("UnifrakturMaguntia", "UnifrakturMaguntia, serif", ["UnifrakturMaguntia-Book.ttf"]),
+    ("Monoton", "Monoton, sans-serif", ["Monoton-Regular.ttf"]),
+    ("Bangers", "Bangers, sans-serif", ["Bangers-Regular.ttf"]),
+    ("Creepster", "Creepster, sans-serif", ["Creepster-Regular.ttf"]),
+    ("Rubik Glitch", '"Rubik Glitch", sans-serif', ["RubikGlitch-Regular.ttf"]),
+    ("Press Start 2P", '"Press Start 2P", monospace', ["PressStart2P-Regular.ttf"]),
 ]
 
 _FONT_DIRS = [
+    Path(__file__).resolve().parent / "web" / "fonts",  # bundled fonts win over a same-named system copy
     Path("C:/Windows/Fonts"),
     Path("/usr/share/fonts"),
     Path("/usr/share/fonts/truetype"),
@@ -95,8 +112,8 @@ def _resolve_fonts():
         try:
             for p in d.rglob("*"):
                 if p.suffix.lower() in (".ttf", ".otf", ".ttc"):
-                    index[p.name.lower()] = p
-                    index[p.stem.lower()] = p
+                    index.setdefault(p.name.lower(), p)
+                    index.setdefault(p.stem.lower(), p)
         except Exception:
             pass
 
@@ -115,6 +132,12 @@ def _resolve_fonts():
 _FONT_MAP = _resolve_fonts()
 _FONT_NAMES = list(_FONT_MAP.keys())
 MARGIN_PX = 6  # must match IMAGE_MARGIN_PX in web/lc_image_preview.js (text overlay)
+
+
+@functools.lru_cache(maxsize=64)
+def _truetype(path, size):
+    """Font files are read once per (path, size); the fit search below asks for the same sizes every run."""
+    return ImageFont.truetype(path, size)
 
 
 def _text_bbox(draw, s, font):
@@ -286,7 +309,7 @@ class LCTextOverlay(PreviewImage):
         path = info.get("path")
         try:
             if path:
-                return ImageFont.truetype(path, size)
+                return _truetype(path, size)
         except Exception as e:
             print(f"[LCTextOverlay] font load failed '{name}' path={path}: {e}")
         try:
@@ -313,6 +336,7 @@ class LCTextOverlay(PreviewImage):
         paragraphs = str(text).split("\n")
         arrays = tensor_to_np(image)
         out = []
+        layouts = {}  # the layout only depends on the frame size, so a batch lays out once
         for img in arrays:
             pil = Image.fromarray((np.clip(img, 0, 1) * 255).astype(np.uint8)).convert("RGBA")
             draw = ImageDraw.Draw(pil)
@@ -323,9 +347,11 @@ class LCTextOverlay(PreviewImage):
             # Text that would overflow the image at the requested size is shrunk (never enlarged) to the
             # largest size that fits the padded box -- a giant font_size on a small image no longer runs
             # the letters off the edge, it just renders smaller. Already fits: unchanged, one layout pass.
-            font_obj, lines, metrics, gap, block_h, _max_line_w = _fit_text_to_box(
-                draw, paragraphs, lambda sz: self._font(font, sz), int(font_size), max_w, max_h
-            )
+            if (w, h) not in layouts:
+                layouts[(w, h)] = _fit_text_to_box(
+                    draw, paragraphs, lambda sz: self._font(font, sz), int(font_size), max_w, max_h
+                )
+            font_obj, lines, metrics, gap, block_h, _max_line_w = layouts[(w, h)]
 
             cx = int(w * (float(x_percent) / 100.0))
             # y_percent = top of text block (no vertical anchor)

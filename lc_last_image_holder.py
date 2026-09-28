@@ -23,6 +23,17 @@ from nodes import PreviewImage
 # ---------------------------------------------------------------------------
 _last_write_prompt = {}
 
+
+def _current_prompt_id():
+    """Id of the prompt being executed, or None if the server does not expose it."""
+    try:
+        from server import PromptServer
+        pid = getattr(PromptServer.instance, "last_prompt_id", None)
+        return ("prompt_id", pid) if pid else None
+    except Exception:
+        return None
+
+
 # ---------------------------------------------------------------------------
 # Temp file helpers
 # ---------------------------------------------------------------------------
@@ -161,7 +172,10 @@ class LCLastImageHolder(PreviewImage):
         previous = _load_held(path)
         has_stored = previous is not None
 
-        prompt_key = id(prompt) if prompt is not None else None
+        prompt_key = _current_prompt_id()
+        if prompt_key is None:
+            # fallback: id() of the prompt dict (can repeat once the old dict is freed)
+            prompt_key = id(prompt) if prompt is not None else None
         already_wrote_this_prompt = (
             prompt_key is not None and _last_write_prompt.get(uid) == prompt_key
         )

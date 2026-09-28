@@ -1,11 +1,11 @@
 """
 LC Save Image + LC Save Metadata
 --------------------------------
-Save IMAGE with Comfy workflow chunks and optional Civitai parameters.
+Save IMAGE with Comfy workflow chunks and optional CivitAI parameters.
 
 Metadata lives on a separate node (pipe-in, no pipe-out).
 Model 1 and Model 2 names share one comma-separated widget.
-Primary Civitai field is a single AIR or URL (CiviScribe-style, no lookup).
+Primary CivitAI field is a single AIR or URL (CiviScribe-style, no lookup).
 """
 
 from __future__ import annotations
@@ -291,7 +291,7 @@ class LCSaveImageMetadata:
                     "STRING",
                     {
                         "default": "",
-                        "tooltip": "Primary Civitai AIR or model URL. No hash lookup. Fill it to link your workflow/model on Civitai. Trade-off: Civitai then labels the image \"made on-site\". Leave it empty and the image reads as an external generator (models and LoRAs still match by hash).",
+                        "tooltip": "Primary CivitAI AIR or model URL. No hash lookup. Fill it to link your workflow/model on CivitAI. Trade-off: CivitAI then labels the image \"made on-site\". Leave it empty and the image reads as an external generator (models and LoRAs still match by hash).",
                     },
                 ),
                 "width": (
@@ -473,7 +473,7 @@ class LCSaveImage:
                     ["png", "jpeg", "webp"],
                     {
                         "default": "png",
-                        "tooltip": "PNG keeps workflow + Civitai text chunks. JPEG/WebP only get a short comment.",
+                        "tooltip": "PNG keeps workflow + CivitAI text chunks. JPEG/WebP only get a short comment.",
                     },
                 ),
                 "quality": (
@@ -509,7 +509,7 @@ class LCSaveImage:
                         "default": True,
                         "label_on": "hash files",
                         "label_off": "no hashes",
-                        "tooltip": "SHA-256 AutoV2 of checkpoints, UNET, CLIP, VAE, LoRAs found in the graph. Civitai lists resources from these hashes, not from names.",
+                        "tooltip": "SHA-256 AutoV2 of checkpoints, UNET, CLIP, VAE, LoRAs found in the graph. CivitAI lists resources from these hashes, not from names.",
                     },
                 ),
             },
@@ -517,7 +517,7 @@ class LCSaveImage:
                 "metadata": (
                     META_TYPE,
                     {
-                        "tooltip": "From LC Save Metadata. Prompts, seed, models, Civitai AIR/URL.",
+                        "tooltip": "From LC Save Metadata. Prompts, seed, models, CivitAI AIR/URL.",
                     },
                 ),
                 "filename_prefix": (
@@ -542,7 +542,7 @@ class LCSaveImage:
     OUTPUT_NODE = True
     DESCRIPTION = (
         "Save images with Comfy workflow metadata. Wire LC Save Metadata for "
-        "Civitai parameters. filename + path widgets; PNG recommended."
+        "CivitAI parameters. filename + path widgets; PNG recommended."
     )
 
     def save(
@@ -604,19 +604,23 @@ class LCSaveImage:
         results = []
         last_path = ""
 
+        # Hash once per save (same graph for every frame). With hash_resources
+        # off nothing is hashed and no hash text is written anywhere.
+        hash_bits = None
+        buckets = None
+        if hash_resources:
+            try:
+                buckets = collect_hashes(prompt, extra_pnginfo, unique_id)
+                hash_bits = (*format_hash_fields(buckets), *format_lora_fields(lora_metadata, buckets))
+            except Exception as e:
+                print(f"[LC123] resource hash skip: {e}")
+                buckets = None
+                hash_bits = None
+
         for i in range(n):
             pil = _tensor_to_pil(batch[i])
             width, height = pil.size
             params = ""
-            hash_bits = None
-            buckets = None
-            if hash_resources or embed_civitai:
-                try:
-                    buckets = collect_hashes(prompt, extra_pnginfo, unique_id)
-                    hash_bits = (*format_hash_fields(buckets), *format_lora_fields(lora_metadata, buckets))
-                except Exception as e:
-                    print(f"[LC123] resource hash skip: {e}")
-                    hash_bits = None
             if embed_civitai:
                 meta_width = int(meta.get("width") or 0)
                 meta_height = int(meta.get("height") or 0)

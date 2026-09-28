@@ -65,6 +65,16 @@ def _list(folder_path: str, subfolders: bool) -> list[str]:
     return sorted(found, key=lambda p: _natural_key(os.path.relpath(p, root)))
 
 
+def _to_rgb(img: Image.Image) -> Image.Image:
+    """16-bit grayscale PNGs open as 'I;16' / 'I;16B' / 'I'. A plain convert("RGB") clips them to white,
+    so scale them down first the way ComfyUI core does (nodes_dataset / the old LoadImage)."""
+    if img.mode in ("I;16", "I;16B", "I;16L"):
+        img = img.convert("I")
+    if img.mode == "I":
+        img = img.point(lambda i: i * (1 / 255))
+    return img.convert("RGB")
+
+
 def _fit(img: Image.Image, w: int, h: int, mode: str) -> Image.Image:
     if img.size == (w, h):
         return img
@@ -137,7 +147,8 @@ class LCImageBatchFromFolder:
 
         out, w, h = [], None, None
         for p in pick:
-            img = ImageOps.exif_transpose(Image.open(p)).convert("RGB")
+            with Image.open(p) as im:  # closed right away, a big folder does not hold every file open
+                img = _to_rgb(ImageOps.exif_transpose(im))
             if w is None:
                 w, h = img.size
             out.append(torch.from_numpy(np.asarray(_fit(img, w, h, size_mode), dtype=np.float32) / 255.0))

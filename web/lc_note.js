@@ -14,6 +14,7 @@ import { ComfyWidgets } from "../../scripts/widgets.js";
 
 const TYPE = "LCNote";
 const SETTING = "LC123.Notes.Language";
+const CARD_SETTING = "LC123.Notes.LinkCards";
 const COLOR = "#2E3A46";
 
 // ComfyUI's own interface languages. code, label, name given to the translator, rtl
@@ -283,8 +284,9 @@ function setupNode(node) {
     w.options.setValue = function (v) {
       origSet.call(this, v);
       if (!node._lcLoading) {
-        syncFromEditor(node);
-        refresh(node);
+        syncFromEditor(node); // the text is stored right away; only the dropdown/button refresh waits
+        clearTimeout(node._lcRefreshTimer);
+        node._lcRefreshTimer = setTimeout(() => refresh(node), 250);
       }
     };
   }
@@ -299,12 +301,13 @@ app.registerExtension({
   settings: [
     {
       id: SETTING,
+      sortOrder: 30, // Notes section order: Note language, Translate all notes, Link cards
       name: "Note language",
       type: "combo",
       defaultValue: "auto",
       options: [{ text: "Same as ComfyUI", value: "auto" }, ...LANGS.map((l) => ({ text: l[1], value: l[0] }))],
       tooltip: "Language LC Notes open in. A note without that translation shows its original text.",
-      category: ["LC123", "Notes", "Note language"],
+      category: ["LC123 Settings ⚙️", "Notes", "Note language"],
       onChange: () => {
         // only switch notes that actually have the new language; leave the rest alone
         const want = readerLang();
@@ -312,25 +315,53 @@ app.registerExtension({
       },
     },
     {
-      id: "LC123.Notes.ConvertAll",
-      name: "Convert all notes",
-      category: ["LC123", "Notes", "Convert all notes"],
+      id: CARD_SETTING,
+      sortOrder: 10,
+      name: "Link cards",
+      type: "boolean",
+      defaultValue: true,
+      tooltip:
+        "A line with just @[card](https://…) in an LC Note shows the page as a card: picture, site, title and description. " +
+        "@[card: your caption](https://…) adds your own caption. Plain links stay plain. ComfyUI reads each card's page " +
+        "once to get its title and picture, and the picture loads from that site. Off = cards show as plain links.",
+      category: ["LC123 Settings ⚙️", "Notes", "Link cards"],
+    },
+    {
+      id: "LC123.Notes.TranslateAll",
+      sortOrder: 20,
+      name: "Translate all notes",
+      category: ["LC123 Settings ⚙️", "Notes", "Translate all notes"],
       defaultValue: "",
       tooltip:
-        "Turns every Markdown Note and Note in the open workflow into an LC Note. " +
-        "A note written as English, then ---, then Chinese becomes one LC Note with both languages. " +
-        "Position, size and color are kept. Save the workflow afterwards to keep it.",
+        "Translates every LC Note in the open workflow (subgraphs too) into the Note language above, one after " +
+        "another, then shows them in it. Notes already in that language, or with an up-to-date translation, are skipped. " +
+        "Needs LC Vision installed. Only LC Notes are touched; other notes are left alone. Save the workflow afterwards to keep it.",
       type: () => {
+        const IDLE = "Translate all notes in this workflow";
         const b = document.createElement("button");
         b.type = "button"; // a plain <button> is a submit button: inside the settings form it reloads ComfyUI
-        b.textContent = "Convert all notes in this workflow";
+        b.textContent = IDLE;
         b.className = "p-button p-component p-button-sm";
-        b.onclick = (e) => {
+        let busy = false;
+        b.onclick = async (e) => {
           e.preventDefault();
           e.stopPropagation();
-          const n = convertAllNotes();
-          b.textContent = n ? `Converted ${n} note${n === 1 ? "" : "s"} ✅` : "No notes to convert";
-          setTimeout(() => (b.textContent = "Convert all notes in this workflow"), 3000);
+          if (busy) return;
+          busy = true;
+          b.disabled = true;
+          try {
+            const r = await translateAllNotes((i, n, name) => (b.textContent = `Translating ${i} of ${n} to ${name}…`));
+            if (r.error) b.textContent = r.error;
+            else if (!r.total) b.textContent = "No LC Notes in this workflow";
+            else if (!r.done && !r.failed) b.textContent = `All notes are already in ${r.name} ✅`;
+            else b.textContent = `Translated ${r.done} to ${r.name} ✅` + (r.failed ? ` · ${r.failed} failed` : "");
+          } finally {
+            busy = false;
+            b.disabled = false;
+            setTimeout(() => {
+              if (!busy) b.textContent = IDLE;
+            }, 6000);
+          }
         };
         return b;
       },
@@ -427,43 +458,15 @@ app.registerExtension({
   },
 });
 
-// ---------------------------------------------------------------- convert old notes
+// ---------------------------------------------------------------- titles saved before they were per-language
 
-const CJK = /[぀-ヿ㐀-䶿一-鿿가-힯豈-﫿＀-￯]/g;
+const CJK =/[぀-ヿ㐀-䶿一-鿿가-힯豈-﫿＀-￯]/g;
 const LATIN = /[A-Za-z]/g;
 
 function cjkShare(s) {
   const c = (s.match(CJK) || []).length;
   const l = (s.match(LATIN) || []).length;
   return c + l ? c / (c + l) : 0;
-}
-
-/** "English --- Chinese" -> {en, zh}. English notes can have their own --- breaks, so it splits at the
- *  rule line with no Chinese above it and the most Chinese below it. */
-function splitBilingual(text) {
-  const lines = String(text || "").split("\n");
-  let best = null;
-  for (let i = 0; i < lines.length; i++) {
-    if (!/^\s*(-{3,}|\*{3,}|_{3,})\s*$/.test(lines[i])) continue;
-    const before = lines.slice(0, i).join("\n").trim();
-    const after = lines.slice(i + 1).join("\n").trim();
-    const share = cjkShare(after);
-    if (before && after && cjkShare(before) < 0.05 && share > 0.3 && (!best || share > best.share)) {
-      best = { en: before, zh: after, share };
-    }
-  }
-  if (best) return { en: best.en, zh: best.zh };
-  const all = String(text || "").trim();
-  return cjkShare(all) > 0.3 ? { zh: all } : { en: all };
-}
-
-const CJK_LOCALES = new Set(["zh", "zh-TW", "ja", "ko"]);
-
-/** Original language for a one-language note: the author's ComfyUI language, unless the script disagrees. */
-function authorLang(isCjkText) {
-  const loc = comfyLocale();
-  if (isCjkText) return CJK_LOCALES.has(loc) ? loc : "zh";
-  return CJK_LOCALES.has(loc) ? "en" : loc;
 }
 
 /** "⚙️ Settings/ ⚙️ 设置" -> {en, zh}; a one-language title -> {en} or {zh}. */
@@ -484,44 +487,36 @@ function allGraphs() {
   return [root, ...subs].filter(Boolean);
 }
 
-function convertAllNotes() {
-  let count = 0;
-  for (const g of allGraphs()) {
-    for (const old of [...(g._nodes || [])]) {
-      if (old.type !== "MarkdownNote" && old.type !== "Note") continue;
-      const parts = splitBilingual(old.widgets?.[0]?.value);
-      const note = LiteGraph.createNode(TYPE);
-      if (!note) continue;
-      const bilingual = parts.en !== undefined && parts.zh !== undefined;
-      // one-language notes: the author's ComfyUI language is the original (Chinese text is still read as Chinese)
-      const source = bilingual ? "en" : authorLang(parts.zh !== undefined);
-      const texts = { [source]: { text: bilingual ? parts.en : parts.en ?? parts.zh } };
-      const titles = {};
-      let t = null;
-      if (old.title && old.title !== old.constructor?.title && old.title !== "Note" && old.title !== "Markdown Note") {
-        t = splitTitle(old.title);
-        titles[source] = bilingual ? t.en || String(old.title).trim() : String(old.title).trim();
-        if (bilingual && t.zh) titles.zh = t.zh;
-      }
-      if (bilingual) texts.zh = { text: parts.zh, src: hash(parts.en), srcTitle: titles.en || "" };
-      note.properties.lc_note = { source, texts, titles };
-      note._lcConfigured = true;
-      note.pos = [...old.pos];
-      note.size = [...old.size];
-      if (old.color) note.color = old.color;
-      if (old.bgcolor) note.bgcolor = old.bgcolor;
-      g.add(note);
-      g.remove(old);
-      note._lcShown = source;
-      show(note, pickLang(note), true);
-      count++;
-    }
+/** Translate every LC Note in the open workflow (subgraphs too) into the Note language, one after another, with the
+ *  same translator as each note's own button. Notes already in that language, or with an up-to-date translation, are
+ *  skipped; afterwards every note that has the language shows it. Only LC Notes are touched. */
+async function translateAllNotes(progress) {
+  const code = readerLang();
+  const name = BY_CODE[code]?.[1] || code;
+  if (!(await translatorStatus())) return { error: "Needs LC Vision installed to translate", name };
+  const notes = [];
+  for (const g of allGraphs()) for (const n of g._nodes || []) if (n.type === TYPE) notes.push(n);
+  const todo = notes.filter((n) => {
+    const d = data(n);
+    const st = status(n, code);
+    return d.source !== code && (d.texts[d.source]?.text || "").trim() && (st === "missing" || st === "stale");
+  });
+  let done = 0;
+  let failed = 0;
+  for (const n of todo) {
+    progress?.(done + failed + 1, todo.length, name);
+    await translateNow(n, code); // it reports its own failures
+    if (status(n, code) === "ok") done++;
+    else failed++;
   }
-  if (count) {
-    app.graph.setDirtyCanvas(true, true);
-    app.extensionManager?.workflow?.activeWorkflow?.changeTracker?.checkState?.();
+  for (const n of notes) if (data(n).texts[code] || data(n).source === code) show(n, code);
+  if (done) {
+    app.graph?.setDirtyCanvas?.(true, true);
+    const ct = app.extensionManager?.workflow?.activeWorkflow?.changeTracker;
+    if (typeof ct?.captureCanvasState === "function") ct.captureCanvasState();
+    else ct?.checkState?.();
   }
-  return count;
+  return { name, done, failed, total: notes.length };
 }
 
 function pickLang(node) {
@@ -529,4 +524,286 @@ function pickLang(node) {
   const want = readerLang();
   return d.texts[want] ? want : d.source;
 }
+
+// ---------------------------------------------------------------- Nodes 2.0: the note keeps its own size
+// Nodes 2.0 lets the markdown push the node as tall as the whole text (and saving then keeps that stretched size).
+// Here the text area is capped at the room the node has and scrolls inside it; resizing the node moves the cap.
+// Classic is untouched: none of this runs there.
+function fitVueNote(node) {
+  const el = document.querySelector(`[data-node-id="${node.id}"]`);
+  const md = el?.querySelector(".widget-markdown");
+  if (!md) return;
+  const scale = app.canvas?.ds?.scale || 1;
+  // the node's own height as Nodes 2.0 lays it out (title included), falling back to litegraph's size
+  const nodeH = parseFloat(el.style.getPropertyValue("--node-height")) || node.size[1] + (window.LiteGraph?.NODE_TITLE_HEIGHT ?? 30);
+  // everything around the text (title, language row, button, badges) = node minus text, measured with the cap off.
+  // All in one go, so nothing is painted in between.
+  const box = md.querySelector(".comfy-markdown-content") || md;
+  const scrolled = box.scrollTop; // taking the cap off resets the scroll, so it is put back afterwards
+  const prev = md.style.maxHeight;
+  md.style.maxHeight = "";
+  const around = (el.getBoundingClientRect().height - md.getBoundingClientRect().height) / scale;
+  const room = Math.max(40, Math.floor(nodeH - around));
+  md.style.maxHeight = prev;
+  if (md.style.maxHeight !== room + "px") md.style.maxHeight = room + "px";
+  if (box.scrollTop !== scrolled) box.scrollTop = scrolled;
+}
+
+// ComfyUI's markdown scrolls inside .comfy-markdown-content once its box is capped, but Nodes 2.0 only hands the wheel
+// to a box that has keyboard focus. Over an LC Note with more text than fits, the wheel scrolls the note straight away;
+// Ctrl+wheel, and any note whose text all fits, still zoom the canvas.
+window.addEventListener("wheel", (e) => {
+  if (!window.LiteGraph?.vueNodesMode || e.ctrlKey) return;
+  const md = e.target?.closest?.(".widget-markdown");
+  const el = md?.closest?.("[data-node-id]");
+  if (!el || app.canvas?.graph?.getNodeById?.(el.dataset.nodeId)?.type !== TYPE) return;
+  const box = md.querySelector(".comfy-markdown-content") || md;
+  if (box.scrollHeight <= box.clientHeight + 1) return;
+  box.scrollTop += e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY;
+  e.preventDefault();
+  e.stopPropagation();
+}, { capture: true, passive: false });
+
+setInterval(() => {
+  if (!window.LiteGraph?.vueNodesMode) return;
+  for (const n of app.canvas?.graph?._nodes || []) if (n.type === TYPE) fitVueNote(n);
+}, 400);
+
+// ---------------------------------------------------------------- link cards
+// A line holding only @[card](https://…) or @[card: caption](https://…) shows as a card: the page's picture, site,
+// title and description, read once by the LC123 server route (/lc123/link_card). Plain links stay plain.
+// The note text itself is never changed: cards are only drawn over what the markdown renders.
+//  - Nodes 2.0 renders the note as plain HTML, so the card line is swapped for the card in place.
+//  - Classic renders it inside a ProseMirror view that watches its own DOM, so nothing inside it is touched:
+//    a style rule keeps the card line's space empty, and the card floats over that space on a layer beside it.
+const cardsOn = () => {
+  try {
+    return (app.extensionManager?.setting?.get?.(CARD_SETTING) ?? app.ui?.settings?.getSettingValue?.(CARD_SETTING)) !== false;
+  } catch (_) {
+    return true;
+  }
+};
+const CARD_H = 76;
+const CARD_RE = /^card(?:\s*:\s*(.*))?$/i;
+const cardInfo = new Map(); // url -> card data, "loading", or a failed card
+
+function loadCard(url) {
+  if (cardInfo.has(url)) return;
+  cardInfo.set(url, "loading");
+  api.fetchApi(`/lc123/link_card?url=${encodeURIComponent(url)}`)
+    .then((r) => r.json())
+    .catch(() => ({ ok: false }))
+    .then((c) => {
+      cardInfo.set(url, c || { ok: false });
+      document.querySelectorAll(".lc-link-card").forEach((el) => {
+        if (el.dataset.url === url) fillCard(el);
+      });
+    });
+}
+
+let cardCss = false;
+function addCardCss() {
+  if (cardCss) return;
+  cardCss = true;
+  const s = document.createElement("style");
+  s.textContent = `
+.lc-link-card{display:flex;gap:10px;height:${CARD_H}px;box-sizing:border-box;margin:0;padding:0;border:1px solid rgba(255,255,255,.14);
+  border-radius:8px;background:rgba(0,0,0,.28);overflow:hidden;text-decoration:none!important;color:inherit!important;cursor:pointer;pointer-events:auto}
+.lc-link-card:hover{border-color:rgba(255,255,255,.35);background:rgba(0,0,0,.4)}
+.lc-link-card .lc-lc-img{flex:0 0 ${CARD_H}px;width:${CARD_H}px;height:100%;object-fit:contain;background:rgba(0,0,0,.35)}
+.lc-link-card .lc-lc-txt{display:flex;flex-direction:column;justify-content:center;min-width:0;padding:4px 8px 4px 0;line-height:1.25}
+.lc-link-card .lc-lc-site{font-size:10px;opacity:.6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lc-link-card .lc-lc-title{font-size:12px;font-weight:600;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.lc-link-card .lc-lc-desc{font-size:11px;opacity:.7;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.lc-link-card .lc-lc-cap{font-size:11px;color:#7dd3fc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lc-link-card.lc-has-cap .lc-lc-title{-webkit-line-clamp:1}
+.lc-card-layer{position:absolute;pointer-events:none;overflow:hidden;z-index:2}
+.lc-card-layer .lc-link-card{position:absolute;left:0;right:0}`;
+  document.head.appendChild(s);
+}
+
+function makeCard(url, caption) {
+  const a = document.createElement("a");
+  a.className = "lc-link-card";
+  a.href = url;
+  a.target = "_blank";
+  a.rel = "noopener noreferrer";
+  a.dataset.url = url;
+  a.dataset.caption = caption || "";
+  // a click opens the page; it must not start a node drag or put the note into edit mode
+  for (const ev of ["pointerdown", "mousedown", "dblclick"]) a.addEventListener(ev, (e) => e.stopPropagation());
+  fillCard(a);
+  loadCard(url);
+  return a;
+}
+
+function fillCard(a) {
+  const url = a.dataset.url;
+  const caption = a.dataset.caption;
+  const c = cardInfo.get(url);
+  let host = url;
+  try {
+    host = new URL(url).hostname.replace(/^www\./, "");
+  } catch (_) {}
+  const info = c && c !== "loading" ? c : null;
+  a.textContent = "";
+  a.title = url;
+  a.classList.toggle("lc-has-cap", !!caption); // a caption line takes the title's second line
+  if (info?.image) {
+    const img = document.createElement("img");
+    img.className = "lc-lc-img";
+    img.src = info.image;
+    img.referrerPolicy = "no-referrer";
+    img.loading = "lazy";
+    img.alt = "";
+    img.onerror = () => img.remove();
+    // a wide picture (a banner) gets a wider slot, up to 2.2x the card's height; past that it fits inside with bars
+    img.onload = () => {
+      const r = img.naturalWidth / Math.max(1, img.naturalHeight);
+      if (r > 1.15) {
+        const w = Math.round(Math.min(CARD_H * r, CARD_H * 2.2));
+        img.style.width = img.style.flexBasis = w + "px";
+      }
+    };
+    a.appendChild(img);
+  }
+  const t = document.createElement("div");
+  t.className = "lc-lc-txt";
+  const line = (cls, text) => {
+    if (!text) return;
+    const d = document.createElement("div");
+    d.className = cls;
+    d.textContent = text;
+    t.appendChild(d);
+  };
+  line("lc-lc-site", info?.site || host);
+  line("lc-lc-title", info?.ok ? info.title || host : c === "loading" || !c ? "Loading…" : host);
+  if (info?.ok) line("lc-lc-desc", info.description);
+  line("lc-lc-cap", caption);
+  if (!info?.image && !t.childNodes.length) line("lc-lc-title", host);
+  if (!info?.image) t.style.paddingLeft = "10px";
+  a.appendChild(t);
+}
+
+// the card lines in a rendered note: a paragraph holding "@" then a link whose text is "card" / "card: caption"
+function cardLines(root) {
+  const out = [];
+  for (const p of root.children) {
+    if (p.tagName !== "P") continue;
+    const a = p.querySelector("a[href]");
+    if (!a || p.children.length !== 1) continue;
+    const m = CARD_RE.exec(a.textContent.trim());
+    if (!m) continue;
+    const before = p.textContent.slice(0, p.textContent.indexOf(a.textContent)).trim();
+    if (before !== "@" || p.textContent.trim() !== "@" + a.textContent.trim()) continue;
+    if (!/^https?:\/\//i.test(a.getAttribute("href"))) continue;
+    out.push({ p, url: a.getAttribute("href"), caption: (m[1] || "").trim() });
+  }
+  return out;
+}
+
+// Nodes 2.0: swap the card line for the card (the HTML is ComfyUI's plain render, redrawn when the text changes)
+function vueCards(node) {
+  const box = document.querySelector(`[data-node-id="${node.id}"] .widget-markdown .comfy-markdown-content`);
+  if (!box) return;
+  // editing: Nodes 2.0 shows its text box over the note; the card lines go back to plain text meanwhile
+  const ta = box.parentElement?.querySelector(":scope > textarea");
+  const editing = !!ta && ta.style.display !== "none" && getComputedStyle(ta).display !== "none";
+  if (!cardsOn() || editing) {
+    box.querySelectorAll("p[data-lc-card]").forEach((p) => {
+      p.innerHTML = p._lcOrig ?? p.innerHTML;
+      delete p.dataset.lcCard;
+    });
+    return;
+  }
+  for (const { p, url, caption } of cardLines(box)) {
+    if (p.dataset.lcCard === url) continue;
+    addCardCss();
+    p._lcOrig = p.innerHTML;
+    p.dataset.lcCard = url;
+    p.textContent = "";
+    p.appendChild(makeCard(url, caption));
+  }
+}
+
+// classic: nothing inside ProseMirror is changed. A style rule keeps each card line's space empty (by position),
+// and the cards sit on a layer beside it that follows the scroll.
+const classicState = new WeakMap(); // widget element -> {layer, style, key}
+function classicCards(node) {
+  const el = node._lcText?.element;
+  const pm = el?.querySelector?.(".ProseMirror");
+  let st = el ? classicState.get(el) : null;
+  const clear = () => {
+    if (!st) return;
+    st.layer.remove();
+    st.style.remove();
+    classicState.delete(el);
+  };
+  // editing (double-click): ComfyUI fades the rendered note out and its text box in; the cards go too, so the
+  // @[card](…) text is there to edit. They come back once the edit ends.
+  if (!pm || !cardsOn() || el.classList.contains("editing") || getComputedStyle(pm).display === "none" || !el.isConnected) return clear();
+  const lines = cardLines(pm);
+  if (!lines.length) return clear();
+  addCardCss();
+  if (!st) {
+    el.dataset.lcNote = String(node.id);
+    if (getComputedStyle(el).position === "static") el.style.position = "relative";
+    const layer = document.createElement("div");
+    layer.className = "lc-card-layer";
+    el.appendChild(layer);
+    const style = document.createElement("style");
+    document.head.appendChild(style);
+    st = { layer, style, key: "" };
+    classicState.set(el, st);
+    pm.addEventListener("scroll", () => placeClassic(el, pm), { passive: true });
+  }
+  const kids = [...pm.children];
+  const key = lines.map((l) => kids.indexOf(l.p) + "|" + l.url + "|" + l.caption).join(";");
+  if (key !== st.key) {
+    st.key = key;
+    const sel = `.comfy-markdown[data-lc-note="${String(node.id).replace(/"/g, "")}"] .ProseMirror`;
+    st.style.textContent = lines
+      .map((l) => `${sel} > :nth-child(${kids.indexOf(l.p) + 1}){visibility:hidden;height:${CARD_H}px;margin:6px 0;overflow:hidden}`)
+      .join("\n");
+    st.layer.textContent = "";
+    for (const l of lines) st.layer.appendChild(makeCard(l.url, l.caption)).dataset.child = String(kids.indexOf(l.p));
+  }
+  placeClassic(el, pm);
+}
+
+function placeClassic(el, pm) {
+  const st = classicState.get(el);
+  if (!st) return;
+  const er = el.getBoundingClientRect();
+  const k = er.width / (el.offsetWidth || 1) || 1; // the widget is scaled with the canvas
+  const pr = pm.getBoundingClientRect();
+  Object.assign(st.layer.style, {
+    left: (pr.left - er.left) / k + "px",
+    top: (pr.top - er.top) / k + "px",
+    width: pr.width / k + "px",
+    height: pr.height / k + "px",
+  });
+  for (const card of st.layer.children) {
+    const p = pm.children[Number(card.dataset.child)];
+    if (!p) continue;
+    const r = p.getBoundingClientRect();
+    card.style.top = (r.top - pr.top) / k + "px";
+    card.style.left = (r.left - pr.left) / k + "px";
+    card.style.width = r.width / k + "px";
+    card.style.right = "auto";
+  }
+}
+
+setInterval(() => {
+  const vue = !!window.LiteGraph?.vueNodesMode;
+  for (const n of app.canvas?.graph?._nodes || []) {
+    if (n.type !== TYPE) continue;
+    try {
+      if (vue) vueCards(n);
+      else classicCards(n);
+    } catch (e) {
+      console.warn("[LC123] link cards", e);
+    }
+  }
+}, 500);
 

@@ -19,6 +19,7 @@ Nodes, Impact Pack, ...) if one of those is ever wired in instead of LC Apply Lo
 from __future__ import annotations
 
 import json
+import os
 
 import folder_paths
 
@@ -27,6 +28,21 @@ import comfy.utils
 
 STACK_NODE_NAME = "LCLoraLoaderStack"
 APPLY_NODE_NAME = "LCApplyLoraStack"
+
+def _cached_lora(prev: dict, used: dict, path: str):
+    """Load a LoRA file, reusing the copy kept from the last run (like core LoraLoader's
+    self.loaded_lora) so a strength change does not reload it from disk. Keyed by path + mtime,
+    so an overwritten file is reloaded. Only entries used this run are carried forward."""
+    try:
+        key = (path, os.path.getmtime(path))
+    except OSError:
+        key = (path, None)
+    hit = used.get(key) or prev.get(key)
+    if hit is None:
+        hit = comfy.utils.load_torch_file(path, safe_load=True, return_metadata=True)
+    used[key] = hit
+    return hit
+
 
 
 class LCLoraLoaderStack:
@@ -106,10 +122,12 @@ class LCApplyLoraStack:
 
     def apply(self, bypass=False, model=None, clip=None, lora_stack=None):
         if bypass or not lora_stack:
+            self._lora_cache = {}
             return (model, clip)
 
         out_model, out_clip = model, clip
-        cache: dict[str, tuple] = {}
+        prev = getattr(self, "_lora_cache", None) or {}
+        used: dict = {}
 
         for entry in lora_stack:
             try:
@@ -124,16 +142,14 @@ class LCApplyLoraStack:
                 # than failing the whole graph, same as LC LoRA Loader
                 continue
 
-            if path in cache:
-                lora, lora_metadata = cache[path]
-            else:
-                lora, lora_metadata = comfy.utils.load_torch_file(path, safe_load=True, return_metadata=True)
-                cache[path] = (lora, lora_metadata)
+            lora, lora_metadata = _cached_lora(prev, used, path)
 
             out_model, out_clip = comfy.sd.load_lora_for_models(
                 out_model, out_clip, lora, strength_model, strength_clip, lora_metadata=lora_metadata
             )
 
+        # keep only the LoRAs used in this run (bounded by the stack size)
+        self._lora_cache = used
         return (out_model, out_clip)
 
 

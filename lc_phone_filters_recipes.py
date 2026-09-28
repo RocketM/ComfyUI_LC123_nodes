@@ -248,7 +248,8 @@ def _1977(p):
 
 def _aden(p):
     tinted = blend_fill(p, "darken", rgb8(66, 10, 14))
-    fading = quarter_turn(linear_mask(p.shape, start=0.8, horizontal=False))
+    # WAS rotates a vertical ramp a quarter turn; a horizontal ramp is the same on square images and fits any size
+    fading = linear_mask(p.shape, start=0.8, horizontal=True)
     g = composite_mask(tinted, p, fading)
     g = saturation(contrast(hue_rotate(g, -20.0), 0.9), 0.85)
     return brightness(g, 1.2)

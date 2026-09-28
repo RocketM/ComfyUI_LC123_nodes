@@ -434,11 +434,14 @@ app.registerExtension({
       scheduleRefresh(this);
       setTimeout(() => trimNodeSize(this), 0);
       setTimeout(() => trimNodeSize(this), 50);
+      this._lcSnapCreated = true; // nodeCreated below then has nothing left to do
       return r;
     };
   },
   nodeCreated(node) {
     if (node.comfyClass !== TYPE && node.type !== TYPE) return;
+    // onNodeCreated already ran the same setup and scheduled the refresh: running it twice doubled every refresh
+    if (node._lcSnapCreated) return;
     trimNodeSize(node);
     hidePayloadWidgets(node);
     hookRefresh(node);

@@ -19,6 +19,7 @@ const ID = {
   skinFull: "LC123.Performance.SkinBeautyFullPreview",
   recentColors: "LC123.Performance.RecentColors",
   loraInfo: "LC123.Performance.LoraInfoButton",
+  minPreview: "LC123.Performance.PreviewMinSize",
 };
 
 function dirty() {
@@ -78,7 +79,35 @@ function policyFor(nodeClass) {
   };
 }
 
-window.LC123Perf = { ID, get, policyFor };
+// Preview distance: like canvas text, an on-node image switches off once it is drawn too small on screen to read.
+// Size is the image's on-screen area as a square side (sqrt(w*h) * zoom), so a 200x200 preview fades out before a 1000x100 one.
+let minPreviewPx = null;
+function minPreview() {
+  if (minPreviewPx === null) {
+    const v = Number(get(ID.minPreview, 40));
+    minPreviewPx = Number.isFinite(v) ? v : 40;
+  }
+  return minPreviewPx;
+}
+
+function tooSmall(w, h) {
+  const min = minPreview();
+  if (!(min > 0)) return false;
+  const scale = app.canvas?.ds?.scale ?? 1;
+  return Math.sqrt(Math.max(0, w) * Math.max(0, h)) * scale < min;
+}
+
+// true = skip the image; draws a flat stand-in so the node does not look empty
+function skipImage(ctx, x, y, w, h) {
+  if (!tooSmall(w, h)) return false;
+  ctx.save();
+  ctx.fillStyle = "rgba(0,0,0,0.28)";
+  ctx.fillRect(x, y, w, h);
+  ctx.restore();
+  return true;
+}
+
+window.LC123Perf = { ID, get, policyFor, tooSmall, skipImage };
 
 /**
  * Official pattern:
@@ -95,7 +124,7 @@ app.registerExtension({
       defaultValue: false,
       tooltip:
         "Disable hover wipe on LC image FX previews. Does not affect Image Compare, Image Split, or Dynamic Overlay.",
-      category: ["LC123", "Performance", "Remove wipe"],
+      category: ["LC123 Settings ⚙️", "Performance", "Remove wipe"],
       onChange: dirty,
     },
     {
@@ -105,7 +134,7 @@ app.registerExtension({
       defaultValue: false,
       tooltip:
         "Draw FX on-node previews at half the image box size. Output sockets stay full resolution.",
-      category: ["LC123", "Performance", "Half-resolution previews"],
+      category: ["LC123 Settings ⚙️", "Performance", "Half-resolution previews"],
       onChange: dirty,
     },
     {
@@ -114,7 +143,7 @@ app.registerExtension({
       type: "boolean",
       defaultValue: false,
       tooltip: "Downscale on-node FX preview textures to Max edge (below).",
-      category: ["LC123", "Performance", "Clamp longest side"],
+      category: ["LC123 Settings ⚙️", "Performance", "Clamp longest side"],
       onChange: dirty,
     },
     {
@@ -129,7 +158,7 @@ app.registerExtension({
         showButtons: true,
       },
       tooltip: "Used when Clamp longest side is on.",
-      category: ["LC123", "Performance", "Max edge (px)"],
+      category: ["LC123 Settings ⚙️", "Performance", "Max edge (px)"],
       onChange: dirty,
     },
     {
@@ -138,7 +167,7 @@ app.registerExtension({
       type: "boolean",
       defaultValue: true,
       tooltip: "Skip drawing on-node images for collapsed FX nodes.",
-      category: ["LC123", "Performance", "No preview when collapsed"],
+      category: ["LC123 Settings ⚙️", "Performance", "No preview when collapsed"],
       onChange: dirty,
     },
     {
@@ -148,7 +177,7 @@ app.registerExtension({
       defaultValue: false,
       tooltip:
         "Hide all LC image FX on-node previews. Compare / Split / Overlay unchanged.",
-      category: ["LC123", "Performance", "Hide FX on-node previews"],
+      category: ["LC123 Settings ⚙️", "Performance", "Hide FX on-node previews"],
       onChange: dirty,
     },
     {
@@ -158,7 +187,7 @@ app.registerExtension({
       defaultValue: true,
       tooltip:
         "Show your last 8 custom colors in the right-click Colors menu (adds a Custom picker if Custom Scripts isn't installed).",
-      category: ["LC123", "Performance", "Recent colors"],
+      category: ["LC123 Settings ⚙️", "Performance", "Recent colors"],
     },
     {
       id: ID.skinFull,
@@ -167,7 +196,7 @@ app.registerExtension({
       defaultValue: true,
       tooltip:
         "LC Skin Beauty keeps full-quality on-node preview (no half-res / no clamp). Wipe still follows Remove wipe.",
-      category: ["LC123", "Performance", "Skin Beauty full preview override"],
+      category: ["LC123 Settings ⚙️", "Performance", "Skin Beauty full preview override"],
       onChange: dirty,
     },
     {
@@ -177,8 +206,22 @@ app.registerExtension({
       defaultValue: true,
       tooltip:
         "Show the ℹ info button on LoRA loader rows. The original loader reads local trigger words; LC Group LoRA Loader shows .civitai.info previews and trigger words. Turn off to declutter the rows.",
-      category: ["LC123", "Performance", "LoRA loader info button"],
+      category: ["LC123 Settings ⚙️", "Performance", "LoRA loader info button"],
       onChange: dirty,
+    },
+    {
+      id: ID.minPreview,
+      name: "Preview distance (px)",
+      type: "slider",
+      defaultValue: 40,
+      attrs: { min: 0, max: 300, step: 5 },
+      tooltip:
+        "On-node image previews switch off when you zoom out far enough that they are drawn smaller than this on screen, the same way node text does. Smaller previews switch off first. 0 = always draw.",
+      category: ["LC123 Settings ⚙️", "Performance", "Preview distance (px)"],
+      onChange: () => {
+        minPreviewPx = null;
+        dirty();
+      },
     },
   ],
   async setup() {

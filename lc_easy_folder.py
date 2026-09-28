@@ -106,6 +106,12 @@ class LCEasyFolder:
         "Build a filename_prefix for native Save Image. Creates folders if needed."
     )
 
+    @classmethod
+    def IS_CHANGED(cls, timestamp="%Y-%m-%d", **kwargs):
+        # Re-run only when the stamp text would change (e.g. a new day), so
+        # the output is not stuck on the stamp from the first run.
+        return _stamp(timestamp)
+
     def build(self, folder, prefix, suffix, timestamp, path_separator):
         sep = _pick_sep(path_separator)
         folder = _sanitize(folder)
@@ -121,9 +127,11 @@ class LCEasyFolder:
             if "%" not in folder:
                 try:
                     import folder_paths
-                    out_root = folder_paths.get_output_directory()
-                    full = os.path.join(out_root, folder.replace("/", os.sep).replace("\\", os.sep))
-                    os.makedirs(full, exist_ok=True)
+                    out_root = os.path.abspath(folder_paths.get_output_directory())
+                    full = os.path.abspath(os.path.join(out_root, folder.replace("/", os.sep).replace("\\", os.sep)))
+                    # only create folders inside the output dir (no ../ or absolute escapes)
+                    if os.path.commonpath([out_root, full]) == out_root:
+                        os.makedirs(full, exist_ok=True)
                 except Exception:
                     pass
             result = f"{folder}{sep}{name}"

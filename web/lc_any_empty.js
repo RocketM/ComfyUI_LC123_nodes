@@ -11,6 +11,7 @@ const MIN_INPUTS = 1;
 const LAUNCH_WIDTH = 240;
 const MIN_WIDTH = 180;
 const COLOR = "#28281E";
+const PREFIX = "any_";
 
 function inputName(i) {
   return `any_${String(i).padStart(2, "0")}`;
@@ -38,12 +39,32 @@ function desiredHeight(node, slots) {
   return titleHeight() + widgetH(node) + n * slotHeight() + 8;
 }
 
-function countFilled(node) {
-  let n = 0;
-  for (const inp of anySlots(node)) {
-    if (inp.link != null) n++;
-  }
-  return n;
+/** Is input slot `idx` wired? Uses the 1.53+ helper, falls back to the old slot read on older frontends. */
+function isLinked(node, idx) {
+  if (typeof node.isInputConnected === "function") return node.isInputConnected(idx);
+  return node.inputs?.[idx]?.link != null;
+}
+
+/** Highest socket number (the NN in any_NN) that has a wire; 0 when none. */
+function highestLinked(node) {
+  let hi = 0;
+  (node.inputs || []).forEach((inp, idx) => {
+    const name = String(inp?.name || "");
+    if (!name.startsWith(PREFIX)) return;
+    const n = parseInt(name.slice(PREFIX.length), 10);
+    if (Number.isFinite(n) && isLinked(node, idx)) hi = Math.max(hi, n);
+  });
+  return hi;
+}
+
+/** Disconnect the wire on an input that is about to be removed. */
+function dropLink(node, inp) {
+  const idx = (node.inputs || []).indexOf(inp);
+  if (idx < 0 || !isLinked(node, idx)) return;
+  try {
+    if (typeof node.disconnectInput === "function") node.disconnectInput(idx);
+    else (node.graph ?? app.graph)?.removeLink(inp.link);
+  } catch (_) {}
 }
 
 function hugHeight(node) {
@@ -63,30 +84,36 @@ function syncInputs(node) {
     if (String(inp.name || "").startsWith("any_")) byName.set(inp.name, inp);
     else keepOther.push(inp);
   }
-  const filled = countFilled(node);
-  let want = Math.max(MIN_INPUTS, filled + 1);
+  // keep every socket up to the highest wired one (a wire above an empty gap stays), plus one empty
+  let want = Math.max(MIN_INPUTS, highestLinked(node) + 1);
   want = Math.min(MAX_INPUTS, want);
+  for (let i = want + 1; i <= MAX_INPUTS; i++) {
+    const old = byName.get(inputName(i));
+    if (old) dropLink(node, old);
+  }
   const next = keepOther.slice();
+  const missing = [];
+  let gap = false;
   for (let i = 1; i <= want; i++) {
     const name = inputName(i);
     if (byName.has(name)) {
+      if (missing.length) gap = true;
       const inp = byName.get(name);
       inp.type = "*";
       inp.name = name;
       next.push(inp);
     } else {
-      next.push({ name, type: "*", link: null });
+      missing.push(name);
     }
   }
-  for (let i = want + 1; i <= MAX_INPUTS; i++) {
-    const old = byName.get(inputName(i));
-    if (old?.link != null && app.graph) {
-      try {
-        app.graph.removeLink(old.link);
-      } catch (_) {}
-    }
+  if (!gap && typeof node.addInput === "function") {
+    // new sockets are real input slots (addInput), appended in order after the kept ones
+    node.inputs = next;
+    for (const name of missing) node.addInput(name, "*");
+  } else {
+    for (const name of missing) next.splice(keepOther.length + parseInt(name.slice(PREFIX.length), 10) - 1, 0, { name, type: "*", link: null });
+    node.inputs = next;
   }
-  node.inputs = next;
   hugHeight(node);
   node.setDirtyCanvas?.(true, true);
 }

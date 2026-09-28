@@ -3,7 +3,6 @@ LC Image tools — self-contained adjustments with on-node preview.
 No Darkroom package dependency.
 """
 
-import functools
 import inspect
 import math
 import numpy as np
@@ -13,6 +12,7 @@ from nodes import PreviewImage
 
 from .lc_image_helpers import (
     tensor_to_np, np_to_tensor, srgb_to_linear, linear_to_srgb, blend, luminance,
+    _alpha_safe, attach_alpha, preview_frames,
 )
 
 
@@ -45,9 +45,10 @@ def _preview(self, result_tensor, source_tensor=None):
     alpha = getattr(self, "_lc_alpha", None)
 
     def shown(t):
-        if alpha is not None and torch.is_tensor(t) and t.dim() == 4 and t.shape[-1] == 3 and t.shape[:3] == alpha.shape[:3]:
-            return torch.cat([t, alpha.to(t.dtype)], dim=-1)
-        return t
+        if alpha is not None:
+            t = attach_alpha(t, alpha)
+        # the wipe shows the first frame, so only the first few frames of a batch are saved
+        return preview_frames(t)
 
     try:
         after = self.save_images(shown(result_tensor), filename_prefix="lc_after")
@@ -657,7 +658,6 @@ class LCImageRGB(PreviewImage):
         out = []
         offsets = np.array([r, g, b], dtype=np.float32)
         for img in arrays:
-            original = img.copy()
             result = np.clip(img + offsets[None, None, :] * strength, 0, 1).astype(np.float32)
             out.append(result)
         return _preview(self, np_to_tensor(out), image)
@@ -893,8 +893,8 @@ class LCVignette(PreviewImage):
         "Edge darkening or brightening vignette. On-node preview with before/after wipe."
     )
 
-    def run(self, image, intensity, midpoint=0.5, roundness=1.0, feather=0.4,
-            cos4_falloff=True, tint_r=1.0, tint_g=1.0, tint_b=1.0, look="Custom"):
+    def run(self, image, intensity, midpoint=0.55, roundness=0.8, feather=0.35,
+            cos4_falloff=True, tint_r=1.0, tint_g=1.0, tint_b=1.05, look="Custom"):
         if abs(intensity) < 0.01:
             return _preview(self, image, image)
         arrays = tensor_to_np(image)
@@ -1280,7 +1280,7 @@ class LCColorMatch(PreviewImage):
         if strength <= 0:
             return _preview(self, image, image)
 
-        ref = reference[0:1]
+        ref = reference[0:1, ..., :3]  # an RGBA reference: match its color, not its alpha
         arrays = tensor_to_np(image)
         ref_np = tensor_to_np(ref)[0]
         out = []
@@ -1423,6 +1423,10 @@ class LCToneMatch(PreviewImage):
     def run(self, image, reference, tone_match, refinement_strength, detail_radius, skin_protect=0.5, mask=None):
         source = reference[..., :3].movedim(-1, 1)
         refined = image[..., :3].movedim(-1, 1)
+        if refined.shape[0] > source.shape[0]:
+            # more images than references: every image is kept, the last reference covers the extra frames
+            extra = source[-1:].expand(refined.shape[0] - source.shape[0], -1, -1, -1)
+            source = torch.cat([source, extra], dim=0)
         if refined.shape[0] == 1 and source.shape[0] > 1:
             refined = refined.expand(source.shape[0], -1, -1, -1)
         elif source.shape[0] != refined.shape[0]:
@@ -1663,49 +1667,55 @@ class LCLensProfile(PreviewImage):
         ca_b = p["ca_b"] * strength * sign
         vig = p["vig"] * strength
         vig_mid = p["vig_mid"]
+        # every frame of a batch has the same size, so the sampling grids and the vignette are built once
+        h, w = image.shape[1], image.shape[2]
+        cy, cx = h / 2.0, w / 2.0
+        scale = min(h, w) / 1024.0
+        device = image.device
+        yy = torch.arange(h, dtype=torch.float32, device=device)
+        xx = torch.arange(w, dtype=torch.float32, device=device)
+        yy, xx = torch.meshgrid(yy, xx, indexing="ij")
+        ny = (yy - cy) / max(cy, 1e-6)
+        nx = (xx - cx) / max(cx, 1e-6)
+        r2 = nx * nx + ny * ny
+        r4 = r2 * r2
+        r = torch.sqrt(r2 + 1e-8)
+        max_r = math.sqrt(cx * cx + cy * cy) + 1e-6
+        shifts = [ca_r * scale, 0.0, ca_b * scale]
+        grids = []
+        for c in range(3):
+            distort = 1.0 + k1 * r2 + k2 * r4
+            ca = shifts[c]
+            total = distort * (1.0 + (ca / max_r) * r) if abs(ca) > 0.01 else distort
+            src_x = nx * total * cx + cx
+            src_y = ny * total * cy + cy
+            # normalize to grid_sample [-1,1]
+            gx = (src_x / max(w - 1, 1)) * 2 - 1
+            gy = (src_y / max(h - 1, 1)) * 2 - 1
+            grids.append(torch.stack((gx, gy), dim=-1).unsqueeze(0))
+        vig_mul = None
+        if vig > 0.01:
+            cos_th = 1.0 / torch.sqrt(1.0 + r2)
+            falloff = cos_th ** 4
+            transition = ((r - vig_mid * 0.8) / 0.4).clamp(0, 1)
+            if mode == "Add Aberrations":
+                vig_mul = (1.0 - transition * (1.0 - falloff) * vig * 2).clamp(0, 1).unsqueeze(-1)
+            else:
+                vig_mul = (1.0 + transition * (1.0 / falloff.clamp(0.3, 1.0) - 1.0) * vig).unsqueeze(-1)
         results = []
         for i in range(image.shape[0]):
-            img = image[i]
-            h, w = img.shape[:2]
-            cy, cx = h / 2.0, w / 2.0
-            scale = min(h, w) / 1024.0
-            device = img.device
-            yy = torch.arange(h, dtype=torch.float32, device=device)
-            xx = torch.arange(w, dtype=torch.float32, device=device)
-            yy, xx = torch.meshgrid(yy, xx, indexing="ij")
-            ny = (yy - cy) / max(cy, 1e-6)
-            nx = (xx - cx) / max(cx, 1e-6)
-            r2 = nx * nx + ny * ny
-            r4 = r2 * r2
-            r = torch.sqrt(r2 + 1e-8)
-            max_r = math.sqrt(cx * cx + cy * cy) + 1e-6
+            # the grids are float32, so bf16/fp16 frames are sampled in float32
+            img = image[i].float()
             out = torch.empty_like(img)
-            shifts = [ca_r * scale, 0.0, ca_b * scale]
             for c in range(3):
-                distort = 1.0 + k1 * r2 + k2 * r4
-                ca = shifts[c]
-                total = distort * (1.0 + (ca / max_r) * r) if abs(ca) > 0.01 else distort
-                src_x = nx * total * cx + cx
-                src_y = ny * total * cy + cy
-                # normalize to grid_sample [-1,1]
-                gx = (src_x / max(w - 1, 1)) * 2 - 1
-                gy = (src_y / max(h - 1, 1)) * 2 - 1
-                grid = torch.stack((gx, gy), dim=-1).unsqueeze(0)
                 ch = img[..., c].unsqueeze(0).unsqueeze(0)
-                sampled = F.grid_sample(ch, grid, mode="bilinear", padding_mode="reflection", align_corners=True)
+                sampled = F.grid_sample(ch, grids[c], mode="bilinear", padding_mode="reflection", align_corners=True)
                 out[..., c] = sampled.squeeze()
-            if vig > 0.01:
-                cos_th = 1.0 / torch.sqrt(1.0 + r2)
-                falloff = cos_th ** 4
-                transition = ((r - vig_mid * 0.8) / 0.4).clamp(0, 1)
-                if mode == "Add Aberrations":
-                    mask = (1.0 - transition * (1.0 - falloff) * vig * 2).clamp(0, 1)
-                    out = out * mask.unsqueeze(-1)
-                else:
-                    correction = 1.0 + transition * (1.0 / falloff.clamp(0.3, 1.0) - 1.0) * vig
-                    out = out * correction.unsqueeze(-1)
+            if vig_mul is not None:
+                out = out * vig_mul
             results.append(out.clamp(0, 1))
-        return _preview(self, torch.stack(results, dim=0), image)
+        # back to the input dtype, like the other torch nodes here (Depth FX, Desaturate)
+        return _preview(self, torch.stack(results, dim=0).to(image.dtype), image)
 
 
 
@@ -1751,9 +1761,17 @@ class LCChromaticAberration(PreviewImage):
         dirs = [red_direction, green_direction, blue_direction]
         shs = [red_shift, green_shift, blue_shift]
         shifts = [get_shift(d, s) for d, s in zip(dirs, shs)]
-        channels = [
-            torch.roll(x[:, i, :, :], shifts=shifts[i], dims=(1, 2)) for i in range(3)
-        ]
+        def shift_edge(ch, sy, sx):
+            # same as torch.roll inside the frame, but the uncovered strip repeats the edge pixel
+            # (roll wrapped a strip from the opposite side of the image in)
+            h, w = ch.shape[-2], ch.shape[-1]
+            sy = max(-(h - 1), min(h - 1, int(sy)))
+            sx = max(-(w - 1), min(w - 1, int(sx)))
+            py, px = abs(sy), abs(sx)
+            padded = torch.nn.functional.pad(ch[:, None], (px, px, py, py), mode="replicate")[:, 0]
+            return padded[:, py - sy : py - sy + h, px - sx : px - sx + w]
+
+        channels = [shift_edge(x[:, i, :, :], *shifts[i]) for i in range(3)]
         out = torch.stack(channels, dim=1).permute(0, 2, 3, 1).clamp(0, 1)
         return _preview(self, out, image)
 
@@ -1863,34 +1881,8 @@ NODE_DISPLAY_NAME_MAPPINGS = {
 # ---------------------------------------------------------------------------
 # RGBA safety: these tools work on RGB. If an image comes in with an alpha channel
 # (a cutout, for example) they process the color and hand the alpha back untouched.
+# _alpha_safe lives in lc_image_helpers so the other LC image nodes can share it.
 # ---------------------------------------------------------------------------
-def _alpha_safe(run):
-    @functools.wraps(run)
-    def wrapper(self, image, *args, **kwargs):
-        if not (torch.is_tensor(image) and image.dim() == 4 and image.shape[-1] == 4):
-            return run(self, image, *args, **kwargs)
-        alpha = image[..., 3:4]
-        self._lc_alpha = alpha
-        try:
-            out = run(self, image[..., :3], *args, **kwargs)
-        finally:
-            self._lc_alpha = None
-
-        def reattach(t):
-            if torch.is_tensor(t) and t.dim() == 4 and t.shape[-1] == 3 and t.shape[:3] == alpha.shape[:3]:
-                return torch.cat([t, alpha.to(t.dtype)], dim=-1)
-            return t
-
-        if isinstance(out, dict) and "result" in out:
-            out["result"] = (reattach(out["result"][0]),) + tuple(out["result"][1:])
-            return out
-        if isinstance(out, tuple) and out:
-            return (reattach(out[0]),) + tuple(out[1:])
-        return out
-
-    return wrapper
-
-
 for _cls in NODE_CLASS_MAPPINGS.values():
     _params = list(inspect.signature(_cls.run).parameters)
     if len(_params) > 1 and _params[1] == "image":

@@ -9,16 +9,16 @@ import numpy as np
 from PIL import Image
 from nodes import PreviewImage
 
-from .lc_image_helpers import tensor_to_np, np_to_tensor
+from .lc_image_helpers import tensor_to_np, np_to_tensor, preview_frames
 
 
 def _preview(self, result_tensor, base_tensor=None, wm_tensor=None):
     out = {"ui": {}, "result": (result_tensor,)}
     try:
-        after = self.save_images(result_tensor, filename_prefix="lc_after")
+        after = self.save_images(preview_frames(result_tensor), filename_prefix="lc_after")
         out["ui"]["lc_preview"] = after["ui"]["images"]
         if base_tensor is not None:
-            before = self.save_images(base_tensor, filename_prefix="lc_before")
+            before = self.save_images(preview_frames(base_tensor), filename_prefix="lc_before")
             out["ui"]["lc_before"] = before["ui"]["images"]
         if wm_tensor is not None:
             wm = self.save_images(wm_tensor, filename_prefix="lc_wm")
@@ -41,6 +41,21 @@ def _to_rgba_pil(arr: np.ndarray) -> Image.Image:
     else:
         rgba = a[..., :4]
     return Image.fromarray((rgba * 255.0).round().astype(np.uint8), mode="RGBA")
+
+
+def _with_mask_alpha(rgb: np.ndarray, mask) -> np.ndarray:
+    """RGB watermark + ComfyUI MASK -> RGBA. Load Image's MASK is 1 where the PNG is see-through (alpha = 1 - mask).
+    A PNG without transparency gives a small all-zero mask: that stretches to fully opaque."""
+    m = mask.detach().float().cpu().numpy() if hasattr(mask, "detach") else np.asarray(mask, dtype=np.float32)
+    if m.ndim == 3:
+        m = m[0]
+    rgb = np.asarray(rgb, dtype=np.float32)[..., :3]
+    h, w = rgb.shape[:2]
+    if m.shape != (h, w):
+        m = np.asarray(Image.fromarray((np.clip(m, 0.0, 1.0) * 255).astype(np.uint8)).resize((w, h), Image.Resampling.BILINEAR),
+                       dtype=np.float32) / 255.0
+    alpha = 1.0 - np.clip(m, 0.0, 1.0)
+    return np.dstack([rgb, alpha]).astype(np.float32)
 
 
 def _paste_watermark(
@@ -150,6 +165,13 @@ class LCWatermark(PreviewImage):
                         "tooltip": "Watermark (RGB/RGBA). Missing = bypass (pass-through).",
                     },
                 ),
+                "watermark_mask": (
+                    "MASK",
+                    {
+                        "tooltip": "The watermark's transparency. Load Image splits a transparent PNG into IMAGE + MASK: "
+                                   "wire its MASK here and the see-through parts of your logo stay see-through.",
+                    },
+                ),
             },
         }
 
@@ -169,14 +191,17 @@ class LCWatermark(PreviewImage):
         opacity=0.85,
         x_percent=90.0,
         y_percent=90.0,
-        margin_percent=3.0,
+        margin_percent=0.5,
         watermark=None,
+        watermark_mask=None,
     ):
         if watermark is None:
             return _preview(self, image, image, None)
 
         base_frames = tensor_to_np(image)
         wm_frames = tensor_to_np(watermark)
+        if watermark_mask is not None:
+            wm_frames[0] = _with_mask_alpha(wm_frames[0], watermark_mask)
         wm_pil = _to_rgba_pil(wm_frames[0])
 
         out_frames = [
@@ -192,13 +217,10 @@ class LCWatermark(PreviewImage):
             for frame in base_frames
         ]
         result = np_to_tensor(out_frames)
-        # Pass first watermark frame as IMAGE tensor for UI (batch of 1)
-        wm_tensor = np_to_tensor([wm_frames[0] if wm_frames[0].shape[-1] >= 3 else wm_frames[0]])
-        # ensure 3ch for save_images
+        # first watermark frame for the on-node preview (batch of 1); alpha is kept, so the preview shows the
+        # see-through parts too (save_images writes 4 channels as an RGBA PNG)
         w0 = wm_frames[0]
-        if w0.shape[-1] == 4:
-            w0 = w0[..., :3]
-        elif w0.ndim == 2:
+        if w0.ndim == 2:
             w0 = np.stack([w0, w0, w0], axis=-1)
         wm_tensor = np_to_tensor([w0.astype(np.float32)])
         return _preview(self, result, image, wm_tensor)

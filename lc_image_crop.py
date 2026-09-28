@@ -74,9 +74,6 @@ class LCImageCrop(PreviewImage):
     RETURN_NAMES = ("image",)
     FUNCTION = "crop"
     CATEGORY = "LC123/image"
-    DESCRIPTION = (
-        "Interactive image crop with aspect-ratio lock and on-node preview."
-    )
     OUTPUT_NODE = True
     DESCRIPTION = (
         "Windows-style interactive crop: drag the box and handles on the node. "
@@ -114,6 +111,8 @@ class LCImageCrop(PreviewImage):
             saved = self.save_images(image, filename_prefix="lc_crop_src")
             result["ui"]["lc_preview"] = saved["ui"]["images"]
             result["ui"]["src_size"] = [{"width": int(w), "height": int(h)}]
+            # the cropped result, first frame only: Nodes 2.0 shows it (the classic crop box ignores it)
+            result["ui"]["lc_result"] = self.save_images(cropped[:1], filename_prefix="lc_crop_out")["ui"]["images"]
         except Exception:
             pass
         return result

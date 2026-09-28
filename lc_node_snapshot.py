@@ -56,10 +56,6 @@ class LCNodeSnapshot:
         "Dropdown lists **widget names**. Outputs: selected, lines, json."
     )
 
-    @classmethod
-    def IS_CHANGED(cls, **kwargs):
-        return float("nan")
-
     def run(
         self,
         widget_name,

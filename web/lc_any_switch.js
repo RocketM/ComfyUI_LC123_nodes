@@ -80,16 +80,17 @@ function fitSize(node, force = false) {
 
 function typeOfInput(node, inp) {
   if (!inp || inp.link == null) return null;
-  const link = app.graph?.links?.[inp.link];
+  const graph = node.graph ?? app.graph; // the node's own graph, so it also works inside a subgraph
+  const link = graph?.links?.[inp.link];
   if (!link) return null;
-  const origin = app.graph.getNodeById?.(link.origin_id);
+  const origin = graph.getNodeById?.(link.origin_id);
   const out = origin?.outputs?.[link.origin_slot];
   return out?.type || null;
 }
 
 function hasAnyConnection(node) {
   for (const inp of node.inputs || []) {
-    if (inp?.link != null && app.graph?.links?.[inp.link]) return true;
+    if (inp?.link != null && (node.graph ?? app.graph)?.links?.[inp.link]) return true;
   }
   return false;
 }
@@ -171,9 +172,10 @@ function syncInputs(node, { fit = false } = {}) {
   for (let i = count + 1; i <= MAX_INPUTS; i++) {
     const name = inputName(i);
     const old = byName.get(name);
-    if (old?.link != null && app.graph) {
+    const graph = node.graph ?? app.graph;
+    if (old?.link != null && graph) {
       try {
-        app.graph.removeLink(old.link);
+        graph.removeLink(old.link);
       } catch (_) {}
     }
   }
@@ -271,9 +273,10 @@ app.registerExtension({
           this._lcLockedType !== "*"
         ) {
           const linkId = this.inputs[index].link;
-          if (linkId != null && app.graph) {
+          const graph = this.graph ?? app.graph;
+          if (linkId != null && graph) {
             try {
-              app.graph.removeLink(linkId);
+              graph.removeLink(linkId);
             } catch (_) {}
             this.inputs[index].link = null;
             this.inputs[index].type = this._lcLockedType;

@@ -1,47 +1,23 @@
 // LC Label
 // A chromeless text label for annotating a workflow. Drawn as HTML on a layer above the canvas, so it is never buried
 // under nodes or links (clicks pass straight through the text to the canvas, so the label is selected, moved and
-// pinned like any node). Select it to get the Word / Paint style handles: the round handle above rotates it (hold
+// pinned like any node). Select it to get the Word / Paint style handles: the round handle below rotates it (hold
 // snaps to 5 degrees with a magnet at 0 / 90 / 180), a corner handle scales it. Double-click opens the settings dialog, like LC Image Label.
 import { app } from "../../scripts/app.js";
-import { getLayer, isSelected, screenCentre, setCentreFromScreen, commit, dragHandle, hitRotated, clientToGraph, snapAngle, vueClickThrough } from "./lc_overlay_common.js";
+import { BUNDLED_FONTS, loadBundledFonts as loadLCFonts } from "./lc_fonts.js";
+import { getLayer, isSelected, screenCentre, setCentreFromScreen, commit, dragHandle, hitRotated, clientToGraph, snapAngle, vueClickThrough, frameRects } from "./lc_overlay_common.js";
 
 const NODE = "LCLabel";
 
 // ---- fonts -------------------------------------------------------------------------------------------------
-const BUNDLED = [
-  { name: "Bebas Neue", file: "BebasNeue-Regular.ttf", weight: "400" },
-  { name: "Oswald", file: "Oswald-Variable.ttf", weight: "200 700" },
-  { name: "Permanent Marker", file: "PermanentMarker-Regular.ttf", weight: "400" },
-  { name: "Pacifico", file: "Pacifico-Regular.ttf", weight: "400" },
-  { name: "Lobster", file: "Lobster-Regular.ttf", weight: "400" },
-  { name: "Great Vibes", file: "GreatVibes-Regular.ttf", weight: "400" },
-  { name: "Abril Fatface", file: "AbrilFatface-Regular.ttf", weight: "400" },
-  { name: "Cinzel Decorative", file: "CinzelDecorative-Regular.ttf", weight: "400" },
-  { name: "UnifrakturMaguntia", file: "UnifrakturMaguntia-Book.ttf", weight: "400" },
-  { name: "Monoton", file: "Monoton-Regular.ttf", weight: "400" },
-  { name: "Bangers", file: "Bangers-Regular.ttf", weight: "400" },
-  { name: "Creepster", file: "Creepster-Regular.ttf", weight: "400" },
-  { name: "Rubik Glitch", file: "RubikGlitch-Regular.ttf", weight: "400" },
-  { name: "Press Start 2P", file: "PressStart2P-Regular.ttf", weight: "400" },
-];
+const BUNDLED = BUNDLED_FONTS;
 const SYSTEM = [
   "Arial", "Arial Black", "Segoe UI", "Bahnschrift", "Trebuchet MS", "Verdana", "Impact", "Georgia", "Times New Roman",
   "Segoe Script", "Ink Free", "Comic Sans MS", "Courier New", "Consolas",
 ];
 
-let fontsStarted = false;
 function loadBundledFonts() {
-  if (fontsStarted) return;
-  fontsStarted = true;
-  document.fonts?.ready?.then(relayoutAll);
-  for (const f of BUNDLED) {
-    try {
-      const face = new FontFace(f.name, `url(${new URL("./fonts/" + f.file, import.meta.url).href})`, { weight: f.weight });
-      document.fonts.add(face);
-      face.load().then(relayoutAll).catch(() => {});
-    } catch (_) {}
-  }
+  loadLCFonts(relayoutAll);
 }
 const fontCss = (name) => `"${name}", Arial, sans-serif`;
 
@@ -88,12 +64,12 @@ let loopOn = false;
 function startLoop() {
   if (loopOn) return;
   loopOn = true;
-  const tick = () => {
+  const tick = (ts) => {
     if (!labelNodes.size) {
       loopOn = false;
       return;
     }
-    for (const n of labelNodes) renderNode(n);
+    for (const n of labelNodes) renderNode(n, ts);
     requestAnimationFrame(tick);
   };
   requestAnimationFrame(tick);
@@ -225,7 +201,7 @@ function layoutNode(node, topLeft = false) {
   app.canvas?.setDirty?.(true, true);
 }
 
-function renderNode(node) {
+function renderNode(node, ts) {
   const v = node.__lc;
   if (!v) return;
   const c = app.canvas;
@@ -235,8 +211,7 @@ function renderNode(node) {
   }
   const ds = c.ds;
   const s = ds.scale;
-  const cr = c.canvas.getBoundingClientRect();
-  const lr = getLayer().getBoundingClientRect();
+  const [cr, lr] = frameRects(ts);
   const cx = (node.pos[0] + node.size[0] / 2 + ds.offset[0]) * s + (cr.left - lr.left);
   const cy = (node.pos[1] + node.size[1] / 2 + ds.offset[1]) * s + (cr.top - lr.top);
   const sel = isSelected(node) && !node.__lcDialog;
@@ -263,14 +238,14 @@ function renderNode(node) {
     k.el.style.top = k.fy * v.h + "px";
     k.el.style.transform = `translate(-50%,-50%) scale(${inv})`;
   }
-  const off = 38 * inv;
+  const off = 38 * inv; // the rotate knob hangs below: ComfyUI's selection toolbox covers the space above a node
   v.rot.style.display = edit ? "flex" : "none";
   v.rot.style.left = v.w / 2 + "px";
-  v.rot.style.top = -off + "px";
+  v.rot.style.top = v.h + off + "px";
   v.rot.style.transform = `translate(-50%,-50%) scale(${inv})`;
   v.stem.style.display = edit ? "block" : "none";
   v.stem.style.left = v.w / 2 - inv + "px";
-  v.stem.style.top = -off + "px";
+  v.stem.style.top = v.h + "px";
   v.stem.style.width = 2 * inv + "px";
   v.stem.style.height = off + "px";
   const showBadge = edit && v.badgeText;
@@ -278,7 +253,7 @@ function renderNode(node) {
   if (showBadge) {
     v.badge.textContent = v.badgeText;
     v.badge.style.left = v.w / 2 + 26 * inv + "px";
-    v.badge.style.top = -off - 10 * inv + "px";
+    v.badge.style.top = v.h + off - 10 * inv + "px";
     v.badge.style.transformOrigin = "0 0";
     v.badge.style.transform = `scale(${inv}) rotate(${-node.properties.angle}deg)`;
   }
@@ -294,7 +269,7 @@ function wireHandles(node, v) {
     },
     (e) => {
       const [cx, cy] = screenCentre(node);
-      const a = snapAngle((Math.atan2(e.clientY - cy, e.clientX - cx) * 180) / Math.PI + 90, e);
+      const a = snapAngle((Math.atan2(e.clientY - cy, e.clientX - cx) * 180) / Math.PI - 90, e);
       node.properties.angle = a;
       v.badgeText = node.properties.angle + "°";
       layoutNode(node);
@@ -611,7 +586,7 @@ function showSettings(node) {
   reset.addEventListener("click", () => { p.angle = 0; ang.value = 0; apply(); });
   row("Angle", ang, reset);
   const tip = document.createElement("div");
-  tip.textContent = "Tip: drag the round handle above the label to rotate it. It snaps to 5° with a magnet at 0, 90 and 180 (Shift = 15°, Alt = free). Drag a corner to scale.";
+  tip.textContent = "Tip: drag the round handle below the label to rotate it. It snaps to 5° with a magnet at 0, 90 and 180 (Shift = 15°, Alt = free). Drag a corner to scale.";
   tip.style.cssText = "font-size:12px;color:#8a9;margin-bottom:6px;line-height:1.4;";
   dialog.appendChild(tip);
 
@@ -720,7 +695,8 @@ app.registerExtension({
     const oldGetNodeOnPos = LGraph.prototype.getNodeOnPos;
     LGraph.prototype.getNodeOnPos = function (x, y, nodes_list) {
       const e = lcLabelState.down;
-      if (nodes_list && e && e.type.includes("down") && e.button === 0) {
+      // only copy and filter the list when some label is actually pinned
+      if (nodes_list && e && e.type.includes("down") && e.button === 0 && [...labelNodes].some((n) => n.flags && n.flags.pinned)) {
         // a pinned label ignores left clicks entirely: they reach the node under it. Ctrl+drag a box to select it.
         nodes_list = [...nodes_list].filter((n) => !((n.comfyClass === NODE || n.type === NODE) && n.flags && n.flags.pinned));
       }

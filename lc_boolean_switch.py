@@ -35,8 +35,8 @@ class LCBooleanSwitch:
                 ),
             },
             "optional": {
-                "on_true": (any_type, {"tooltip": "Passed through when state is true."}),
-                "on_false": (any_type, {"tooltip": "Passed through when state is false."}),
+                "on_true": (any_type, {"lazy": True, "tooltip": "Passed through when state is true."}),
+                "on_false": (any_type, {"lazy": True, "tooltip": "Passed through when state is false."}),
             },
         }
 
@@ -45,6 +45,14 @@ class LCBooleanSwitch:
     FUNCTION = "switch"
     CATEGORY = "LC123/utils"
     DESCRIPTION = "Boolean switch: state picks on_true or on_false (any type)."
+
+    def check_lazy_status(self, state, **kwargs):
+        # Lazy inputs: only the selected branch is evaluated. A connected but not yet
+        # evaluated input arrives as None; an unconnected one is absent from kwargs.
+        key = "on_true" if bool(state) else "on_false"
+        if key in kwargs and kwargs[key] is None:
+            return [key]
+        return []
 
     def switch(self, state, on_true=None, on_false=None):
         return (on_true if bool(state) else on_false,)

@@ -18,6 +18,29 @@ function clearNodePreview(node) {
   app.graph?.setDirtyCanvas?.(true, true);
 }
 
+/** Subgraph node ids the Python side (UNIQUE_ID) knows the node by: "parent:child" inside subgraphs, the plain
+ * id at the root. Mirrors the frontend's own execution-path lookup (root graph -> subgraph nodes -> ...). */
+function findSubgraphPath(graph, target, seen) {
+  for (const n of graph?._nodes || graph?.nodes || []) {
+    const sg = n?.subgraph;
+    if (!sg || (typeof n.isSubgraphNode === "function" && !n.isSubgraphNode())) continue;
+    if (sg === target) return [n.id];
+    if (seen.has(sg)) continue;
+    seen.add(sg);
+    const sub = findSubgraphPath(sg, target, seen);
+    if (sub) return [n.id, ...sub];
+  }
+  return null;
+}
+
+function executionIdOf(node) {
+  const g = node.graph;
+  const root = g?.rootGraph ?? app.rootGraph ?? app.graph;
+  if (!g || !root || g === root) return String(node.id);
+  const path = findSubgraphPath(root, g, new Set());
+  return path ? [...path, node.id].join(":") : String(node.id);
+}
+
 app.registerExtension({
   name: "LC123.LastImageHolder",
 
@@ -35,13 +58,14 @@ app.registerExtension({
       const node = this;
 
       const btn = node.addWidget("button", "Clear held image", "clear_btn", async () => {
-        const nodeId = String(node.id);
+        const nodeId = executionIdOf(node);
         try {
-          await api.fetchApi("/lc123/last_image_holder/clear", {
+          const r = await api.fetchApi("/lc123/last_image_holder/clear", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ node_id: nodeId }),
           });
+          if (!r.ok) console.warn("[LC Last Image Holder] clear API failed:", r.status);
         } catch (err) {
           console.warn("[LC Last Image Holder] clear API failed:", err);
         }

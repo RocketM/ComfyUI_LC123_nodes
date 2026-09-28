@@ -1,6 +1,6 @@
 # LC123 node inventory
 
-**127 Python nodes** + **5 JS-only** · version 1.42.3
+**127 Python nodes** + **5 JS-only** · version 1.43.0
 
 Registered class IDs: 128 (127 in search, 1 deprecated but still loads in old workflows).
 
@@ -133,7 +133,7 @@ Registered class IDs: 128 (127 in search, 1 deprecated but still loads in old wo
 
 ## LC123/text (2)
 
-- `LCCivitaiStrip`: Civitai 🚩🔪
+- `LCCivitaiStrip`: CivitAI 🚩🔪
 - `LCWidgetToString`: LC Widget To String
 
 ## LC123/utils (32)

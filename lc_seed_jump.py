@@ -41,7 +41,8 @@ class LCSeedJump:
     def jump_seeds(self, seed, jump=1):
         a = int(seed)
         b = max(1, min(20, int(jump)))
-        out = tuple(a + i * b for i in range(6))
+        # wrap into the 64-bit seed range so a seed near the max never overflows it
+        out = tuple((a + i * b) & 0xFFFFFFFFFFFFFFFF for i in range(6))
         return out
 
 

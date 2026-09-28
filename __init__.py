@@ -37,7 +37,7 @@ def _load(module_name: str) -> None:
         disp = getattr(mod, "NODE_DISPLAY_NAME_MAPPINGS", None) or {}
         NODE_CLASS_MAPPINGS.update(maps)
         NODE_DISPLAY_NAME_MAPPINGS.update(disp)
-        print(f"[LC123] + {module_name}: {list(maps.keys())}")
+        print(f"[LC123] + {module_name} ({len(maps)})")
     except Exception as e:
         print(f"[LC123] ! failed to load {module_name}: {e}")
         traceback.print_exc()
@@ -109,6 +109,8 @@ _load("lc_split_sigma_scheduler")
 _load("lc_basic_scheduler")
 _load("lc_split_sigmas_advanced")
 _load("lc_prompt_box")
+_load("lc_optimizer")
+_load("lc_link_card")
 _load("lc_vram_cache_clear")
 _load("lc_stop")
 _load("lc_advanced_folder")
@@ -131,49 +133,11 @@ WEB_DIRECTORY = "./web"
 
 __all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS", "WEB_DIRECTORY"]
 
-# LC Wildcard
-try:
-    from .lc_wildcard import NODE_CLASS_MAPPINGS as _LC_WC_MAP
-    from .lc_wildcard import NODE_DISPLAY_NAME_MAPPINGS as _LC_WC_DISP
-    NODE_CLASS_MAPPINGS.update(_LC_WC_MAP)
-    NODE_DISPLAY_NAME_MAPPINGS.update(_LC_WC_DISP)
-except Exception as _e:
-    print(f"[LC123] lc_wildcard load skipped: {_e}")
-
-# LC Seed (utility)
-try:
-    from .lc_seed import NODE_CLASS_MAPPINGS as _LC_SEED_MAP
-    from .lc_seed import NODE_DISPLAY_NAME_MAPPINGS as _LC_SEED_DISP
-    NODE_CLASS_MAPPINGS.update(_LC_SEED_MAP)
-    NODE_DISPLAY_NAME_MAPPINGS.update(_LC_SEED_DISP)
-except Exception as _e:
-    print(f"[LC123] lc_seed load skipped: {_e}")
-
-# LC Reference Latent
-try:
-    from .lc_reference_latent import NODE_CLASS_MAPPINGS as _LC_REFLAT_MAP
-    from .lc_reference_latent import NODE_DISPLAY_NAME_MAPPINGS as _LC_REFLAT_DISP
-    NODE_CLASS_MAPPINGS.update(_LC_REFLAT_MAP)
-    NODE_DISPLAY_NAME_MAPPINGS.update(_LC_REFLAT_DISP)
-except Exception as _e:
-    print(f"[LC123] lc_reference_latent load skipped: {_e}")
-
-# LC Denoise
-try:
-    from .lc_denoise import NODE_CLASS_MAPPINGS as _LC_DENOISE_MAP
-    from .lc_denoise import NODE_DISPLAY_NAME_MAPPINGS as _LC_DENOISE_DISP
-    NODE_CLASS_MAPPINGS.update(_LC_DENOISE_MAP)
-    NODE_DISPLAY_NAME_MAPPINGS.update(_LC_DENOISE_DISP)
-except Exception as _e:
-    print(f"[LC123] lc_denoise load skipped: {_e}")
-
-# LC Relight
-try:
-    from .lc_relight import NODE_CLASS_MAPPINGS as _LC_RELIGHT_MAP
-    from .lc_relight import NODE_DISPLAY_NAME_MAPPINGS as _LC_RELIGHT_DISP
-    NODE_CLASS_MAPPINGS.update(_LC_RELIGHT_MAP)
-    NODE_DISPLAY_NAME_MAPPINGS.update(_LC_RELIGHT_DISP)
-except Exception as _e:
-    print(f"[LC123] lc_relight load skipped: {_e}")
+# Loaded after WEB_DIRECTORY, same order as before; _load prints a traceback on failure
+_load("lc_wildcard")  # LC Wildcard
+_load("lc_seed")  # LC Seed (utility)
+_load("lc_reference_latent")  # LC Reference Latent
+_load("lc_denoise")  # LC Denoise
+_load("lc_relight")  # LC Relight
 
 print(f"[LC123] total {len(NODE_CLASS_MAPPINGS)} nodes: {sorted(NODE_CLASS_MAPPINGS.keys())}")

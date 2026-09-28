@@ -1,8 +1,12 @@
 """
-Civitai 🚩🔪
+CivitAI 🚩🔪
 ------------
 Strip terms from a prompt using an external list file under assets/lists/.
 Default list: civitai_compliance_remove.txt
+
+Why it exists: LLMs sometimes (and abliterated models especially) write "child" or "young adult in their late teens or
+early 20s" about adults. This catches those words before a prompt ends up in a post you did not mean to make.
+It is an off-by-default tool: the user has to switch it on. Workflows saved before the switch existed keep stripping.
 """
 
 from __future__ import annotations
@@ -14,6 +18,13 @@ _ASSETS_LISTS = os.path.join(
     os.path.dirname(os.path.realpath(__file__)), "assets", "lists"
 )
 _DEFAULT_LIST = "civitai_compliance_remove.txt"
+
+DISCLAIMER = (
+    "DISCLAIMER: a convenience filter, not a safety system. It only removes the exact words in the list, it cannot "
+    "understand an image or a prompt, and it will miss things. It does not make any content allowed. You alone are "
+    "responsible for what you create and post, and for following CivitAI's Terms of Service and the law. No "
+    "guarantee the list is complete, current or enough for approval. Not affiliated with CivitAI."
+)
 
 
 def _list_files():
@@ -53,8 +64,8 @@ def _strip_terms(text: str, terms: list) -> str:
     for term in terms:
         if not term:
             continue
-        # case-insensitive substring remove
-        pattern = re.compile(re.escape(term), re.IGNORECASE)
+        # case-insensitive whole word / phrase remove (no hits inside other words)
+        pattern = re.compile(r"(?<![\w])" + re.escape(term) + r"(?![\w])", re.IGNORECASE)
         out = pattern.sub("", out)
     # tidy leftover commas / spaces
     out = re.sub(r"[ \t]{2,}", " ", out)
@@ -88,6 +99,17 @@ class LCCivitaiStrip:
                     },
                 ),
             },
+            "optional": {
+                "enabled": (
+                    "BOOLEAN",
+                    {
+                        "default": False,
+                        "label_on": "ON",
+                        "label_off": "OFF",
+                        "tooltip": DISCLAIMER + " Off = the text passes through untouched. You have to switch it on yourself.",
+                    },
+                ),
+            },
         }
 
     RETURN_TYPES = ("STRING",)
@@ -95,13 +117,15 @@ class LCCivitaiStrip:
     FUNCTION = "strip"
     CATEGORY = "LC123/text"
     DESCRIPTION = (
-        "Civitai 🚩🔪 — strip terms from assets/lists/*. "
-        "For compliance assistance only! YOUR responsibility to abide by CivitAi TOS. "
-        "Review assets/lists/civitai_compliance_remove.txt. "
-        "No guarantee it is complete, current, or enough for Civitai approval."
+        "CivitAI 🚩🔪: removes listed words and phrases (whole words only) from a prompt, for example the "
+        "\"child\" / \"late teens\" wording LLMs (abliterated models especially) sometimes add to adults. Off until you switch it on. " + DISCLAIMER
     )
 
-    def strip(self, text, list_file=_DEFAULT_LIST):
+    # enabled defaults to True here on purpose: prompts saved before the switch existed (and API scripts that
+    # never send it) keep stripping. A newly placed node sends False until the user turns it on.
+    def strip(self, text, list_file=_DEFAULT_LIST, enabled=True):
+        if not enabled:
+            return (text if text is not None else "",)
         terms = _load_terms(list_file)
         cleaned = _strip_terms(text if text is not None else "", terms)
         return (cleaned,)
@@ -112,5 +136,5 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "LCCivitaiStrip": "Civitai 🚩🔪",
+    "LCCivitaiStrip": "CivitAI 🚩🔪",
 }

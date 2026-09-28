@@ -152,23 +152,29 @@ def _resize_hw(img: np.ndarray, h: int, w: int) -> np.ndarray:
 
 
 def _run_model(upscale_model, image_bhwc: torch.Tensor, tile: int, overlap: int) -> torch.Tensor:
+    # Same loading as ComfyUI's own Upscale Image (using Model): the model goes to the GPU for the run
+    # (it used to stay on the CPU, which was slow and could clash with a copy already on the GPU).
     import comfy.utils
+    from comfy import model_management
 
     scale = float(getattr(upscale_model, "scale", 1.0) or 1.0)
-    s = image_bhwc.movedim(-1, -3).contiguous()
-    in_img = s
+    patcher = getattr(upscale_model, "patcher", None)
+    device = patcher.load_device if patcher is not None else image_bhwc.device
+    if patcher is not None:
+        need = (512 * 512 * 3) * image_bhwc.element_size() * max(scale, 1.0) * 384.0
+        need += image_bhwc.nelement() * image_bhwc.element_size()
+        model_management.load_models_gpu([patcher], memory_required=need, force_full_load=True)
+    in_img = image_bhwc.movedim(-1, -3).contiguous().to(device)
     tile = int(tile)
     overlap = int(max(0, overlap))
     if tile <= 0:
-        tile = max(s.shape[-1], s.shape[-2])
+        tile = max(in_img.shape[-1], in_img.shape[-2])
 
     def _fn(a):
-        return upscale_model(a)
+        return upscale_model(a.float())
 
-    oom = True
     cur = max(64, tile)
-    last = None
-    while oom:
+    while True:
         try:
             s = comfy.utils.tiled_scale(
                 in_img,
@@ -178,15 +184,15 @@ def _run_model(upscale_model, image_bhwc: torch.Tensor, tile: int, overlap: int)
                 overlap=min(overlap, max(0, cur // 4)),
                 upscale_amount=scale,
                 out_channels=in_img.shape[1],
+                output_device=model_management.intermediate_device(),
             )
-            oom = False
+            break
         except Exception as e:
-            last = e
-            nxt = cur // 2
-            if nxt < 64:
-                raise last
-            cur = nxt
-    return torch.clamp(s.movedim(-3, -1), 0.0, 1.0)
+            model_management.raise_non_oom(e)  # only a real out-of-memory retries with smaller tiles
+            cur //= 2
+            if cur < 64:
+                raise
+    return torch.clamp(s.movedim(-3, -1).float().cpu(), 0.0, 1.0)
 
 
 class LCSkinUpscale(PreviewImage):
@@ -326,8 +332,16 @@ class LCSkinUpscale(PreviewImage):
             matte = _feather_mask(np.clip(matte, 0, 1), mask_feather)
             box = _bbox(matte, pad=16)
             if box is None or float(blend) <= 0.001:
-                out_imgs.append(fr)
-                out_masks.append(matte)
+                if mode == "scale":
+                    # nothing to patch, but the frame still has to come out at the upscaled size like the rest
+                    # of the batch (a mixed-size batch used to crash)
+                    scale = float(getattr(upscale_model, "scale", 1.0) or 1.0)
+                    out_h, out_w = int(round(h * scale)), int(round(w * scale))
+                    out_imgs.append(np.clip(_resize_hw(fr, out_h, out_w), 0, 1).astype(np.float32))
+                    out_masks.append(_resize_hw(matte, out_h, out_w).astype(np.float32))
+                else:
+                    out_imgs.append(fr)
+                    out_masks.append(matte)
                 continue
 
             y0, y1, x0, x1 = box

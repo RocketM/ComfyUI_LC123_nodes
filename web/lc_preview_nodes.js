@@ -72,6 +72,7 @@ function installPreview(node, cls) {
     return w && w.name === "lc_preview" ? undefined : w;
   };
   node.__lcPreview = {
+    img,
     show(list) {
       const first = Array.isArray(list) && list.length ? list[0] : null;
       if (!first) {
@@ -113,6 +114,21 @@ app.registerExtension({
     // the frontend uses this as the minimum size when the node is dragged smaller
     nodeType.prototype.computeSize = function () {
       return [MIN_NODE_W, MIN_NODE_H];
+    };
+
+    // Preview distance setting: hide the image once it is drawn too small on screen to read (only touches the DOM on a change)
+    const onDrawFg = nodeType.prototype.onDrawForeground;
+    nodeType.prototype.onDrawForeground = function () {
+      const r = onDrawFg?.apply(this, arguments);
+      const img = this.__lcPreview?.img;
+      if (img) {
+        const hide = !!window.LC123Perf?.tooSmall?.(this.size[0] - PAD * 2, this.size[1] - 46 - PAD * 2);
+        if (img.__lcHidden !== hide) {
+          img.__lcHidden = hide;
+          img.style.visibility = hide ? "hidden" : "";
+        }
+      }
+      return r;
     };
 
     const onExecuted = nodeType.prototype.onExecuted;

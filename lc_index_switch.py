@@ -27,7 +27,7 @@ def _first(value, default=None):
 class LCIndexSwitch:
     @classmethod
     def INPUT_TYPES(cls):
-        optional = {f"any_{i:02d}": (any_type,) for i in range(1, 21)}
+        optional = {f"any_{i:02d}": (any_type, {"lazy": True}) for i in range(1, 21)}
         return {
             "required": {
                 "index": (
@@ -67,12 +67,25 @@ class LCIndexSwitch:
     INPUT_IS_LIST = True
     OUTPUT_IS_LIST = (True,)
 
-    def switch(self, index, inputcount=2, **kwargs):
+    @staticmethod
+    def _selected_key(index, inputcount):
         n = int(_first(inputcount, 2) or 2)
         n = max(2, min(20, n))
         idx = int(_first(index, 0) or 0)
         idx = max(0, min(n - 1, idx))
-        val = kwargs.get(f"any_{idx + 1:02d}")
+        return f"any_{idx + 1:02d}"
+
+    def check_lazy_status(self, index, inputcount=2, **kwargs):
+        # Lazy slots: only the selected slot is evaluated. INPUT_IS_LIST means every
+        # value here is a list; a connected but not yet evaluated slot is [None].
+        # Comfy drops names that are already evaluated, so asking again is harmless.
+        key = self._selected_key(index, inputcount)
+        if key in kwargs and _first(kwargs[key]) is None:
+            return [key]
+        return []
+
+    def switch(self, index, inputcount=2, **kwargs):
+        val = kwargs.get(self._selected_key(index, inputcount))
         if val is None:
             return ([],)
         if not isinstance(val, list):

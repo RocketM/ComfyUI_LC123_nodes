@@ -86,6 +86,18 @@ export function hitRotated(node, gx, gy, w, h, angleDeg) {
   return Math.abs(lx) <= w / 2 && Math.abs(ly) <= h / 2;
 }
 
+// the canvas and overlay layer rects, read once per animation frame and shared by every label: all the rAF callbacks
+// of one frame get the same timestamp, so LC Label and LC Image Label share one read. No timestamp = read fresh.
+let rectStamp = null;
+let rectCache = null;
+export function frameRects(ts) {
+  if (typeof ts !== "number" || ts !== rectStamp || !rectCache) {
+    rectCache = [app.canvas.canvas.getBoundingClientRect(), getLayer().getBoundingClientRect()];
+    rectStamp = typeof ts === "number" ? ts : null;
+  }
+  return rectCache;
+}
+
 // client px -> graph coordinates
 export function clientToGraph(e) {
   const c = app.canvas;
@@ -119,9 +131,33 @@ for (const t of ["pointerdown", "pointermove", "mousedown", "mousemove"]) {
   window.addEventListener(t, (e) => { ctrlHeld = !!(e.ctrlKey || e.metaKey); }, true);
 }
 
+// is Nodes 2.0 on? Read at most once a second. Unknown (an older frontend without either flag) counts as on, so the
+// lookup below still runs there exactly as before.
+let vueOn = true;
+let vueCheckedAt = -Infinity;
+function vueNodesOn() {
+  const now = performance.now();
+  if (now - vueCheckedAt < 1000) return vueOn;
+  vueCheckedAt = now;
+  let flag = window.LiteGraph?.vueNodesMode;
+  if (flag !== true) {
+    try {
+      const s = app.extensionManager?.setting?.get?.("Comfy.VueNodes.Enabled");
+      if (s != null) flag = !!s;
+    } catch (_) {}
+  }
+  vueOn = flag !== false;
+  return vueOn;
+}
+
 export function vueClickThrough(node, on) {
   let el = node.__vueEl;
   if (!el || !el.isConnected) {
+    // with Nodes 2.0 off there is no .lg-node element to find: skip the per-frame document query
+    if (!vueNodesOn()) {
+      node.__vueEl = null;
+      return;
+    }
     el = document.querySelector(`.lg-node[data-node-id="${node.id}"]`);
     node.__vueEl = el || null;
   }

@@ -12,9 +12,9 @@ import numpy as np
 from nodes import PreviewImage
 
 try:
-    from .lc_image_helpers import tensor_to_np, np_to_tensor, blend
+    from .lc_image_helpers import tensor_to_np, np_to_tensor, blend, _alpha_safe
 except ImportError:
-    from lc_image_helpers import tensor_to_np, np_to_tensor, blend
+    from lc_image_helpers import tensor_to_np, np_to_tensor, blend, _alpha_safe
 
 try:
     from .lc_image_tools import _preview
@@ -259,9 +259,14 @@ def _box_blur(ch, r):
     r = int(max(r, 0))
     if r < 1:
         return ch.astype(np.float32)
-    ker = np.ones(2 * r + 1, dtype=np.float64) / float(2 * r + 1)
-    h = np.apply_along_axis(lambda m: np.convolve(m, ker, mode="same"), axis=1, arr=ch.astype(np.float64))
-    v = np.apply_along_axis(lambda m: np.convolve(m, ker, mode="same"), axis=0, arr=h)
+    # repeat the edge pixels instead of padding with black: zeros used to darken a band along every border
+    k = 2 * r + 1
+    x = np.pad(ch.astype(np.float64), ((0, 0), (r, r)), mode="edge")
+    c = np.concatenate([np.zeros((x.shape[0], 1)), np.cumsum(x, axis=1)], axis=1)
+    h = (c[:, k:] - c[:, :-k]) / k
+    y = np.pad(h, ((r, r), (0, 0)), mode="edge")
+    c = np.concatenate([np.zeros((1, y.shape[1])), np.cumsum(y, axis=0)], axis=0)
+    v = (c[k:, :] - c[:-k, :]) / k
     return v.astype(np.float32)
 
 
@@ -653,6 +658,7 @@ class LCPhoneLook(PreviewImage):
         "Strength blends with the original. Not a lens geometry tool."
     )
 
+    @_alpha_safe
     def run(
         self,
         image,

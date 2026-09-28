@@ -30,15 +30,17 @@ async function harness(workflow) {
   const app = { graph, registerExtension(ext) { extensions.push(ext); } };
   const LiteGraph = { registered_node_types: {}, registerNodeType(type, cls) { this.registered_node_types[type] = cls; } };
   const context = vm.createContext({
-    app, LiteGraph, LGraphNode: Node, lcHasSavedColor: () => false,
+    app, LiteGraph, window: {}, LGraphNode: Node, lcHasSavedColor: () => false,
     console: { log() {}, warn(...args) { throw new Error(args.join(" ")); } },
     setTimeout(fn) { timers.set(++timerId, fn); return timerId; },
     clearTimeout(id) { timers.delete(id); },
     setInterval(fn) { intervals.push(fn); },
   });
+  const bridge = fs.readFileSync(new URL("lc_graph_events.js", sourceRoot), "utf8").replace(/^export /gm, "");
+  vm.runInContext(bridge, context, { filename: "lc_graph_events.js" });
   for (const file of ["lc_bypasser.js", "lc_mode_relay.js"]) {
     const source = fs.readFileSync(new URL(file, sourceRoot), "utf8").replace(/^import .*;\r?\n/gm, "");
-    vm.runInContext(source, context, { filename: file });
+    vm.runInContext(`(() => {${source}\n})()`, context, { filename: file });
   }
   extensions[0].registerCustomNodes();
   class Relay extends Node {}
@@ -47,8 +49,9 @@ async function harness(workflow) {
   const create = (type, id, mode = 4) => {
     const Cls = type === "LCBypassRelay" ? Relay : LiteGraph.registered_node_types[type] || Node;
     const node = new Cls(type);
-    Object.assign(node, { type, id, mode });
+    Object.assign(node, { type, id, mode, graph });
     graph._nodes.push(node);
+    node.onAdded?.();
     return node;
   };
   if (workflow) {

@@ -12,29 +12,50 @@ class LCStopUI {
         this.node.color = "#963232";
         this.node.bgcolor = "#963232";
 
+        // the per-instance hooks below chain whatever the node already had (other extensions' prototype hooks)
+        const prevGraphConfigured = this.node.onGraphConfigured;
+        const prevDrawForeground = this.node.onDrawForeground;
+
         this.node.onGraphConfigured = function () {
+            const r = prevGraphConfigured?.apply(this, arguments);
             this.configured = true;
+            return r;
+        };
+
+        const prevConnectionsChange = this.node.onConnectionsChange;
+        const prevAdded = this.node.onAdded;
+        const prevMouseDown = this.node.onMouseDown;
+
+        // back to an untyped passthrough (was this.onAdded(); kept separate so a disconnect does not re-run onAdded hooks)
+        const resetTypes = function () {
+            this.inputs[0].type = "*";
+            this.outputs[0].name = "";
+            this.outputs[0].type = "*";
         };
 
         this.node.onConnectionsChange = function (type, index, connected, link_info) {
+            const r = prevConnectionsChange?.apply(this, arguments);
+            // the node's own graph, so it also works inside a subgraph
+            const graph = this.graph ?? app.graph;
             if (link_info) {
                 if (connected) {
-                    if (type === LiteGraph.INPUT) {
-                        const cnode = app.graph.getNodeById(link_info.origin_id);
+                    const cnode = type === LiteGraph.INPUT ? graph?.getNodeById(link_info.origin_id) : null;
+                    // a link whose origin is gone (mid-load, or already removed) used to throw here: skip it
+                    if (type === LiteGraph.INPUT && cnode?.outputs?.[link_info.origin_slot]) {
                         const ctype = cnode.outputs[link_info.origin_slot].type;
                         const color = LGraphCanvas.link_type_colors[ctype];
                         this.outputs[0].type = ctype;
                         this.outputs[0].name = ctype;
                         this.inputs[0].type = ctype;
-                        if (link_info.id) {
-                            app.graph.links[link_info.id].color = color;
+                        if (link_info.id && graph.links[link_info.id]) {
+                            graph.links[link_info.id].color = color;
                         }
                         if (this.outputs[0].links !== null) {
                             for (let i = this.outputs[0].links.length; i > 0; i--) {
                                 const tlinkId = this.outputs[0].links[i - 1];
-                                const tlink = app.graph.links[tlinkId];
-                                if (this.configured && ctype !== tlink.type) {
-                                    app.graph.getNodeById(tlink.target_id).disconnectInput(tlink.target_slot);
+                                const tlink = graph.links[tlinkId];
+                                if (this.configured && tlink && ctype !== tlink.type) {
+                                    graph.getNodeById(tlink.target_id)?.disconnectInput(tlink.target_slot);
                                 }
                             }
                         }
@@ -48,25 +69,28 @@ class LCStopUI {
                     ((type === LiteGraph.INPUT) && (this.outputs[0].links === null || this.outputs[0].links.length === 0)) ||
                     ((type === LiteGraph.OUTPUT) && (this.inputs[0].link === null))
                 ) {
-                    this.onAdded();
+                    resetTypes.call(this);
                 }
             }
             this.computeSize();
+            return r;
         };
 
         this.node.onAdded = function () {
-            this.inputs[0].type = "*";
-            this.outputs[0].name = "";
-            this.outputs[0].type = "*";
+            const r = prevAdded?.apply(this, arguments);
+            resetTypes.call(this);
+            return r;
         };
 
         // Click on the title-bar play button → queue again (continue past stop)
         this.node.onMouseDown = function (e, pos, canvas) {
             let cWidth = this._collapsed_width || LiteGraph.NODE_COLLAPSED_WIDTH;
             // Only title bar
-            if (e.canvasY - this.pos[1] > 0) return false;
-            if (this.flags.collapsed && (e.canvasX - this.pos[0] < LiteGraph.NODE_TITLE_HEIGHT)) return false;
-            if (!this.flags.collapsed && ((e.canvasX - this.pos[0]) < (this.size[0] - cWidth + LiteGraph.NODE_TITLE_HEIGHT))) return false;
+            // not on the button: hand the click to whatever handler the node had before (false when none, as before)
+            const passOn = () => (prevMouseDown ? prevMouseDown.apply(this, arguments) : false);
+            if (e.canvasY - this.pos[1] > 0) return passOn();
+            if (this.flags.collapsed && (e.canvasX - this.pos[0] < LiteGraph.NODE_TITLE_HEIGHT)) return passOn();
+            if (!this.flags.collapsed && ((e.canvasX - this.pos[0]) < (this.size[0] - cWidth + LiteGraph.NODE_TITLE_HEIGHT))) return passOn();
             this.updateThisNodeGraph?.();
             this.onTmpMouseUp(e, pos, canvas);
             return true;
@@ -77,6 +101,7 @@ class LCStopUI {
         };
 
         this.node.onDrawForeground = function (ctx) {
+            prevDrawForeground?.apply(this, arguments);
             this.configured = true;
             if (this.size[1] > LiteGraph.NODE_SLOT_HEIGHT * 1.3) {
                 this.size[1] = LiteGraph.NODE_SLOT_HEIGHT * 1.3;
@@ -125,6 +150,7 @@ class LCStopUI {
             }
         };
 
+        // not chained on purpose: LC Stop is a fixed one-row node, so its size is the only answer that fits
         this.node.computeSize = function () {
             return [
                 (this.properties.showOutputText && this.outputs && this.outputs.length)

@@ -12,7 +12,6 @@
 
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
-import { lcApplyLaunchColor } from "./lc_color.js";
 
 const NODE_TYPE = "LCBatchImageComparer";
 const SELECTOR_HEIGHT = 30;
@@ -25,12 +24,12 @@ const SLOT_HEIGHT = 22;
 
 function imageDataToUrl(data) {
     if (!data) return null;
-    return api.apiURL(
-        `/view?filename=${encodeURIComponent(data.filename)}` +
-        `&type=${data.type}` +
-        `&subfolder=${data.subfolder || ""}` +
-        `${app.getPreviewFormatParam()}${app.getRandParam()}`
-    );
+    const params = new URLSearchParams({
+        filename: data.filename,
+        type: data.type,
+        subfolder: data.subfolder || "",
+    });
+    return api.apiURL(`/view?${params}${app.getPreviewFormatParam()}${app.getRandParam()}`);
 }
 
 function slotDisplayName(slot) {
@@ -152,13 +151,20 @@ class LCBatchImageComparer {
     _loadImages() {
         const self = this;
         const idx = this.index;
+        // latest request wins: a slower earlier load (other pair / older run) never replaces a newer one
+        const tokA = (this._tokA = (this._tokA || 0) + 1);
+        const tokB = (this._tokB = (this._tokB || 0) + 1);
 
         if (this.imagesA.length > 0) {
             const data = this.imagesA[Math.min(idx, this.imagesA.length - 1)];
             const url = imageDataToUrl(data);
             if (url) {
                 const img = new Image();
-                img.onload = () => { self.imgA = img; app.canvas?.setDirty?.(true, true); };
+                img.onload = () => {
+                    if (tokA !== self._tokA) return;
+                    self.imgA = img;
+                    app.canvas?.setDirty?.(true, true);
+                };
                 img.src = url;
             }
         } else {
@@ -170,7 +176,11 @@ class LCBatchImageComparer {
             const url = imageDataToUrl(data);
             if (url) {
                 const img = new Image();
-                img.onload = () => { self.imgB = img; app.canvas?.setDirty?.(true, true); };
+                img.onload = () => {
+                    if (tokB !== self._tokB) return;
+                    self.imgB = img;
+                    app.canvas?.setDirty?.(true, true);
+                };
                 img.src = url;
             }
         } else {
@@ -299,7 +309,7 @@ class LCBatchImageComparer {
             const sh = img.height * scale;
             const ox = dx + (dw - sw) / 2;
             const oy = dy + (dh - sh) / 2;
-            ctx.drawImage(img, ox, oy, sw, sh);
+            if (!window.LC123Perf?.skipImage?.(ctx, ox, oy, sw, sh)) ctx.drawImage(img, ox, oy, sw, sh);
         };
 
         const mode = this.node.properties?.comparer_mode || this.mode;
@@ -396,7 +406,7 @@ app.registerExtension({
         nodeType.prototype.onNodeCreated = function () {
             if (onNodeCreated) onNodeCreated.apply(this, arguments);
             if (this.flags) this.flags.pinned = false;
-            lcApplyLaunchColor(this, "#325A5A");
+            // color: #324B4B from lc_node_colors.js (it is set unconditionally there, so a launch color here never showed)
             this.lcComparer = new LCBatchImageComparer(this);
         };
     },

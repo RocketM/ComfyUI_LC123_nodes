@@ -94,10 +94,6 @@ class LCNotify:
         "Mode: always, on empty queue, or never."
     )
 
-    @classmethod
-    def IS_CHANGED(cls, **kwargs):
-        return float("nan")
-
     def notify(self, mode="always", volume=0.5, file="notify.mp3", any=None):
         return {
             "ui": {

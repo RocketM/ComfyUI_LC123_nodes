@@ -7,6 +7,9 @@
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
 import { lcApplyLaunchColor } from "./lc_color.js";
+import { loadBundledFonts } from "./lc_fonts.js";
+// one listener for every Text Overlay node (a per-node closure would keep deleted nodes alive)
+const redrawOnFontLoad = () => app.canvas?.setDirty?.(true, true);
 
 const NODE_CLASSES = new Set([
   "LCImageAdjust",
@@ -35,6 +38,8 @@ const NODE_CLASSES = new Set([
   "LCPhoneFilters",
   "LCDirectionalBlur",
 ]);
+
+window.LC123FXClasses = NODE_CLASSES; // read by the Optimization report
 
 // Text overlay handled separately (live overlay, no wipe)
 const TEXT_OVERLAY = "LCTextOverlay";
@@ -88,6 +93,7 @@ function drawCoverScaled(ctx, img, x, y, w, h, maxEdge) {
   const sh = ih * scale;
   const ox = x + (w - sw) / 2;
   const oy = y + (h - sh) / 2;
+  if (window.LC123Perf?.skipImage?.(ctx, ox, oy, sw, sh)) return;
   ctx.drawImage(src, ox, oy, sw, sh);
 }
 
@@ -128,13 +134,62 @@ function imageDataToUrl(data) {
     typeof app.getPreviewFormatParam === "function"
       ? app.getPreviewFormatParam()
       : "";
-  return api.apiURL(
-    `/view?filename=${encodeURIComponent(data.filename)}` +
-      `&type=${data.type || "temp"}` +
-      `&subfolder=${encodeURIComponent(data.subfolder || "")}` +
-      `${fmt}${rand}`
-  );
+  const params = new URLSearchParams({
+    filename: data.filename ?? "",
+    type: data.type || "temp",
+    subfolder: data.subfolder || "",
+  });
+  return api.apiURL(`/view?${params}${fmt}${rand}`);
 }
+
+/** Stable identity of an output image (no rand param): used to spot a repeated restore of the same file. */
+function imageDataKey(data) {
+  return data ? `${data.type || "temp"}|${data.subfolder || ""}|${data.filename}` : "";
+}
+
+/**
+ * Load a preview image where only the newest request per (owner, slot) may land: an older, slower
+ * response never replaces a newer image. `restore` requests are skipped while the same file is still
+ * loading for that slot (onConfigure and node creation both ask for it).
+ */
+function loadLatest(owner, slot, data, onload, restore = false) {
+  const url = imageDataToUrl(data);
+  if (!url) return;
+  const key = imageDataKey(data);
+  const pend = (owner._lcPending ||= {});
+  if (restore && pend[slot] === key) return;
+  const tokens = (owner._lcLoadToken ||= {});
+  const token = (tokens[slot] = (tokens[slot] || 0) + 1);
+  pend[slot] = key;
+  const img = new Image();
+  img.crossOrigin = "anonymous";
+  const done = () => {
+    if (tokens[slot] === token) pend[slot] = null;
+  };
+  img.onload = () => {
+    done();
+    if (tokens[slot] !== token) return;
+    onload(img);
+    app.canvas?.setDirty?.(true, true);
+  };
+  img.onerror = done;
+  img.src = url;
+}
+
+/** Cancel any in-flight load for a slot (its result must not land any more). */
+function cancelLoad(owner, slot) {
+  const tokens = (owner._lcLoadToken ||= {});
+  tokens[slot] = (tokens[slot] || 0) + 1;
+  if (owner._lcPending) owner._lcPending[slot] = null;
+}
+
+// measured text changes once a web font finishes loading: wrapped-line caches key on this counter
+let fontEpoch = 0;
+try {
+  document.fonts?.addEventListener?.("loadingdone", () => {
+    fontEpoch++;
+  });
+} catch (_) {}
 
 function widgetsHeight(node) {
   let y = TITLE;
@@ -192,11 +247,16 @@ function isPrimitiveStringNode(origin) {
 
 function inputOrWidgetValue(node, name, fallback) {
   try {
-    const inp = (node.inputs || []).find((i) => i.name === name);
-    if (inp && inp.link != null && app.graph?.links) {
-      const link = app.graph.links[inp.link];
+    const graph = node.graph ?? app.graph;
+    const idx = (node.inputs || []).findIndex((i) => i.name === name);
+    const inp = idx >= 0 ? node.inputs[idx] : null;
+    const linked =
+      inp && (typeof node.isInputConnected === "function" ? node.isInputConnected(idx) : inp.link != null);
+    if (linked && graph?.links) {
+      const link =
+        typeof node.getInputLink === "function" ? node.getInputLink(idx) : graph.links[inp.link];
       if (link) {
-        const origin = app.graph.getNodeById(link.origin_id);
+        const origin = graph.getNodeById(link.origin_id);
         if (origin) {
           if (!isPrimitiveStringNode(origin)) {
             // Computed STRING — live text unknown; signal caller to skip overlay
@@ -274,7 +334,7 @@ class LCPreviewCompare {
       self.pointerPos = pos;
       const pol = lcPerfPolicy(this);
       if (pol.wipe && !pol.hide && self.pointerOver && self.imgA && self.imgB) {
-        app.canvas?.setDirty?.(true, true);
+        app.canvas?.setDirty?.(true, false); // the wipe is drawn in the foreground only
       }
       return origMouseMove ? origMouseMove.apply(this, arguments) : false;
     };
@@ -306,29 +366,30 @@ class LCPreviewCompare {
     };
   }
 
-  _loadMeta(meta, which) {
+  _loadMeta(meta, which, restore = false) {
     if (!meta?.length) {
+      cancelLoad(this, which);
       if (which === "A") this.imgA = null;
       if (which === "B") this.imgB = null;
       return;
     }
     const self = this;
-    const url = imageDataToUrl(meta[0]);
-    if (!url) return;
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      if (which === "A") self.imgA = img;
-      else self.imgB = img;
-      app.canvas?.setDirty?.(true, true);
-    };
-    img.src = url;
+    loadLatest(
+      this,
+      which,
+      meta[0],
+      (img) => {
+        if (which === "A") self.imgA = img;
+        else self.imgB = img;
+      },
+      restore
+    );
   }
 
   _restoreFromProps() {
     const props = this.node.properties || {};
-    if (props.lc_preview_meta) this._loadMeta(props.lc_preview_meta, "A");
-    if (props.lc_before_meta) this._loadMeta(props.lc_before_meta, "B");
+    if (props.lc_preview_meta) this._loadMeta(props.lc_preview_meta, "A", true);
+    if (props.lc_before_meta) this._loadMeta(props.lc_before_meta, "B", true);
     else if (!props.lc_preview_meta) {
       // nothing stored
     }
@@ -349,6 +410,7 @@ class LCPreviewCompare {
       this._loadMeta(beforeMeta, "B");
     } else {
       this.node.properties.lc_before_meta = null;
+      cancelLoad(this, "B");
       this.imgB = null;
     }
     this.node._lcBypass = !!(
@@ -652,15 +714,7 @@ class LCTextOverlayPreview {
     const meta = props.lc_preview_meta || props.lc_before_meta;
     if (!meta?.length) return;
     const self = this;
-    const url = imageDataToUrl(meta[0]);
-    if (!url) return;
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      self.baseImg = img;
-      app.canvas?.setDirty?.(true, true);
-    };
-    img.src = url;
+    loadLatest(this, "base", meta[0], (img) => (self.baseImg = img), true);
   }
 
   onExecuted(message) {
@@ -678,16 +732,7 @@ class LCTextOverlayPreview {
     if (meta?.length) {
       if (!this.node.properties) this.node.properties = {};
       this.node.properties.lc_preview_meta = meta;
-      const url = imageDataToUrl(meta[0]);
-      if (url) {
-        const img = new Image();
-        img.crossOrigin = "anonymous";
-        img.onload = () => {
-          self.baseImg = img;
-          app.canvas?.setDirty?.(true, true);
-        };
-        img.src = url;
-      }
+      loadLatest(this, "base", meta[0], (img) => (self.baseImg = img));
     }
   }
 
@@ -741,7 +786,7 @@ class LCTextOverlayPreview {
     if (box.h < 16) return;
 
     const { ox, oy, sw, sh, scale } = this._imageRect(box);
-    ctx.drawImage(img, ox, oy, sw, sh);
+    if (!window.LC123Perf?.skipImage?.(ctx, ox, oy, sw, sh)) ctx.drawImage(img, ox, oy, sw, sh);
 
     let rawText = inputOrWidgetValue(node, "text", "");
     // Linked computed (Join Strings, etc.): use text from last successful run
@@ -781,12 +826,20 @@ class LCTextOverlayPreview {
     const weight = /bold/i.test(fontKey) ? "bold " : "";
     const italic = /italic/i.test(fontKey) ? "italic " : "";
     ctx.save();
-    ctx.font = `${italic}${weight}${dispSize}px ${fontCss}`;
+    const font = `${italic}${weight}${dispSize}px ${fontCss}`;
+    ctx.font = font;
     ctx.fillStyle = `rgb(${r},${g},${b})`;
     ctx.textBaseline = "top";
     ctx.textAlign = "left";
 
-    const lines = this._wrap(ctx, text, maxW);
+    // wrapping measures every word: only redo it when text, font, size, width or loaded fonts change
+    const wrapKey = `${fontEpoch}\n${font}\n${maxW}\n${text}`;
+    if (!this._wrapCache || this._wrapCache.key !== wrapKey) {
+      const wrapped = this._wrap(ctx, text, maxW);
+      this._wrapCache = { key: wrapKey, lines: wrapped, widths: wrapped.map((l) => ctx.measureText(l).width) };
+    }
+    const lines = this._wrapCache.lines;
+    const widths = this._wrapCache.widths;
     const lineH = dispSize * 1.2;
     const blockH = Math.max(lineH, lines.length * lineH);
 
@@ -802,7 +855,7 @@ class LCTextOverlayPreview {
     const cx = ox + (xp / 100) * sw;
 
     lines.forEach((line, i) => {
-      const tw = ctx.measureText(line).width;
+      const tw = widths[i];
       let lx;
       if (ah === "left") lx = cx;
       else if (ah === "right") lx = cx - tw;
@@ -970,25 +1023,25 @@ class LCWatermarkPreview {
     setWval(this.node, "y_percent", Math.round(yp * 10) / 10);
   }
 
-  _loadMeta(meta, which) {
+  _loadMeta(meta, which, restore = false) {
     if (!meta?.length) return;
     const self = this;
-    const url = imageDataToUrl(meta[0]);
-    if (!url) return;
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      if (which === "base") self.baseImg = img;
-      else self.wmImg = img;
-      app.canvas?.setDirty?.(true, true);
-    };
-    img.src = url;
+    loadLatest(
+      this,
+      which,
+      meta[0],
+      (img) => {
+        if (which === "base") self.baseImg = img;
+        else self.wmImg = img;
+      },
+      restore
+    );
   }
 
   _restoreFromProps() {
     const props = this.node.properties || {};
-    if (props.lc_before_meta) this._loadMeta(props.lc_before_meta, "base");
-    if (props.lc_wm_meta) this._loadMeta(props.lc_wm_meta, "wm");
+    if (props.lc_before_meta) this._loadMeta(props.lc_before_meta, "base", true);
+    if (props.lc_wm_meta) this._loadMeta(props.lc_wm_meta, "wm", true);
   }
 
   onExecuted(message) {
@@ -1025,6 +1078,7 @@ class LCWatermarkPreview {
     const ox = x + (w - sw) / 2;
     const oy = y + (h - sh) / 2;
 
+    if (window.LC123Perf?.skipImage?.(ctx, ox, oy, sw, sh)) return;
     ctx.drawImage(base, ox, oy, sw, sh);
 
     const wm = this.wmImg;
@@ -1076,6 +1130,7 @@ app.registerExtension({
       this.comfyClass = name;
 
       if (isText) {
+        loadBundledFonts(redrawOnFontLoad);
         const tw = (this.widgets || []).find((w) => w.name === "text");
         if (tw) {
           tw.computeSize = function (width) {

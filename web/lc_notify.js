@@ -17,7 +17,8 @@ function soundUrl(filename) {
 function playFile(filename, volume) {
   const url = soundUrl(filename);
   const audio = new Audio(url);
-  audio.volume = Math.max(0, Math.min(1, Number(volume) ?? 0.5));
+  const v = Number(volume);
+  audio.volume = Math.max(0, Math.min(1, Number.isFinite(v) ? v : 0.5));
   const p = audio.play();
   if (p && typeof p.catch === "function") {
     p.catch((e) => console.warn("[LC Notify] play failed", e, url));
