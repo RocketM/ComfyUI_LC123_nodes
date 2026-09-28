@@ -193,14 +193,14 @@ function ilRender(node, ts) {
         k.el.style.top = k.fy * v.h + "px";
         k.el.style.transform = `translate(-50%,-50%) scale(${inv})`;
     }
-    const off = 38 * inv;
+    const off = 38 * inv; // the rotate knob hangs below: ComfyUI's selection toolbox covers the space above a node
     v.rot.style.display = edit ? "flex" : "none";
     v.rot.style.left = v.w / 2 + "px";
-    v.rot.style.top = -off + "px";
+    v.rot.style.top = v.h + off + "px";
     v.rot.style.transform = `translate(-50%,-50%) scale(${inv})`;
     v.stem.style.display = edit ? "block" : "none";
     v.stem.style.left = v.w / 2 - inv + "px";
-    v.stem.style.top = -off + "px";
+    v.stem.style.top = v.h + "px";
     v.stem.style.width = 2 * inv + "px";
     v.stem.style.height = off + "px";
     const showBadge = edit && v.badgeText;
@@ -208,7 +208,7 @@ function ilRender(node, ts) {
     if (showBadge) {
         v.badge.textContent = v.badgeText;
         v.badge.style.left = v.w / 2 + 26 * inv + "px";
-        v.badge.style.top = -off - 10 * inv + "px";
+        v.badge.style.top = v.h + off - 10 * inv + "px";
         v.badge.style.transformOrigin = "0 0";
         v.badge.style.transform = `scale(${inv}) rotate(${-p.angle}deg)`;
     }
@@ -249,7 +249,7 @@ function ilWire(node, v) {
         () => { v.badgeText = Math.round(node.properties.angle) + "°"; },
         (e) => {
             const [cx, cy] = screenCentre(node);
-            const a = snapAngle((Math.atan2(e.clientY - cy, e.clientX - cx) * 180) / Math.PI + 90, e);
+            const a = snapAngle((Math.atan2(e.clientY - cy, e.clientX - cx) * 180) / Math.PI - 90, e);
             node.properties.angle = a;
             v.badgeText = node.properties.angle + "°";
             ilLayout(node);

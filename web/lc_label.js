@@ -1,7 +1,7 @@
 // LC Label
 // A chromeless text label for annotating a workflow. Drawn as HTML on a layer above the canvas, so it is never buried
 // under nodes or links (clicks pass straight through the text to the canvas, so the label is selected, moved and
-// pinned like any node). Select it to get the Word / Paint style handles: the round handle above rotates it (hold
+// pinned like any node). Select it to get the Word / Paint style handles: the round handle below rotates it (hold
 // snaps to 5 degrees with a magnet at 0 / 90 / 180), a corner handle scales it. Double-click opens the settings dialog, like LC Image Label.
 import { app } from "../../scripts/app.js";
 import { BUNDLED_FONTS, loadBundledFonts as loadLCFonts } from "./lc_fonts.js";
@@ -238,14 +238,14 @@ function renderNode(node, ts) {
     k.el.style.top = k.fy * v.h + "px";
     k.el.style.transform = `translate(-50%,-50%) scale(${inv})`;
   }
-  const off = 38 * inv;
+  const off = 38 * inv; // the rotate knob hangs below: ComfyUI's selection toolbox covers the space above a node
   v.rot.style.display = edit ? "flex" : "none";
   v.rot.style.left = v.w / 2 + "px";
-  v.rot.style.top = -off + "px";
+  v.rot.style.top = v.h + off + "px";
   v.rot.style.transform = `translate(-50%,-50%) scale(${inv})`;
   v.stem.style.display = edit ? "block" : "none";
   v.stem.style.left = v.w / 2 - inv + "px";
-  v.stem.style.top = -off + "px";
+  v.stem.style.top = v.h + "px";
   v.stem.style.width = 2 * inv + "px";
   v.stem.style.height = off + "px";
   const showBadge = edit && v.badgeText;
@@ -253,7 +253,7 @@ function renderNode(node, ts) {
   if (showBadge) {
     v.badge.textContent = v.badgeText;
     v.badge.style.left = v.w / 2 + 26 * inv + "px";
-    v.badge.style.top = -off - 10 * inv + "px";
+    v.badge.style.top = v.h + off - 10 * inv + "px";
     v.badge.style.transformOrigin = "0 0";
     v.badge.style.transform = `scale(${inv}) rotate(${-node.properties.angle}deg)`;
   }
@@ -269,7 +269,7 @@ function wireHandles(node, v) {
     },
     (e) => {
       const [cx, cy] = screenCentre(node);
-      const a = snapAngle((Math.atan2(e.clientY - cy, e.clientX - cx) * 180) / Math.PI + 90, e);
+      const a = snapAngle((Math.atan2(e.clientY - cy, e.clientX - cx) * 180) / Math.PI - 90, e);
       node.properties.angle = a;
       v.badgeText = node.properties.angle + "°";
       layoutNode(node);
@@ -586,7 +586,7 @@ function showSettings(node) {
   reset.addEventListener("click", () => { p.angle = 0; ang.value = 0; apply(); });
   row("Angle", ang, reset);
   const tip = document.createElement("div");
-  tip.textContent = "Tip: drag the round handle above the label to rotate it. It snaps to 5° with a magnet at 0, 90 and 180 (Shift = 15°, Alt = free). Drag a corner to scale.";
+  tip.textContent = "Tip: drag the round handle below the label to rotate it. It snaps to 5° with a magnet at 0, 90 and 180 (Shift = 15°, Alt = free). Drag a corner to scale.";
   tip.style.cssText = "font-size:12px;color:#8a9;margin-bottom:6px;line-height:1.4;";
   dialog.appendChild(tip);
 
