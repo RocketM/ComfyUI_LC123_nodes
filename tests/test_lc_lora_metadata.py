@@ -38,22 +38,16 @@ def graph(rows, model=True, clip=True):
 
 
 class LCLoraMetadataTests(unittest.TestCase):
-    def test_source_size_variants(self):
-        for width, height, sw, sh, expected in [
-            (24, 16, 24, 16, None),
-            (48, 32, 24, 16, '24x16'),
-            (12, 8, 24, 16, '24x16'),
-            (12, 16, 24, 16, '24x16'),
-            (24, 16, None, None, None),
-            (24, 16, 0, 16, None),
-        ]:
-            with self.subTest(output=(width, height), source=(sw, sh)):
-                text = save._build_parameters({}, width, height, source_width=sw, source_height=sh)
-                self.assertIn(f'Size: {width}x{height}', text)
-                if expected is None:
-                    self.assertNotIn('Source size:', text)
-                else:
-                    self.assertIn('Source size: ' + expected, text)
+    def test_original_size_and_missing_size_fallback(self):
+        for sw, sh, expected in [(1024, 1536, '1024x1536'), (0, 0, '24x16'), (24, 0, '24x16')]:
+            with self.subTest(source=(sw, sh)), tempfile.TemporaryDirectory() as tmp:
+                with patch.object(folders, 'get_output_directory', return_value=tmp, create=True), patch.object(folders, 'get_save_image_path', return_value=(tmp, 'test', 1, '', ''), create=True):
+                    save.LCSaveImage().save(np.zeros((1, 16, 24, 3)), metadata={'width': sw, 'height': sh}, hash_resources=False)
+                with Image.open(next(Path(tmp).glob('*.png'))) as image:
+                    self.assertIn('Size: ' + expected, image.info['parameters'])
+                    self.assertNotIn('Source size:', image.info['parameters'])
+                    self.assertNotIn('Final size:', image.info['parameters'])
+                    self.assertEqual(image.size, (24, 16))
 
     def test_generic_flat_inputs_ignore_loader_name(self):
         for kind in ['LoraLoader', 'LoraLoaderModelOnly', 'Krea2ControlLoRALoader', 'CustomAdapter']:
@@ -146,7 +140,7 @@ class LCLoraMetadataTests(unittest.TestCase):
                 params = image.info['parameters']
                 self.assertEqual(params.split('\nNegative prompt:')[0].split('\nSteps:')[0].split('\nSize:')[0], 'test')
                 self.assertNotIn('<lora:', params)
-                for text in ['Size: 24x16', 'Source size: 832x1216']:
+                for text in ['Size: 832x1216', 'Version: ComfyUI']:
                     self.assertIn(text, params)
                 rows = json.loads(image.info['lora_metadata'])['loras']
                 self.assertEqual((rows[0]['strength_model'], rows[0]['strength_clip']), (0.65, 0))
@@ -182,32 +176,21 @@ class LCLoraMetadataTests(unittest.TestCase):
         self.assertIn('1', metadata._image_ancestors(prompt, '3'))
         self.assertNotIn('9', metadata._image_ancestors(prompt, '3'))
 
-    def test_save_keeps_manual_prompt_and_emits_addnet(self):
+    def test_save_keeps_manual_prompt_without_addnet(self):
         prompt = graph([{'on': True, 'lora': 'lc.safetensors', 'strength': 0.65}])
         buckets = {'lora': [('lc', '123456ABCD')], 'hashes_json': {'lora:lc': '123456ABCD'}}
         positive = 'test <lora:manually_written:0.2>'
         with tempfile.TemporaryDirectory() as tmp:
             with patch.object(folders, 'get_output_directory', return_value=tmp, create=True), patch.object(folders, 'get_save_image_path', return_value=(tmp, 'test', 1, '', ''), create=True), patch.object(save, 'collect_hashes', return_value=buckets) as collect:
                 save.LCSaveImage().save(np.zeros((1, 16, 24, 3), dtype=np.float32), metadata={'positive': positive, 'negative': 'bad', 'civitai_air': '3328902'}, prompt=prompt, unique_id='3')
-                collect.assert_called_once_with(prompt, None, '3')
+                self.assertEqual(collect.call_args.args, ({k: v for k, v in prompt.items() if k != '3'}, None))
+                self.assertIn('lora_metadata', collect.call_args.kwargs)
             with Image.open(next(Path(tmp).glob('*.png'))) as image:
                 params = image.info['parameters']
                 self.assertEqual(params.split('\nNegative prompt:')[0], positive)
                 self.assertNotIn('<lora:lc:', params)
-                self.assertIn('AddNet Weight A 1: 0.65', params)
-                self.assertIn('AddNet Weight B 1: 0.65', params)
+                self.assertNotIn('AddNet', params)
                 self.assertEqual(image.info['civitai_air'], '3328902')
-
-    def test_addnet_strengths_without_prompt_tags(self):
-        prompt = graph([{'on': True, 'lora': 'my-lora.safetensors', 'strength': -0.4}])
-        data = metadata.collect_lora_metadata(prompt, '3')
-        fields = metadata.format_lora_fields(data, {'lora': [('my-lora', 'ABCD123456')]})
-        self.assertIn('AddNet Model 1: my_lora(ABCD123456)', fields)
-        self.assertIn('AddNet Weight 1: -0.4', fields)
-        self.assertIn('AddNet Weight A 1: -0.4', fields)
-        self.assertIn('AddNet Weight B 1: -0.4', fields)
-        self.assertEqual(metadata.format_lora_fields(data, {}), [])
-
 
     def test_verified_lora_version_and_stale_sidecar(self):
         import hashlib

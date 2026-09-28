@@ -16,7 +16,7 @@ from urllib.parse import parse_qs, urlparse
 
 import folder_paths
 
-from .lc_lora_metadata import parse_lc_lora_rows, _image_ancestors
+from .lc_lora_metadata import parse_lc_lora_rows, _image_ancestors, _resolve as _resolve_input
 from .lc_lora_weights import row_strengths
 
 _FILE_EXT = re.compile(r"\.(safetensors|sft|gguf|ckpt|pt|bin|pth)$", re.I)
@@ -296,8 +296,14 @@ def _collect_from_prompt(prompt, skip_ids=None) -> list[tuple[str, str | None]]:
                     if row.get('on') and any(weight != 0.0 for weight in weights) and isinstance(name, str):
                         add(name, 'loras')
             continue
+        if not _lora_enabled(inputs):
+            continue
         for key, val in inputs.items():
-            take_value(val, _hint_for_key(key) or hint_node)
+            if key in ('text', 'prompt', 'positive', 'negative', 'positive_prompt', 'negative_prompt'):
+                continue
+            hint = _hint_for_key(key) or hint_node
+            if hint is not None:
+                take_value(_resolve_input(val, prompt), hint)
         widgets = node.get("widgets_values")
         if isinstance(widgets, (list, tuple)):
             for val in widgets:
@@ -308,7 +314,7 @@ def _collect_from_prompt(prompt, skip_ids=None) -> list[tuple[str, str | None]]:
     return found
 
 
-def collect_hashes(prompt=None, extra_pnginfo=None, save_node_id=None) -> dict:
+def collect_hashes(prompt=None, extra_pnginfo=None, save_node_id=None, *, lora_metadata=None, excluded_lora_paths=()) -> dict:
     """
     Return {
       'model': [(name, autov2), ...],
@@ -372,39 +378,47 @@ def collect_hashes(prompt=None, extra_pnginfo=None, save_node_id=None) -> dict:
             }
         candidates.extend(_collect_from_prompt(fake_prompt, skip_ids))
 
+    active_loras = None
+    if lora_metadata is not None:
+        active_loras = {row['filename'] for row in lora_metadata.get('loras', [])
+                        if row['scope'] == 'image_upstream' and row['nonzero_or_unresolved']}
+        candidates.extend((name, 'loras') for name in sorted(active_loras))
+    excluded = {os.path.normcase(os.path.abspath(path)) for path in excluded_lora_paths}
     seen_path = set()
+    seen_hash = set()
     for name, hint in candidates:
         path, kind = _resolve(name, hint)
         if not path or path in seen_path:
+            continue
+        if kind == 'lora' and (os.path.normcase(os.path.abspath(path)) in excluded
+                               or (active_loras is not None and name not in active_loras)):
             continue
         seen_path.add(path)
         digest = autov2(path)
         if not digest:
             continue
         kind = kind or "model"
+        identity = ("model" if kind == "unet" else kind, digest)
+        if identity in seen_hash:
+            continue
+        seen_hash.add(identity)
         label = os.path.splitext(os.path.basename(path))[0]
         buckets.setdefault(kind, []).append((label, digest))
-        if kind == "model":
-            hashes_json.setdefault("model", digest)
-            # extra models get model:Name
-            if "model" in hashes_json and hashes_json["model"] != digest:
+        if kind in ("model", "unet"):
+            if "model" not in hashes_json:
+                hashes_json["model"] = digest
+                buckets['primary_model'] = label
+            elif hashes_json['model'] != digest:
                 hashes_json[f"model:{label}"] = digest
         elif kind == "lora":
             hashes_json[f"lora:{label}"] = digest
         elif kind == "clip":
             hashes_json[f"clip:{label}"] = digest
-        elif kind == "unet":
-            # A UNETLoader ("Load Diffusion Model") IS the base model on a diffusion-only
-            # architecture (Krea2, Flux, ...) -- it just never resolves via the classic
-            # single-file "checkpoints" folder that sets kind=="model" above. Without this,
-            # a UNET-loaded base model never got the bare "model" key CivitAI's parser
-            # actually keys the primary resource off, only "unet:Name" -- CivitAI never had
-            # a way to auto-link it. Same pattern as the vae branch just below.
-            hashes_json.setdefault("model", digest)
-            hashes_json[f"unet:{label}"] = digest
         elif kind == "vae":
-            hashes_json.setdefault("vae", digest)
-            hashes_json[f"vae:{label}"] = digest
+            if "vae" not in hashes_json:
+                hashes_json['vae'] = digest
+            elif hashes_json['vae'] != digest:
+                hashes_json[f"vae:{label}"] = digest
         elif kind == "embed":
             hashes_json[f"embed:{label}"] = digest
         else:
@@ -533,19 +547,30 @@ def _lora_version(path):
     return None
 
 
-def lora_resources_payload(metadata):
+def lora_resources_payload(metadata, resolved_paths=None):
     """Offline, hash-verified Civitai version identities for this image's active LoRAs."""
-    resources = []
+    resources = {}
     for row in metadata.get('loras', []):
-        if row['scope'] != 'image_upstream' or not row['nonzero_or_unresolved'] or row['strength_model'] is None:
+        if row['scope'] != 'image_upstream' or not row['nonzero_or_unresolved']:
             continue
         path, kind = _resolve(row['filename'], 'loras')
         if not path or kind != 'lora':
             continue
         identity = _lora_version(path)
         if identity is not None:
-            resources.append({**identity, 'weight': row['strength_model']})
-    return resources
+            if resolved_paths is not None:
+                resolved_paths.add(path)
+            key = (identity['type'], identity['modelVersionId'])
+            item = dict(identity)
+            if row['strength_model'] is not None:
+                item['weight'] = row['strength_model']
+            if key not in resources:
+                resources[key] = item
+            elif resources[key].get('weight') != item.get('weight'):
+                # One scalar cannot represent repeated applications with different weights.
+                # Keep the version identity; per-slot strengths remain in lora_metadata.
+                resources[key].pop('weight', None)
+    return list(resources.values())
 
 
 def format_hash_fields(buckets: dict) -> tuple[str, str, str, str]:

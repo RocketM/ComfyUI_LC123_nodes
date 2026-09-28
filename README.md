@@ -6,7 +6,7 @@ English | [简体中文](README.zh-CN.md)
 
 | Modified node | Changes |
 | --- | --- |
-| LC Save Image 💾 | Keeps `Size` equal to the saved image dimensions and adds `Source size` when valid original dimensions differ. Exports LoRA model-strength tags and structured PNG metadata with separate model/CLIP strengths. Preserves active LoRAs when only one strength is zero. |
+| LC Save Image 💾 | `Size` uses original generation dimensions from the metadata pipe; output dimensions are a fallback only. Keeps prompts unchanged, records LoRA versions and weights in `Civitai resources`, and preserves separate model/CLIP strengths in compact PNG metadata. Resource collection follows the saved image branch, with cache-based LC/rgthree switch selection. No AddNet fields or duplicate primary model/VAE aliases. |
 | LC Group LoRA Loader Stack 🎚️ | Grouped selection with the same visual library and independent weights; emits standard `(name, model strength, CLIP strength)` tuples for LC Apply LoRA Stack and compatible nodes. |
 | LC Group LoRA Loader 🎚️ | Separate node with groups, drag sorting, a resizable batch picker, .civitai.info previews and independent model/CLIP strengths. The original loader and stack retain their original UI and loading behavior. |
 | LC LoRA Loader 🎚️ | Connects its row settings to strength metadata and LoRA hash collection, respecting row switches, strengths, and model-only or CLIP-only connections. The loader's sampling behavior is unchanged. |
