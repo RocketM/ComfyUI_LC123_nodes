@@ -34,8 +34,7 @@ class LCImageRefPipeIn(io.ComfyNode):
             node_id="LCImageRefPipeIn",
             display_name="LC Image Ref Pipe In 🖼️",
             category="LC123/pipe",
-            description="Bundle up to 16 reference images into one pipe. A new socket appears as you fill the last one, "
-                        "same as Text Encode Qwen Image 2.1. Slot numbers are kept, so image_3 in is image_3 out.",
+            description="Bundles up to 16 reference images into one wire. A new socket appears as you fill the last one.",
             inputs=[
                 io.Autogrow.Input(
                     "images",
@@ -63,8 +62,7 @@ class LCImageRefPipeOut(io.ComfyNode):
             node_id="LCImageRefPipeOut",
             display_name="LC Image Ref Pipe Out 🖼️",
             category="LC123/pipe",
-            description="Unpack an LC Image Ref Pipe. Pipe passes through first, then image_1..image_16 in their "
-                        "original slots. Image sockets grow to match the pipe in, plus one as you wire them.",
+            description="Unpacks your reference images. image_3 in is image_3 out.",
             inputs=[io.Custom(PIPE_TYPE).Input("pipe")],
             outputs=[io.Custom(PIPE_TYPE).Output(display_name="pipe")]
             + [io.Image.Output(display_name=n) for n in NAMES],

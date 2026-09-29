@@ -1,8 +1,8 @@
 # LC123 node inventory
 
-**127 Python nodes** + **5 JS-only** · version 1.43.0
+**131 Python nodes** + **5 JS-only** · version 1.45.0
 
-Registered class IDs: 128 (127 in search, 1 deprecated but still loads in old workflows).
+Registered class IDs: 132 (131 in search, 1 deprecated but still loads in old workflows).
 
 ## LC123/Regional Canvas/Anima (1)
 
@@ -92,6 +92,13 @@ Registered class IDs: 128 (127 in search, 1 deprecated but still loads in old wo
 ## LC123/mask (1)
 
 - `LCMaskPass`: LC Mask Pass
+
+## LC123/optimizer (4)
+
+- `LCOptimizer`: LC Model Optimizer ⚡
+- `LCOptimizerPipe`: LC Model Optimizer (pipe) ⚡
+- `LCOptimizerVideo`: LC Model Optimizer Video ⚡
+- `LCOptimizerVideoPipe`: LC Model Optimizer Video (pipe) ⚡
 
 ## LC123/pipe (9)
 

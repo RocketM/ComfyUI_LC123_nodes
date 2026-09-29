@@ -174,10 +174,7 @@ class LCPipeOut:
     RETURN_NAMES = ("pipe",) + tuple(DISPLAY[k] for k, _ in SLOT_ORDER)
     FUNCTION = "unpack"
     CATEGORY = "LC123/pipe"
-    DESCRIPTION = (
-        "Expands an LC_PIPE into individual sockets (top → bottom). "
-        "Pipe is passed through for Get/Set chaining."
-    )
+    DESCRIPTION = "Unpacks a pipe back into separate sockets. The pipe keeps going out the top."
 
     def unpack(self, pipe):
         if not isinstance(pipe, dict):
@@ -201,10 +198,7 @@ class LCPipeEdit:
     RETURN_NAMES = ("pipe",)
     FUNCTION = "edit"
     CATEGORY = "LC123/pipe"
-    DESCRIPTION = (
-        "Build or edit an LC_PIPE. Leave pipe empty to pack from sockets only (in). "
-        "Connect a pipe to merge overrides (edit). Socket labels match LC Pipe Out."
-    )
+    DESCRIPTION = "Packs anything you wire into one pipe, so one wire carries it all. Wire a pipe in to change only what you connect; everything else rides along."
 
     def edit(self, pipe=None, **kwargs):
         base = dict(pipe) if isinstance(pipe, dict) else _empty()
@@ -265,10 +259,7 @@ class LCDetailPipeOut:
     RETURN_NAMES = ("pipe",) + tuple(DETAIL_DISPLAY[k] for k, _ in DETAIL_SLOTS)
     FUNCTION = "unpack"
     CATEGORY = "LC123/pipe"
-    DESCRIPTION = (
-        "Detail unpack from LC_PIPE: Model 1, Clip 1, VAE 1, prompts, "
-        "conditioning, seed, CFG 1, sampler, scheduler, detailer steps. Pipe passes through."
-    )
+    DESCRIPTION = "Unpacks what a detailer needs from a pipe: model, clip, VAE, prompts, seed, CFG, sampler, scheduler and detailer steps. The pipe keeps going out the top."
 
     def unpack(self, pipe):
         if not isinstance(pipe, dict):

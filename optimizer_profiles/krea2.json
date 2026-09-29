@@ -200,13 +200,13 @@
     }
    },
    "krea2_turbo_int8_convrot.safetensors": {
-    "lpips_avg": 0.1351,
-    "note": "measured on the Animosity finetune's own int8 conversion vs its bf16; Comfy's krea2_turbo_int8_convrot not measured yet"
+    "lpips_avg": 0.0063,
+    "note": "measured on Krealism V3.1's int8_convrot vs its own bf16 (a Krea 2 finetune): 0.0073 without --fast, 0.0053 with; Comfy's own krea2_turbo_int8_convrot not measured yet"
    }
   },
   "notes": [
    "GGUF measured with a Civitai Q8_0 conversion (arch tag 'krea2'), loaded with calcuis gguf LoaderGGUF: ComfyUI-GGUF rejects that tag.",
-   "int8-convrot measured only on the Animosity finetune (its own conversion vs its own bf16): LPIPS 0.135, visibly grainier. Comfy's official krea2_turbo_int8_convrot not tested yet."
+   "int8-convrot measured on a Krea 2 finetune (Krealism V3.1 int8_convrot vs its own bf16): LPIPS 0.006, near identical. Comfy's own krea2_turbo_int8_convrot not tested yet; no int8 timing measured."
   ]
  },
  "benchmarks": {
@@ -254,18 +254,6 @@
       "megapixels": 2.0,
       "step_s": 1.31,
       "note": null
-     },
-     {
-      "file": "krea2_turbo_int8_convrot.safetensors",
-      "megapixels": 1.0,
-      "step_s": 0.41,
-      "note": "measured on the Animosity int8 conversion"
-     },
-     {
-      "file": "krea2_turbo_int8_convrot.safetensors",
-      "megapixels": 2.0,
-      "step_s": 0.83,
-      "note": "measured on the Animosity int8 conversion"
      }
     ]
    },
@@ -304,20 +292,6 @@
       "megapixels": 2.0,
       "step_s": 8.56,
       "peak_ram_gib": 44.31,
-      "peak_swap_gib": 0.03
-     },
-     {
-      "file": "krea2_turbo_int8_convrot.safetensors",
-      "megapixels": 1.0,
-      "step_s": 2.2,
-      "peak_ram_gib": 35.81,
-      "peak_swap_gib": 0.03
-     },
-     {
-      "file": "krea2_turbo_int8_convrot.safetensors",
-      "megapixels": 2.0,
-      "step_s": 4.77,
-      "peak_ram_gib": 35.85,
       "peak_swap_gib": 0.03
      }
     ]

@@ -426,7 +426,7 @@ def shopping_guide(sysp):
     if ram and ram < 48:
         avoid.append({"what": "Big GGUFs with little RAM", "why": f"A GGUF sits fully in RAM; with {ram:g} GB it spills into the page file first (32 GB test: loading twice as slow)."})
     avoid.append({"what": "Files your loader cannot open", "why": "Community GGUFs without an architecture tag (Ideogram 4, most Qwen-Image 2.1) are rejected by ComfyUI-GGUF; some community fp8 / bf16 files are not recognised at all. Check the model page for 'ComfyUI' and the loader."})
-    avoid.append({"what": "Community int8 / fp8 conversions of finetunes without a comparison", "why": "Conversions vary: one finetune's int8 drifted 0.135 from its own bf16 (visibly grainier) while official int8 files stay near 0.02."})
+    avoid.append({"what": "Community int8 / fp8 conversions of finetunes without a comparison", "why": "Conversions vary, and a file name can be wrong (one finetune's \"int8\" file was really fp8). Official files are measured; a community one is only as good as its converter."})
     avoid.append({"what": "LoRA-heavy workflows on 8-bit quants (video)", "why": "LTX 2.3 with its LoRA drifted 0.07 to 0.09 on fp8 / int8 vs 0.015 for Q8; test before trusting."})
     # the short answer per goal: what to pick on THIS machine, best first
     q, o, f = [], [], []

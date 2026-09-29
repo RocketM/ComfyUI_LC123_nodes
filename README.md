@@ -6,7 +6,7 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 - **CivitAI:** [lonecatone23](https://civitai.com/user/lonecatone23)
 - **Instagram:** [synth.studio.models](https://www.instagram.com/synth.studio.models/)
 - **Support:** [Buy me a ☕](https://ko-fi.com/lonecatone)
-- **Version:** 1.43.0 · **127 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
+- **Version:** 1.45.0 · **131 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
 
 > Small tools that remove friction: less wire mess, fewer clicks, clearer workflows.
 
@@ -18,17 +18,18 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 1. [Canvas tools](#-canvas-tools) (Align, Connection FX, Comfy Optimization Report, System & Model Optimization Report, Pin all)
 2. [Settings](#%EF%B8%8F-lc123-settings)
 3. [Notes, labels and previews](#-notes-labels-and-previews)
-4. [LoRA loaders](#%EF%B8%8F-lora-loaders)
-5. [Lighting](#-lighting)
-6. [Skin, sharpening, depth and looks](#-skin-sharpening-depth-and-looks)
-7. [Image FX](#-image-fx-on-node-preview--wipe)
-8. [Image and size](#%EF%B8%8F-image-and-size)
-9. [Prompt Builder](#%EF%B8%8F-prompt-builder)
-10. [Sampling, sigmas, latents and pipes](#-sampling-sigmas-latents-and-pipes)
-11. [Saving, metadata and text](#-saving-metadata-and-text)
-12. [Switches, logic and control](#-switches-logic-and-control)
-13. [Regional canvas](#-regional-canvas)
-14. [Example workflows](#-example-workflows), [Assets](#-assets), [Quick tips](#-quick-tips), [Install](#install)
+4. [LC Model Optimizer](#-lc-model-optimizer-loader--speed-ups) (loads the right files and speed-ups for your machine)
+5. [LoRA loaders](#%EF%B8%8F-lora-loaders)
+6. [Lighting](#-lighting)
+7. [Skin, sharpening, depth and looks](#-skin-sharpening-depth-and-looks)
+8. [Image FX](#-image-fx-on-node-preview--wipe)
+9. [Image and size](#%EF%B8%8F-image-and-size)
+10. [Prompt Builder](#%EF%B8%8F-prompt-builder)
+11. [Sampling, sigmas, latents and pipes](#-sampling-sigmas-latents-and-pipes)
+12. [Saving, metadata and text](#-saving-metadata-and-text)
+13. [Switches, logic and control](#-switches-logic-and-control)
+14. [Regional canvas](#-regional-canvas)
+15. [Example workflows](#-example-workflows), [Assets](#-assets), [Quick tips](#-quick-tips), [Install](#install)
 
 ---
 
@@ -85,6 +86,7 @@ Tools for the canvas itself, not nodes. Nothing here touches your generations.
     - Measured on an RTX 5090 and an 8 GB RTX 5060 Laptop. Image models land within about 15 %; video models are rougher and it says so.
 - **Show last run** and **Copy report** work like the Comfy Optimization Report. It will not run while ComfyUI is generating.
 - Nothing is changed. Open it from **Settings > LC123 Settings ⚙️ > Optimization**, or right-click the empty canvas.
+- The **[LC Model Optimizer](#-lc-model-optimizer-loader--speed-ups)** nodes use this report to load the right files and speed-ups for you.
 
 **Pin (all) / Unpin (all) 📌**
 - Right-click any node, group or the empty canvas.
@@ -205,6 +207,47 @@ Previews that stay quiet when nothing arrives. The core previews complain when a
 - **Pass-through output:** the image / mask comes out the other side. No signal = anything after it is skipped quietly.
 - They show as soon as their image is ready, not after the whole workflow finishes. Batches show the first frame.
 - Preview Image launches in the LC teal. Preview Mask launches black.
+
+---
+
+## ⚡ LC Model Optimizer (loader + speed-ups)
+
+The **System & Model Optimization Report** tells you what suits your machine. The **LC Model Optimizer** sets it up for you. It replaces your model, text encoder and VAE loaders: the first thing you wire in.
+
+**LC Model Optimizer ⚡ / LC Model Optimizer (pipe) ⚡** (image models)
+- Outputs: `model`, `clip`, `vae`, `summary`. The pipe version adds an `LC_PIPE` in front (model 2 = Ideogram 4's second model).
+- Krea 2, Qwen-Image 2.1, Z-Image Turbo, Flux.2 Klein 9B, Ideogram 4, Anima.
+
+**LC Model Optimizer Video ⚡ / LC Model Optimizer Video (pipe) ⚡** (video models)
+- Outputs: `model`, `clip`, `vae`, `audio_vae`, `latent_upscaler`, `summary`. The pipe version adds an `LC_PIPE` in front (vae 2 = audio VAE).
+- MiniMax H3, LTX 2.5, LTX 2.3 (its distilled LoRA is applied at 0.5, like Comfy's template).
+- *note:* the outputs never change with the base model. These nodes sit at the start of the graph, so your wires stay put. A part the model doesn't use just shows **not used by** (e.g. no upscaler on MiniMax H3).
+
+**How it works**
+- Pick the **base model** and a **goal** (Quality / Optimal / Fast, same as the report).
+- **Every file defaults to ★ Recommended:** the file the report picked for this machine. No report yet? Comfy's own default files, and a 💡 to run the report.
+- **File pickers work like the LC LoRA Loader:** click to browse your folders, with a search box. On top:
+    - **★ Recommended** (and the actual file name it will use)
+    - **From checkpoint** / **None**
+    - **⬇ Download:** recommended files you don't have yet. They download on the first run, then the picker switches to the real file name.
+    - **On disk for this model:** your files that match the base model.
+    - Then all your folders, so **custom models** work too.
+- **All-in-one checkpoints:** the text encoder and VAE come from the checkpoint (you can still pick your own).
+- **GGUF:** loads through **ComfyUI-GGUF**. A GGUF it refuses (e.g. a `krea2` tag) falls back to the **calcuis gguf** pack if you have it.
+
+**Speed-ups (Auto)**
+- **Attention:** Sage (or Flash) only if it passed the report's test on this machine.
+- **Comfy Kitchen:** used on its own for int8 / fp8 / nvfp4 files. The node just tells you if it's working.
+- **fp16 accumulation** and **Step cache (EasyCache):** Fast goal only. The step cache only when it's worth it (20+ steps).
+- **Manual:** set `speed_ups` to Manual and pick each one yourself, **torch.compile** included.
+
+**The status panel (on the node)**
+- Each file: ✅ on disk · ⬇️ downloads X GB · 📦 from the checkpoint.
+- Each speed-up: will apply / applied, or ➖ and why not.
+- Estimated time per step on YOUR machine, whether it fits on the card, and **Open the report** (or **Run the report** when there isn't one yet).
+- ⚠️ **Mismatch hints:** a text encoder or VAE that doesn't belong to the base model (e.g. Qwen3 8B on Krea 2) gets a warning. It is read from the file header, nothing loads. It still lets you use it: a hint, not a block.
+
+![LC Model Optimizer and LC Model Optimizer Video](assets/readme/lc_optimizer.png)
 
 ---
 
@@ -394,7 +437,7 @@ Hover any of these to wipe against the original. Heavy graph? See **Performance*
 
 | Node | What it does |
 |------|----------------|
-| **📐 Aspect Ratio Simplifier** | Size from image, mask or preset. Resizes image and mask together. Crop / stretch / pad / total pixels. Outputs an empty latent too. Default upscale is **lanczos** |
+| **📐 Aspect Ratio Simplifier** | **aspect_ratio_source** = image/mask: keeps the image's aspect ratio and scales it up or down so the longer side is **max_resolution** (0 = keep its size). Or a preset / custom size. Resizes image and mask together. Crop / stretch / pad / total pixels. Outputs an empty latent too. Default upscale is **lanczos** |
 | **📐 Aspect Ratio Simplifier (pipe)** | Same node plus a pipe out |
 | **LC Aspect Ratio Pipe (In/Edit)** | Packs image, mask, width, height, latent, batch, resolution into a pipe, or edits one. Only the sockets you wire overwrite |
 | **LC Aspect Ratio Pipe Out** | Unpacks the aspect pipe. 💡 This used to be called Pipe (In/Edit), old workflows still load it |

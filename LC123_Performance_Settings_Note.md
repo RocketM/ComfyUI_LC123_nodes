@@ -101,6 +101,7 @@
     - **Model recommendations:** exact files with download links for the tested base models, plus **All base models at a glance**
 - **Show last run** and **Copy report** work like the Comfy Optimization Report. It will not run while ComfyUI is generating.
 - Nothing is changed. (Also in the right-click menu on the empty canvas.)
+- 💡 The **LC Model Optimizer** nodes read this report: run it once and they load the right files and speed-ups for this machine. (With LC Vision installed, its Loader also puts a ★ on the model that suits your card.)
 
 ---
 

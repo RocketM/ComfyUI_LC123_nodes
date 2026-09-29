@@ -265,10 +265,7 @@ class LCSamplerConfigure:
     )
     FUNCTION = "configure"
     CATEGORY = "LC123/sampling"
-    DESCRIPTION = (
-        "Central dual-pass sampler settings: steps, swap, detailer steps, denoise, "
-        "CFGs, sampler, and scheduler."
-    )
+    DESCRIPTION = "All your two-pass sampler settings in one place: steps, swap step, detailer steps, denoise, both CFGs, sampler and scheduler."
 
     def configure(self, total_steps, sampler_name, scheduler, **kwargs):
         return _vals_from_full(total_steps, sampler_name, scheduler, **kwargs)
@@ -314,10 +311,7 @@ class LCSamplerConfigurePipeOut:
     )
     FUNCTION = "configure"
     CATEGORY = "LC123/sampling"
-    DESCRIPTION = (
-        "Dual-pass sampler configure with optional pipe in (left) and pipe out (top). "
-        "Widget values write into the pipe; other keys from pipe in are kept."
-    )
+    DESCRIPTION = "All your two-pass sampler settings in one place: steps, swap step, detailer steps, denoise, both CFGs, sampler and scheduler."
 
     def configure(self, total_steps, sampler_name, scheduler, pipe=None, **kwargs):
         vals = _vals_from_full(total_steps, sampler_name, scheduler, **kwargs)
@@ -414,10 +408,7 @@ class LCSamplerConfigureSimple:
     )
     FUNCTION = "configure"
     CATEGORY = "LC123/sampling"
-    DESCRIPTION = (
-        "Simple sampler settings: steps, detailer steps, denoise, one CFG, sampler, scheduler. "
-        "No step_swap / cfg_2 (single-pass friendly)."
-    )
+    DESCRIPTION = "Your sampler settings in one place for a single pass: steps, detailer steps, denoise, CFG, sampler and scheduler."
 
     def configure(self, total_steps, sampler_name, scheduler, **kwargs):
         return _vals_from_simple(total_steps, sampler_name, scheduler, **kwargs)
@@ -459,10 +450,7 @@ class LCSamplerConfigureSimplePipeOut:
     )
     FUNCTION = "configure"
     CATEGORY = "LC123/sampling"
-    DESCRIPTION = (
-        "Simple sampler configure with optional pipe in (left) and pipe out (top). "
-        "Packs into LC_PIPE with step_swap=0 and cfg_2=cfg for dual-pass consumers."
-    )
+    DESCRIPTION = "Your sampler settings in one place for a single pass: steps, detailer steps, denoise, CFG, sampler and scheduler."
 
     def configure(self, total_steps, sampler_name, scheduler, pipe=None, **kwargs):
         vals = _vals_from_simple(total_steps, sampler_name, scheduler, **kwargs)

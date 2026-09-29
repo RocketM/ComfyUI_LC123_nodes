@@ -307,7 +307,8 @@ function recText(r) {
 
 let running = false;
 
-function openWindow() {
+// opts.saved: show the saved report when there is one (no new test), run a new one otherwise
+function openWindow(opts = {}) {
   const open = document.querySelector(".lc-sys-overlay");
   if (open && running) return;
   open?.remove();
@@ -382,7 +383,7 @@ function openWindow() {
     }
   }
 
-  function render(p) {
+  function render(p, saved = false) {
     const lines = [];
     const h = [];
     const prev = loadLast();
@@ -436,10 +437,25 @@ function openWindow() {
     body.innerHTML = current;
     text = lines.join("\n");
     initRec(body, recState); // live controls: filled after the report is on screen
-    saveLast({ when: new Date().toLocaleString(), html: current, snap }); // only the last run is kept
+    if (saved) body.insertAdjacentHTML("afterbegin", `<div style="color:#9aa3ad;margin-bottom:8px">Saved report from ${esc(p.when || "the last run")}. <b>Run again</b> for a new test.</div>`);
+    else saveLast({ when: new Date().toLocaleString(), html: current, snap }); // only the last run is kept (a saved report is not a new run)
     paintLast();
   }
-  go();
+
+  async function showSaved() {
+    try {
+      const r = await api.fetchApi("/lc123/syscheck/profile");
+      const prof = r.ok ? await r.json() : null;
+      if (prof && !prof.error) {
+        for (const c of [".lc-sys-again", ".lc-sys-copy", ".lc-sys-close"]) box.querySelector(c).disabled = false;
+        render(prof, true);
+        return;
+      }
+    } catch (_) {}
+    go();
+  }
+  if (opts.saved) showSaved();
+  else go();
 }
 
 app.registerExtension({
