@@ -6,7 +6,7 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 - **CivitAI:** [lonecatone23](https://civitai.com/user/lonecatone23)
 - **Instagram:** [synth.studio.models](https://www.instagram.com/synth.studio.models/)
 - **Support:** [Buy me a ☕](https://ko-fi.com/lonecatone)
-- **Version:** 1.45.1 · **131 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
+- **Version:** 1.45.2 · **131 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
 
 > Small tools that remove friction: less wire mess, fewer clicks, clearer workflows.
 
@@ -245,7 +245,7 @@ The **System & Model Optimization Report** tells you what suits your machine. Th
 **The status panel (on the node)**
 - Each file: ✅ on disk · ⬇️ downloads X GB · 📦 from the checkpoint.
 - Each speed-up: will apply / applied, or ➖ and why not.
-- Estimated time per step on YOUR machine, whether it fits on the card, and **Open the report** (or **Run the report** when there isn't one yet).
+- Estimated time per step on YOUR machine, whether it fits on the card, and **Run or Open Report** (shows the saved report, or runs one if there isn't one yet).
 - ⚠️ **Mismatch hints:** a text encoder or VAE that doesn't belong to the base model (e.g. Qwen3 8B on Krea 2) gets a warning. It is read from the file header, nothing loads. It still lets you use it: a hint, not a block.
 
 ![LC Model Optimizer and LC Model Optimizer Video](assets/readme/lc_optimizer.png)

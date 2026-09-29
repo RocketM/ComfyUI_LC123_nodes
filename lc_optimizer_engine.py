@@ -409,6 +409,59 @@ def download(variant):
     return folder, os.path.relpath(dest, target)
 
 
+# ---------------------------------------------------------------- Lonecat's own models (Krealism, Animosity)
+# Never a choice in the picker. When a workflow opens with one of these as its model file and the file is missing,
+# it downloads from Lonecat's Hugging Face repo into the same folder path the workflow saved, so the value stays valid.
+_SHIPPED = None
+
+
+def shipped(name):
+    global _SHIPPED
+    if _SHIPPED is None:
+        _SHIPPED = {}
+        try:
+            path = os.path.join(os.path.dirname(__file__), "optimizer_shipped_models.json")
+            for m in json.load(open(path, encoding="utf-8")).get("models", []):
+                for n in m.get("names", []):
+                    _SHIPPED[n.lower()] = m
+        except Exception:
+            pass
+    return _SHIPPED.get(os.path.basename(str(name).replace("\\", "/")).lower())
+
+
+def download_shipped(entry, value, folder="diffusion_models"):
+    """Download one of Lonecat's models to <folder root>/<the path the workflow saved>. Returns (folder, value)."""
+    root = folder_paths.get_folder_paths(folder)[0]
+    dest = os.path.join(root, value.replace("\\", "/"))
+    if os.path.exists(dest):
+        return folder, value
+    os.makedirs(os.path.dirname(dest), exist_ok=True)
+    with _DL_LOCK:
+        print(f"[LC Optimizer] The workflow uses {entry['family']} ({os.path.basename(dest)}, {entry['gb']} GB): downloading from "
+              f"https://huggingface.co/{entry['repo']} ...")
+        tmp = os.path.join(os.path.dirname(dest), ".lc_download")
+        try:
+            from huggingface_hub import hf_hub_download
+
+            got = hf_hub_download(repo_id=entry["repo"], filename=entry["path"], local_dir=tmp)
+        except ImportError:
+            import urllib.request
+
+            got = os.path.join(tmp, os.path.basename(entry["path"]))
+            os.makedirs(tmp, exist_ok=True)
+            urllib.request.urlretrieve(f"https://huggingface.co/{entry['repo']}/resolve/main/{entry['path']}", got + ".part")
+            os.replace(got + ".part", got)
+        os.replace(got, dest)
+        try:
+            import shutil
+
+            shutil.rmtree(tmp, ignore_errors=True)
+        except Exception:
+            pass
+    print(f"[LC Optimizer] Finished downloading {os.path.basename(dest)}.")
+    return folder, value
+
+
 # ---------------------------------------------------------------- resolve a widget value to a file
 def resolve(profile_id, role, value, goal):
     """Widget value -> (folder, name, variant or None). Downloads when needed. None for 'None' / From checkpoint."""
@@ -436,6 +489,10 @@ def resolve(profile_id, role, value, goal):
             if value in _list(folder):
                 v = next((x for x in vs if x["file"] == os.path.basename(value.replace("\\", "/"))), None)
                 return folder, value, v
+        entry = shipped(value) if role == "model" else None
+        if entry:
+            folder, name = download_shipped(entry, value)
+            return folder, name, None
         raise FileNotFoundError(f"[LC Optimizer] {value} was not found in the {'/'.join(ROLE_FOLDERS[role])} folders.")
     folder = FOLDER_BY_LOADER.get(v["loader"], ROLE_FOLDERS[role][0])
     hit = find_on_disk(v["file"], [folder]) or download(v)
@@ -689,6 +746,12 @@ def plan(profile_id, goal, picks, manual=None):
             else:
                 folder = next((f for f in ROLE_FOLDERS[role] if value in _list(f)), None)
                 row.update(label=os.path.basename(value.replace("\\", "/")), state="disk" if folder else "missing")
+                entry = shipped(value) if (role == "model" and not folder) else None
+                if entry:
+                    row.update(state="download", gb=entry["gb"])
+                    out["hints"].append(("ℹ️", f"This workflow uses {entry['family']}: it downloads from huggingface.co/{entry['repo']} on the first run."))
+                    if prof and entry.get("profile") and entry["profile"] != profile_id:
+                        out["hints"].append(("⚠️", f"{entry['family']} is a {profiles().get(entry['profile'], {}).get('name', entry['profile'])} model: set the base model to match."))
                 if folder:
                     paths[role] = full_path(folder, value)
                     ckpt = ckpt or (role == "model" and folder == "checkpoints")

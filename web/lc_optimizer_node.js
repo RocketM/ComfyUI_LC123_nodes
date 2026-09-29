@@ -202,8 +202,8 @@ function renderFace(node) {
   const est = e ? `~${e.step_s} s/step${e.total_s ? ` · ~${e.total_s} s` : ""}${e.fits === "vram" ? " · fits on the card" : e.fits ? " · streams from RAM" : ""}` : "";
   f.foot.innerHTML = `<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(est || (rep ? `Report: ${rep.when?.slice(0, 10)} · ${rep.gpu}` : "No report yet"))}</span>`;
   const b = document.createElement("button");
-  b.textContent = rep ? "Open the report" : "Run the report";
-  b.title = rep ? "Shows the saved System & Model Optimization Report (Run again inside it for a new test)." : "Tests this machine (about 10 seconds), then shows the report.";
+  b.textContent = "Run or Open Report";
+  b.title = "Run the optimization report or view saved one";
   b.style.cssText = "background:#2a313b;color:#dfe5ec;border:1px solid #3a4250;border-radius:4px;padding:2px 8px;cursor:pointer;font:12px sans-serif";
   b.onclick = (ev) => { ev.stopPropagation(); window.LC123SystemCheck?.open?.({ saved: true }); };
   f.foot.appendChild(b);

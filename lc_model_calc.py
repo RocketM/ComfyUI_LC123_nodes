@@ -25,8 +25,13 @@ def load_profiles(ids=None):
         return out
     for fn in sorted(os.listdir(PROFILE_DIR)):
         if fn.endswith(".json"):
-            with open(os.path.join(PROFILE_DIR, fn), encoding="utf-8") as f:
-                p = json.load(f)
+            try:
+                with open(os.path.join(PROFILE_DIR, fn), encoding="utf-8") as f:
+                    p = json.load(f)
+            except Exception:
+                continue
+            if not isinstance(p, dict) or "id" not in p or "components" not in p:  # not a model profile
+                continue
             if not ids or p["id"] in ids:
                 out[p["id"]] = p
     return out
