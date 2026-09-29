@@ -192,6 +192,17 @@ try {
 } catch (_) {}
 
 function widgetsHeight(node) {
+  // the real layout first: the frontend places every widget (y), and its row spacing has grown over versions,
+  // so a fixed per-row estimate drifts on nodes with many widgets and the preview slid under the last rows
+  let bottom = 0;
+  for (const w of node.widgets || []) {
+    if (!w || w.type === "hidden" || w._lcHidden) continue;
+    const wy = typeof w.y === "number" && w.y > 0 ? w.y : w.last_y;
+    if (typeof wy !== "number" || wy <= 0) continue;
+    const h = typeof w.computeSize === "function" ? w.computeSize(node.size[0])?.[1] ?? 20 : 20;
+    bottom = Math.max(bottom, wy + h);
+  }
+  if (bottom > 0) return bottom;
   let y = TITLE;
   for (const w of node.widgets || []) {
     if (!w || w.type === "hidden" || w._lcHidden) continue;

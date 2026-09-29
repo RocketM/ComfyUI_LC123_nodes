@@ -499,6 +499,43 @@ def resolve(profile_id, role, value, goal):
     return hit[0], hit[1], v
 
 
+# ---------------------------------------------------------------- what a node actually loads (for LC Save Metadata)
+_META_ROLES = {"model_file": ("model", "diffusion_models"), "text_encoder": ("clip", "text_encoders"), "vae": ("vae", "vae"),
+               "audio_vae": ("audio_vae", "vae"), "latent_upscaler": ("upscaler", "latent_upscale_models"), "lora": ("lora", "loras")}
+
+
+def loaded_files(inputs):
+    """[(file name relative to its folder, folder)] an LC Model Optimizer node loads with these inputs. Never downloads:
+    by the time metadata is written the node has run, so the files are on disk."""
+    out = []
+    base = inputs.get("base_model")
+    pid = next((p for p, n in base_names(None) if n == base), None)
+    prof = profiles().get(pid) if pid else None
+    goal = inputs.get("goal") or "Optimal"
+    roles = roles_for(pid) if pid else ["model", "clip", "vae"]
+    for widget, (role, folder) in _META_ROLES.items():
+        value = inputs.get(widget)
+        if role not in roles or not isinstance(value, str) or value in (NONE, FROM_CKPT, ""):
+            continue
+        try:
+            if value == RECOMMENDED or value.startswith(DOWNLOAD):
+                if value == RECOMMENDED:
+                    v = recommended(prof, role, goal) if prof else None
+                    fname = v["file"] if v else None
+                    folder = FOLDER_BY_LOADER.get(v["loader"], folder) if v else folder
+                else:
+                    fname = value[len(DOWNLOAD):]
+                hit = find_on_disk(fname, [folder] + [f for f in ROLE_FOLDERS.get(role, []) if f != folder]) if fname else None
+                if hit:
+                    out.append((hit[1], hit[0]))
+            else:
+                hit = next(((value, f) for f in ROLE_FOLDERS.get(role, [folder]) if value in _list(f)), None)
+                out.append(hit or (value, folder))
+        except Exception:
+            continue
+    return out
+
+
 # ---------------------------------------------------------------- loading through ComfyUI's own loaders
 def _node(name):
     import nodes

@@ -6,7 +6,7 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 - **CivitAI:** [lonecatone23](https://civitai.com/user/lonecatone23)
 - **Instagram:** [synth.studio.models](https://www.instagram.com/synth.studio.models/)
 - **Support:** [Buy me a ☕](https://ko-fi.com/lonecatone)
-- **Version:** 1.45.2 · **131 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
+- **Version:** 1.45.3 · **132 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
 
 > Small tools that remove friction: less wire mess, fewer clicks, clearer workflows.
 
@@ -499,6 +499,7 @@ Full directions: [`LC_Prompt_Builder_Note.md`](LC_Prompt_Builder_Note.md)
 | **LC Reference Latent** | Up to 8 optional reference latents into conditioning. All empty = pass-through |
 | **LC Denoise 💉** | Latent injection: `noise_std = 1 - denoise`. Match the sampler's denoise |
 | **LC Pipe (in/edit)** / **Pipe Out** / **Detail Pipe Out** | Bundle or unpack models, clips, VAEs, prompts, seed, steps, the works |
+| **LC Pipe Combine** | Edits the top pipe with a second pipe: whatever the edit pipe carries overwrites the top one, everything else rides along |
 | **LC MiniMax H3 Pipe** / **Pipe Out** | H3 refs on one pipe: fl2va / ref2va model + clip, VAEs, size, length, frame rate, ref images and videos |
 | **LC MiniMax H3 Pipe V2** | Everything above plus `prompt`, `total_steps`, `cfg`, `sampler_name`, `scheduler`. Feed a V1 pipe in to upgrade it |
 | **LC Image Ref Pipe In** / **Out** | Up to 16 reference images on one wire. Sockets grow as you fill them, same as Text Encode Qwen Image 2.1 |

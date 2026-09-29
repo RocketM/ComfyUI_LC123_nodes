@@ -1,8 +1,8 @@
 # LC123 node inventory
 
-**131 Python nodes** + **5 JS-only** · version 1.45.2
+**132 Python nodes** + **5 JS-only** · version 1.45.3
 
-Registered class IDs: 132 (131 in search, 1 deprecated but still loads in old workflows).
+Registered class IDs: 133 (132 in search, 1 deprecated but still loads in old workflows).
 
 ## LC123/Regional Canvas/Anima (1)
 
@@ -100,7 +100,7 @@ Registered class IDs: 132 (131 in search, 1 deprecated but still loads in old wo
 - `LCOptimizerVideo`: LC Model Optimizer Video ⚡
 - `LCOptimizerVideoPipe`: LC Model Optimizer Video (pipe) ⚡
 
-## LC123/pipe (9)
+## LC123/pipe (10)
 
 - `LCDetailPipeOut`: LC Detail Pipe Out
 - `LCImageRefPipeIn`: LC Image Ref Pipe In 🖼️
@@ -109,6 +109,7 @@ Registered class IDs: 132 (131 in search, 1 deprecated but still loads in old wo
 - `LCMiniMaxH3PipeOut`: LC MiniMax H3 Pipe Out
 - `LCMiniMaxH3PipeOutV2`: LC MiniMax H3 Pipe Out V2
 - `LCMiniMaxH3PipeV2`: LC MiniMax H3 Pipe V2
+- `LCPipeCombine`: LC Pipe Combine
 - `LCPipeEdit`: LC Pipe (in/edit)
 - `LCPipeOut`: LC Pipe Out
 

@@ -270,14 +270,44 @@ class LCDetailPipeOut:
         return (pipe,) + values
 
 
+class LCPipeCombine:
+    """Top pipe, edited by the bottom pipe: every value set in edit_pipe overwrites the same slot in pipe."""
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "pipe": (PIPE_TYPE, {"tooltip": "The pipe to edit. Everything the edit pipe doesn't set passes through."}),
+                "edit_pipe": (PIPE_TYPE, {"tooltip": "Its values overwrite the top pipe's. Empty slots are ignored."}),
+            },
+        }
+
+    RETURN_TYPES = (PIPE_TYPE,)
+    RETURN_NAMES = ("pipe",)
+    FUNCTION = "combine"
+    CATEGORY = "LC123/pipe"
+    DESCRIPTION = "Edits the top pipe with the bottom one: whatever the edit pipe carries overwrites the top pipe, everything else rides along."
+
+    def combine(self, pipe, edit_pipe):
+        out = dict(pipe) if isinstance(pipe, dict) else _empty()
+        if isinstance(edit_pipe, dict):
+            for key, val in edit_pipe.items():
+                if key != "_type" and _is_provided(val):
+                    out[key] = val
+        out["_type"] = PIPE_TYPE
+        return (out,)
+
+
 NODE_CLASS_MAPPINGS = {
     "LCPipeOut": LCPipeOut,
     "LCPipeEdit": LCPipeEdit,
     "LCDetailPipeOut": LCDetailPipeOut,
+    "LCPipeCombine": LCPipeCombine,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "LCPipeOut": "LC Pipe Out",
     "LCPipeEdit": "LC Pipe (in/edit)",
     "LCDetailPipeOut": "LC Detail Pipe Out",
+    "LCPipeCombine": "LC Pipe Combine",
 }
