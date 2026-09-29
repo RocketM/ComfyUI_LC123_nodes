@@ -27,6 +27,17 @@ def profile_path():
     return os.path.join(root, "LC123", "system_profile.json")
 
 
+def _add_install(prof):
+    """Recommended to install: links only, worked out fresh each time (so a saved report shows current advice)."""
+    try:
+        from . import lc_install_recs
+
+        prof["install"] = lc_install_recs.install_recs(prof)
+    except Exception as e:
+        prof["install"] = {"error": str(e), "items": []}
+    return prof
+
+
 def run_and_save():
     """Runs in a worker thread. One run at a time."""
     if not _LOCK.acquire(blocking=False):
@@ -39,6 +50,7 @@ def run_and_save():
             prof["shopping"] = lc_model_calc.shopping_guide(prof)  # model-independent: what file formats suit this machine
         except Exception as e:
             prof["shopping"] = {"error": str(e)}
+        _add_install(prof)
         path = profile_path()
         try:
             os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -74,7 +86,7 @@ try:
     async def _lc123_syscheck_profile(request):
         try:
             with open(profile_path(), encoding="utf-8") as f:
-                return web.json_response(json.load(f))
+                return web.json_response(json.loads(json.dumps(_add_install(json.load(f)), default=str)))
         except Exception:
             return web.json_response({"error": "No system check has been run yet."}, status=404)
 

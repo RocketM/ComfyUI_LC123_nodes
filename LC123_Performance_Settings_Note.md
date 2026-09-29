@@ -96,6 +96,7 @@
 - One button. It tests this machine in about 10 seconds: graphics card, VRAM, RAM, page file, drive speed, and which speed-ups really work here (Sage, Triton, Sol-Attn, Comfy Kitchen, fp8 / int8 / nvfp4, llama-cpp).
 - ⚠️ problem · 💡 worth changing · ✅ works · ℹ️ info · ➖ not installed
 - Then it tells you which model files suit this machine:
+    - **Recommended to install:** links to Sage, Triton, Comfy Kitchen etc. for this card when they're missing (links only, nothing is installed)
     - **LC Vision model suggestion** (Quality / Optimal / Fast, with the context size to set)
     - **When picking a model (includes custom models):** what to get for Quality, Optimal and Fast, a size guide, and what to avoid
     - **Model recommendations:** exact files with download links for the tested base models, plus **All base models at a glance**

@@ -305,6 +305,28 @@ function recText(r) {
   return l.join("\n");
 }
 
+// "Recommended to install": links to other people's projects, matched to this card. Nothing is installed from here.
+function installSection(p, h, lines) {
+  const ins = p.install;
+  if (!ins?.items?.length) return;
+  const link = (u, t) => `<a href="${esc(u)}" target="_blank" rel="noopener" style="color:#60a5fa">${esc(t)}</a>`;
+  h.push(`<div style="font-weight:600;font-size:14px;margin:14px 0 4px">Recommended to install</div>`);
+  h.push(`<div style="color:#9aa3ad;font-size:12px;margin-bottom:6px">For this machine: ${esc(ins.detected)}</div>`);
+  lines.push("", "Recommended to install:", `For this machine: ${ins.detected}`);
+  for (const it of ins.items) {
+    const tag = it.status === "failed" ? "⚠️" : it.status === "info" ? "ℹ️" : "💡";
+    const more = (it.more || []).map(([t, u]) => " · " + link(u, t)).join("");
+    h.push(`<div style="margin:6px 0;padding:8px 10px;background:#252a31;border-left:3px solid #60a5fa;border-radius:4px">${tag} <b>${esc(it.name)}</b>${it.link ? ` · ${link(it.link, "Get it here")}` : ""}${more}<div style="margin-top:3px">${esc(it.why)}</div>`);
+    for (const n of it.notes || []) {
+      const cmd = n.startsWith("Command: ");
+      h.push(`<div style="margin-top:3px;color:#b8c2d0">${cmd ? `<code style="background:#161a1f;padding:1px 6px;border-radius:3px;user-select:all">${esc(n.slice(9))}</code>` : "• " + esc(n)}</div>`);
+    }
+    h.push(`</div>`);
+    lines.push(`${tag} ${it.name}${it.link ? `: ${it.link}` : ""}`, `   ${it.why}`, ...(it.notes || []).map((n) => `   ${n}`));
+  }
+  h.push(`<div style="color:#9aa3ad;font-size:11px;margin:4px 0 12px">${esc(ins.fine_print)}</div>`);
+}
+
 let running = false;
 
 // opts.saved: show the saved report when there is one (no new test), run a new one otherwise
@@ -417,6 +439,7 @@ function openWindow(opts = {}) {
     const snap = snapshot(p);
     if (prev?.snap) sinceLast(prev, snap, h, lines);
 
+    installSection(p, h, lines);
     h.push(`<div style="font-weight:600;font-size:14px;margin:6px 0">Findings</div>`);
     h.push(`<div style="color:#9aa3ad;font-size:12px;margin-bottom:4px">⚠️ problem · 💡 worth changing · ✅ works · ℹ️ info · ➖ not installed / does not apply</div>`);
     lines.push("", "Findings (⚠️ problem, 💡 worth changing, ✅ works, ℹ️ info, ➖ not installed):");
@@ -468,7 +491,7 @@ app.registerExtension({
       category: ["LC123 Settings ⚙️", "Optimization", "System & Model Optimization Report"],
       defaultValue: "",
       tooltip:
-        "Tests this machine (graphics card, memory, drive, and which speed-ups really work here: small live GPU tests, about 10 seconds), then tells you which model files suit it: what to look for, what to avoid, and exact picks with download links for the tested base models. Nothing is changed.",
+        "Tests this machine (graphics card, memory, drive, and which speed-ups really work here: small live GPU tests, about 10 seconds), then tells you which model files suit it: what to look for, what to avoid, and exact picks with download links for the tested base models. Missing Sage, Triton or Comfy Kitchen? It links to builds that match your card. Nothing is changed or installed.",
       type: () => {
         const b = document.createElement("button");
         b.type = "button";

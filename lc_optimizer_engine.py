@@ -550,12 +550,12 @@ def plan_speedups(profile_id, goal, manual=None):
             why = f"{(t.get('sageattention' if pick == 'sage' else 'flash_attn') or {}).get('detail', 'tested fine')}"
             rows.append({"key": "attention", "label": f"Attention: {ATTN_LABEL[pick]}", "state": "on", "value": pick, "why": why})
         else:
-            why = "Sage / Flash not installed or failed the report's test" if sysp else "run the report to pick one"
+            why = "Sage not installed or failed its test: see Recommended to install in the report" if sysp else "run the report to pick one"
             rows.append({"key": "attention", "label": "Attention: standard", "state": "off", "value": None, "why": why})
     elif want == "pytorch" or want in reg:
         rows.append({"key": "attention", "label": f"Attention: {ATTN_LABEL.get(want, want)}", "state": "on", "value": want, "why": "set by hand"})
     else:
-        rows.append({"key": "attention", "label": f"Attention: {ATTN_LABEL.get(want, want)}", "state": "na", "value": None, "why": "not installed"})
+        rows.append({"key": "attention", "label": f"Attention: {ATTN_LABEL.get(want, want)}", "state": "na", "value": None, "why": "not installed: see Recommended to install in the report"})
 
     kit = sysp.get("kitchen") or {}
     if kit.get("installed"):
@@ -563,7 +563,7 @@ def plan_speedups(profile_id, goal, manual=None):
         rows.append({"key": "kitchen", "label": "Comfy Kitchen (int8 / fp8 / nvfp4 files)", "state": "on" if cuda else "off", "value": None,
                      "why": "used automatically for those files" if cuda else "GPU backend not available: slower path"})
     elif sysp:
-        rows.append({"key": "kitchen", "label": "Comfy Kitchen", "state": "na", "value": None, "why": "not installed"})
+        rows.append({"key": "kitchen", "label": "Comfy Kitchen", "state": "na", "value": None, "why": "not installed: see Recommended to install in the report"})
 
     want = manual.get("fp16_accumulation", "auto")
     fp16_ok = (t.get("matmul_fp16") or {}).get("ok")
