@@ -47,6 +47,22 @@ function rgb(c) {
   return v;
 }
 
+// The real type behind an "any" socket, when its node knows it (LC Slider: INT or FLOAT from its decimals,
+// LC Any Switch: the type its first wire set). Nodes opt in with node.lcFxType(isInput, index).
+function realType(node, isInput, index, slot) {
+  let t = null;
+  try {
+    t = node?.lcFxType?.(isInput, index);
+  } catch (_) {}
+  return t && t !== "*" ? t : slot?.type;
+}
+
+function typesMatch(a, b) {
+  if (!a || !b || a === "*" || b === "*") return true;
+  const B = String(b).split(",").map((x) => x.trim());
+  return String(a).split(",").some((x) => B.includes(x.trim()));
+}
+
 // every socket the wire being dragged could connect to: [{x, y, color}] in graph space
 function targets(canvas) {
   const lc = canvas.linkConnector;
@@ -54,8 +70,10 @@ function targets(canvas) {
   const toInputs = lc.state?.connectingTo === "input";
   const links = lc.renderLinks || [];
   if (!links.length) return null;
-  const fromType = links[0]?.fromSlot?.type;
+  const l0 = links[0];
+  const fromType = realType(l0?.node, !toInputs, l0?.fromSlotIndex, l0?.fromSlot);
   const out = [];
+  out.anyWire = !fromType || fromType === "*"; // an "any" wire lights up nearly every socket
   for (const node of canvas.visible_nodes || []) {
     if (node.flags?.collapsed) continue;
     const slots = toInputs ? node.inputs : node.outputs;
@@ -67,6 +85,7 @@ function targets(canvas) {
         ok = toInputs ? lc.isInputValidDrop(node, slot) : links.some((l) => l.canConnectToOutput?.(node, slot));
       } catch (_) {}
       if (!ok) continue;
+      if (!typesMatch(fromType, realType(node, toInputs, i, slot))) continue;
       const p = node.getConnectionPos(toInputs, i);
       out.push({ x: p[0], y: p[1], color: slotColor(canvas, slot, fromType) });
     }
@@ -86,6 +105,8 @@ function draw(canvas) {
   const zoomOut = Math.min(1, Math.max(0, (1 - s) / 0.7)) * (cfg.zoomGlow / 100);
   const R = Math.max(20, cfg.radius);
   const px = 1 / s; // one screen pixel in graph units, so the effect keeps its screen size at any zoom
+  // "any" wire: everything glows, so glow and rings run at half brightness to keep the canvas readable
+  const dim = list.anyWire ? 0.5 : 1;
 
   ctx.save();
   try {
@@ -99,7 +120,7 @@ function draw(canvas) {
 
     // glow on every valid socket: stronger when zoomed out, and as the cursor gets close
     const glowR = (9 + 10 * zoomOut + 12 * near) * px;
-    const a = Math.min(1, 0.22 + 0.5 * zoomOut + 0.55 * near);
+    const a = Math.min(1, 0.22 + 0.5 * zoomOut + 0.55 * near) * dim;
     const grad = ctx.createRadialGradient(it.x, it.y, 0, it.x, it.y, glowR);
     grad.addColorStop(0, `rgba(${r},${g},${b},${a})`);
     grad.addColorStop(1, `rgba(${r},${g},${b},0)`);
@@ -115,7 +136,7 @@ function draw(canvas) {
       for (let k = 0; k < 3; k++) {
         const phase = (t * speed + k / 3) % 1;
         const rr = (7 + phase * (10 + 26 * near)) * px;
-        ctx.strokeStyle = `rgba(${r},${g},${b},${(1 - phase) * (0.25 + 0.75 * near)})`;
+        ctx.strokeStyle = `rgba(${r},${g},${b},${(1 - phase) * (0.25 + 0.75 * near) * dim})`;
         ctx.beginPath();
         ctx.arc(it.x, it.y, rr, 0, Math.PI * 2);
         ctx.stroke();

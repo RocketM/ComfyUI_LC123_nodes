@@ -208,6 +208,11 @@ app.registerExtension({
       return size;
     };
 
+    // Connection FX: once a wire has set the type, every slot on the switch is that type
+    nodeType.prototype.lcFxType = function () {
+      return this._lcLockedType || resolveLockedType(this);
+    };
+
     const onCreated = nodeType.prototype.onNodeCreated;
     nodeType.prototype.onNodeCreated = function () {
       const r = onCreated?.apply(this, arguments);

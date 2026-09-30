@@ -109,6 +109,17 @@ def _join_path(*parts: str) -> str:
     return "/".join(chunks)
 
 
+def _saved_size(meta: dict, pil) -> tuple:
+    """Size written to the metadata: the image being saved, unless LC Save Metadata has a width / height typed in."""
+    w, h = pil.size
+    try:
+        w = int(meta.get("width_override") or 0) or w
+        h = int(meta.get("height_override") or 0) or h
+    except (TypeError, ValueError):
+        pass
+    return w, h
+
+
 def _build_parameters(meta: dict, width: int, height: int, hash_bits=None) -> str:
     positive = _txt(meta.get("positive"))
     negative = _txt(meta.get("negative"))
@@ -286,7 +297,7 @@ class LCSaveImageMetadata:
                         "default": 0,
                         "min": 0,
                         "max": 65536,
-                        "tooltip": "0 = use pipe width (save node still writes the real pixel size).",
+                        "tooltip": "0 = the width of the image LC Save Image actually saves (upscaled or not). Any other number is written instead.",
                     },
                 ),
                 "height": (
@@ -295,7 +306,7 @@ class LCSaveImageMetadata:
                         "default": 0,
                         "min": 0,
                         "max": 65536,
-                        "tooltip": "0 = use pipe height.",
+                        "tooltip": "0 = the height of the image LC Save Image actually saves (upscaled or not). Any other number is written instead.",
                     },
                 ),
                 "denoise": (
@@ -401,6 +412,11 @@ class LCSaveImageMetadata:
 
         w = int(width or 0)
         h = int(height or 0)
+        # A number typed on the node overrides the saved image's size; 0 = LC Save Image reads the real size.
+        if w > 0:
+            meta["width_override"] = w
+        if h > 0:
+            meta["height_override"] = h
         if w <= 0:
             try:
                 w = int(_pipe_get(pipe, "width") or 0)
@@ -557,21 +573,24 @@ class LCSaveImage:
         quality = int(max(1, min(100, quality)))
 
         meta = _as_meta(metadata)
-        prefix = _fill_tokens(_txt(filename_prefix), meta)
-        stem = _fill_tokens(_txt(filename), meta) or "LC123"
-        folder = _fill_tokens(_txt(path), meta)
+        batch = images
+        if hasattr(batch, "cpu"):
+            batch = batch.detach().cpu()
+        n = int(batch.shape[0]) if hasattr(batch, "shape") else len(batch)
+        first = _tensor_to_pil(batch[0])
+
+        # %width / %height in names follow the image being saved too (or the numbers typed on LC Save Metadata)
+        token_meta = dict(meta)
+        token_meta["width"], token_meta["height"] = _saved_size(meta, first)
+        prefix = _fill_tokens(_txt(filename_prefix), token_meta)
+        stem = _fill_tokens(_txt(filename), token_meta) or "LC123"
+        folder = _fill_tokens(_txt(path), token_meta)
         if prefix and (not _txt(filename) or filename == "LC123"):
             combined = prefix
         else:
             combined = _join_path(folder, stem) if folder else stem
 
         output_dir = folder_paths.get_output_directory()
-        batch = images
-        if hasattr(batch, "cpu"):
-            batch = batch.detach().cpu()
-        n = int(batch.shape[0]) if hasattr(batch, "shape") else len(batch)
-
-        first = _tensor_to_pil(batch[0])
         full_dir, file_stem, _core_counter, subfolder, _pfx = folder_paths.get_save_image_path(
             combined or "LC123", output_dir, first.size[0], first.size[1]
         )
@@ -599,7 +618,7 @@ class LCSaveImage:
 
         for i in range(n):
             pil = _tensor_to_pil(batch[i])
-            width, height = pil.size
+            width, height = _saved_size(meta, pil)
             params = ""
             if embed_civitai:
                 params = _build_parameters(meta, width, height, hash_bits)
