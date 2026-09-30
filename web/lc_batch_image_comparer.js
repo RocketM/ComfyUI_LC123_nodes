@@ -32,6 +32,13 @@ function imageDataToUrl(data) {
     return api.apiURL(`/view?${params}${app.getPreviewFormatParam()}${app.getRandParam()}`);
 }
 
+const lastRun = new Map();
+function runKey(node) {
+    const wf = app.extensionManager?.workflow?.activeWorkflow;
+    const sub = node.graph && node.graph.rootGraph && node.graph !== node.graph.rootGraph ? node.graph.id : "root"; // subgraph ids are stable, the root graph id is not
+    return `${wf?.path ?? wf?.key ?? ""}|${sub}|${node.id}`;
+}
+
 function slotDisplayName(slot) {
     if (!slot) return "";
     // Prefer the user-visible label, then localized_name, then name
@@ -123,7 +130,19 @@ class LCBatchImageComparer {
         const origExecuted = node.onExecuted;
         node.onExecuted = function (message) {
             if (origExecuted) origExecuted.apply(this, arguments);
+            if (message) lastRun.set(runKey(this), message);
             self.onExecuted(message);
+        };
+
+        // Ctrl+Z rebuilds every node from the saved graph and never re-runs onExecuted, so the comparer came back
+        // empty. The last result is kept in memory per workflow tab + node id and put back when the node is rebuilt.
+        // (Not saved in the workflow: that would make every run an undo step, and undoing it would wipe the images.)
+        const origConfigure = node.onConfigure;
+        node.onConfigure = function () {
+            const r = origConfigure ? origConfigure.apply(this, arguments) : undefined;
+            const last = lastRun.get(runKey(this));
+            if (last && !self.imagesA.length && !self.imagesB.length) self.onExecuted(last);
+            return r;
         };
 
         const origResize = node.onResize;
