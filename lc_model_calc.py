@@ -72,7 +72,11 @@ def format_support(fmt, sysp):
         return "cast", "stored as 8-bit (half the VRAM of bf16), computed in bf16: no speed gain before RTX 50"
     if fmt in ("w4a8", "int4_convrot"):
         ok = (t.get("matmul_int8") or {}).get("ok")
-        return ("native", "4-bit weights, int8 math") if ok else ("no", "needs int8 math, which failed on this card")
+        if not ok:
+            return "no", "needs int8 math, which failed on this card"
+        if nv and cap < (8, 0):  # Comfy Kitchen's fast W4A8 kernel needs sm 8.0
+            return "cast", "4-bit weights unpacked per layer before RTX 30: saves VRAM, no speed gain"
+        return "native", "4-bit weights, int8 math"
     if fmt == "nvfp4":
         if c.get("supports_nvfp4_compute") or (nv and cap >= (10, 0)):
             return "native", "fast nvfp4 on RTX 50 / Blackwell"
@@ -394,6 +398,8 @@ def shopping_guide(sysp):
     fp8 = format_support("fp8_scaled", sysp)[0] == "native"
     nvfp4 = format_support("nvfp4", sysp)[0] == "native"
     int8 = format_support("int8_convrot", sysp)[0] == "native"
+    mxfp8 = format_support("mxfp8", sysp)[0] == "native"
+    w4a8 = format_support("w4a8", sysp)[0] == "native"
     gguf_pack = (sysp.get("packs") or {}).get("GGUF") is not False
     look, avoid = [], []
 
@@ -410,9 +416,13 @@ def shopping_guide(sysp):
     if int8:
         look.append({"what": "int8_convrot", "why": "Fast on this card (int8 math through Comfy Kitchen): 1.3 to 2.2x the speed of bf16 and usually near identical (0.002 to 0.04 vs bf16). Best default in most tests."})
     if fp8:
-        look.append({"what": "fp8_scaled / fp8mixed / mxfp8", "why": "Fast fp8 math on this card: 1.2 to 1.75x the speed of bf16, near identical (0.014 to 0.037)."})
+        look.append({"what": "fp8_scaled / fp8mixed", "why": "Fast fp8 math on this card: 1.2 to 1.75x the speed of bf16, near identical (0.014 to 0.037)."})
+    if mxfp8:
+        look.append({"what": "mxfp8", "why": "Native on RTX 50: 8-bit with a scale for every 32 values, so it stays close even without the per-layer settings a plain fp8 file needs (Krealism V3.1: 0.019). About int8 speed."})
     elif nv:
         look.append({"what": "fp8 files (to save VRAM only)", "why": "Half the size of bf16, but this card has no fast fp8 math: no speed gain."})
+    if w4a8:
+        look.append({"what": "w4a8 (small and close)", "why": "4-bit weights, int8 math: nvfp4 size, but closer to bf16 (Krealism V3.1: 0.031 vs 0.059 for nvfp4). As fast as int8 on an RTX 5090 and an RTX 5060 laptop."})
     if nvfp4:
         look.append({"what": "nvfp4 (for speed)", "why": "Native on this card: the fastest files and a quarter the size of bf16, with small but visible differences (0.05 to 0.15)."})
     if gguf_pack:
@@ -443,12 +453,16 @@ def shopping_guide(sysp):
         q.append(("GGUF Q8_0", "nearly identical to bf16, smaller"))
     if int8:
         o.append(("int8_convrot", "fast here, near identical"))
+    if mxfp8:
+        o.append(("mxfp8", "fast here, very close"))
     if fp8:
-        o.append(("fp8_scaled / mxfp8", "fast here, near identical"))
+        o.append(("fp8_scaled", "fast here, near identical"))
     if not o and gguf_pack:
         o.append(("GGUF Q8_0", "no fast 8-bit math on this card"))
     if nvfp4:
         f.append(("nvfp4", "fastest, small visible changes"))
+    if w4a8:
+        f.append(("w4a8", "nvfp4 size, closer to bf16"))
     if int8:
         f.append(("int8_convrot", "fast, near identical"))
     elif fp8:

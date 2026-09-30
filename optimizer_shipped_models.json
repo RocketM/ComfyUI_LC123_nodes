@@ -7,7 +7,7 @@
    "repo": "Lonecatone23/Krealism",
    "path": "Krealism_V1.0-fp8.safetensors",
    "gb": 14.13,
-   "sha256": "cee7bffc274fce076fabaa99c1c35c7fc69dbe0f75806ed9337ff3d5dd384cc4",
+   "sha256": "2e0a0fe0e25755e2a4a7140aec8da7c061b2f9995c9f48cd37be0e0177eabfc8",
    "profile": "krea2",
    "format": "fp8_scaled",
    "names": [
@@ -78,7 +78,7 @@
    "repo": "Lonecatone23/Krealism",
    "path": "Krealism_V3.1_fp8.safetensors",
    "gb": 14.13,
-   "sha256": "fadea114dfc0f9a1a9583642026b4433e603c345379adf07810db118704c4f31",
+   "sha256": "6f3f4528ba8bbbe4d166faeb3251d2e506b6c00f86f5d132abc2e9d694497806",
    "profile": "krea2",
    "format": "fp8_scaled",
    "names": [
@@ -102,6 +102,19 @@
   },
   {
    "family": "Krealism",
+   "file": "Krealism_V3.1_mxfp8.safetensors",
+   "repo": "Lonecatone23/Krealism",
+   "path": "Krealism_V3.1_mxfp8.safetensors",
+   "gb": 14.51,
+   "sha256": "672a0428cd6922777c27160087bcf5202267e9411365891a352f4b2df1c64f10",
+   "profile": "krea2",
+   "format": "mxfp8",
+   "names": [
+    "Krealism_V3.1_mxfp8.safetensors"
+   ]
+  },
+  {
+   "family": "Krealism",
    "file": "Krealism_V3.1_nvfp4.safetensors",
    "repo": "Lonecatone23/Krealism",
    "path": "Krealism_V3.1_nvfp4.safetensors",
@@ -112,6 +125,19 @@
    "names": [
     "Krealism_V3.1_nvfp4.safetensors",
     "krealism_v31TurboNvfp4.safetensors"
+   ]
+  },
+  {
+   "family": "Krealism",
+   "file": "Krealism_V3.1_w4a8.safetensors",
+   "repo": "Lonecatone23/Krealism",
+   "path": "Krealism_V3.1_w4a8.safetensors",
+   "gb": 8.81,
+   "sha256": "e4078029c9a7cda7dbec9276c776073f2c9791d6ddd2b5d1f05cc5b601dad245",
+   "profile": "krea2",
+   "format": "w4a8",
+   "names": [
+    "Krealism_V3.1_w4a8.safetensors"
    ]
   },
   {
@@ -161,7 +187,7 @@
    "repo": "Lonecatone23/Animosity",
    "path": "krea2/Animosity_Krea2_V1.0_int8_convrot.safetensors",
    "gb": 14.13,
-   "sha256": "e8acdb9bed67c55cb4d97d995a4f288b981a254df3303c4ae2eb6b573eef2ca9",
+   "sha256": "148e68835a5cea90c9a68a6b524766733ecf2b65c504b4f32fd217f615701eae",
    "profile": "krea2",
    "format": "int8_convrot",
    "names": [
@@ -189,7 +215,7 @@
    "repo": "Lonecatone23/Animosity",
    "path": "krea2/Krea-Animosity_V1.0-fp8.safetensors",
    "gb": 14.13,
-   "sha256": "22a402254c4f805b9d4e2dc1abd7dcc027b7710c7e32fa358aab5a227e42eec6",
+   "sha256": "693aab0bcfd3b3871a79ad943b37dade1383adcc8ccdc2d855a7e153ef40b7bb",
    "profile": "krea2",
    "format": "fp8_scaled",
    "names": [

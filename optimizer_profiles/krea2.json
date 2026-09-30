@@ -202,11 +202,50 @@
    "krea2_turbo_int8_convrot.safetensors": {
     "lpips_avg": 0.0063,
     "note": "measured on Krealism V3.1's int8_convrot vs its own bf16 (a Krea 2 finetune): 0.0073 without --fast, 0.0053 with; Comfy's own krea2_turbo_int8_convrot not measured yet"
+   },
+   "krea2_turbo_mxfp8.safetensors": {
+    "lpips_avg": 0.0187,
+    "k2": {
+     "lpips": 0.0334,
+     "ssim": 0.9434,
+     "psnr": 30.55
+    },
+    "k4": {
+     "lpips": 0.0175,
+     "ssim": 0.9673,
+     "psnr": 33.74
+    },
+    "k6": {
+     "lpips": 0.0053,
+     "ssim": 0.988,
+     "psnr": 38.96
+    },
+    "note": "measured on Krealism V3.1 (Krealism_V3.1_mxfp8) vs its own bf16, 2026-09-30, no --fast; Comfy's own krea2_turbo_mxfp8.safetensors not measured"
+   },
+   "krea2_turbo_nvfp4.safetensors": {
+    "lpips_avg": 0.0591,
+    "k2": {
+     "lpips": 0.1118,
+     "ssim": 0.8589,
+     "psnr": 23.44
+    },
+    "k4": {
+     "lpips": 0.0496,
+     "ssim": 0.9176,
+     "psnr": 28.11
+    },
+    "k6": {
+     "lpips": 0.0158,
+     "ssim": 0.9708,
+     "psnr": 34.01
+    },
+    "note": "measured on Krealism V3.1 (Krealism_V3.1_nvfp4) vs its own bf16, 2026-09-30, no --fast; Comfy's own krea2_turbo_nvfp4.safetensors not measured"
    }
   },
   "notes": [
    "GGUF measured with a Civitai Q8_0 conversion (arch tag 'krea2'), loaded with calcuis gguf LoaderGGUF: ComfyUI-GGUF rejects that tag.",
-   "int8-convrot measured on a Krea 2 finetune (Krealism V3.1 int8_convrot vs its own bf16): LPIPS 0.006, near identical. Comfy's own krea2_turbo_int8_convrot not tested yet; no int8 timing measured."
+   "int8-convrot measured on a Krea 2 finetune (Krealism V3.1 int8_convrot vs its own bf16): LPIPS 0.006, near identical. Comfy's own krea2_turbo_int8_convrot not tested yet; no int8 timing measured.",
+   "2026-09-30 Krealism V3.1 (a Krea 2 finetune) vs its own bf16: int8_convrot 0.0073, mxfp8 0.0187, w4a8 (asym_w4a8_int8) 0.0309, nvfp4 0.0591. fp8 (float8_e4m3fn comfy_quant) was 0.0985 without Comfy's full_precision_matrix_mult on attn.gate / attn.wo / mlp.down (those layers' inputs get one per-tensor fp8 scale and the finetunes have outliers); with the flags 0.0158 at 0.46 s/step (5090, 1 MP). Same fix: Krealism V1.0 fp8 0.167 -> 0.021, Animosity Krea fp8 0.136 -> 0.018. mxfp8 / nvfp4 gain little from the flags and lose 40-45 % speed."
   ]
  },
  "benchmarks": {
@@ -254,6 +293,42 @@
       "megapixels": 2.0,
       "step_s": 1.31,
       "note": null
+     },
+     {
+      "file": "krea2_turbo_int8_convrot.safetensors",
+      "megapixels": 1.0,
+      "step_s": 0.3,
+      "note": "measured with Krealism_V3.1_int8_convrot (same architecture), 2026-09-30"
+     },
+     {
+      "file": "krea2_turbo_int8_convrot.safetensors",
+      "megapixels": 2.0,
+      "step_s": 0.65,
+      "note": "measured with Krealism_V3.1_int8_convrot (same architecture), 2026-09-30"
+     },
+     {
+      "file": "krea2_turbo_mxfp8.safetensors",
+      "megapixels": 1.0,
+      "step_s": 0.33,
+      "note": "measured with Krealism_V3.1_mxfp8 (same architecture), 2026-09-30"
+     },
+     {
+      "file": "krea2_turbo_mxfp8.safetensors",
+      "megapixels": 2.0,
+      "step_s": 0.7,
+      "note": "measured with Krealism_V3.1_mxfp8 (same architecture), 2026-09-30"
+     },
+     {
+      "file": "krea2_turbo_nvfp4.safetensors",
+      "megapixels": 1.0,
+      "step_s": 0.26,
+      "note": "measured with Krealism_V3.1_nvfp4 (same architecture), 2026-09-30"
+     },
+     {
+      "file": "krea2_turbo_nvfp4.safetensors",
+      "megapixels": 2.0,
+      "step_s": 0.59,
+      "note": "measured with Krealism_V3.1_nvfp4 (same architecture), 2026-09-30"
      }
     ]
    },
@@ -293,6 +368,30 @@
       "step_s": 8.56,
       "peak_ram_gib": 44.31,
       "peak_swap_gib": 0.03
+     },
+     {
+      "file": "krea2_turbo_int8_convrot.safetensors",
+      "megapixels": 1.0,
+      "step_s": 2.62,
+      "note": "measured with Krealism_V3.1_int8_convrot (same architecture), 2026-09-30"
+     },
+     {
+      "file": "krea2_turbo_int8_convrot.safetensors",
+      "megapixels": 2.0,
+      "step_s": 6.08,
+      "note": "measured with Krealism_V3.1_int8_convrot (same architecture), 2026-09-30"
+     },
+     {
+      "file": "krea2_turbo_mxfp8.safetensors",
+      "megapixels": 1.0,
+      "step_s": 2.73,
+      "note": "measured with Krealism_V3.1_mxfp8 (same architecture), 2026-09-30"
+     },
+     {
+      "file": "krea2_turbo_mxfp8.safetensors",
+      "megapixels": 2.0,
+      "step_s": 5.79,
+      "note": "measured with Krealism_V3.1_mxfp8 (same architecture), 2026-09-30"
      }
     ]
    }
