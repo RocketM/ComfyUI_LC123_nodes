@@ -1,6 +1,6 @@
 # LC123 node inventory
 
-**132 Python nodes** + **5 JS-only** · version 1.45.6
+**132 Python nodes** + **5 JS-only** · version 1.45.7
 
 Registered class IDs: 133 (132 in search, 1 deprecated but still loads in old workflows).
 

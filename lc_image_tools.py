@@ -276,7 +276,7 @@ class LCClarity(PreviewImage):
                     "tooltip": "Capture sharpening. Undoes softness (deconvolution) instead of drawing outlines. 0 = off.",
                 }),
                 "strength": ("FLOAT", {
-                    "default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01,
+                    "default": 0.7, "min": 0.0, "max": 1.0, "step": 0.01,
                     "tooltip": "Mix with the original. 0 = original, 1 = full effect.",
                 }),
                 "halo": ("FLOAT", {

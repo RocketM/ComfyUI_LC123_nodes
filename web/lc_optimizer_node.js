@@ -210,10 +210,21 @@ function renderFace(node) {
   fit(node);
 }
 
+// Height of what the face actually shows. Not wrap.scrollHeight: the face is stretched to the space the node gives it
+// and scrollHeight never reports less than that, so every time the node grew the "minimum" grew with it (empty
+// space at the bottom that never went away).
+function faceHeight(node) {
+  const f = node._lcOptFace;
+  if (!f) return 0;
+  const kids = [...f.wrap.children];
+  return kids.reduce((h, k) => h + k.offsetHeight, 0) + 6 * Math.max(0, kids.length - 1) + 8 + 8;
+}
+
+// The node follows its content both ways: it grows for more status lines and shrinks back when there are fewer.
 function fit(node) {
   requestAnimationFrame(() => {
     const need = node.computeSize?.()?.[1];
-    if (need && node.size[1] < need) node.setSize([Math.max(node.size[0], DEFAULT_W), need]);
+    if (need && Math.abs(node.size[1] - need) > 1) node.setSize([Math.max(node.size[0], DEFAULT_W), need]);
     node.setDirtyCanvas?.(true, true);
   });
 }
@@ -257,7 +268,7 @@ function setup(node) {
   wrap.append(pickers, status, foot);
   // stop canvas zoom/drag from swallowing clicks inside the face
   for (const ev of ["pointerdown", "mousedown", "wheel"]) wrap.addEventListener(ev, (e) => e.stopPropagation());
-  const dom = node.addDOMWidget("lc_optimizer_face", "LC_OPTIMIZER_FACE", wrap, { serialize: false, getMinHeight: () => wrap.scrollHeight + 8 });
+  const dom = node.addDOMWidget("lc_optimizer_face", "LC_OPTIMIZER_FACE", wrap, { serialize: false, getMinHeight: () => faceHeight(node), getMaxHeight: () => faceHeight(node) });
   dom.serializeValue = () => undefined;
   node._lcOptFace = { wrap, pickers, status, foot };
 
