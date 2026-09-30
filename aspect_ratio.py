@@ -299,16 +299,18 @@ class AspectRatioSimplifier:
                         "min": 0,
                         "max": MAX_RESOLUTION,
                         "step": 8,
-                        "tooltip": "Clamp longer side. 0 = no clamp.",
+                        "tooltip": "Longer side of the output. From the image/mask: the image is scaled up or down so its longer side is this. From a preset / custom size: larger sizes shrink to it. 0 = keep the size as it is.",
                     },
                 ),
+                # the key stays resolution_source so saved workflows and API prompts keep working; only the label changed
                 "resolution_source": (
                     "BOOLEAN",
                     {
                         "default": False,
+                        "display_name": "aspect_ratio_source",
                         "label_on": "custom / preset",
                         "label_off": "image/mask",
-                        "tooltip": "Off: size from image/mask. On: use preset or custom width x height.",
+                        "tooltip": "Off: the image/mask's aspect ratio, scaled so its longer side is max_resolution (up or down). On: preset or custom width x height.",
                     },
                 ),
                 "aspect_ratio": (list(ASPECT_PRESETS.keys()), {"tooltip": "Preset ratio when using custom/preset source."}),
@@ -361,15 +363,7 @@ class AspectRatioSimplifier:
         """Allow saved workflows whose preset label was renamed/removed; run() falls back to custom."""
         return True
 
-    DESCRIPTION = (
-        "Resize an image and/or mask to a target size. "
-        "Size from input image/mask, or from a preset / custom width x height. "
-        "Outputs: image, mask, width, height, empty latent, batch. "
-        "Settings: resolution_source (image/mask vs custom/preset); aspect_ratio preset; "
-        "custom_width/height; swap_dimensions; upscale_method (default lanczos); "
-        "proportion (stretch|resize|crop|pad|total_pixels); crop_location; pad_color; "
-        "divisible_by (e.g. 8); max_resolution (0=no clamp); batch_size (empty latent only)."
-    )
+    DESCRIPTION = "Resizes your image and mask to the size you want. From the image: keeps its shape and scales it up or down so the longer side is max_resolution. Or pick a preset / custom size.\nCrop, stretch, pad or fit, and an empty latent at the same size."
 
     def run(
         self,
@@ -407,8 +401,12 @@ class AspectRatioSimplifier:
             src_ref = None
 
         def _preset_size():
-            # Missing / unknown label → custom width×height (no crash)
+            # Missing / unknown label → custom width×height (no crash). A renamed preset in an older workflow
+            # (e.g. "Instagram Portrait - 1080x1350") still matches by its size.
             preset = ASPECT_PRESETS.get(aspect_ratio, None)
+            if preset is None and isinstance(aspect_ratio, str) and aspect_ratio != "custom":
+                tail = aspect_ratio.rsplit(" - ", 1)[-1].strip()
+                preset = next((v for k, v in ASPECT_PRESETS.items() if v and k.rsplit(" - ", 1)[-1].strip() == tail), None)
             if preset is None:
                 tw, th = int(custom_width), int(custom_height)
             else:
@@ -417,24 +415,27 @@ class AspectRatioSimplifier:
                 tw, th = th, tw
             return tw, th
 
-        # resolution_source False = image/mask, True = custom/preset
+        # resolution_source (shown as aspect_ratio_source) False = image/mask, True = custom/preset
         # No image/mask (disconnected or upstream bypassed) → always custom/preset
-        if has_source and not resolution_source:
-            tw, th = src_w, src_h
-        else:
-            tw, th = _preset_size()
-
         max_res = int(max_resolution)
-        tw, th = _clamp_to_max(tw, th, max_res)
+        if has_source and not resolution_source:
+            # the image's aspect ratio, scaled so the longer side is max_resolution (up or down); 0 = its own size
+            if max_res > 0:
+                scale = max_res / float(max(src_w, src_h))
+                tw, th = max(1, int(round(src_w * scale))), max(1, int(round(src_h * scale)))
+            else:
+                tw, th = src_w, src_h
+        else:
+            tw, th = _clamp_to_max(*_preset_size(), max_res)
         div = int(divisible_by) if divisible_by else 1
         if div > 1:
             # Round down so we never exceed max_resolution after alignment
             tw = max(div, (tw // div) * div)
             th = max(div, (th // div) * div)
-            # If still over max (e.g. div > max), clamp to max then down-align
-            if tw > max_res:
+            # If still over max (e.g. div > max), clamp to max then down-align (0 = no max)
+            if max_res > 0 and tw > max_res:
                 tw = max(div, (max_res // div) * div) if max_res >= div else max_res
-            if th > max_res:
+            if max_res > 0 and th > max_res:
                 th = max(div, (max_res // div) * div) if max_res >= div else max_res
         tw = max(1, int(tw))
         th = max(1, int(th))
@@ -515,14 +516,7 @@ class LCAspectRatioPipeOut:
     def VALIDATE_INPUTS(cls, aspect_ratio=None, **kwargs):
         return True
 
-    DESCRIPTION = (
-        "Same controls as Aspect Ratio Simplifier, plus a pipe output on top for Get/Set. "
-        "Size from input image/mask, or from a preset / custom width x height. "
-        "Outputs: pipe, image, mask, width, height, empty latent, batch, resolution. "
-        "Settings: resolution_source; aspect_ratio; custom_width/height; swap_dimensions; "
-        "upscale_method (default lanczos); proportion; crop_location; pad_color; "
-        "divisible_by; max_resolution; batch_size (empty latent only)."
-    )
+    DESCRIPTION = "Resizes your image and mask to the size you want. From the image: keeps its shape and scales it up or down so the longer side is max_resolution. Or pick a preset / custom size.\nCrop, stretch, pad or fit, and an empty latent at the same size."
 
     def run(self, **kwargs):
         image, mask, width, height, latent, batch, resolution = AspectRatioSimplifier().run(**kwargs)
@@ -556,10 +550,7 @@ class LCAspectRatioPipe:
     RETURN_NAMES = ("pipe", "image", "mask", "width", "height", "latent", "batch", "resolution")
     FUNCTION = "unpack"
     CATEGORY = "LC123/image"
-    DESCRIPTION = (
-        "Unpacks aspect fields from an LC_PIPE into individual sockets. "
-        "Pipe is passed through for further Get/Set chaining."
-    )
+    DESCRIPTION = "Unpacks the image, mask, size, latent and batch from a pipe. The pipe keeps going out the top."
 
     def unpack(self, pipe):
         if not isinstance(pipe, dict):
@@ -612,11 +603,7 @@ class LCAspectRatioPipeIn:
     RETURN_NAMES = ("pipe",)
     FUNCTION = "pack"
     CATEGORY = "LC123/image"
-    DESCRIPTION = (
-        "Packs image, mask, width, height, latent, batch and resolution into an LC_PIPE, or edits an "
-        "existing one. Only wired sockets overwrite; everything else on the pipe passes through. "
-        "Resolution fills in as max(width, height) when width/height are wired and resolution is not."
-    )
+    DESCRIPTION = "Packs image, mask, size, latent and batch into a pipe, or changes only what you wire on an existing one."
 
     def pack(self, pipe=None, **kwargs):
         out = dict(pipe) if isinstance(pipe, dict) else {}

@@ -14,6 +14,7 @@ const MIN_NODE_H = 199;
 const MIN_WIDGET_H = 173;
 const PREVIEW_H = 335;
 const PAD = 16;
+const SIZE_H = 16; // the "1024 x 1024" line under the image
 
 const KINDS = {
   LCPreviewImage: { empty: "#1a1f1f" },
@@ -49,14 +50,17 @@ function installPreview(node, cls) {
   wrap.className = "lc-preview-wrap";
   // the DOM widget sits 10 px in from each node edge (and 10 px off the rows above and below), so reach out to the edges and pad by 16: 300 - 32 = 268 wide
   // padding is 16 px at the launch width and eases down to 4 px at the minimum width, so a squeezed node still shows most of the image
-  wrap.style.cssText = `width:calc(100% + 20px);height:calc(100% + 20px);margin:-10px 0 0 -10px;box-sizing:border-box;padding:clamp(4px, calc(4px + (100% - 120px) * 0.075), ${PAD}px);`;
+  wrap.style.cssText = `width:calc(100% + 20px);height:calc(100% + 20px);margin:-10px 0 0 -10px;box-sizing:border-box;padding:clamp(4px, calc(4px + (100% - 120px) * 0.075), ${PAD}px);display:flex;flex-direction:column;`;
   const frame = document.createElement("div");
-  frame.style.cssText = `width:100%;height:100%;box-sizing:border-box;background:${kind.empty};border-radius:4px;display:flex;align-items:center;justify-content:center;overflow:hidden;`;
+  // the size line lives inside the window, so the node keeps its size (saved workflows too) and the image gives up the room
+  frame.style.cssText = `width:100%;flex:1 1 auto;min-height:0;box-sizing:border-box;background:${kind.empty};border-radius:4px;display:flex;align-items:center;justify-content:center;overflow:hidden;`;
   const img = document.createElement("img");
   img.style.cssText = "max-width:100%;max-height:100%;object-fit:contain;display:none;user-select:none;pointer-events:none;";
   img.draggable = false;
   frame.appendChild(img);
-  wrap.appendChild(frame);
+  const size = document.createElement("div");
+  size.style.cssText = `flex:0 0 ${SIZE_H}px;line-height:${SIZE_H}px;margin-top:2px;text-align:center;font:11px sans-serif;color:#c8d4d4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;`;
+  wrap.append(frame, size);
 
   const dom = node.addDOMWidget("lc_preview", "LC_PREVIEW", wrap, {
     getMinHeight: () => MIN_WIDGET_H,
@@ -79,9 +83,13 @@ function installPreview(node, cls) {
         img.style.display = "none";
         img.removeAttribute("src");
         wrap.title = "";
+        size.textContent = "";
         return;
       }
-      img.onload = () => (img.style.display = "block");
+      img.onload = () => {
+        img.style.display = "block";
+        size.textContent = `${img.naturalWidth} × ${img.naturalHeight}` + (list.length > 1 ? `  ·  batch of ${list.length}` : "");
+      };
       img.src = viewUrl(first);
       wrap.title = list.length > 1 ? `batch of ${list.length}, showing the first` : "";
     },
@@ -122,7 +130,7 @@ app.registerExtension({
       const r = onDrawFg?.apply(this, arguments);
       const img = this.__lcPreview?.img;
       if (img) {
-        const hide = !!window.LC123Perf?.tooSmall?.(this.size[0] - PAD * 2, this.size[1] - 46 - PAD * 2);
+        const hide = !!window.LC123Perf?.tooSmall?.(this.size[0] - PAD * 2, this.size[1] - 46 - PAD * 2 - SIZE_H);
         if (img.__lcHidden !== hide) {
           img.__lcHidden = hide;
           img.style.visibility = hide ? "hidden" : "";

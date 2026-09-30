@@ -3,6 +3,7 @@
 import json
 from pathlib import Path
 import tempfile
+import sys
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
@@ -33,6 +34,21 @@ def switch_graph(kind):
 
 
 class MetadataContractTests(unittest.TestCase):
+    def test_optimizer_metadata_respects_saved_image_scope(self):
+        prompt = graph([])
+        prompt['0'] = {'class_type': 'LCOptimizerImage', 'inputs': {'base_model': 'Anima'}}
+        prompt['9'] = {'class_type': 'LCOptimizerImage', 'inputs': {'base_model': 'Unused'}}
+        calls = []
+        def loaded_files(inputs):
+            calls.append(inputs['base_model'])
+            return [('janima.safetensors', 'diffusion_models')]
+        engine = SimpleNamespace(loaded_files=loaded_files)
+        with patch.object(sys.modules['lc_metadata_test'], 'lc_optimizer_engine', engine, create=True), patch.object(hashes, '_resolve', return_value=('janima.safetensors', 'unet')), patch.object(hashes, 'autov2', return_value='ABC'):
+            result = hashes.collect_hashes(prompt, save_node_id='3')
+        self.assertEqual(calls, ['Anima'])
+        self.assertEqual(result['primary_model'], 'janima')
+        self.assertEqual(result['hashes_json'], {'model': 'ABC'})
+
     def test_same_basename_verified_file_does_not_hide_unverified_file(self):
         prompt = graph([{'on': True, 'lora': 'known/character.safetensors', 'strength': .8},
                         {'on': True, 'lora': 'unknown/character.safetensors', 'strength': .3}])

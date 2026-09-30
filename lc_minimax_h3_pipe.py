@@ -172,10 +172,7 @@ class LCMiniMaxH3Pipe:
     RETURN_NAMES = ("pipe",)
     FUNCTION = "pack"
     CATEGORY = "LC123/pipe"
-    DESCRIPTION = (
-        "MiniMax H3 pipe in / edit. Same sockets as Pipe Out (all slots always shown, no autogrow). "
-        "Pipe accepts an H3 pipe (full merge) or Aspect Ratio Simplifier / LC Pipe (width + height only)."
-    )
+    DESCRIPTION = "Everything MiniMax H3 needs in one wire: prompts, reference pictures, size, length and frame rate (V2 adds prompt, steps, CFG, seed, sampler and scheduler). Wire a pipe in to change only what you connect."
 
     def pack(self, pipe=None, **kwargs):
         base = _merge_incoming(pipe)
@@ -224,10 +221,7 @@ class LCMiniMaxH3PipeOut:
     RETURN_NAMES = ("pipe",) + tuple(label for _k, _kind, label in _slot_keys())
     FUNCTION = "unpack"
     CATEGORY = "LC123/pipe"
-    DESCRIPTION = (
-        "Unpacks an LC MiniMax H3 pipe. ref_image_0 = <Picture 1>. "
-        "width / height come from the H3 pipe or from an Aspect Ratio Simplifier pipe merged upstream."
-    )
+    DESCRIPTION = "Unpacks an H3 pipe. ref_image_0 is <Picture 1> in your prompt."
 
     def unpack(self, pipe):
         if not isinstance(pipe, dict):
@@ -305,14 +299,7 @@ class LCMiniMaxH3PipeV2:
     RETURN_NAMES = ("pipe",)
     FUNCTION = "pack"
     CATEGORY = "LC123/pipe"
-    DESCRIPTION = (
-        "MiniMax H3 pipe in / edit, V2 -- adds prompt / total_steps / cfg / seed / sampler_name / "
-        "scheduler sockets on top of everything LC MiniMax H3 Pipe already carries (same forceInput-"
-        "socket convention as every other field on this pipe, wire these in rather than setting them "
-        "directly). New pipe type (LC_H3_PIPE_V2) -- the original LC MiniMax H3 Pipe / Pipe Out are "
-        "completely unchanged and unaffected by this node's existence, so no existing workflow can "
-        "break from adding it."
-    )
+    DESCRIPTION = "Everything MiniMax H3 needs in one wire: prompts, reference pictures, size, length and frame rate (V2 adds prompt, steps, CFG, seed, sampler and scheduler). Wire a pipe in to change only what you connect."
 
     def pack(self, pipe=None, prompt=None, total_steps=None, cfg=None, seed=None, sampler_name=None, scheduler=None, **kwargs):
         base = _merge_incoming_v2(pipe)
@@ -374,11 +361,7 @@ class LCMiniMaxH3PipeOutV2:
     RETURN_NAMES = ("pipe",) + tuple(label for _k, _kind, label in _slot_keys(SAMPLING_SLOTS_V2))
     FUNCTION = "unpack"
     CATEGORY = "LC123/pipe"
-    DESCRIPTION = (
-        "Unpacks an LC MiniMax H3 pipe V2. Same reference-media outputs as LC MiniMax H3 Pipe Out, plus "
-        "prompt / total_steps / cfg / seed / sampler_name / scheduler (between frame_rate and ref_image_0). "
-        "Also accepts a V1 LC_H3_PIPE directly -- sampling fields fall back to their defaults."
-    )
+    DESCRIPTION = "Unpacks an H3 pipe. ref_image_0 is <Picture 1> in your prompt."
 
     # Fallback defaults when a sampling field was never wired on the way
     # in -- matches LC Sampler Configure Simple's own defaults.

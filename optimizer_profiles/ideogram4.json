@@ -1,0 +1,223 @@
+{
+ "id": "ideogram4",
+ "name": "Ideogram 4",
+ "kind": "image",
+ "params_b": 9.3,
+ "notes": [
+  "Needs BOTH the conditional and the unconditional model: sizes below are per file, a pair loads twice that.",
+  "No bf16 loads in ComfyUI (the community unconditional bf16 is not recognised); fp8_scaled is the reference.",
+  "Every Ideogram GGUF checked has no architecture tag: ComfyUI-GGUF rejects them.",
+  "Non-commercial license."
+ ],
+ "components": {
+  "diffusion": {
+   "label": "Image model (x2: conditional + unconditional)",
+   "role": "diffusion",
+   "variants": [
+    {
+     "file": "ideogram4_fp8_scaled.safetensors",
+     "format": "fp8_scaled",
+     "gb": 17.29,
+     "bits": 8,
+     "repo": "Comfy-Org/Ideogram-4",
+     "loader": "UNETLoader x2",
+     "default": true,
+     "note": "pair"
+    },
+    {
+     "file": "ideogram4_int8_convrot.safetensors",
+     "format": "int8_convrot",
+     "gb": 17.84,
+     "bits": 8,
+     "repo": "Comfy-Org/Ideogram-4",
+     "loader": "UNETLoader x2",
+     "note": "pair"
+    },
+    {
+     "file": "ideogram4_nvfp4_mixed.safetensors",
+     "format": "nvfp4",
+     "gb": 10.23,
+     "bits": 4,
+     "repo": "Comfy-Org/Ideogram-4",
+     "loader": "UNETLoader x2",
+     "note": "pair"
+    }
+   ]
+  },
+  "text_encoder": {
+   "label": "Text encoder (Qwen3-VL-8B)",
+   "role": "text_encoder",
+   "clip_type": "ideogram4",
+   "variants": [
+    {
+     "file": "qwen3vl_8b_fp8_scaled.safetensors",
+     "format": "fp8_scaled",
+     "gb": 9.86,
+     "bits": 8,
+     "repo": "Comfy-Org/Ideogram-4",
+     "loader": "CLIPLoader",
+     "default": true
+    },
+    {
+     "file": "qwen3vl_8b_nvfp4.safetensors",
+     "format": "nvfp4",
+     "gb": 5.88,
+     "bits": 4,
+     "repo": "Comfy-Org/Ideogram-4",
+     "loader": "CLIPLoader"
+    }
+   ]
+  },
+  "vae": {
+   "label": "VAE",
+   "role": "fixed",
+   "variants": [
+    {
+     "file": "flux2-vae.safetensors",
+     "format": "bf16",
+     "gb": 0.32,
+     "bits": 16,
+     "repo": "Comfy-Org/Ideogram-4",
+     "loader": "VAELoader",
+     "always": true
+    }
+   ]
+  }
+ },
+ "benchmarks": {
+  "workflow": "Comfy-Org image_ideogram4_t2i as API, Default preset (20 steps), DualModelGuider cfg 7",
+  "references": [
+   {
+    "machine": {
+     "gpu": "NVIDIA GeForce RTX 5090",
+     "vram_gb": 31.8,
+     "attention_sdpa_ms": 2.42,
+     "fp8_tflops": 399.8,
+     "note": ""
+    },
+    "runs": [
+     {
+      "file": "ideogram4_fp8_scaled.safetensors",
+      "megapixels": 1.0,
+      "step_s": 0.9
+     },
+     {
+      "file": "ideogram4_fp8_scaled.safetensors",
+      "megapixels": 2.0,
+      "step_s": 2.17
+     },
+     {
+      "file": "ideogram4_int8_convrot.safetensors",
+      "megapixels": 1.0,
+      "step_s": 0.75
+     },
+     {
+      "file": "ideogram4_int8_convrot.safetensors",
+      "megapixels": 2.0,
+      "step_s": 1.91
+     },
+     {
+      "file": "ideogram4_nvfp4_mixed.safetensors",
+      "megapixels": 1.0,
+      "step_s": 0.68
+     },
+     {
+      "file": "ideogram4_nvfp4_mixed.safetensors",
+      "megapixels": 2.0,
+      "step_s": 1.8
+     }
+    ]
+   },
+   {
+    "machine": {
+     "gpu": "NVIDIA GeForce RTX 5060 Laptop GPU",
+     "vram_gb": 8.0,
+     "attention_sdpa_ms": 17.2,
+     "fp8_tflops": 66.5,
+     "note": "64 GB RAM, PCIe Gen5 x8, no SageAttention"
+    },
+    "runs": [
+     {
+      "file": "ideogram4_fp8_scaled.safetensors",
+      "megapixels": 1.0,
+      "step_s": 7.61,
+      "peak_ram_gib": 41.66
+     },
+     {
+      "file": "ideogram4_fp8_scaled.safetensors",
+      "megapixels": 2.0,
+      "step_s": 17.95,
+      "peak_ram_gib": 41.81
+     },
+     {
+      "file": "ideogram4_int8_convrot.safetensors",
+      "megapixels": 1.0,
+      "step_s": 6.65,
+      "peak_ram_gib": 42.81
+     },
+     {
+      "file": "ideogram4_int8_convrot.safetensors",
+      "megapixels": 2.0,
+      "step_s": 17.29,
+      "peak_ram_gib": 42.7
+     },
+     {
+      "file": "ideogram4_nvfp4_mixed.safetensors",
+      "megapixels": 1.0,
+      "step_s": 5.68,
+      "peak_ram_gib": 37.49
+     },
+     {
+      "file": "ideogram4_nvfp4_mixed.safetensors",
+      "megapixels": 2.0,
+      "step_s": 14.45,
+      "peak_ram_gib": 37.47
+     }
+    ]
+   }
+  ]
+ },
+ "quality": {
+  "method": "single step from the same fp8 latent (steps 5, 10, 15 of 20), 3 prompts, LPIPS vs fp8_scaled (no loadable bf16)",
+  "reference": "ideogram4_fp8_scaled.safetensors",
+  "files": {
+   "ideogram4_int8_convrot.safetensors": {
+    "lpips_avg": 0.1053,
+    "k5": {
+     "lpips": 0.1719,
+     "ssim": 0.7569,
+     "psnr": 20.91
+    },
+    "k10": {
+     "lpips": 0.1013,
+     "ssim": 0.8022,
+     "psnr": 25.39
+    },
+    "k15": {
+     "lpips": 0.0426,
+     "ssim": 0.9027,
+     "psnr": 30.61
+    }
+   },
+   "ideogram4_nvfp4_mixed.safetensors": {
+    "lpips_avg": 0.1543,
+    "k5": {
+     "lpips": 0.227,
+     "ssim": 0.6962,
+     "psnr": 18.68
+    },
+    "k10": {
+     "lpips": 0.1485,
+     "ssim": 0.7794,
+     "psnr": 22.65
+    },
+    "k15": {
+     "lpips": 0.0873,
+     "ssim": 0.8416,
+     "psnr": 27.29
+    }
+   }
+  }
+ },
+ "source": "Hugging Face tree API sizes and Comfy-Org workflow templates, researched and measured 2026-09-28"
+}

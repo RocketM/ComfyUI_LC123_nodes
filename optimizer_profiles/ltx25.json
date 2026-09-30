@@ -1,0 +1,263 @@
+{
+ "id": "ltx25",
+ "name": "LTX 2.5 (22B distilled)",
+ "kind": "video",
+ "notes": [
+  "Dev has the same sizes as distilled.",
+  "No smaller text encoder: a custom Gemma 4 12B with projections.",
+  "The optional prompt enhancer (Gemma 4 E2B) adds 5.2 GB (int8) or 10.3 GB (bf16)."
+ ],
+ "components": {
+  "diffusion": {
+   "label": "Video model",
+   "role": "diffusion",
+   "variants": [
+    {
+     "file": "ltx-2.5-22b-distilled-transformer-bf16.safetensors",
+     "format": "bf16",
+     "gb": 39.13,
+     "bits": 16,
+     "repo": "Lightricks/LTX-2.5",
+     "loader": "UNETLoader"
+    },
+    {
+     "file": "ltx-2.5-22b-distilled-transformer-comfy-int8-convrot.safetensors",
+     "format": "int8_convrot",
+     "gb": 20.02,
+     "bits": 8,
+     "repo": "Lightricks/LTX-2.5",
+     "loader": "UNETLoader",
+     "default": true
+    },
+    {
+     "file": "ltx-2.5-22b-distilled-fp8.safetensors",
+     "format": "fp8",
+     "gb": 19.59,
+     "bits": 8,
+     "repo": "vonkaiser/LTX-2.5-FP8-NVFP4",
+     "loader": "UNETLoader",
+     "community": true
+    },
+    {
+     "file": "ltx-2.5-22b-distilled-transformer-nvfp4.safetensors",
+     "format": "nvfp4",
+     "gb": 17.43,
+     "bits": 4,
+     "repo": "Lightricks/LTX-2.5",
+     "loader": "UNETLoader"
+    },
+    {
+     "file": "ltx-2.5-22b-distilled-Q8_0.gguf",
+     "format": "gguf_q8_0",
+     "gb": 21.98,
+     "bits": 8,
+     "repo": "vantagewithai/LTX-2.5-GGUF",
+     "loader": "UnetLoaderGGUF",
+     "community": true
+    },
+    {
+     "file": "ltx-2.5-22b-distilled-Q6_K.gguf",
+     "format": "gguf_q6_k",
+     "gb": 17.34,
+     "bits": 6,
+     "repo": "vantagewithai/LTX-2.5-GGUF",
+     "loader": "UnetLoaderGGUF",
+     "community": true
+    },
+    {
+     "file": "ltx-2.5-22b-distilled-Q5_K_M.gguf",
+     "format": "gguf_q5_k_m",
+     "gb": 16.88,
+     "bits": 5,
+     "repo": "vantagewithai/LTX-2.5-GGUF",
+     "loader": "UnetLoaderGGUF",
+     "community": true
+    },
+    {
+     "file": "ltx-2.5-22b-distilled-Q4_K_M.gguf",
+     "format": "gguf_q4_k_m",
+     "gb": 14.61,
+     "bits": 4,
+     "repo": "vantagewithai/LTX-2.5-GGUF",
+     "loader": "UnetLoaderGGUF",
+     "community": true
+    },
+    {
+     "file": "ltx-2.5-22b-distilled-Q3_K_M.gguf",
+     "format": "gguf_q3_k_m",
+     "gb": 12.03,
+     "bits": 3,
+     "repo": "vantagewithai/LTX-2.5-GGUF",
+     "loader": "UnetLoaderGGUF",
+     "community": true
+    },
+    {
+     "file": "LTX-2.5-distilled-Q2_K.gguf",
+     "format": "gguf_q2_k",
+     "gb": 8.22,
+     "bits": 2,
+     "repo": "realrebelai/LTX-2.5_GGUFs",
+     "loader": "UnetLoaderGGUF",
+     "community": true
+    }
+   ]
+  },
+  "text_encoder": {
+   "label": "Text encoder (Gemma 4 12B)",
+   "role": "text_encoder",
+   "clip_type": "ltxv",
+   "variants": [
+    {
+     "file": "gemma4-12b-with-proj-ltx-2.5-bf16.safetensors",
+     "format": "bf16",
+     "gb": 24.46,
+     "bits": 16,
+     "repo": "Lightricks/LTX-2.5",
+     "loader": "CLIPLoader"
+    },
+    {
+     "file": "gemma4-12b-with-proj-ltx-2.5-comfy-int8-convrot.safetensors",
+     "format": "int8_convrot",
+     "gb": 14.31,
+     "bits": 8,
+     "repo": "Lightricks/LTX-2.5",
+     "loader": "CLIPLoader",
+     "default": true
+    },
+    {
+     "file": "gemma4-12b-with-proj-ltx-2.5-nvfp4.safetensors",
+     "format": "nvfp4",
+     "gb": 9.87,
+     "bits": 4,
+     "repo": "Deadshot699/ltx-2.5-gemma4-12b-comfy-nvfp4",
+     "loader": "CLIPLoader",
+     "community": true
+    },
+    {
+     "file": "gemma4-12b-with-proj-ltx-2.5-Q4_K_M.gguf",
+     "format": "gguf_q4_k_m",
+     "gb": 7.83,
+     "bits": 4,
+     "repo": "elix3r/gemma4-12b-with-proj-ltx-2.5-GGUF",
+     "loader": "CLIPLoaderGGUF",
+     "community": true,
+     "unconfirmed": "Gemma 4 is not on ComfyUI-GGUF's text encoder list"
+    }
+   ]
+  },
+  "vae": {
+   "label": "VAEs and upscaler",
+   "role": "fixed",
+   "variants": [
+    {
+     "file": "ltx-2.5-video-vae-bf16.safetensors",
+     "format": "bf16",
+     "gb": 1.37,
+     "bits": 16,
+     "repo": "Lightricks/LTX-2.5",
+     "loader": "VAELoader",
+     "always": true
+    },
+    {
+     "file": "ltx-2.5-audio-vae-bf16.safetensors",
+     "format": "bf16",
+     "gb": 0.34,
+     "bits": 16,
+     "repo": "Lightricks/LTX-2.5",
+     "loader": "VAELoader",
+     "always": true
+    },
+    {
+     "file": "ltx-2.5-spatial-upscaler-x2.safetensors",
+     "format": "bf16",
+     "gb": 0.93,
+     "bits": 16,
+     "repo": "Lightricks/LTX-2.5",
+     "loader": "LatentUpscaleModelLoader",
+     "always": true
+    }
+   ]
+  }
+ },
+ "source": "Hugging Face tree API sizes and Comfy-Org workflow templates, researched 2026-09-27",
+ "benchmarks": {
+  "workflow": "Comfy-Org video_ltx2_5_t2v as API, enhancer off, 3 s (73 frames), 16:9; step_s = stage 1 (8 steps at half size)",
+  "references": [
+   {
+    "machine": {
+     "gpu": "NVIDIA GeForce RTX 5090",
+     "attention_sdpa_ms": 2.42,
+     "fp8_tflops": 399.8
+    },
+    "runs": [
+     {
+      "file": "ltx-2.5-22b-distilled-transformer-comfy-int8-convrot.safetensors",
+      "megapixels": 0.4,
+      "frames": 73,
+      "step_s": 0.32,
+      "stage2_s": 1.3,
+      "decode_s": 2.2
+     },
+     {
+      "file": "ltx-2.5-22b-distilled-transformer-comfy-int8-convrot.safetensors",
+      "megapixels": 0.9,
+      "frames": 73,
+      "step_s": 0.32,
+      "stage2_s": 2.8,
+      "decode_s": 5.0
+     }
+    ]
+   },
+   {
+    "machine": {
+     "gpu": "NVIDIA GeForce RTX 5060 Laptop GPU",
+     "vram_gb": 8.0,
+     "attention_sdpa_ms": 17.2,
+     "fp8_tflops": 66.5,
+     "note": "64 GB RAM, PCIe Gen5 x8, no SageAttention"
+    },
+    "runs": [
+     {
+      "file": "ltx-2.5-22b-distilled-transformer-comfy-int8-convrot.safetensors",
+      "megapixels": 0.4,
+      "step_s": 0.76,
+      "peak_ram_gib": 54.9,
+      "peak_swap_gib": 0.08
+     },
+     {
+      "file": "ltx-2.5-22b-distilled-transformer-comfy-int8-convrot.safetensors",
+      "megapixels": 0.9,
+      "step_s": 1.54,
+      "peak_ram_gib": 55.06,
+      "peak_swap_gib": 0.08
+     }
+    ]
+   }
+  ]
+ },
+ "quality": {
+  "method": "single step from the same bf16 latent (stage 1 sigmas 2, 4, 6 of 8), video frames decoded, LPIPS vs bf16",
+  "reference": "ltx-2.5-22b-distilled-transformer-bf16.safetensors",
+  "files": {
+   "ltx-2.5-22b-distilled-transformer-comfy-int8-convrot.safetensors": {
+    "k2": {
+     "lpips": 0.0218,
+     "ssim": 0.9795,
+     "psnr": 35.66
+    },
+    "k4": {
+     "lpips": 0.0235,
+     "ssim": 0.9789,
+     "psnr": 35.19
+    },
+    "k6": {
+     "lpips": 0.0109,
+     "ssim": 0.9901,
+     "psnr": 40.67
+    },
+    "lpips_avg": 0.0187
+   }
+  }
+ },
+ "params_b": 22
+}

@@ -1,0 +1,302 @@
+{
+ "id": "krea2",
+ "name": "Krea 2 (Turbo)",
+ "kind": "image",
+ "notes": [
+  "Raw has the same sizes as Turbo.",
+  "No smaller text encoder documented (Qwen3-VL-4B)."
+ ],
+ "components": {
+  "diffusion": {
+   "label": "Image model",
+   "role": "diffusion",
+   "variants": [
+    {
+     "file": "krea2_turbo_bf16.safetensors",
+     "format": "bf16",
+     "gb": 24.48,
+     "bits": 16,
+     "repo": "Comfy-Org/Krea-2",
+     "loader": "UNETLoader"
+    },
+    {
+     "file": "krea2_turbo_fp8_scaled.safetensors",
+     "format": "fp8_scaled",
+     "gb": 12.24,
+     "bits": 8,
+     "repo": "Comfy-Org/Krea-2",
+     "loader": "UNETLoader",
+     "default": true
+    },
+    {
+     "file": "krea2_turbo_int8_convrot.safetensors",
+     "format": "int8_convrot",
+     "gb": 12.56,
+     "bits": 8,
+     "repo": "Comfy-Org/Krea-2",
+     "loader": "UNETLoader"
+    },
+    {
+     "file": "krea2_turbo_mxfp8.safetensors",
+     "format": "mxfp8",
+     "gb": 12.6,
+     "bits": 8,
+     "repo": "Comfy-Org/Krea-2",
+     "loader": "UNETLoader"
+    },
+    {
+     "file": "krea2_turbo_nvfp4.safetensors",
+     "format": "nvfp4",
+     "gb": 7.14,
+     "bits": 4,
+     "repo": "Comfy-Org/Krea-2",
+     "loader": "UNETLoader"
+    },
+    {
+     "file": "krea2_turbo-Q8_0.gguf",
+     "format": "gguf_q8_0",
+     "gb": 12.77,
+     "bits": 8,
+     "repo": "vantagewithai/Krea-2-Turbo-GGUF",
+     "loader": "UnetLoaderGGUF",
+     "community": true
+    },
+    {
+     "file": "krea2_turbo-Q6_K.gguf",
+     "format": "gguf_q6_k",
+     "gb": 9.85,
+     "bits": 6,
+     "repo": "vantagewithai/Krea-2-Turbo-GGUF",
+     "loader": "UnetLoaderGGUF",
+     "community": true
+    },
+    {
+     "file": "krea2_turbo-Q5_K_M.gguf",
+     "format": "gguf_q5_k_m",
+     "gb": 8.26,
+     "bits": 5,
+     "repo": "vantagewithai/Krea-2-Turbo-GGUF",
+     "loader": "UnetLoaderGGUF",
+     "community": true
+    },
+    {
+     "file": "krea2_turbo-Q4_K_M.gguf",
+     "format": "gguf_q4_k_m",
+     "gb": 6.98,
+     "bits": 4,
+     "repo": "vantagewithai/Krea-2-Turbo-GGUF",
+     "loader": "UnetLoaderGGUF",
+     "community": true
+    },
+    {
+     "file": "krea2_turbo-Q3_K_M.gguf",
+     "format": "gguf_q3_k_m",
+     "gb": 5.6,
+     "bits": 3,
+     "repo": "vantagewithai/Krea-2-Turbo-GGUF",
+     "loader": "UnetLoaderGGUF",
+     "community": true
+    },
+    {
+     "file": "krea2_turbo-Q2_K.gguf",
+     "format": "gguf_q2_k",
+     "gb": 4.55,
+     "bits": 2,
+     "repo": "vantagewithai/Krea-2-Turbo-GGUF",
+     "loader": "UnetLoaderGGUF",
+     "community": true
+    }
+   ]
+  },
+  "text_encoder": {
+   "label": "Text encoder (Qwen3-VL-4B)",
+   "role": "text_encoder",
+   "clip_type": "krea2",
+   "variants": [
+    {
+     "file": "qwen3vl_4b_bf16.safetensors",
+     "format": "bf16",
+     "gb": 8.27,
+     "bits": 16,
+     "repo": "Comfy-Org/Krea-2",
+     "loader": "CLIPLoader"
+    },
+    {
+     "file": "qwen3vl_4b_fp8_scaled.safetensors",
+     "format": "fp8_scaled",
+     "gb": 4.88,
+     "bits": 8,
+     "repo": "Comfy-Org/Krea-2",
+     "loader": "CLIPLoader",
+     "default": true
+    },
+    {
+     "file": "qwen3vl_4b-iq4_xs.gguf",
+     "format": "gguf_iq4_xs",
+     "gb": 2.89,
+     "bits": 4,
+     "repo": "gguf-org/krea-2-gguf",
+     "loader": "CLIPLoaderGGUF",
+     "community": true,
+     "unconfirmed": "made for the calcuis gguf node"
+    }
+   ]
+  },
+  "vae": {
+   "label": "VAE",
+   "role": "fixed",
+   "variants": [
+    {
+     "file": "qwen_image_vae.safetensors",
+     "format": "bf16",
+     "gb": 0.23,
+     "bits": 16,
+     "repo": "Comfy-Org/Krea-2",
+     "loader": "VAELoader",
+     "always": true
+    }
+   ]
+  }
+ },
+ "source": "Hugging Face tree API sizes and Comfy-Org workflow templates, researched 2026-09-27",
+ "quality": {
+  "method": "single step from the same bf16 latent (steps 2, 4, 6 of 8), 3 prompts, LPIPS vs bf16; 0 = identical",
+  "reference": "krea2_turbo_bf16.safetensors",
+  "files": {
+   "krea2_turbo_fp8_scaled.safetensors": {
+    "lpips_avg": 0.0136,
+    "k2": {
+     "lpips": 0.0273,
+     "ssim": 0.9507,
+     "psnr": 32.05
+    },
+    "k4": {
+     "lpips": 0.0104,
+     "ssim": 0.9761,
+     "psnr": 36.64
+    },
+    "k6": {
+     "lpips": 0.0031,
+     "ssim": 0.9925,
+     "psnr": 43.24
+    }
+   },
+   "krea2_turbo-Q8_0.gguf": {
+    "lpips_avg": 0.005,
+    "k2": {
+     "lpips": 0.0094,
+     "ssim": 0.9794,
+     "psnr": 38.04
+    },
+    "k4": {
+     "lpips": 0.0045,
+     "ssim": 0.9886,
+     "psnr": 41.22
+    },
+    "k6": {
+     "lpips": 0.001,
+     "ssim": 0.9963,
+     "psnr": 47.59
+    }
+   },
+   "krea2_turbo_int8_convrot.safetensors": {
+    "lpips_avg": 0.0063,
+    "note": "measured on Krealism V3.1's int8_convrot vs its own bf16 (a Krea 2 finetune): 0.0073 without --fast, 0.0053 with; Comfy's own krea2_turbo_int8_convrot not measured yet"
+   }
+  },
+  "notes": [
+   "GGUF measured with a Civitai Q8_0 conversion (arch tag 'krea2'), loaded with calcuis gguf LoaderGGUF: ComfyUI-GGUF rejects that tag.",
+   "int8-convrot measured on a Krea 2 finetune (Krealism V3.1 int8_convrot vs its own bf16): LPIPS 0.006, near identical. Comfy's own krea2_turbo_int8_convrot not tested yet; no int8 timing measured."
+  ]
+ },
+ "benchmarks": {
+  "workflow": "Comfy-Org image_krea2_turbo_t2i as API, 8 steps, euler/simple, cfg 1, TE fp8_scaled",
+  "references": [
+   {
+    "machine": {
+     "gpu": "NVIDIA GeForce RTX 5090",
+     "attention_sdpa_ms": 2.42,
+     "fp8_tflops": 399.8
+    },
+    "runs": [
+     {
+      "file": "krea2_turbo_bf16.safetensors",
+      "megapixels": 1.0,
+      "step_s": 0.61,
+      "note": null
+     },
+     {
+      "file": "krea2_turbo_bf16.safetensors",
+      "megapixels": 2.0,
+      "step_s": 1.25,
+      "note": null
+     },
+     {
+      "file": "krea2_turbo_fp8_scaled.safetensors",
+      "megapixels": 1.0,
+      "step_s": 0.48,
+      "note": null
+     },
+     {
+      "file": "krea2_turbo_fp8_scaled.safetensors",
+      "megapixels": 2.0,
+      "step_s": 1.0,
+      "note": null
+     },
+     {
+      "file": "krea2_turbo-Q8_0.gguf",
+      "megapixels": 1.0,
+      "step_s": 0.67,
+      "note": null
+     },
+     {
+      "file": "krea2_turbo-Q8_0.gguf",
+      "megapixels": 2.0,
+      "step_s": 1.31,
+      "note": null
+     }
+    ]
+   },
+   {
+    "machine": {
+     "gpu": "NVIDIA GeForce RTX 5060 Laptop GPU",
+     "vram_gb": 8.0,
+     "attention_sdpa_ms": 17.2,
+     "fp8_tflops": 66.5,
+     "note": "64 GB RAM, PCIe Gen5 x8, no SageAttention"
+    },
+    "runs": [
+     {
+      "file": "krea2_turbo_fp8_scaled.safetensors",
+      "megapixels": 1.0,
+      "step_s": 2.86,
+      "peak_ram_gib": 34.2,
+      "peak_swap_gib": 0.0
+     },
+     {
+      "file": "krea2_turbo_fp8_scaled.safetensors",
+      "megapixels": 2.0,
+      "step_s": 5.85,
+      "peak_ram_gib": 34.27,
+      "peak_swap_gib": 0.0
+     },
+     {
+      "file": "krea2_turbo-Q8_0.gguf",
+      "megapixels": 1.0,
+      "step_s": 4.86,
+      "peak_ram_gib": 42.93,
+      "peak_swap_gib": 0.03
+     },
+     {
+      "file": "krea2_turbo-Q8_0.gguf",
+      "megapixels": 2.0,
+      "step_s": 8.56,
+      "peak_ram_gib": 44.31,
+      "peak_swap_gib": 0.03
+     }
+    ]
+   }
+  ]
+ },
+ "params_b": 12
+}

@@ -1,5 +1,5 @@
 """
-LC Optimization report, server side.
+Comfy Optimization Report, server side.
 
 GET /lc123/optimizer/scan reads the front-end files (.js / .css) of every installed pack that has a web folder and
 lists the patterns that tend to slow down the canvas: timers, animation loops, patches on the canvas draw calls,

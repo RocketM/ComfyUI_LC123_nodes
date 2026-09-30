@@ -282,6 +282,16 @@ def _collect_from_prompt(prompt, skip_ids=None) -> list[tuple[str, str | None]]:
         class_type = str(node.get("class_type") or node.get("type") or "")
         hint_node = _hint_from_class(class_type)
         inputs = node.get("inputs") if isinstance(node.get("inputs"), dict) else {}
+        # LC Model Optimizer: its widgets usually say "★ Recommended", not a file name. Ask it which files it loads.
+        if class_type.startswith("LCOptimizer") and inputs:
+            try:
+                from . import lc_optimizer_engine
+
+                for name, folder in lc_optimizer_engine.loaded_files(inputs):
+                    add(name, folder)
+            except Exception:
+                pass
+            continue
         if class_type in ('LCLoraLoader', 'LCGroupLoraLoader', 'LCGroupLoraLoaderStack'):
             widgets = node.get('widgets_values')
             values = [inputs.get('lora_rows')]
@@ -370,6 +380,8 @@ def collect_hashes(prompt=None, extra_pnginfo=None, save_node_id=None, *, lora_m
             if n.get("mode") in (2, 4):
                 continue
             if (scope is not None and str(n.get("id", i)) not in scope) or (run_ids is not None and str(n.get("id", i)) not in run_ids):
+                continue
+            if str(n.get("type") or "").startswith("LCOptimizer"):  # read from its inputs above, not its raw widgets
                 continue
             fake_prompt[str(n.get("id", i))] = {
                 "class_type": n.get("type"),

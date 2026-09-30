@@ -72,6 +72,9 @@ api.addEventListener("executed", ({ detail }) => {
   const out = detail?.output;
   if (!out) return;
   const key = String(detail.display_node || detail.node);
+  // LC Preview Image / Mask draw their own window (a DOM widget, fine in Nodes 2.0): a copy would show it twice
+  const node = app.graph?.getNodeById?.(Number(key)) || app.graph?.getNodeById?.(key);
+  if (["LCPreviewImage", "LCPreviewMask"].includes(node?.comfyClass || node?.type)) return;
   const pics = pictureFor(out);
   const text = readoutFor(out);
   // after the frontend has stored this node's output (it would overwrite an earlier write)

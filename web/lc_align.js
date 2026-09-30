@@ -197,7 +197,9 @@ function lockMoving() {
     mode === "group"
       ? union(groups.map((gr) => { const s = drag.groups.get(gr); return [s.x, s.y, s.w, s.h]; }))
       : union(nodes.map(start));
-  return { nodes, groups, mode, rect0 };
+  // LC Notes label nodes and groups alike, so a drag of only LC Notes snaps to Node lines and Group lines
+  const notesOnly = mode === "node" && nodes.every((n) => n.type === "LCNote");
+  return { nodes, groups, mode, rect0, notesOnly };
 }
 
 // candidate lines per axis for the current drag
@@ -205,7 +207,7 @@ function candidates(lock) {
   const xs = [];
   const ys = [];
   for (const gd of guides()) {
-    if (gd.kind !== lock.mode) continue;
+    if (gd.kind !== lock.mode && !lock.notesOnly) continue;
     (gd.axis === "x" ? xs : ys).push({ v: gd.v, kind: gd.kind, guide: true });
   }
   if (cfg.snapItems) {
