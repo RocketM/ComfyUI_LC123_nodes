@@ -24,7 +24,8 @@ const LEGEND = {
   hint: "⚠️ check this (it still loads) · 💡 tip · ℹ️ info",
 };
 const tip = (detail, legend) => esc(detail ? `${detail}\n\n${legend}` : legend);
-const ICON = { disk: "✅", download: "⬇️", ckpt: "📦", missing: "⚠️", on: "✅", off: "➖", na: "➖" };
+const ICON = { disk: "✅", download: "⬇️", ckpt: "📦", missing: "⚠️", on: "✅", off: "➖", na: "➖", unsupported: "➖" };
+const CUSTOM = "Custom";
 
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const wByName = (node, n) => (node.widgets || []).find((w) => w.name === n);
@@ -136,7 +137,8 @@ async function showPicker(node, widget, role, anchor) {
     crumb.textContent = path.length ? path.join(" / ") : `${base} · ${goal}`;
     if (!path.length) {
       const rec = data.recommended;
-      row(`<span>★</span><span style="flex:1"><b>Recommended</b><br><span style="color:#8a95a5">${rec ? esc(rec.file) + (rec.on_disk ? " · on disk" : ` · downloads ${rec.gb ?? "?"} GB`) + (rec.source === "default" ? " · Comfy default" : "") : "nothing for this part"}</span></span>`, () => pick(REC), { current: widget.value === REC });
+      const ckptPart = role !== "model" && node._lcOptPlan?.checkpoint;
+      row(`<span>★</span><span style="flex:1"><b>Recommended</b><br><span style="color:#8a95a5">${rec ? esc(rec.file) + (rec.on_disk ? " · on disk" : ` · downloads ${rec.gb ?? "?"} GB`) + (rec.source === "default" ? " · Comfy default" : "") : (ckptPart ? "blank: the checkpoint's own" : data.unsupported ? "unsupported for Custom: pick a file" : "nothing for this part")}</span></span>`, () => pick(REC), { current: widget.value === REC });
       for (const x of extras) row(`<span>${x === CKPT ? "📦" : "∅"}</span><span>${x}</span>`, () => pick(x), { current: widget.value === x });
       if ((data.downloads || []).length) row(`<span>📁</span><span style="flex:1">⬇ Download</span><span style="color:#8a95a5">${data.downloads.length}</span>`, () => { path = ["__dl"]; render(); });
       if (known.size) row(`<span>📁</span><span style="flex:1">On disk for ${esc(base)}</span><span style="color:#8a95a5">${known.size}</span>`, () => { path = ["__known"]; render(); });
@@ -157,8 +159,10 @@ async function showPicker(node, widget, role, anchor) {
 
 // ---------------------------------------------------------------- the face
 function display(v, planFile) {
+  if (v === REC && planFile?.state === "unsupported") return "unsupported: pick a file";
+  if (v === REC && planFile?.state === "ckpt") return ""; // blank: the checkpoint's own text encoder / VAE
   if (v === REC) return `★ ${planFile?.label ? baseName(planFile.label) : "Recommended"}`;
-  if (typeof v === "string" && v.startsWith(DL)) return `⬇ ${baseName(v.slice(DL.length))}`;
+  if (typeof v === "string" && v.startsWith(DL)) return `⬇ ${baseName(planFile?.label || v.slice(DL.length))}`;
   if (v === CKPT) return "📦 From checkpoint";
   return baseName(v ?? "");
 }
@@ -188,7 +192,7 @@ function renderFace(node) {
   if (!pl) { f.status.innerHTML = `<div style="color:#8a95a5">Checking…</div>`; f.foot.textContent = ""; return; }
   const lines = [];
   for (const x of pl.files || []) {
-    const what = x.state === "download" ? `downloads ${x.gb ?? "?"} GB` : x.state === "disk" ? "on disk" : x.state === "ckpt" ? "" : "not found";
+    const what = x.state === "download" ? `downloads ${x.gb ?? "?"} GB` : x.state === "disk" ? "on disk" : x.state === "ckpt" ? "" : x.state === "unsupported" ? "" : "not found";
     lines.push(`<div style="display:flex;gap:6px" title="${tip(baseName(x.label), LEGEND.file)}"><span>${ICON[x.state] || "•"}</span><span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(baseName(x.label))}</span><span style="color:#8a95a5;white-space:nowrap">${what}</span></div>`);
   }
   for (const s of pl.speedups || []) {
@@ -199,7 +203,7 @@ function renderFace(node) {
     lines.push(`<div style="display:flex;gap:6px;color:${icon === "⚠️" ? "#f3c969" : "#b8c2d0"}" title="${tip("", LEGEND.hint)}"><span>${icon}</span><span style="flex:1">${esc(text)}</span></div>`);
   f.status.innerHTML = lines.join("");
   const e = pl.estimate, rep = pl.report;
-  const est = e ? `~${e.step_s} s/step${e.total_s ? ` · ~${e.total_s} s` : ""}${e.fits === "vram" ? " · fits on the card" : e.fits ? " · streams from RAM" : ""}` : "";
+  const est = e === "unsupported" ? "Estimate: unsupported" : e ? `~${e.step_s} s/step${e.total_s ? ` · ~${e.total_s} s` : ""}${e.fits === "vram" ? " · fits on the card" : e.fits ? " · streams from RAM" : ""}` : "";
   f.foot.innerHTML = `<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(est || (rep ? `Report: ${rep.when?.slice(0, 10)} · ${rep.gpu}` : "No report yet"))}</span>`;
   const b = document.createElement("button");
   b.textContent = "Run or Open Report";
@@ -242,6 +246,17 @@ async function refreshPlan(node) {
     const res = await api.fetchApi("/lc123/optimizer_node/plan", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
     if (seq !== node._lcOptSeq) return;
     node._lcOptPlan = await res.json();
+    // switching to a checkpoint base (SDXL family): the text encoder and VAE go blank (the checkpoint's own)
+    if (node._lcOptBaseChanged && node._lcOptPlan.checkpoint_only) {
+      node._lcOptBaseChanged = false;
+      let changed = false;
+      for (const wn of ["text_encoder", "vae"]) {
+        const w = wByName(node, wn);
+        if (w && w.value !== REC) { w.value = REC; changed = true; }
+      }
+      if (changed) return refreshPlan(node);
+    }
+    node._lcOptBaseChanged = false;
   } catch (e) {
     node._lcOptPlan = { hints: [["⚠️", "Could not reach ComfyUI to check the files."]] };
   }
@@ -251,6 +266,8 @@ async function refreshPlan(node) {
 function applyManual(node) {
   const manual = wByName(node, "speed_ups")?.value === "Manual";
   for (const k of MANUAL) (manual ? showWidget : hideWidget)(wByName(node, k));
+  // the text encoder type is only asked for Custom (the known base models bring their own)
+  (wByName(node, "base_model")?.value === CUSTOM ? showWidget : hideWidget)(wByName(node, "clip_type"));
   fit(node);
 }
 
@@ -274,13 +291,14 @@ function setup(node) {
 
   let timer = 0;
   node._lcOptRefresh = () => { clearTimeout(timer); timer = setTimeout(() => refreshPlan(node), 150); };
-  for (const n of ["base_model", "goal", "speed_ups", ...MANUAL]) {
+  for (const n of ["base_model", "goal", "speed_ups", "clip_type", ...MANUAL]) {
     const w = wByName(node, n);
     if (!w) continue;
     const prev = w.callback;
     w.callback = function (...a) {
       const r = prev?.apply(this, a);
-      if (n === "speed_ups") applyManual(node);
+      if (n === "speed_ups" || n === "base_model") applyManual(node);
+      if (n === "base_model") node._lcOptBaseChanged = true;
       node._lcOptRefresh();
       return r;
     };

@@ -1,0 +1,86 @@
+{
+ "id": "pony",
+ "name": "Pony Diffusion V6 XL (SDXL)",
+ "kind": "image",
+ "params_b": 2.6,
+ "notes": [
+  "One checkpoint holds the model, both text encoders (CLIP-L + CLIP-G) and the VAE, about 6.5 GB in fp16. Fits an 8 GB card. No official fp8 / int8 / GGUF versions; every finetune of this family is the same size and speed.",
+  "Needs its score tags (score_9, score_8_up, ...) and clip skip 2. About 25 steps at cfg 6-7.",
+  "5090 times measured with cyberrealisticPony v17 (a Pony finetune, same architecture). The download is a community mirror of the CivitAI release."
+ ],
+ "components": {
+  "diffusion": {
+   "label": "Checkpoint (model + text encoders + VAE)",
+   "role": "diffusion",
+   "variants": [
+    {
+     "file": "ponyDiffusionV6XL_v6StartWithThisOne.safetensors",
+     "display": "ponyDiffusionV6XL_v6.safetensors",
+     "format": "fp16",
+     "gb": 6.46,
+     "bits": 16,
+     "repo": "LyliaEngine/Pony_Diffusion_V6_XL",
+     "loader": "CheckpointLoaderSimple",
+     "default": true,
+     "note": "full checkpoint incl. text encoders and VAE",
+     "community": true
+    }
+   ]
+  }
+ },
+ "source": "Hugging Face tree API sizes (LyliaEngine/Pony_Diffusion_V6_XL), measured 2026-09-30",
+ "quality": {
+  "method": "single format (fp16 checkpoint): the reference itself",
+  "reference": "ponyDiffusionV6XL_v6StartWithThisOne.safetensors",
+  "files": {}
+ },
+ "benchmarks": {
+  "workflow": "CheckpointLoaderSimple, 1024 / 1408 square, cfg 6, euler/normal; step_s = slope of two step counts (a fast card's progress reporting adds a fixed ~0.1 s per step that this removes)",
+  "references": [
+   {
+    "machine": {
+     "gpu": "NVIDIA GeForce RTX 5090",
+     "attention_sdpa_ms": 2.42,
+     "fp8_tflops": 399.8
+    },
+    "runs": [
+     {
+      "file": "ponyDiffusionV6XL_v6StartWithThisOne.safetensors",
+      "megapixels": 1.0,
+      "step_s": 0.09,
+      "note": "measured 2026-09-30"
+     },
+     {
+      "file": "ponyDiffusionV6XL_v6StartWithThisOne.safetensors",
+      "megapixels": 2.0,
+      "step_s": 0.18,
+      "note": "measured 2026-09-30"
+     }
+    ]
+   },
+   {
+    "machine": {
+     "gpu": "NVIDIA GeForce RTX 5060 Laptop GPU",
+     "vram_gb": 8.0,
+     "attention_sdpa_ms": 17.2,
+     "fp8_tflops": 66.5,
+     "note": "64 GB RAM, PCIe Gen5 x8, no SageAttention"
+    },
+    "runs": [
+     {
+      "file": "ponyDiffusionV6XL_v6StartWithThisOne.safetensors",
+      "megapixels": 1.0,
+      "step_s": 0.49,
+      "note": "measured with sd_xl_base_1.0 (same architecture), 2026-09-30"
+     },
+     {
+      "file": "ponyDiffusionV6XL_v6StartWithThisOne.safetensors",
+      "megapixels": 2.0,
+      "step_s": 0.99,
+      "note": "measured with sd_xl_base_1.0 (same architecture), 2026-09-30"
+     }
+    ]
+   }
+  ]
+ }
+}

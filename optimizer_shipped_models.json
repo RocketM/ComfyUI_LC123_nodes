@@ -169,6 +169,21 @@
   },
   {
    "family": "Animosity",
+   "file": "Animosity_Illustrious_v1.1.safetensors",
+   "repo": "Lonecatone23/Animosity",
+   "path": "illustrious/Animosity_Illustrious_v1.1.safetensors",
+   "gb": 7.25,
+   "sha256": "02548d80f16aaa290f16ce89d8dccd90b38f794300c414dce9d735de6a35fd34",
+   "profile": "illustrious",
+   "format": "fp16",
+   "names": [
+    "Animosity_Illustrious_v1.1.safetensors",
+    "animosity_illustriousV11.safetensors"
+   ],
+   "folder": "checkpoints"
+  },
+  {
+   "family": "Animosity",
    "file": "Animosity_Krea2_V1.0.safetensors",
    "repo": "Lonecatone23/Animosity",
    "path": "krea2/Animosity_Krea2_V1.0.safetensors",

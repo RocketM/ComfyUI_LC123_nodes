@@ -6,7 +6,7 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 - **CivitAI:** [lonecatone23](https://civitai.com/user/lonecatone23)
 - **Instagram:** [synth.studio.models](https://www.instagram.com/synth.studio.models/)
 - **Support:** [Buy me a ☕](https://ko-fi.com/lonecatone)
-- **Version:** 1.45.9 · **133 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
+- **Version:** 1.45.10 · **133 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
 
 > Small tools that remove friction: less wire mess, fewer clicks, clearer workflows.
 
@@ -83,7 +83,7 @@ Tools for the canvas itself, not nodes. Nothing here touches your generations.
 - **When picking a model (includes custom models):** what file type to get on YOUR machine for Quality, Optimal and Fast, a size guide, and what to avoid. Works for finetunes and merges too.
 - **Model recommendations:** pick a model and a goal, get the exact files: download link, size, how close it is to bf16, time per step on your machine, and whether it fits. ✅ = you already have it.
     - **All base models at a glance** lists every model at once.
-    - Models covered: MiniMax H3, Krea 2, LTX 2.5, LTX 2.3, Anima, Z-Image Turbo, Qwen-Image 2.1, Flux.2 Klein 9B, Ideogram 4.
+    - Models covered: MiniMax H3, Krea 2 (Turbo and Raw), LTX 2.5, LTX 2.3, Anima, Z-Image Turbo, Qwen-Image 2.1, Flux.2 Klein 9B, Ideogram 4, SDXL, Illustrious XL, Pony Diffusion V6 XL.
     - Measured on an RTX 5090 and an 8 GB RTX 5060 Laptop. Image models land within about 15 %; video models are rougher and it says so.
 - **Show last run** and **Copy report** work like the Comfy Optimization Report. It will not run while ComfyUI is generating.
 - Nothing is changed. Open it from **Settings > LC123 Settings ⚙️ > Optimization**, or right-click the empty canvas.
@@ -217,7 +217,7 @@ The **System & Model Optimization Report** tells you what suits your machine. Th
 
 **LC Model Optimizer ⚡ / LC Model Optimizer (pipe) ⚡** (image models)
 - Outputs: `model`, `clip`, `vae`, `summary`. The pipe version adds an `LC_PIPE` in front (model 2 = Ideogram 4's second model).
-- Krea 2, Qwen-Image 2.1, Z-Image Turbo, Flux.2 Klein 9B, Ideogram 4, Anima.
+- Krea 2 (Turbo and Raw), Qwen-Image 2.1, Z-Image Turbo, Flux.2 Klein 9B, Ideogram 4, Anima, SDXL, Illustrious XL, Pony Diffusion V6 XL (the SDXL family loads as one checkpoint: text encoders and VAE come from it).
 
 **LC Model Optimizer Video ⚡ / LC Model Optimizer Video (pipe) ⚡** (video models)
 - Outputs: `model`, `clip`, `vae`, `audio_vae`, `latent_upscaler`, `summary`. The pipe version adds an `LC_PIPE` in front (vae 2 = audio VAE).
@@ -234,6 +234,10 @@ The **System & Model Optimization Report** tells you what suits your machine. Th
     - **On disk for this model:** your files that match the base model.
     - Then all your folders, so **custom models** work too.
 - **All-in-one checkpoints:** the text encoder and VAE come from the checkpoint (you can still pick your own).
+- **Custom (any other model or workflow):** set the base model to **Custom** (image and video).
+    - Pick your own files. ★ Recommended, downloads, estimates and file checks show as **unsupported** (we have no data for it).
+    - The speed-ups still apply.
+    - `clip_type` (Custom only): how the text encoder loads. **auto** works when the encoder matches one of the models above; otherwise set it (e.g. `chroma` for Chroma).
 - **GGUF:** loads through **ComfyUI-GGUF**. A GGUF it refuses (e.g. a `krea2` tag) falls back to the **calcuis gguf** pack if you have it.
 
 **Speed-ups (Auto)**

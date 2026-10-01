@@ -45,7 +45,7 @@ TE_EXPECTS = {
     "ideogram4": ("Qwen3-VL 8B", 36, 4096, True), "krea2": ("Qwen3-VL 4B", 36, 2560, True),
     "ltx23": ("Gemma 3 12B", 48, 3840, True), "ltx25": ("Gemma 4 12B", 48, 3840, True),
     "minimax_h3": ("Qwen3-VL 32B (H3)", 50, 5120, True), "qwen_image_21": ("Qwen3-VL 8B", 36, 4096, True),
-    "z_image_turbo": ("Qwen3 4B", 36, 2560, False),
+    "z_image_turbo": ("Qwen3 4B", 36, 2560, False), "krea2_raw": ("Qwen3-VL 4B", 36, 2560, True),
 }
 TE_NAMES = {(28, 1024, False): "Qwen3 0.6B", (36, 2560, False): "Qwen3 4B", (36, 4096, False): "Qwen3 8B",
             (36, 2560, True): "Qwen3-VL 4B", (36, 4096, True): "Qwen3-VL 8B", (50, 5120, True): "Qwen3-VL 32B (H3)",
@@ -53,11 +53,12 @@ TE_NAMES = {(28, 1024, False): "Qwen3 0.6B", (36, 2560, False): "Qwen3 4B", (36,
             (26, 2304, False): "Gemma 2 2B", (30, 5120, True): "Mistral Small 3", (35, 1536, True): "Gemma 4 E2B",
             (42, 2560, True): "Gemma 4 E4B"}
 VAE_EXPECTS = {"anima": (16, 5), "krea2": (16, 5), "z_image_turbo": (16, 4), "flux2_klein_9b": (32, 4), "ideogram4": (32, 4),
-               "qwen_image_21": (64, 5), "ltx25": (128, 2)}
+               "qwen_image_21": (64, 5), "ltx25": (128, 2), "krea2_raw": (16, 5), "sdxl": (4, 4), "illustrious": (4, 4), "pony": (4, 4)}
 VAE_NAMES = {(16, 4): "16-channel 2D (Flux 1 / Z-Image)", (16, 5): "16-channel 3D (Wan / Qwen-Image)", (32, 4): "32-channel (Flux 2)",
              (64, 5): "64-channel (Qwen-Image 2.1)", (4, 4): "4-channel (SD / SDXL)", (128, 2): "128-channel (LTX)"}
 MODEL_CLASSES = {"anima": "Anima", "flux2_klein_9b": "Flux2", "ideogram4": "Ideogram4", "krea2": "Krea2", "ltx23": "LTXAV",
-                 "ltx25": "LTXAV", "minimax_h3": "MiniMaxH3", "qwen_image_21": "QwenImage21", "z_image_turbo": "ZImage"}
+                 "ltx25": "LTXAV", "minimax_h3": "MiniMaxH3", "qwen_image_21": "QwenImage21", "z_image_turbo": "ZImage",
+                 "krea2_raw": "Krea2", "sdxl": "SDXL", "illustrious": "SDXL", "pony": "SDXL"}
 
 
 # the extra parts each base model uses (the nodes are static; this only decides which pickers matter)
@@ -69,11 +70,31 @@ EXTRAS = {
 }
 MAX_EXTRAS = 2
 
+# "Custom": any model and workflow. No files, numbers or checks are known for it, so those show as unsupported;
+# the speed-ups from the report still apply.
+CUSTOM = {"custom": "image", "custom_video": "video"}
+CUSTOM_NAME = "Custom"
+UNSUPPORTED = "unsupported"
+CLIP_AUTO = "auto"
+
+
+def is_custom(profile_id):
+    return profile_id in CUSTOM
+
+
+def checkpoint_only(profile_id):
+    """Base models shipped as one checkpoint (the SDXL family): the text encoder and VAE come from it."""
+    prof = profiles().get(profile_id) or {}
+    vs = variants(prof, "model") if prof.get("components") else []
+    return bool(vs) and all(v.get("loader") == "CheckpointLoaderSimple" for v in vs)
+
 
 def roles_for(profile_id):
     """The file pickers this base model uses."""
     prof = profiles().get(profile_id) or {}
     roles = ["model", "clip", "vae"]
+    if profile_id == "custom_video":
+        return roles + ["audio_vae", "upscaler", "lora"]
     extras = [n for n, _ in EXTRAS.get(profile_id, [])]
     if "audio_vae" in extras:
         roles.append("audio_vae")
@@ -86,13 +107,41 @@ def roles_for(profile_id):
 
 # ---------------------------------------------------------------- profiles, report, files on disk
 def profiles(kind=None):
-    out = lc_model_calc.load_profiles()
+    out = dict(lc_model_calc.load_profiles())
+    for pid, k in CUSTOM.items():
+        out[pid] = {"id": pid, "name": CUSTOM_NAME, "kind": k, "custom": True, "components": {}, "notes": []}
     return {k: v for k, v in out.items() if kind is None or v.get("kind") == kind}
 
 
 def base_names(kind):
-    """[(id, name)] for the base model dropdown, image or video."""
-    return sorted(((k, v["name"]) for k, v in profiles(kind).items()), key=lambda x: x[1].lower())
+    """[(id, name)] for the base model dropdown, image or video. Custom goes last."""
+    return sorted(((k, v["name"]) for k, v in profiles(kind).items()), key=lambda x: (is_custom(x[0]), x[1].lower()))
+
+
+def clip_types(kind):
+    """The text encoder types a Custom pick can use (CLIPLoader's list, plus LTX 2.3's own loader for video)."""
+    try:
+        import nodes
+
+        types = list(nodes.NODE_CLASS_MAPPINGS["CLIPLoader"].INPUT_TYPES()["required"]["type"][0])
+    except Exception:
+        types = ["stable_diffusion"]
+    if kind == "video":
+        types.append("LTXAVTextEncoderLoader")
+    return [CLIP_AUTO] + types
+
+
+def auto_clip_type(path):
+    """Custom + auto: the clip type of the known base models whose text encoder has this shape, when only one fits."""
+    sig = te_signature(path) if path else None
+    if sig is None:
+        return None, []
+    found = set()
+    for pid, want in TE_EXPECTS.items():
+        if want[1:] == sig:
+            prof = profiles().get(pid) or {}
+            found |= {c.get("clip_type") for c in prof.get("components", {}).values() if c.get("role") == "text_encoder" and c.get("clip_type")}
+    return (found.pop() if len(found) == 1 else None), sorted(found)
 
 
 def report():
@@ -222,7 +271,7 @@ def choices(profile_id, role, goal):
     """What the picker shows: the recommended file, downloads for the profile's files not on disk, local files
     (files known for this base model first)."""
     prof = profiles().get(profile_id)
-    out = {"recommended": None, "downloads": [], "local": [], "known": []}
+    out = {"recommended": None, "downloads": [], "local": [], "known": [], "unsupported": is_custom(profile_id)}
     if not prof:
         return out
     rec = recommended(prof, role, goal)
@@ -236,7 +285,7 @@ def choices(profile_id, role, goal):
         if hit:
             known.add(hit[1])
         elif not v.get("unconfirmed"):
-            out["downloads"].append({"value": DOWNLOAD + v["file"], "file": v["file"], "gb": v.get("gb"), "format": v.get("format"),
+            out["downloads"].append({"value": DOWNLOAD + v["file"], "file": v.get("display") or v["file"], "gb": v.get("gb"), "format": v.get("format"),
                                      "community": bool(v.get("community")), "gated": v["repo"].startswith(("black-forest-labs",))})
     out["local"] = [n for _, n in local_files(role)]
     out["known"] = sorted(known)
@@ -322,13 +371,21 @@ def check_files(profile_id, picks):
     name = prof.get("name", profile_id)
     hints = []
     p = picks.get("model")
+    if is_custom(profile_id):
+        cls = model_class(p) if p else None
+        if cls:
+            hints.append(("ℹ️", f"This model file looks like {cls}."))
+        return hints
     if p and profile_id in MODEL_CLASSES:
         cls = model_class(p)
         want = MODEL_CLASSES[profile_id]
         if cls and cls != want and not (want == "ZImage" and cls.startswith("ZImage")):
             hints.append(("⚠️", f"This model file looks like {cls}, not {name}. Check the base model setting."))
     p = picks.get("clip")
-    if p and profile_id in TE_EXPECTS:
+    if p and checkpoint_only(profile_id) and MODEL_CLASSES.get(profile_id) == "SDXL":
+        hints.append(("⚠️", f"{name} needs CLIP-L and CLIP-G together. One text encoder file loads as a single CLIP: expect errors. "
+                             "Leave the text encoder blank to use the checkpoint's own."))
+    elif p and profile_id in TE_EXPECTS:
         want = TE_EXPECTS[profile_id]
         sig = te_signature(p)
         if sig is None:
@@ -475,6 +532,8 @@ def resolve(profile_id, role, value, goal):
             return None
         v = rec
     elif value.startswith(DOWNLOAD):
+        if is_custom(profile_id):
+            raise FileNotFoundError(f"[LC Optimizer] Custom: downloads are {UNSUPPORTED}. Pick a file you have for the {role}.")
         fname = value[len(DOWNLOAD):]
         v = next((x for x in vs if x["file"] == fname), None)
         if v is None:
@@ -491,7 +550,7 @@ def resolve(profile_id, role, value, goal):
                 return folder, value, v
         entry = shipped(value) if role == "model" else None
         if entry:
-            folder, name = download_shipped(entry, value)
+            folder, name = download_shipped(entry, value, entry.get("folder", "diffusion_models"))  # checkpoints (SDXL family) go to checkpoints
             return folder, name, None
         raise FileNotFoundError(f"[LC Optimizer] {value} was not found in the {'/'.join(ROLE_FOLDERS[role])} folders.")
     folder = FOLDER_BY_LOADER.get(v["loader"], ROLE_FOLDERS[role][0])
@@ -742,14 +801,19 @@ def apply_speedups(model, rows):
 def plan(profile_id, goal, picks, manual=None):
     """picks: {role: widget value}. Everything the face shows, without loading or downloading anything."""
     prof = profiles().get(profile_id)
+    custom = is_custom(profile_id)
     out = {"base": prof["name"] if prof else profile_id, "roles": roles_for(profile_id), "extras": EXTRAS.get(profile_id, []), "files": [], "speedups": plan_speedups(profile_id, goal, manual),
-           "hints": [], "report": None, "estimate": None}
+           "hints": [], "report": None, "estimate": UNSUPPORTED if custom else None, "custom": custom, "checkpoint_only": checkpoint_only(profile_id)}
     sysp = report()
     if sysp:
         g = (sysp.get("gpus") or [{}])[0]
         out["report"] = {"when": sysp.get("when"), "gpu": g.get("name"), "vram_gb": g.get("vram_gb")}
+    elif custom:
+        out["hints"].append(("💡", "No report yet: run the System & Model Optimization Report so the speed-ups suit this machine."))
     else:
         out["hints"].append(("💡", "No report yet: using Comfy's default files. Run the System & Model Optimization Report for picks that suit this machine."))
+    if custom:
+        out["hints"].append(("ℹ️", "Custom: recommended files, downloads, estimates and file checks are unsupported. Pick your own files; the speed-ups still apply."))
     paths = {}
     ckpt = False
     for role, value in picks.items():
@@ -759,6 +823,12 @@ def plan(profile_id, goal, picks, manual=None):
             out["files"].append({"role": role, "label": "from the checkpoint", "state": "ckpt"})
             continue
         row = {"role": role, "value": value}
+        if custom and (value == RECOMMENDED or value.startswith(DOWNLOAD)):
+            if not (ckpt and role in ("clip", "vae", "audio_vae")):
+                out["files"].append(dict(row, label=f"{role}: {UNSUPPORTED}", state=UNSUPPORTED))
+            else:
+                out["files"].append({"role": role, "label": "from the checkpoint", "state": "ckpt"})
+            continue
         try:
             if value == RECOMMENDED or value.startswith(DOWNLOAD):
                 if value == RECOMMENDED:
@@ -772,10 +842,10 @@ def plan(profile_id, goal, picks, manual=None):
                     continue
                 folder = FOLDER_BY_LOADER.get(v["loader"], ROLE_FOLDERS[role][0])
                 hit = find_on_disk(v["file"], [folder])
-                row.update(label=v["file"], gb=v.get("gb"), state="disk" if hit else "download")
+                row.update(label=v.get("display") or v["file"], gb=v.get("gb"), state="disk" if hit else "download")
+                ckpt = ckpt or (role == "model" and folder == "checkpoints")  # also before it is downloaded
                 if hit:
                     paths[role] = full_path(*hit)
-                    ckpt = ckpt or (role == "model" and hit[0] == "checkpoints")
                 if role == "model" and v.get("pick", {}).get("step_s"):
                     pk = v["pick"]
                     out["estimate"] = {"step_s": pk["step_s"], "total_s": pk.get("total_s"), "steps": pk.get("steps"), "fits": pk.get("fits"),
@@ -810,7 +880,9 @@ def summary_text(pl, applied, loaded):
     for role, name in loaded:
         lines.append(f"{role}: {name}")
     lines.append("speed-ups: " + (", ".join(applied) if applied else "none"))
-    if pl.get("estimate"):
+    if pl.get("estimate") == UNSUPPORTED:
+        lines.append(f"estimate: {UNSUPPORTED}")
+    elif pl.get("estimate"):
         e = pl["estimate"]
         lines.append(f"estimate: ~{e['step_s']} s/step" + (f", ~{e['total_s']} s for {e['steps']} steps" if e.get("total_s") else ""))
     for icon, text in pl["hints"]:

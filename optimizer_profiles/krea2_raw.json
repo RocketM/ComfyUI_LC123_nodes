@@ -1,0 +1,193 @@
+{
+ "id": "krea2_raw",
+ "name": "Krea 2 (Raw)",
+ "kind": "image",
+ "params_b": 12,
+ "notes": [
+  "The undistilled base: real CFG (about 3.5) and about 52 steps (er_sde / simple). Each step costs about 2x Turbo (it runs a negative pass too), so a full image takes about 13x as long as Turbo's 8 steps.",
+  "Best up to about 1 MP. Same sizes, text encoder and VAE as Turbo; the base to train and fine-tune on.",
+  "fp8_scaled and int8_convrot: speed and quality come from Turbo's files (same network, same Comfy-Org recipe), not measured on the Raw files."
+ ],
+ "components": {
+  "diffusion": {
+   "label": "Image model",
+   "role": "diffusion",
+   "variants": [
+    {
+     "file": "krea2_raw_bf16.safetensors",
+     "format": "bf16",
+     "gb": 24.48,
+     "bits": 16,
+     "repo": "Comfy-Org/Krea-2",
+     "loader": "UNETLoader"
+    },
+    {
+     "file": "krea2_raw_fp8_scaled.safetensors",
+     "format": "fp8_scaled",
+     "gb": 12.24,
+     "bits": 8,
+     "repo": "Comfy-Org/Krea-2",
+     "loader": "UNETLoader",
+     "default": true
+    },
+    {
+     "file": "krea2_raw_int8_convrot.safetensors",
+     "format": "int8_convrot",
+     "gb": 12.56,
+     "bits": 8,
+     "repo": "Comfy-Org/Krea-2",
+     "loader": "UNETLoader"
+    }
+   ]
+  },
+  "text_encoder": {
+   "label": "Text encoder (Qwen3-VL-4B)",
+   "role": "text_encoder",
+   "clip_type": "krea2",
+   "variants": [
+    {
+     "file": "qwen3vl_4b_bf16.safetensors",
+     "format": "bf16",
+     "gb": 8.27,
+     "bits": 16,
+     "repo": "Comfy-Org/Krea-2",
+     "loader": "CLIPLoader"
+    },
+    {
+     "file": "qwen3vl_4b_fp8_scaled.safetensors",
+     "format": "fp8_scaled",
+     "gb": 4.88,
+     "bits": 8,
+     "repo": "Comfy-Org/Krea-2",
+     "loader": "CLIPLoader",
+     "default": true
+    },
+    {
+     "file": "qwen3vl_4b-iq4_xs.gguf",
+     "format": "gguf_iq4_xs",
+     "gb": 2.89,
+     "bits": 4,
+     "repo": "gguf-org/krea-2-gguf",
+     "loader": "CLIPLoaderGGUF",
+     "community": true,
+     "unconfirmed": "made for the calcuis gguf node"
+    }
+   ]
+  },
+  "vae": {
+   "label": "VAE",
+   "role": "fixed",
+   "variants": [
+    {
+     "file": "qwen_image_vae.safetensors",
+     "format": "bf16",
+     "gb": 0.23,
+     "bits": 16,
+     "repo": "Comfy-Org/Krea-2",
+     "loader": "VAELoader",
+     "always": true
+    }
+   ]
+  }
+ },
+ "source": "Hugging Face tree API sizes (Comfy-Org/Krea-2), measured 2026-09-30",
+ "quality": {
+  "method": "single step from the same bf16 latent (steps 2, 4, 6 of 8), 3 prompts, LPIPS vs bf16; 0 = identical",
+  "reference": "krea2_raw_bf16.safetensors",
+  "files": {
+   "krea2_raw_fp8_scaled.safetensors": {
+    "lpips_avg": 0.0136,
+    "note": "Turbo's krea2_turbo_fp8_scaled vs Turbo bf16 (same recipe); Raw not measured"
+   },
+   "krea2_raw_int8_convrot.safetensors": {
+    "lpips_avg": 0.0063,
+    "note": "Turbo / Krealism int8_convrot vs bf16 (same recipe); Raw not measured"
+   }
+  }
+ },
+ "benchmarks": {
+  "workflow": "Comfy-Org image_krea2_turbo_t2i as API with the Raw model, cfg 3.5, euler/simple, TE fp8_scaled; step_s = slope of two step counts",
+  "references": [
+   {
+    "machine": {
+     "gpu": "NVIDIA GeForce RTX 5090",
+     "attention_sdpa_ms": 2.42,
+     "fp8_tflops": 399.8
+    },
+    "runs": [
+     {
+      "file": "krea2_raw_bf16.safetensors",
+      "megapixels": 1.0,
+      "step_s": 1.27,
+      "note": "measured 2026-09-30"
+     },
+     {
+      "file": "krea2_raw_bf16.safetensors",
+      "megapixels": 2.0,
+      "step_s": 2.57,
+      "note": "measured 2026-09-30"
+     },
+     {
+      "file": "krea2_raw_fp8_scaled.safetensors",
+      "megapixels": 1.0,
+      "step_s": 1.0,
+      "note": "derived: Turbo's fp8_scaled time x the CFG cost measured on this machine (same network, Raw runs a negative pass every step), 2026-09-30"
+     },
+     {
+      "file": "krea2_raw_fp8_scaled.safetensors",
+      "megapixels": 2.0,
+      "step_s": 1.99,
+      "note": "derived: Turbo's fp8_scaled time x the CFG cost measured on this machine (same network, Raw runs a negative pass every step), 2026-09-30"
+     },
+     {
+      "file": "krea2_raw_int8_convrot.safetensors",
+      "megapixels": 1.0,
+      "step_s": 0.62,
+      "note": "derived: Turbo's int8_convrot time x the CFG cost measured on this machine (same network, Raw runs a negative pass every step), 2026-09-30"
+     },
+     {
+      "file": "krea2_raw_int8_convrot.safetensors",
+      "megapixels": 2.0,
+      "step_s": 1.29,
+      "note": "derived: Turbo's int8_convrot time x the CFG cost measured on this machine (same network, Raw runs a negative pass every step), 2026-09-30"
+     }
+    ]
+   },
+   {
+    "machine": {
+     "gpu": "NVIDIA GeForce RTX 5060 Laptop GPU",
+     "vram_gb": 8.0,
+     "attention_sdpa_ms": 17.2,
+     "fp8_tflops": 66.5,
+     "note": "64 GB RAM, PCIe Gen5 x8, no SageAttention"
+    },
+    "runs": [
+     {
+      "file": "krea2_raw_fp8_scaled.safetensors",
+      "megapixels": 1.0,
+      "step_s": 5.71,
+      "note": "measured with krea2_turbo_fp8_scaled at cfg 3.5 (same network and format), 2026-09-30"
+     },
+     {
+      "file": "krea2_raw_fp8_scaled.safetensors",
+      "megapixels": 2.0,
+      "step_s": 11.61,
+      "note": "measured with krea2_turbo_fp8_scaled at cfg 3.5 (same network and format), 2026-09-30"
+     },
+     {
+      "file": "krea2_raw_int8_convrot.safetensors",
+      "megapixels": 1.0,
+      "step_s": 5.21,
+      "note": "derived: Turbo's int8_convrot time x the CFG cost measured on this machine (same network, Raw runs a negative pass every step), 2026-09-30"
+     },
+     {
+      "file": "krea2_raw_int8_convrot.safetensors",
+      "megapixels": 2.0,
+      "step_s": 12.1,
+      "note": "derived: Turbo's int8_convrot time x the CFG cost measured on this machine (same network, Raw runs a negative pass every step), 2026-09-30"
+     }
+    ]
+   }
+  ]
+ }
+}

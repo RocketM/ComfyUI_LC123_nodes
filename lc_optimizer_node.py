@@ -28,6 +28,8 @@ QWEN_TIP = ("Qwen-Image 2.1 only (Qwen Image 2.1 Cache): where the KV cache live
             "but roughly doubles the per-step error. RAM costs little speed. off = slowest.")
 ROLES_IMAGE = ["model", "clip", "vae"]
 ROLES_VIDEO = ["model", "clip", "vae", "audio_vae", "upscaler", "lora"]
+CLIP_TIP = ("Custom only: how the text encoder is loaded (CLIPLoader's type). auto = from the encoder's shape when it "
+            "matches one known base model. Ignored for the other base models and for a checkpoint's own encoder.")
 WIDGET_OF = {"model": "model_file", "clip": "text_encoder", "vae": "vae", "audio_vae": "audio_vae", "upscaler": "latent_upscaler", "lora": "lora"}
 
 
@@ -44,16 +46,21 @@ DESC_IMAGE = (
     "that actually work on it (Sage, Comfy Kitchen, etc.).\n"
     "Run the report with the button below, or from the LC123 settings.\n"
     "Missing a file? Pick a ⬇ entry and it downloads on the first run.\n"
-    "Custom models work too. Pick your own file and it still gets the speed-ups, plus a ⚠️ if the text encoder or VAE doesn't match.\n"
-    "Current available models: Krea 2, Qwen-Image 2.1, Z-Image Turbo, Flux.2 Klein 9B, Ideogram 4, Anima."
+    "Finetunes work too. Pick your own file and it still gets the speed-ups, plus a ⚠️ if the text encoder or VAE doesn't match.\n"
+    "Any other model: set the base model to Custom and pick your own files (and the text encoder type). The speed-ups "
+    "still apply; recommendations, estimates and checks show as unsupported.\n"
+    "Current available models: Krea 2, Krea 2 (Raw), Qwen-Image 2.1, Z-Image Turbo, Flux.2 Klein 9B, Ideogram 4, Anima, "
+    "SDXL, Illustrious, Pony, Custom."
 )
 DESC_VIDEO = (
     "This node analyzes your machine and loads the model, text encoder, video and audio VAE and latent upscaler that suit "
     "YOUR card, with the speed-ups that actually work on it (Sage, Comfy Kitchen, etc.).\n"
     "Run the report with the button below, or from the LC123 settings.\n"
     "Missing a file? Pick a ⬇ entry and it downloads on the first run.\n"
-    "Custom models work too. Pick your own file and it still gets the speed-ups, plus a ⚠️ if the text encoder or VAE doesn't match.\n"
-    "Current available models: MiniMax H3, LTX 2.5, LTX 2.3."
+    "Finetunes work too. Pick your own file and it still gets the speed-ups, plus a ⚠️ if the text encoder or VAE doesn't match.\n"
+    "Any other model: set the base model to Custom and pick your own files (and the text encoder type). The speed-ups "
+    "still apply; recommendations, estimates and checks show as unsupported.\n"
+    "Current available models: MiniMax H3, LTX 2.5, LTX 2.3, Custom."
 )
 
 
@@ -80,6 +87,7 @@ class _LCOptimizerBase:
             req[k] = (opts, {"default": d, "tooltip": tip})
         if cls.KIND == "image":  # last, so saved workflows keep their widget order
             req["qwen21_cache"] = (["auto"] + list(E.QWEN_CACHE), {"default": "auto", "tooltip": QWEN_TIP})
+        req["clip_type"] = (E.clip_types(cls.KIND), {"default": E.CLIP_AUTO, "tooltip": CLIP_TIP})  # last: Custom only
         return {"required": req}
 
     @classmethod
@@ -113,9 +121,11 @@ class _LCOptimizerBase:
                 swap[WIDGET_OF[role]] = r[1]
             return r
 
+        custom = E.is_custom(pid)
         got["model"] = res("model")
         if not got["model"]:
-            raise ValueError("[LC Optimizer] Pick a model file.")
+            raise ValueError("[LC Optimizer] Custom: ★ Recommended is unsupported. Pick your own model file." if custom
+                             else "[LC Optimizer] Pick a model file.")
         folder, name, _ = got["model"]
         model, clip, vae, how = E.load_model(folder, name)
         loaded.append(("model", f"{name} ({how})"))
@@ -128,9 +138,17 @@ class _LCOptimizerBase:
             picks["audio_vae"] = E.FROM_CKPT
         if got.get("clip"):
             f, n, v = got["clip"]
-            ctype = (v or {}).get("clip_type") or next((c.get("clip_type") for c in prof["components"].values() if c["role"] == "text_encoder"), "stable_diffusion")
+            if custom:
+                ctype = kw.get("clip_type") or E.CLIP_AUTO
+                if ctype == E.CLIP_AUTO:
+                    ctype, seen = E.auto_clip_type(E.full_path(f, n))
+                    if not ctype:
+                        raise ValueError("[LC Optimizer] Custom: could not tell how to load this text encoder"
+                                         + (f" (it fits {', '.join(seen)})" if seen else "") + ". Set clip_type on the node.")
+            else:
+                ctype = (v or {}).get("clip_type") or next((c.get("clip_type") for c in prof["components"].values() if c["role"] == "text_encoder"), "stable_diffusion")
             clip = E.load_clip(f, n, ctype, ckpt_name)
-            loaded.append(("clip", n))
+            loaded.append(("clip", f"{n} ({ctype})" if custom else n))
         elif clip is not None:
             loaded.append(("clip", "from the checkpoint"))
         if got.get("vae"):

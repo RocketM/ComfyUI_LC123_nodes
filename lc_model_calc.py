@@ -129,7 +129,7 @@ def assess(variant, sysp, role, others_gb=0.0):
     support, why = format_support(variant["format"], sysp)
     r = {"file": variant["file"], "format": variant["format"], "gb": size, "support": support, "support_why": why, "notes": [],
          "expected_quality": expected_quality(variant)}
-    for k in ("repo", "loader", "default", "pruned", "community", "unconfirmed", "note"):
+    for k in ("repo", "loader", "default", "pruned", "community", "unconfirmed", "note", "display"):
         if variant.get(k) is not None:
             r[k] = variant[k]
     if variant.get("unconfirmed"):
@@ -269,7 +269,8 @@ def calc(model, sysp):
 # landed at across 9 models (8-bit ~0.02, 6 ~0.03, 5 ~0.04, 4 ~0.07, 3 ~0.18, 2 ~0.35)
 BITS_TO_LPIPS = {32: 0.0, 16: 0.0, 8: 0.02, 6: 0.03, 5: 0.04, 4: 0.07, 3: 0.18, 2: 0.35}
 GOALS = {"Quality": None, "Optimal": 0.05, "Fast": 0.10}  # the most distance from bf16 each goal accepts (frame sheets: under ~0.05 looks the same)
-STEPS = {"minimax_h3": 8, "krea2": 8, "ltx25": 11, "anima": 30, "z_image_turbo": 8, "qwen_image_21": 25, "flux2_klein_9b": 20, "ideogram4": 20, "ltx23": 11}
+STEPS = {"minimax_h3": 8, "krea2": 8, "ltx25": 11, "anima": 30, "z_image_turbo": 8, "qwen_image_21": 25, "flux2_klein_9b": 20, "ideogram4": 20, "ltx23": 11,
+         "krea2_raw": 52, "sdxl": 30, "illustrious": 28, "pony": 25}
 LOADER_NEEDS = {"UnetLoaderGGUF": "needs the ComfyUI-GGUF pack", "CLIPLoaderGGUF": "needs the ComfyUI-GGUF pack"}
 
 
@@ -311,7 +312,7 @@ def recommend(model, sysp, goal="Optimal", megapixels=None):
         if role == "fixed":
             picks = [r for r in rows if (r.get("default") or r.get("note") == "always") or any(v["file"] == r["file"] and (v.get("always") or v.get("default")) for v in comps[key]["variants"])]
             for r in picks or rows[:1]:
-                out["picks"].append({"component": comp["label"], "file": r["file"], "gb": r["gb"], "repo": r.get("repo"), "on_disk": r["file"] in have, "role": role})
+                out["picks"].append({"component": comp["label"], "file": r["file"], "display": r.get("display"), "gb": r["gb"], "repo": r.get("repo"), "on_disk": r["file"] in have, "role": role})
                 chosen_gb[key] = chosen_gb.get(key, 0) + r["gb"]
             continue
         by_fmt = {}
@@ -373,7 +374,7 @@ def recommend(model, sysp, goal="Optimal", megapixels=None):
         warn = [w for w in (LOADER_NEEDS.get(r.get("loader", "")), "gated on Hugging Face: accept the license there first" if v.get("note") == "gated" else None,
                             "community file" if r.get("community") else None,
                             "RAM will spill into the page file: slower first run" if r["ram"] == "pagefile" else None) if w]
-        pick = {"component": comp["label"], "file": r["file"], "format": r["format"], "gb": r["gb"], "repo": r.get("repo"), "on_disk": r["file"] in have,
+        pick = {"component": comp["label"], "file": r["file"], "display": r.get("display"), "format": r["format"], "gb": r["gb"], "repo": r.get("repo"), "on_disk": r["file"] in have,
                 "role": role, "support": r["support"], "support_why": r.get("support_why"), "fits": r["fits"], "ram": r["ram"],
                 "lpips": round(r["_q"], 4), "lpips_measured": r["_q_measured"], "warnings": warn, "info": info, "load_s": r.get("load_s")}
         if role == "diffusion" and r.get("_t"):
