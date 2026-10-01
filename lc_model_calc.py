@@ -57,6 +57,15 @@ def format_support(fmt, sysp):
     cap = (major, minor)
     if not g:
         return "no", "no usable GPU"
+    # the format has to exist in this ComfyUI first (read live from comfy.quant_ops); older builds cannot open newer files
+    algos = c.get("quant_algos")
+    need = {"mxfp8": "mxfp8", "nvfp4": "nvfp4", "int8": "int8_tensorwise", "int8_convrot": "int8_tensorwise",
+            "w4a8": "asym_w4a8_int8", "int4_convrot": "convrot_w4a4"}.get(fmt)
+    ver = f" {c['version']}" if c.get("version") else ""
+    if algos is not None and need and need not in algos:
+        return "no", f"your ComfyUI{ver} cannot load {fmt} files yet: update ComfyUI"
+    if fmt == "int8_convrot" and c.get("int8_convrot") is False:
+        return "no", f"your ComfyUI{ver} loads int8 but not int8_convrot files yet: update ComfyUI"
     if fmt in ("bf16",):
         return ("native", "fast bf16 on this card") if cap >= (8, 0) or not nv else ("slow", "no fast bf16 before RTX 30: ComfyUI runs it in fp16 / fp32")
     if fmt in ("fp16", "fp32"):

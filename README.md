@@ -6,7 +6,7 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 - **CivitAI:** [lonecatone23](https://civitai.com/user/lonecatone23)
 - **Instagram:** [synth.studio.models](https://www.instagram.com/synth.studio.models/)
 - **Support:** [Buy me a ☕](https://ko-fi.com/lonecatone)
-- **Version:** 1.45.7 · **132 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
+- **Version:** 1.45.9 · **133 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
 
 > Small tools that remove friction: less wire mess, fewer clicks, clearer workflows.
 
@@ -343,6 +343,7 @@ One **UPSCALE_MODEL** + an optional **MASK**. It crops to the matte, runs the mo
 - **`scale`**: keeps the model's native factor. Everything outside the mask stays bilinear.
 - Optional **MASK** (PersonMaskUltra `face` + `body` is the good combo). `mask_source`: **input** / **chroma** / **input+chroma**.
 - **blend** 0 = original, 1 = full patch under the matte.
+- **transfer**: **detail band** (default) takes only the model's pore and fold detail, brightness only and softly capped, so no colour shift and no 1-pixel grain. **full paste** is the old behaviour. **softness** smooths the detail band.
 - ⚠️ Don't load a 4x model in `detail 1x`. You pay for 4x the time and throw the extra pixels in the trash.
 - 💡 Daily setup: `1xSkinContrast-High-SuperUltraCompact` · `detail 1x` · blend `0.75` · Ultra `face+body` · `mask_source: input` · tile `256` / overlap `16`.
 
@@ -416,18 +417,19 @@ Hover any of these to wipe against the original. Heavy graph? See **Performance*
 | **LC Lift Gamma Gain** | Color-wheel style lift / gamma / gain |
 | **LC Image RGB** | Per-channel RGB control |
 | **LC Film Grain** | Grain. A little goes a long way |
-| **LC Film Stock (B&W)** / **(Color)** | Stock film looks, real blacks on B&W |
-| **LC Vibrance** | Smart saturation that won't blow out skin |
+| **LC Film Stock (B&W)** / **(Color)** | Stock film looks, real blacks on B&W. Bright colours roll off and keep their hue instead of clipping |
+| **LC Vibrance** | Smart saturation that won't blow out skin. Works on colour strength only, so hues never shift |
 | **LC Vignette** | Edge darkening |
 | **LC Bloom** | Glow, Pro-Mist or Halation |
 | **LC Depth FX 🌫️** | Haze, light wrap and depth of field from a depth map |
 | **LC Chromatic Aberration** | RGB fringe |
-| **LC Image Denoise** | Denoise that tries to keep detail instead of smearing it |
-| **LC Color Match 🎨** | Matches a reference (AdaIN / mean-std) with **skin_protect**. Optional **mask**: white = match, black = keep |
-| **LC Tone Match** | **image** supplies the detail, **reference** supplies lighting / color. Optional **mask** (white = lock). Wipes against the reference |
+| **LC Image Denoise** | **smart** (default) measures the noise in each image, cleans brightness grain and colour speckle separately, and brings back pores and hair where they stand above the noise. **noise_report** says how noisy each image was. **legacy** is the old edge-gated blur. 💡 On heavy noise, add LC Film Grain after it so skin does not look plastic |
+| **LC Color Match 🎨** | Matches a reference with **skin_protect**. **oklab** (default) matches how all the colours relate, not each channel on its own; **oklab + distribution** also matches the shape of the colours (best for copying a grade, can over-match a different scene); **adain** / **mean_std** are the old methods. oklab methods use every reference frame and run on the GPU. Optional **mask**: white = match, black = keep |
+| **LC Tone Match** | **image** supplies the detail, **reference** supplies lighting / color. Optional **mask** (white = lock). **split**: **guided** (default) follows the image's own edges, so no bright or dark rim on hard edges; **blur** is the old split. Wipes against the reference |
 | **LC Image Desaturate** | Desaturate, plain and simple |
 | **LC Skin Beauty ✨** / **LC Skin Upscale** / **LC Photo Style 📷** | See above |
-| **LC Apply LUT** | Reads `.cube` files from **`ComfyUI/models/luts/`**. Launches with **LC_Crushed_Blacks** at 0.3. Sample LUTs copy over from `assets/luts/` and never overwrite yours |
+| **LC Skin Texture ✨** | Adds real pore texture to skin that came out too smooth (after a strong denoise, a beauty pass or a plastic-looking model). Takes only the fine relief of a real skin photo, never its colour, and adds less where skin already has detail. **mask**: LC Person Mask (mediapipe, face + body, remove_features) is ideal; unwired, skin is found by colour. **reference**: your own skin close-up, or the bundled CC0 photo |
+| **LC Apply LUT** | Reads `.cube` files from **`ComfyUI/models/luts/`**. Launches with **LC_Crushed_Blacks** at 0.3. Sample LUTs copy over from `assets/luts/` and never overwrite yours. **interpolation**: **tetrahedral** (default, GPU, cleaner greys) or the old **trilinear** |
 | **LC Text Overlay** | Text on an image: align, drag or type the position. Shrinks to fit if the font would run off the edge. Includes the 14 bundled fonts |
 | **LC Phone Filters 📱** | The 37 phone-app presets (1977, Aden, Brooklyn, Xpro2, etc.). Pick one, dial strength, wipe to compare |
 | **LC Directional Blur** | Motion blur along one angle/length. Drag the arrow on the node, or double-click a readout to type. **strength** blends back toward the original. **taps** = smoothness, **edge** = what it reads past the border |
@@ -608,6 +610,7 @@ Workflow > Open, or just drag it onto the canvas.
 | `assets/luts/` | Sample LUTs, copied to `models/luts/` on first load if missing |
 | `assets/wildcards/` | LC Wildcard |
 | `assets/prompt_builder/` | Prompt Builder presets |
+| `assets/skin_texture/` | LC Skin Texture's CC0 skin photo (credits in its README) |
 | `web/fonts/` | The 14 bundled fonts (with their licenses) |
 
 ---
@@ -647,6 +650,8 @@ Workflow > Open, or just drag it onto the canvas.
 ## License
 
 MIT. See `LICENSE`.
+
+Borrowed code, with thanks (all MIT): colour science in `vendor/chromagrade` from ComfyUI-ChromaGrade (MONKEYFOREVER2), guided filter and tetrahedral LUT adapted from the same; band-pass detail transfer and skin texture synthesis adapted from ComfyUI-SkinDetailer; Photo Style local tone mapping re-written after ComfyUI-CameraForensicRealism.
 
 This represents hundreds of hours of work. If you enjoy it, please 👍 like, 💬 comment, and feel free to ⚡ tip 😉
 

@@ -34,6 +34,7 @@ const NODE_CLASSES = new Set([
   "LCChromaticAberration",
   "LCSkinBeauty",
   "LCSkinUpscale",
+  "LCSkinTexture",
   "LCPhoneLook",
   "LCPhoneFilters",
   "LCDirectionalBlur",

@@ -62,6 +62,7 @@ function sinceLast(prev, now, h, lines) {
   lines.push("", `Since the last run (${prev.when}):`);
   h.push(`<div style="color:#9aa3ad;font-size:12px;margin-bottom:4px">Grey = under 10%, which is normal run-to-run noise. Green = better, red = worse.</div>`);
   h.push(`<table style="width:100%;border-collapse:collapse;margin-bottom:8px;font-size:12px"><tr style="color:#9aa3ad;text-align:left"><th>Measured</th><th>Last run → this run</th></tr>`);
+  const bigDrop = [];
   for (const [k, b] of Object.entries(now.nums)) {
     const a = prev.snap.nums?.[k];
     if (a == null || b == null) continue;
@@ -70,8 +71,15 @@ function sinceLast(prev, now, h, lines) {
     const col = Math.abs(pct) < 10 ? "#9aa3ad" : good ? "#86efac" : "#f87171";
     h.push(`<tr><td>${esc(k)}</td><td style="color:${col}">${a} → ${b} (${pct > 0 ? "+" : ""}${pct}%)</td></tr>`);
     lines.push(`${k}: ${a} → ${b} (${pct > 0 ? "+" : ""}${pct}%)`);
+    if (!good && Math.abs(pct) >= 40) bigDrop.push(k);
   }
   h.push(`</table>`);
+  // a drop this big is almost never the card: something else was using the GPU while the tests ran
+  if (bigDrop.length) {
+    const msg = `⚠️ ${bigDrop.join(", ")} dropped 40% or more. That usually means something else was using the graphics card during the test (a generation, a game, a browser video). Run the report again with ComfyUI idle before trusting these numbers.`;
+    h.push(`<div style="margin:2px 0 6px 10px;color:#fbbf24">${esc(msg)}</div>`);
+    lines.push(msg);
+  }
   const changed = Object.entries(now.facts).filter(([k, v]) => (prev.snap.facts?.[k] ?? "") !== (v ?? ""));
   for (const [k, v] of changed) {
     h.push(`<div style="margin:2px 0 2px 10px;color:#fbbf24">Changed: <b>${esc(k)}</b>: ${esc(prev.snap.facts?.[k] || "none")} → ${esc(v || "none")}</div>`);

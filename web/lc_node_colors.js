@@ -25,6 +25,7 @@ const COLORS = {
     LCGetImage: { color: "#324b4b", bgcolor: "#324b4b" },
     LCSkinBeauty: { color: "#324B4B", bgcolor: "#324B4B" },
     LCSkinUpscale: { color: "#324B4B", bgcolor: "#324B4B" },
+    LCSkinTexture: { color: "#324B4B", bgcolor: "#324B4B" },
     LCDimensionResize: { color: "#324B4B", bgcolor: "#324B4B", size: [270, 110] },
     LCLastImageHolder: { color: "#324B4B", bgcolor: "#324B4B" },
     LCBatchImage: { color: "#324B4B", bgcolor: "#324B4B" },

@@ -1,8 +1,8 @@
 # LC123 node inventory
 
-**132 Python nodes** + **5 JS-only** · version 1.45.7
+**133 Python nodes** + **5 JS-only** · version 1.45.9
 
-Registered class IDs: 133 (132 in search, 1 deprecated but still loads in old workflows).
+Registered class IDs: 134 (133 in search, 1 deprecated but still loads in old workflows).
 
 ## LC123/Regional Canvas/Anima (1)
 
@@ -64,6 +64,7 @@ Registered class IDs: 133 (132 in search, 1 deprecated but still loads in old wo
 - `LCClarity`: LC Sharpen Pro
 - `LCSkinBeauty`: LC Skin Beauty ✨
 - `LCSkinUpscale`: LC Skin Upscale
+- `LCSkinTexture`: LC Skin Texture ✨
 - `LCTextOverlay`: LC Text Overlay
 - `LCToneMatch`: LC Tone Match
 - `LCVibrance`: LC Vibrance

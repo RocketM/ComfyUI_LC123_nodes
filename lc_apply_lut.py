@@ -144,6 +144,54 @@ def _trilinear_lut(img, table):
     return out.astype(np.float32)
 
 
+def _tetrahedral_lut(img, table, chunk=1 << 22):
+    """
+    img HxWx3 in 0..1, table (S,S,S,3) indexed [b, g, r]. Tetrahedral interpolation on the GPU when there is one:
+    each lattice cube is split into six tetrahedra, so a grey input only ever mixes grey-axis entries (cleaner
+    neutrals than trilinear, which mixes all eight corners).
+    Adapted from ComfyUI-ChromaGrade (chromagrade/lut.py _tetrahedral), MIT License, Copyright (c) 2026 MONKEYFOREVER2.
+    """
+    import torch
+    try:
+        import comfy.model_management as mm
+        dev = mm.get_torch_device()
+    except Exception:
+        dev = torch.device("cpu")
+    size = table.shape[0]
+    # [b, g, r] -> [r, g, b] so the flat index is (r * S + g) * S + b
+    flat = torch.from_numpy(np.ascontiguousarray(table.transpose(2, 1, 0, 3))).to(dev, torch.float32).reshape(-1, 3)
+    x_all = torch.from_numpy(np.ascontiguousarray(img, dtype=np.float32)).to(dev).reshape(-1, 3)
+    out = torch.empty_like(x_all)
+    s2 = size * size
+    for a in range(0, x_all.shape[0], chunk):
+        x = x_all[a:a + chunk]
+        f = x.clamp(0.0, 1.0) * (size - 1)
+        i0 = f.floor().clamp(0, size - 2).long()
+        d = (f - i0).clamp(0.0, 1.0)
+        base = (i0[:, 0] * size + i0[:, 1]) * size + i0[:, 2]
+        v = lambda dr, dg, db: flat[base + dr * s2 + dg * size + db]
+        v000, v001, v010, v011 = v(0, 0, 0), v(0, 0, 1), v(0, 1, 0), v(0, 1, 1)
+        v100, v101, v110, v111 = v(1, 0, 0), v(1, 0, 1), v(1, 1, 0), v(1, 1, 1)
+        dr, dg, db = d[:, 0:1], d[:, 1:2], d[:, 2:3]
+        c1 = (dr > dg) & (dg > db)
+        c2 = (dr > dg) & ~(dg > db) & (dr > db)
+        c3 = (dr > dg) & ~(dg > db) & ~(dr > db)
+        c4 = ~(dr > dg) & (db > dg)
+        c5 = ~(dr > dg) & ~(db > dg) & (db > dr)
+
+        def pick(o1, o2, o3, o4, o5, o6):
+            o = o6
+            for c, val in ((c5, o5), (c4, o4), (c3, o3), (c2, o2), (c1, o1)):
+                o = torch.where(c, val, o)
+            return o
+
+        cr = pick(v100 - v000, v100 - v000, v101 - v001, v111 - v011, v111 - v011, v110 - v010)
+        cg = pick(v110 - v100, v111 - v101, v111 - v101, v011 - v001, v010 - v000, v010 - v000)
+        cb = pick(v111 - v110, v101 - v100, v001 - v000, v001 - v000, v011 - v010, v111 - v110)
+        out[a:a + chunk] = v000 + cr * dr + cg * dg + cb * db
+    return out.reshape(img.shape).cpu().numpy().astype(np.float32)
+
+
 def _preview(self, result_tensor, source_tensor=None):
     out = {"ui": {}, "result": (result_tensor,)}
     try:
@@ -194,6 +242,13 @@ class LCApplyLUT(PreviewImage):
                         "tooltip": "OFF for normal photo/sRGB LUTs (recommended). ON only if the LUT is authored for log/linear (inverse-gamma in, gamma out).",
                     },
                 ),
+                "interpolation": (
+                    ["tetrahedral", "trilinear"],
+                    {
+                        "default": "tetrahedral",
+                        "tooltip": "tetrahedral = cleaner greys and smoother gradients, runs on the GPU (what grading apps use). trilinear = the old method.",
+                    },
+                ),
             }
         }
 
@@ -208,7 +263,7 @@ class LCApplyLUT(PreviewImage):
     )
 
     @_alpha_safe
-    def run(self, image, lut_name, strength, log):
+    def run(self, image, lut_name, strength, log, interpolation="tetrahedral"):
         if strength <= 0 or not lut_name or lut_name.startswith("(no"):
             return _preview(self, image, image)
 
@@ -251,7 +306,7 @@ class LCApplyLUT(PreviewImage):
             im_01 = (im_dom - dmin) / dom
             im_01 = np.clip(im_01, 0.0, 1.0)
 
-            mapped = _trilinear_lut(im_01, table)
+            mapped = _tetrahedral_lut(im_01, table) if interpolation == "tetrahedral" else _trilinear_lut(im_01, table)
 
             # If domain was non-default, table values are often still 0..1 RGB;
             # clip only — do not re-expand unless the LUT itself stores domain-scaled RGB.
