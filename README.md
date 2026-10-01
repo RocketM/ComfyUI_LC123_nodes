@@ -6,7 +6,7 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 - **CivitAI:** [lonecatone23](https://civitai.com/user/lonecatone23)
 - **Instagram:** [synth.studio.models](https://www.instagram.com/synth.studio.models/)
 - **Support:** [Buy me a ☕](https://ko-fi.com/lonecatone)
-- **Version:** 1.45.10 · **133 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
+- **Version:** 1.45.11 · **136 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
 
 > Small tools that remove friction: less wire mess, fewer clicks, clearer workflows.
 
@@ -502,6 +502,8 @@ Full directions: [`LC_Prompt_Builder_Note.md`](LC_Prompt_Builder_Note.md)
 | **LC Basic Scheduler** | Scheduler + steps = sigmas. No denoise |
 | **LC Sigma Curve** | No MODEL needed. Named schedules (`simple`, `karras`, `beta57`, `bong_tangent`, `linear_quadratic`, `kl_optimal`, etc.), your saved curves, and **Custom**. Drag a knot and it becomes Custom. **Save curve** arms the save, you still queue it. Your saves live in `ComfyUI/user/LC123/sigma_curves/`, so an update never touches them (older saves in the pack still load) |
 | **LC Sigma Resample** | Same sigma path, new **real** step count: `new_steps = round(old x multiplier) + adder`. Put it **after** a split, on the slice you want denser |
+| **LC Sigmas (BETA)** | One scheduler for one- and two-pass sampling. **preset** fills in the sampler + shape that tested best for your model (Krea 2, Z-Image, Flux 2, SDXL / Illustrious), or **auto** reads the loaded model. **focus** (structure ↔ detail), **shift**, image-to-image **denoise** (the info line shows the real starting noise), a **handoff** split whose low pass always starts where the high pass stopped (also with a second **model_2**), and **renoise** for ControlNet cleanup. Outputs both sigmas, the noise for each pass and the sampler. Live graph on the node |
+| **LC Detail Daemon (BETA)** / **(model)** | Adds fine detail by hiding a little of the noise from the model. **amount** is a plain % (not multiplied by CFG), **start / end** are how far along the image is, so they land the same at any step count. **mode auto** fixes the classic method working backwards on Krea 2. Sampler version for SamplerCustomAdvanced, model version for a plain KSampler |
 | **LC Reference Latent** | Up to 8 optional reference latents into conditioning. All empty = pass-through |
 | **LC Denoise 💉** | Latent injection: `noise_std = 1 - denoise`. Match the sampler's denoise |
 | **LC Pipe (in/edit)** / **Pipe Out** / **Detail Pipe Out** | Bundle or unpack models, clips, VAEs, prompts, seed, steps, the works |
@@ -590,6 +592,7 @@ Details: [`LC123_Save_Image_Note.md`](LC123_Save_Image_Note.md)
 | [`workflows/LC Skin Beauty basic (no deps).json`](workflows/LC%20Skin%20Beauty%20basic%20(no%20deps).json) | Skin Beauty on its own |
 | [`workflows/LC Dual sigma workflow example.json`](workflows/LC%20Dual%20sigma%20workflow%20example.json) | Split sigma |
 | [`workflows/LC Dual Sigma Advanced workflow example.json`](workflows/LC%20Dual%20Sigma%20Advanced%20workflow%20example.json) | Advanced split sigmas |
+| [`workflows/LC Better Sigmas V1.0.json`](workflows/LC%20Better%20Sigmas%20V1.0.json) | LC Sigmas + LC Detail Daemon against a plain euler / simple baseline, with I2I and LC Vision prompt assist |
 | [`workflows/Anima Regional Conditioning WF.json`](workflows/Anima%20Regional%20Conditioning%20WF.json) | Anima regional |
 | [`workflows/Anima Inline Regional Canvas workflow.json`](workflows/Anima%20Inline%20Regional%20Canvas%20workflow.json) | Anima inline canvas |
 | [`workflows/Anima Inline Regional Canvas example.json`](workflows/Anima%20Inline%20Regional%20Canvas%20example.json) | Anima inline canvas, example |

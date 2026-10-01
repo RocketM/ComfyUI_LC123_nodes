@@ -1,8 +1,8 @@
 # LC123 node inventory
 
-**133 Python nodes** + **5 JS-only** · version 1.45.10
+**136 Python nodes** + **5 JS-only** · version 1.45.11
 
-Registered class IDs: 134 (133 in search, 1 deprecated but still loads in old workflows).
+Registered class IDs: 137 (136 in search, 1 deprecated but still loads in old workflows).
 
 ## LC123/Regional Canvas/Anima (1)
 
@@ -126,9 +126,11 @@ Registered class IDs: 134 (133 in search, 1 deprecated but still loads in old wo
 - `LCSubjectArray`: 🗒️LC Subject Array
 - `LCPromptAssembler`: 🧩LC Prompt Assembler
 
-## LC123/sampling (11)
+## LC123/sampling (14)
 
 - `LCBasicScheduler`: LC Basic Scheduler
+- `LCDetailDaemon`: LC Detail Daemon (BETA)
+- `LCDetailDaemonModel`: LC Detail Daemon (model) (BETA)
 - `LCSamplerConfigure`: LC Sampler Configure
 - `LCSamplerConfigurePipeOut`: LC Sampler Configure (pipe)
 - `LCSamplerConfigurePipe`: LC Sampler Configure Pipe Out
@@ -137,6 +139,7 @@ Registered class IDs: 134 (133 in search, 1 deprecated but still loads in old wo
 - `LCSigmaCurve`: LC Sigma Curve
 - `LCSigmaResample`: LC Sigma Resample
 - `LCChangeStepCount`: LC Sigma Resample
+- `LCSigmas`: LC Sigmas (BETA)
 - `LCSplitSigmaScheduler`: LC Split Sigma Scheduler
 - `LCSplitSigmasAdvanced`: LC Split Sigmas (Advanced)
 
