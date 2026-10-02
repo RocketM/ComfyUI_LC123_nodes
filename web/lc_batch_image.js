@@ -1,12 +1,12 @@
 /**
- * LC Batch Image — autogrow IMAGE slots. Keep one empty socket.
+ * LC Batch Image / LC Image Stitch Multi — autogrow IMAGE slots. Keep one empty socket.
  * computeSize returns the minimum only. this.size may grow and shrink to that min.
  * Height hugs the last socket. Launch width 270; shrink min ~180.
  */
 import { app } from "../../scripts/app.js";
 import { lcApplyLaunchColor } from "./lc_color.js";
 
-const NODE_CLASS = "LCBatchImage";
+const NODE_CLASSES = new Set(["LCBatchImage", "LCImageStitchMulti"]);
 const MAX_INPUTS = 20;
 const MIN_INPUTS = 2;
 const LAUNCH_WIDTH = 270;
@@ -26,10 +26,16 @@ function titleHeight() {
   return (typeof LiteGraph !== "undefined" && LiteGraph.NODE_TITLE_HEIGHT) || 30;
 }
 
-/** Minimum box that still shows every socket — hugs the last one. */
-function desiredHeight(slots) {
-  const n = Math.max(slots || 0, MIN_INPUTS);
-  return titleHeight() + n * slotHeight() + 6;
+function widgetRows(node) {
+  return (node?.widgets || []).filter((w) => w && w.type !== "hidden" && !w._lcHidden).length;
+}
+
+/** Minimum box that still shows every socket (and any widgets below them) — hugs the last one. */
+function desiredHeight(slots, node) {
+  const n = Math.max(slots || 0, MIN_INPUTS, node?.outputs?.length || 0);
+  const wh = ((typeof LiteGraph !== "undefined" && LiteGraph.NODE_WIDGET_HEIGHT) || 20) + 4;
+  const rows = widgetRows(node);
+  return titleHeight() + n * slotHeight() + 6 + (rows ? rows * wh + 8 : 0);
 }
 
 function slotCount(node) {
@@ -38,7 +44,7 @@ function slotCount(node) {
 
 function setSize(node, w, h) {
   w = Math.max(MIN_WIDTH, w || MIN_WIDTH);
-  h = Math.max(desiredHeight(MIN_INPUTS), h || desiredHeight(MIN_INPUTS));
+  h = Math.max(desiredHeight(MIN_INPUTS, node), h || desiredHeight(MIN_INPUTS, node));
   if (typeof node.setSize === "function") node.setSize([w, h]);
   else if (node.size) {
     node.size[0] = w;
@@ -78,7 +84,7 @@ function dropLink(node, inp) {
 
 function hugHeight(node) {
   const n = slotCount(node) || MIN_INPUTS;
-  const minH = desiredHeight(n);
+  const minH = desiredHeight(n, node);
   const w = Math.max(MIN_WIDTH, node.size?.[0] || LAUNCH_WIDTH);
   setSize(node, w, minH);
 }
@@ -133,13 +139,13 @@ app.registerExtension({
   name: "LC123.BatchImage",
 
   async beforeRegisterNodeDef(nodeType, nodeData) {
-    if ((nodeData?.name || "") !== NODE_CLASS) return;
+    if (!NODE_CLASSES.has(nodeData?.name || "")) return;
 
     const origCompute = nodeType.prototype.computeSize;
     nodeType.prototype.computeSize = function (out) {
       const slots = slotCount(this) || MIN_INPUTS;
       const minW = MIN_WIDTH;
-      const minH = desiredHeight(slots);
+      const minH = desiredHeight(slots, this);
       // Minimum only — never feed saved lc_h back or the node cannot shrink.
       const size = [minW, minH];
       if (out) {
@@ -156,7 +162,7 @@ app.registerExtension({
       try {
         lcApplyLaunchColor(this, COLOR);
       } catch (_) {}
-      if (!this.size) this.size = [LAUNCH_WIDTH, desiredHeight(MIN_INPUTS)];
+      if (!this.size) this.size = [LAUNCH_WIDTH, desiredHeight(MIN_INPUTS, this)];
       else this.size[0] = Math.max(MIN_WIDTH, this.size[0] || LAUNCH_WIDTH);
       if (!this.size[0] || this.size[0] < LAUNCH_WIDTH) this.size[0] = LAUNCH_WIDTH;
       syncInputs(this);
@@ -164,7 +170,7 @@ app.registerExtension({
       this.onResize = function (size) {
         if (size) {
           if (size[0] < MIN_WIDTH) size[0] = MIN_WIDTH;
-          const minH = desiredHeight(slotCount(this) || MIN_INPUTS);
+          const minH = desiredHeight(slotCount(this) || MIN_INPUTS, this);
           if (size[1] < minH) size[1] = minH;
         }
         return prevResize?.apply(this, arguments);
@@ -180,7 +186,7 @@ app.registerExtension({
         syncInputs(this);
         if (data?.size?.[0]) {
           const w = Math.max(MIN_WIDTH, data.size[0]);
-          setSize(this, w, desiredHeight(slotCount(this) || MIN_INPUTS));
+          setSize(this, w, desiredHeight(slotCount(this) || MIN_INPUTS, this));
         }
       }, 20);
       return r;

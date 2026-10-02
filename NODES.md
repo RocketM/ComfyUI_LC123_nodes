@@ -1,8 +1,8 @@
 # LC123 node inventory
 
-**136 Python nodes** + **5 JS-only** · version 1.45.11
+**137 Python nodes** + **5 JS-only** · version 1.46.0
 
-Registered class IDs: 137 (136 in search, 1 deprecated but still loads in old workflows).
+Registered class IDs: 138 (137 in search, 1 deprecated but still loads in old workflows).
 
 ## LC123/Regional Canvas/Anima (1)
 
@@ -27,6 +27,7 @@ Registered class IDs: 137 (136 in search, 1 deprecated but still loads in old wo
 - `LCAspectRatioPipe`: LC Aspect Ratio Pipe Out
 - `LCAutoWhiteBalance`: LC Auto White Balance
 - `LCBatchImage`: LC Batch Image 🖼️
+- `LCImageStitchMulti`: LC Image Stitch Multi 🖼️🪡
 - `LCBloom`: LC Bloom
 - `LCChromaticAberration`: LC Chromatic Aberration
 - `LCColorMatch`: LC Color Match 🎨

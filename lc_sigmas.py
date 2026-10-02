@@ -81,6 +81,48 @@ def recommended(fam):
     return (sampler if sampler in comfy.samplers.KSampler.SAMPLERS else "euler"), "simple", f
 
 
+# ---------------------------------------------------------------- RES4LYF (ClownShark) sampler names
+def _clown_node():
+    """RES4LYF's ClownSampler node class when RES4LYF is installed, else None."""
+    try:
+        import nodes
+        return nodes.NODE_CLASS_MAPPINGS.get("ClownSampler_Beta")
+    except Exception:
+        return None
+
+
+def clown_names() -> dict:
+    """{name as typed or as a Clown Sampler Selector sends it: folder/name} for RES4LYF's samplers. Empty without RES4LYF.
+    The Selector sends the bare name (radau_iia_3s), the dropdowns use folder/name (fully_implicit/radau_iia_3s)."""
+    cls = _clown_node()
+    if cls is None:
+        return {}
+    import sys
+    try:
+        names = list(sys.modules[cls.__module__].get_sampler_name_list())
+    except Exception:
+        return {}
+    out = {}
+    for full in names:
+        full = str(full)
+        if full in ("none", "use_explicit"):
+            continue
+        out.setdefault(full, full)
+        out.setdefault(full.split("/")[-1], full)
+    return out
+
+
+def make_sampler(name: str):
+    """A SAMPLER for any Comfy sampler name, or a RES4LYF name (built by RES4LYF's ClownSampler at its own defaults)."""
+    if name in comfy.samplers.KSampler.SAMPLERS:
+        return comfy.samplers.sampler_object(name)
+    full = clown_names().get(name)
+    if full is None:
+        raise ValueError(f"[LC Sigmas] Unknown sampler: {name}")
+    out = _clown_node().execute(sampler_name=full)
+    return (getattr(out, "result", None) or out)[0]
+
+
 # ---------------------------------------------------------------- built-in shapes (beta57, bong_tangent)
 def _bong_piece(steps, slope, pivot, start, end):
     smax = ((2 / math.pi) * math.atan(-slope * (0 - pivot)) + 1) / 2
@@ -285,9 +327,14 @@ class LCSigmas:
                 "shape": (shapes, {"default": "beta57" if "beta57" in shapes else "simple",
                           "tooltip": "The curve's family. Filled in by the preset; changing it switches the preset to manual. Tested: on flow models (Krea 2, Z-Image, Flux 2) beta, beta57 and "
                                      "simple are safe; karras, kl_optimal and linear_quadratic burn. SDXL takes almost anything."}),
-                "sampler": (list(comfy.samplers.KSampler.SAMPLERS), {"default": "euler",
-                            "tooltip": "For the sampler output. Filled in by the preset; changing it switches the preset to manual. "
-                                       "Or ignore the output and wire your own sampler (KSamplerSelect, ClownSampler)."}),
+                "sampler": (list(comfy.samplers.KSampler.SAMPLERS) + [n for n in dict.fromkeys(clown_names().values())
+                                                                      if n not in comfy.samplers.KSampler.SAMPLERS],
+                            {"default": "euler",
+                             "tooltip": "For the sampler output. Filled in by the preset; changing it switches the preset to manual. "
+                                        "With RES4LYF installed its samplers are listed too (folder/name), and a ClownSampler "
+                                        "Selector can be wired in here. A RES4LYF sampler always wins over the preset's pick and "
+                                        "runs at ClownSampler's defaults (eta 0.5 adds noise: halve Detail Daemon). For eta and "
+                                        "the other Clown options, wire a ClownSampler into your sampler node instead."}),
                 "focus": ("FLOAT", {"default": 0.0, "min": -1.0, "max": 1.0, "step": 0.05,
                           "tooltip": "Where the steps go. Negative = structure (more steps at high noise: composition). Positive = detail "
                                      "(more steps at low noise: texture). A creative control: in testing it changed the look but did not "
@@ -329,7 +376,8 @@ class LCSigmas:
     def VALIDATE_INPUTS(cls, preset, sampler):
         # the first beta saved "recommended" in both: still accepted (read as auto)
         ok_preset = preset in PRESETS or preset == LEGACY
-        ok_sampler = sampler in comfy.samplers.KSampler.SAMPLERS or sampler == LEGACY
+        # a wired sampler (e.g. a Clown Sampler Selector) arrives as None here; its name is checked when the node runs
+        ok_sampler = sampler is None or sampler in comfy.samplers.KSampler.SAMPLERS or sampler == LEGACY or sampler in clown_names()
         return True if ok_preset and ok_sampler else f"Unknown preset or sampler: {preset} / {sampler}"
 
     DESCRIPTION = ("One scheduler for one- and two-pass sampling. The preset fills in the sampler and shape that tested best "
@@ -354,7 +402,7 @@ class LCSigmas:
             _PREVIEW[str(unique_id)] = (ms1, ms2, size, fam)
         return {"ui": {"lc_sigmas": [json.dumps(graph)]},
                 "result": (high, low, Noise_RandomNoise(int(seed)), noise_low, info, full,
-                           comfy.samplers.sampler_object(g["sampler"]))}
+                           make_sampler(g["sampler"]))}
 
 
 def _describe(fam, preset, shape, sampler):
@@ -367,8 +415,13 @@ def _describe(fam, preset, shape, sampler):
         use_shape = shape
     else:
         use_sampler, use_shape = rec_sampler, rec_shape
+        # a RES4LYF name (picked, or wired from a Clown Sampler Selector) is never a preset's pick: it was chosen on purpose
+        if sampler not in comfy.samplers.KSampler.SAMPLERS and sampler in clown_names():
+            use_sampler = sampler
     tip = f"Tested best for {f['name']}: {rec_sampler} + {rec_shape}. Detail Daemon: {f['dd']}."
-    if any(t in use_sampler for t in NOISY):
+    if use_sampler not in comfy.samplers.KSampler.SAMPLERS:
+        tip += " RES4LYF sampler at ClownSampler's defaults: eta 0.5 adds noise, so halve Detail Daemon or expect specks."
+    elif any(t in use_sampler for t in NOISY):
         tip += " This sampler adds its own noise: halve Detail Daemon or expect specks."
     return {"shape": use_shape, "sampler": use_sampler, "tip": tip}
 

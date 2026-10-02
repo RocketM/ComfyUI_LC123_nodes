@@ -6,7 +6,7 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 - **CivitAI:** [lonecatone23](https://civitai.com/user/lonecatone23)
 - **Instagram:** [synth.studio.models](https://www.instagram.com/synth.studio.models/)
 - **Support:** [Buy me a ☕](https://ko-fi.com/lonecatone)
-- **Version:** 1.45.11 · **136 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
+- **Version:** 1.46.0 · **137 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
 
 > Small tools that remove friction: less wire mess, fewer clicks, clearer workflows.
 
@@ -231,7 +231,8 @@ The **System & Model Optimization Report** tells you what suits your machine. Th
     - **★ Recommended** (and the actual file name it will use)
     - **From checkpoint** / **None**
     - **⬇ Download:** recommended files you don't have yet. They download on the first run, then the picker switches to the real file name.
-    - **On disk for this model:** your files that match the base model.
+    - **On disk for this model:** your files that match the base model, including every version of **Krealism** and **Animosity** made for it.
+    - On **Krea 2 (Turbo)**, the **Krealism V3.1** files you don't have yet sit at the top of **⬇ Download**.
     - Then all your folders, so **custom models** work too.
 - **All-in-one checkpoints:** the text encoder and VAE come from the checkpoint (you can still pick your own).
 - **Custom (any other model or workflow):** set the base model to **Custom** (image and video).
@@ -453,6 +454,7 @@ Hover any of these to wipe against the original. Heavy graph? See **Performance*
 | **LC Image-Mask Resize 📐** | Image + mask only. **match_aspect_ratio**, **upscale_by** none / multiplier / megapixels. The real **WxH** is drawn on the node after a run |
 | **LC Image to Total Megapixels 📐** | Scales to a total megapixel count, plus **resolution** and **megapixels** outputs. 1 MP = 1,000,000 pixels, the same count LC Get Image uses (the native node counts 1024 x 1024) |
 | **LC Batch Image 🖼️** | Autogrow IMAGE slots into one batch. Muted or empty sockets are skipped. Mixed sizes follow the first live image |
+| **LC Image Stitch Multi 🖼️🪡** | Stitch images side by side or stacked from autogrow slots. **direction** right / down / left / up, **match_size** scales every image to the first one's height (side by side) or width (stacked) so the edges line up, **align** places smaller images when sizes differ, **gap** + **gap_color** add space between them. Muted or empty slots are skipped; batches stitch frame by frame. Outputs **image**, **width**, **height** |
 | **LC Image Batch From Folder 📂** | A whole folder as one batch (img2 before img10). Full path or a folder in `ComfyUI/input`, pasted however you like. **max_images** (0 = all) and **start_index** to load in chunks. Outputs the batch, counts and file names |
 | **LC Image Compare 🔎** | Batch A/B with one slider per pair |
 | **LC Image Split 🖼️** | Saveable A\|B wipe. The output is the baked split |

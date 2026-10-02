@@ -122,7 +122,7 @@ async function showPicker(node, widget, role, anchor) {
     if (path[0] === "__dl") {
       crumb.textContent = "⬇ Download";
       for (const d of data.downloads || []) {
-        const tag = d.gated ? " · gated" : d.community ? " · community" : "";
+        const tag = d.featured ? ` · ${esc(d.featured)}` : d.gated ? " · gated" : d.community ? " · community" : "";
         row(`<span>⬇️</span><span style="flex:1;word-break:break-all">${esc(d.file)}</span><span style="color:#8a95a5;white-space:nowrap">${d.gb ?? "?"} GB${tag}</span>`, () => pick(d.value), { current: d.value === widget.value });
       }
       return;

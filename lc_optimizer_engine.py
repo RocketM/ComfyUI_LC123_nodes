@@ -276,6 +276,11 @@ def choices(profile_id, role, goal):
         return out
     rec = recommended(prof, role, goal)
     folders = ROLE_FOLDERS[role]
+    if role == "model":  # Lonecat's featured models first (Krealism V3.1 for Krea 2 Turbo)
+        for m in shipped_all():
+            if m.get("featured") and m.get("profile") == profile_id and not find_on_disk(m["file"], ROLE_FOLDERS[role]):
+                out["downloads"].append({"value": DOWNLOAD + m["file"], "file": m["file"], "gb": m.get("gb"), "format": m.get("format"),
+                                         "community": False, "gated": False, "featured": m["family"]})
     if rec:
         hit = find_on_disk(rec["file"], [FOLDER_BY_LOADER.get(rec["loader"], folders[0])])
         out["recommended"] = {"file": rec["file"], "gb": rec.get("gb"), "on_disk": bool(hit), "source": rec["source"]}
@@ -288,6 +293,8 @@ def choices(profile_id, role, goal):
             out["downloads"].append({"value": DOWNLOAD + v["file"], "file": v.get("display") or v["file"], "gb": v.get("gb"), "format": v.get("format"),
                                      "community": bool(v.get("community")), "gated": v["repo"].startswith(("black-forest-labs",))})
     out["local"] = [n for _, n in local_files(role)]
+    if role == "model":  # every version of Lonecat's own models made for this base model
+        known.update(n for _, n in local_files(role) if own_profile(n) == profile_id)
     out["known"] = sorted(known)
     return out
 
@@ -486,6 +493,27 @@ def shipped(name):
     return _SHIPPED.get(os.path.basename(str(name).replace("\\", "/")).lower())
 
 
+def shipped_all():
+    shipped("")  # loads the list
+    return list({id(m): m for m in _SHIPPED.values()}.values())
+
+
+# Lonecat's model families by name, for files the shipped list does not name (other versions, renamed files)
+_OWN = [(re.compile(r"krealism[ _-]?v\d", re.I), "krea2"),
+        (re.compile(r"animosity.*krea|krea.*animosity", re.I), "krea2"),
+        (re.compile(r"animosity.*illustrious", re.I), "illustrious"),
+        (re.compile(r"animosity.*anima", re.I), "anima")]
+
+
+def own_profile(name):
+    """The base model one of Lonecat's own model files (Krealism, Animosity) is for, or None."""
+    entry = shipped(name)
+    if entry:
+        return entry.get("profile")
+    base = os.path.basename(str(name).replace("\\", "/"))
+    return next((pid for rx, pid in _OWN if rx.search(base)), None)
+
+
 def download_shipped(entry, value, folder="diffusion_models"):
     """Download one of Lonecat's models to <folder root>/<the path the workflow saved>. Returns (folder, value)."""
     root = folder_paths.get_folder_paths(folder)[0]
@@ -542,6 +570,13 @@ def resolve(profile_id, role, value, goal):
                 if v:
                     break
         if v is None:
+            entry = shipped(fname) if role == "model" else None
+            if entry:  # one of Lonecat's models, offered as a featured download
+                hit = find_on_disk(entry["file"], ROLE_FOLDERS[role])
+                if hit:
+                    return hit[0], hit[1], None
+                folder, name = download_shipped(entry, f"{entry['family']}/{entry['file']}", entry.get("folder", "diffusion_models"))
+                return folder, name, None
             raise FileNotFoundError(f"[LC Optimizer] No download known for {fname}.")
     else:
         for folder in ROLE_FOLDERS[role]:
@@ -836,6 +871,16 @@ def plan(profile_id, goal, picks, manual=None):
                 else:
                     fname = value[len(DOWNLOAD):]
                     v = next((x for x in variants(prof, role) if x["file"] == fname), None) if prof else None
+                    entry = shipped(fname) if (role == "model" and not v) else None
+                    if entry:  # a featured download of Lonecat's (Krealism V3.1)
+                        hit = find_on_disk(entry["file"], ROLE_FOLDERS[role])
+                        row.update(label=entry["file"], gb=entry["gb"], state="disk" if hit else "download")
+                        if hit:
+                            paths[role] = full_path(*hit)
+                        else:
+                            out["hints"].append(("ℹ️", f"{entry['family']} downloads from huggingface.co/{entry['repo']} on the first run."))
+                        out["files"].append(row)
+                        continue
                 if not v:
                     if ckpt and role in ("clip", "vae", "audio_vae"):
                         out["files"].append({"role": role, "label": "from the checkpoint", "state": "ckpt"})

@@ -107,26 +107,38 @@ function readBooleanFromOrigin(origin) {
   return readBooleanFromWidgets(origin);
 }
 
-/** Same lock helper as LC Bypasser */
+/**
+ * The text on a toggle lives in its label, never its name. The new frontend keeps widget names in a registry and
+ * silently refuses a rename onto a name another widget still holds, so renaming toggles as the group list shifts
+ * left them showing the wrong group. Names stay fixed ("Enable 1", "Enable 2", ...); the label is what is drawn.
+ */
+function setToggleTitle(widget, title) {
+  if (!widget) return;
+  widget._lcNameClean = title;
+  const text = widget._lcLocked ? "🔒 " + title : title;
+  if (widget.label !== text) widget.label = text;
+}
+
+/** Same lock helper as LC Bypasser (lock shown in the label) */
 function setWidgetLocked(widget, locked) {
   if (!widget) return;
   widget.disabled = !!locked;
   widget.readOnly = !!locked;
-  if (locked) {
-    widget._lcLocked = true;
-    if (widget.name && !widget.name.startsWith("🔒 ")) {
-      widget._lcNameClean = widget.name;
-      widget.name = "🔒 " + widget.name;
-    }
-  } else {
-    widget._lcLocked = false;
-    if (widget._lcNameClean) {
-      widget.name = widget._lcNameClean;
-      widget._lcNameClean = null;
-    } else if (widget.name?.startsWith("🔒 ")) {
-      widget.name = widget.name.slice(2);
-    }
+  widget._lcLocked = !!locked;
+  const base = (widget._lcNameClean || widget.label || widget.name || "").replace(/^\s*🔒\s*/, "");
+  setToggleTitle(widget, base);
+}
+
+/** Remove a widget so its name also leaves the frontend's registry */
+function dropLastWidget(node) {
+  const w = node.widgets[node.widgets.length - 1];
+  if (typeof node.removeWidget === "function") {
+    try {
+      node.removeWidget(w);
+      return;
+    } catch (_) {}
   }
+  node.widgets.pop();
 }
 
 function groupStableId(group) {
@@ -213,7 +225,7 @@ const live = new Set();
 // what the node shows (sockets, rows, size): stabilize redraws only when this changed
 function faceSignature(node) {
   const ins = (node.inputs || []).map((i) => (i ? `${i.name}|${i.type}|${i.link}` : "")).join(",");
-  const ws = (node.widgets || []).map((w) => (w ? `${w.name}|${w.value}|${w.disabled}` : "")).join(",");
+  const ws = (node.widgets || []).map((w) => (w ? `${w.name}|${w.label}|${w.value}|${w.disabled}` : "")).join(",");
   return `${ins};${ws};${node.size?.[0]}x${node.size?.[1]}`;
 }
 
@@ -399,6 +411,7 @@ app.registerExtension({
           this._lcSlotIds[i] = id;
           const title = g.title || `Group ${i + 1}`;
           this.inputs[i].name = title;
+          if (this.inputs[i].label != null && this.inputs[i].label !== title) this.inputs[i].label = title;
           this.inputs[i].type = "BOOLEAN";
         }
 
@@ -414,7 +427,7 @@ app.registerExtension({
           );
         }
         while (this.widgets.length > groups.length) {
-          this.widgets.pop();
+          dropLastWidget(this);
         }
 
         // Restore values / try to reattach boolean by origin node id
@@ -425,14 +438,7 @@ app.registerExtension({
           const title = groups[i].title || `Group ${i + 1}`;
           const saved = bindings[id] || {};
 
-          const base = `Enable ${title}`;
-          if (w._lcLocked && w._lcNameClean) {
-            w._lcNameClean = base;
-            w.name = "🔒 " + base;
-          } else {
-            w.name = base;
-            w._lcNameClean = null;
-          }
+          setToggleTitle(w, `Enable ${title}`);
 
           // Reconnect boolean from saved origin if slot empty
           if (inp.link == null && saved.originId != null && graph) {

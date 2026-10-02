@@ -29,6 +29,7 @@ const COLORS = {
     LCDimensionResize: { color: "#324B4B", bgcolor: "#324B4B", size: [270, 110] },
     LCLastImageHolder: { color: "#324B4B", bgcolor: "#324B4B" },
     LCBatchImage: { color: "#324B4B", bgcolor: "#324B4B" },
+    LCImageStitchMulti: { color: "#324B4B", bgcolor: "#324B4B" },
     LCImageBatchFromFolder: { color: "#324B4B", bgcolor: "#324B4B" },
     LCImageCrop: { color: "#324B4B", bgcolor: "#324B4B" },
     LCFilmGrain: { color: "#324B4B", bgcolor: "#324B4B" },

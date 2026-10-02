@@ -75,6 +75,7 @@ _load("lc_save_text")
 
 # Image tools
 _load("lc_batch_image")
+_load("lc_image_stitch_multi")
 _load("lc_batch_image_comparer")
 _load("lc_image_split")
 _load("lc_last_image_holder")

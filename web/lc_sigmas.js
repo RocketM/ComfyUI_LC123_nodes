@@ -180,5 +180,15 @@ app.registerExtension({
       applyUsed(this, this._lcSigGraph?.used);
       draw(this);
     };
+    // wiring a sampler in (e.g. a Clown Sampler Selector) means you chose it: the preset becomes manual, like picking one
+    const onConn = nodeType.prototype.onConnectionsChange;
+    nodeType.prototype.onConnectionsChange = function (type, index, connected) {
+      const r = onConn?.apply(this, arguments);
+      if (type === 1 && connected && this.inputs?.[index]?.name === "sampler") {
+        const p = this.widgets?.find((x) => x.name === "preset");
+        if (p && p.value !== "manual") p.value = "manual";
+      }
+      return r;
+    };
   },
 });

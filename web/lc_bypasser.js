@@ -107,10 +107,35 @@ function setWidgetLocked(w, locked) {
   if (!w) return;
   if (w._lcLocked !== !!locked) w._lcLocked = !!locked;
   if (w.disabled !== !!locked) w.disabled = !!locked;
-  const base = (w._lcNameClean || w.name || "").replace(/^\s*🔒\s*/, "");
-  if (w._lcNameClean !== base) w._lcNameClean = base;
-  const name = locked ? `🔒 ${base}` : base;
-  if (w.name !== name) w.name = name;
+  const base = (w._lcNameClean || w.label || w.name || "").replace(/^\s*🔒\s*/, "");
+  setToggleTitle(w, base);
+}
+
+/**
+ * The text on a toggle lives in its label, never its name. The new frontend keeps widget names in a registry and
+ * silently refuses a rename onto a name another widget still holds (two linked nodes with the same title, or rows
+ * shifting), which left toggles showing the wrong title. Names stay fixed ("Enable 1", ...); the label is drawn.
+ * Returns true when the text changed.
+ */
+function setToggleTitle(w, title) {
+  if (!w) return false;
+  w._lcNameClean = title;
+  const text = w._lcLocked ? `🔒 ${title}` : title;
+  if (w.label === text) return false;
+  w.label = text;
+  return true;
+}
+
+/** Remove a widget so its name also leaves the frontend's registry */
+function dropLastWidget(node) {
+  const w = node.widgets[node.widgets.length - 1];
+  if (typeof node.removeWidget === "function") {
+    try {
+      node.removeWidget(w);
+      return;
+    } catch (_) {}
+  }
+  node.widgets.pop();
 }
 
 // live hubs and panels, so the 1 s tick costs nothing in a workflow without one
@@ -255,6 +280,7 @@ app.registerExtension({
 
       stabilize() {
         const graph = this.graph ?? app.graph; // own graph: also works inside a subgraph
+        if (this.stabilizePairs(graph)) return;
         const inputs = this.inputs || [];
         const targets = [];
         const enables = [];
@@ -272,6 +298,7 @@ app.registerExtension({
           if (t.link == null) continue;
           const origin = getLinkedOrigin(graph, t);
           t.name = origin ? origin.title || "" : t.name || "";
+          if (t.label != null && t.label !== t.name) t.label = t.name;
           t.type = "*";
           next.push(t);
           const e = enables[i] || { name: "enable", type: "BOOLEAN", link: null };
@@ -284,6 +311,35 @@ app.registerExtension({
         this.inputs = next;
         this.syncWidgets();
         this.setDirtyCanvas?.(true, true);
+      }
+
+      /**
+       * Compact the sockets with removeInput/addInput so every link's target slot moves with its socket.
+       * Swapping in a new inputs array (the fallback above) leaves links pointing at old slots in the new frontend,
+       * so unplugging a middle node lost the toggle of the last one. Returns false on a malformed (unpaired) layout.
+       */
+      stabilizePairs(graph) {
+        const inputs = this.inputs || [];
+        if (inputs.length % 2) return false;
+        for (let i = 0; i < inputs.length; i += 2) {
+          if (inputs[i]?.type === "BOOLEAN" || inputs[i + 1]?.type !== "BOOLEAN") return false;
+        }
+        for (let p = inputs.length / 2 - 1; p >= 0; p--) {
+          if (this.inputs[p * 2].link != null) continue;
+          this.removeInput(p * 2 + 1);
+          this.removeInput(p * 2);
+        }
+        for (const t of this.inputs) {
+          if (t.type === "BOOLEAN") continue;
+          const origin = getLinkedOrigin(graph, t);
+          if (origin && t.name !== (origin.title || "")) t.name = origin.title || "";
+          if (t.label != null && t.label !== t.name) t.label = t.name;
+        }
+        this.addInput("", "*");
+        this.addInput("enable", "BOOLEAN");
+        this.syncWidgets();
+        this.setDirtyCanvas?.(true, true);
+        return true;
       }
 
       syncWidgets() {
@@ -304,7 +360,7 @@ app.registerExtension({
             { on: "yes", off: "no" }
           );
         }
-        while (this.widgets.length > filled) this.widgets.pop();
+        while (this.widgets.length > filled) dropLastWidget(this);
 
         for (let p = 0; p < filled; p++) {
           const t = this.inputs[p * 2];
@@ -313,8 +369,7 @@ app.registerExtension({
           const origin = getLinkedOrigin(graph, t);
           const title = origin?.title || origin?.type || `Slot ${p + 1}`;
           const driven = e?.link != null;
-          w._lcNameClean = null;
-          w.name = `Enable ${title}`;
+          setToggleTitle(w, `Enable ${title}`);
           let enabled = w.value !== false;
           if (driven) {
             const bv = resolveBoolean(graph, e);
@@ -393,27 +448,9 @@ app.registerExtension({
             t.name = title;
             changed = true;
           }
+          if (t.label != null && t.label !== t.name) { t.label = t.name; changed = true; }
           const w = this.widgets?.[p];
-          if (w && !w._lcLocked) {
-            const want = `Enable ${title || `Slot ${p + 1}`}`;
-            // Keep lock prefix if present
-            const locked = !!w._lcLocked;
-            const base = want;
-            w._lcNameClean = base;
-            const next = locked ? `🔒 ${base}` : base;
-            if (w.name !== next) {
-              w.name = next;
-              changed = true;
-            }
-          } else if (w) {
-            const base = `Enable ${title || `Slot ${p + 1}`}`;
-            w._lcNameClean = base;
-            const next = w._lcLocked ? `🔒 ${base}` : base;
-            if (w.name !== next) {
-              w.name = next;
-              changed = true;
-            }
-          }
+          if (w && setToggleTitle(w, `Enable ${title || `Slot ${p + 1}`}`)) changed = true;
         }
         if (changed) this.setDirtyCanvas?.(true, true);
       }
@@ -636,14 +673,13 @@ app.registerExtension({
             { on: "yes", off: "no" }
           );
         }
-        while (this.widgets.length > targets.length) this.widgets.pop();
+        while (this.widgets.length > targets.length) dropLastWidget(this);
 
         for (let p = 0; p < targets.length; p++) {
           const item = targets[p];
           const w = this.widgets[p];
           const driven = item.enableInput?.link != null;
-          w._lcNameClean = null;
-          w.name = `Enable ${item.title}`;
+          setToggleTitle(w, `Enable ${item.title}`);
           let enabled = w.value !== false;
 
           if (item.kind === "node") {
@@ -722,16 +758,12 @@ app.registerExtension({
           const w = this.widgets[p];
           if (!w) continue;
           const driven = item.enableInput?.link != null;
-          const wantName = `Enable ${item.title}`;
-          const nextName = driven ? `🔒 ${wantName}` : wantName;
-          if (w.name !== nextName) {
-            w._lcNameClean = wantName;
-            w.name = nextName;
-            dirty = true;
-          }
           const shouldLock = driven;
-          if (!!w._lcLocked !== shouldLock) {
-            setWidgetLocked(w, shouldLock);
+          if (!!w._lcLocked !== shouldLock || !!w.disabled !== shouldLock) {
+            w._lcNameClean = `Enable ${item.title}`;
+            setWidgetLocked(w, shouldLock); // sets the lock and the title together
+            dirty = true;
+          } else if (setToggleTitle(w, `Enable ${item.title}`)) {
             dirty = true;
           }
         }
