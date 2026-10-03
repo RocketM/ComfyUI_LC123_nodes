@@ -506,7 +506,7 @@
           "source": "en",
           "texts": {
             "en": {
-              "text": "## Instructions\n---\n\n@[card: Follow me](https://civitai.com/user/lonecatone23)\n\n@[card: Follow me](https://www.instagram.com/synth.studio.models/)\n\n@[card: Get my stuff here](https://github.com/lonecatone23)\n\n@[card: Get my models here](https://huggingface.co/Lonecatone23)\n\n\n@[card: Buy me a ☕](https://ko-fi.com/lonecatone)\n\n### This is many hours of work. If you enjoy it, please 👍 like, 💬 comment, and feel free to ⚡ tip 😉\n\n---\n\n### 🛑🚫✋ What this workflow is for\n- A test bench for two new nodes: **LC Sigmas** and **LC Detail Daemon**. Same prompt, same model, run two ways, and the comparer shows you the difference.\n- **Top path (new):** LC Sigmas builds the schedule, LC Detail Daemon adds detail, and two samplers split the work (first pass, then second pass).\n- **Bottom path (baseline):** a plain KSampler on euler / simple. This is \"what you would normally get\".\n- Every setting here came out of a 3,432 image test across Krea 2 Turbo and Raw, Z-Image, Flux 2 Klein, SDXL and Illustrious.\n\n---\n\n**LC Sigmas (BETA) 📉**\n- A sigma is just how much noise is left at a step. The schedule is the list of those amounts, start to finish. Big noise = the model decides the big stuff (pose, composition, light). Small noise = fine detail (skin, hair, fabric).\n- **sampler / scheduler_shape:** the green line under the graph tells you what tested best for your model (Krea 2: euler + beta57). RES4LYF / ClownShark samplers work too, and a ClownSampler Selector can be wired straight in.\n- The graph shows your schedule: orange = first pass, blue = second pass, dashed = the model's plain schedule for comparison. It updates live once you have run it. Drag the node taller and the graph grows.\n- **step_swap** splits the render into two passes. 0 = one pass. A second model (model_2) can take the second pass, and it always starts at exactly the noise level where the first stopped (no jump).\n- **low_pass:** **continue noise schedule** = the second pass finishes the leftover noise. **renoise** = the first pass finishes the picture, then fresh noise goes back up to the swap level, so the clean model has something to refine. This is the one for cleaning up ControlNet. The step swap sets how much it gets: late = clean-up, earlier = heavier refining.\n- **denoise** is for image to image. The info line tells you the real starting noise, because on Krea 2 \"denoise 0.5\" actually starts at 76% noise. **denoise_steps:** **full schedule** = denoise covers the whole run. **at step swap** = it covers the first pass only, so the second pass refines on its own.\n- **sigma_shift:** leave it on **use model default**. Higher shift = more steps on composition, lower = more on detail.\n- It also outputs the noise for each pass and the sampler, so you do not need RandomNoise, DisableNoise or KSamplerSelect nodes.\n\n**LC Detail Daemon (BETA) 😈**\n- Adds detail by telling the model there is a little less noise than there really is, so it removes a little less and keeps more fine texture.\n- **amount** uses the same scale as the original Detail Daemon (1.0 = 10% less noise at the peak), but it is never multiplied by your CFG.\n- **start / end** are steps, like the original: 0.15 to 0.85.\n- **peak** and **exponent** do more than the amount. **peak 0** = strongest at the start of the window, on the noisy steps where it shapes things. **exponent 0** = full strength across the whole window.\n- **mode:**\n    - **look only** (default): crisp detail without big reshuffles.\n    - **classic:** the original. Small things shift (folds, windows, background focus).\n    - **keep structure:** only the fine part of the change is kept, so the layout stays exactly where it was. About 45% slower.\n- It sits on the first pass only. Want detail later in the render too? Wire it into the second sampler as well.\n- ⚠️ Samplers that add their own noise (dpmpp_2m_sde, euler_ancestral, er_sde, ClownShark at eta 0.5) plus Detail Daemon can leave specks. Lower the amount with those, or stay on euler.\n\n**Baseline**\n- Plain KSampler, euler / simple. Compare it against the new path in the image comparer and judge for yourself.\n\n**Best LC Sigmas Settings**\n| Model | sampler + scheduler_shape | steps | step_swap (ControlNet) | Detail Daemon amount (look only) | Notes |\n|---|---|---|---|---|---|\n| **Krea 2 Turbo / Krealism** | euler + beta57 | 8 | 7 | 1.0 | The everyday setup |\n| **Krea 2 Raw** | euler + beta57 | 20 - 30 | 18 - 27 | 0.5 | More steps = it hits harder |\n| **Z-Image Turbo** | uni_pc + simple | 8 - 9 | 8 | 0.75 | Takes detail the best |\n| **Flux 2 Klein** | uni_pc + simple | 4 | off | off | Too few steps: it shifts the light instead of adding detail |\n| **SDXL / Illustrious / Pony** | dpmpp_2m + karras | 25 - 30 | 23 - 27 | 0.75 | Karras is fine here, not on flow models |\n\n**Best Detail Daemon Settings**\n| Preset | amount | start | end | peak | exponent | mode | Recommended for | Notes |\n|---|---|---|---|---|---|---|---|---|\n| **Balanced** (default) | 1.0 | 0.15 | 0.85 | 0 | 0 | look only | Everyday use | The tested setting |\n| **Gentle sharpen** | 0.5 | 0.20 | 0.80 | 0.5 | 1 | look only | Portraits, skin | Barely moves anything |\n| **Original look** | 0.5 | 0.15 | 0.85 | 0 | 0 | classic | The old Detail Daemon feel | Small things shift |\n| **Keep layout** | 0.5 | 0.15 | 0.85 | 0 | 0 | keep structure | When nothing may move | About 45% slower |\n| **Smooth** | -0.5 | 0.15 | 0.85 | 0 | 0 | look only | Busy or grainy renders | Negative = smoother, less detail |\n\n### Quick Tips:\n- **peak** and **exponent** at 0 is where the punch comes from. Raise them for a gentler sharpen.\n- **amount** is the original Detail Daemon's scale: 1.0 = 10% less noise at the peak.\n- **classic** and **keep structure** hit harder than look only: start them at half the amount.\n- **start / end:** leave the last steps alone, or noise stays in the image.\n- 4-step models: not worth it.\n\n---\n\n***\"True Nothing is. Permitted Everything is\"***- Yoda Auditore, *Assassin's Wars*"
+              "text": "## Instructions\n---\n\n@[card: Follow me](https://civitai.com/user/lonecatone23)\n\n@[card: Follow me](https://www.instagram.com/synth.studio.models/)\n\n@[card: Get my stuff here](https://github.com/lonecatone23)\n\n@[card: Get my models here](https://huggingface.co/Lonecatone23)\n\n\n@[card: Buy me a ☕](https://ko-fi.com/lonecatone)\n\n### This is many hours of work. If you enjoy it, please 👍 like, 💬 comment, and feel free to ⚡ tip 😉\n\n---\n\n### 🛑🚫✋ What this workflow is for\n- A test bench for two new nodes: **LC Sigmas** and **LC Detail Daemon**. Same prompt, same model, run two ways, and the comparer shows you the difference.\n- **Top path (new):** LC Sigmas builds the schedule, LC Detail Daemon adds detail, and two samplers split the work (first pass, then second pass).\n- **Bottom path (baseline):** a plain KSampler on euler / simple. This is \"what you would normally get\".\n- Every setting here came out of a 3,432 image test across Krea 2 Turbo and Raw, Z-Image, Flux 2 Klein, SDXL and Illustrious.\n\n---\n\n**LC Sigmas (BETA) 📉**\n- A sigma is just how much noise is left at a step. The schedule is the list of those amounts, start to finish. Big noise = the model decides the big stuff (pose, composition, light). Small noise = fine detail (skin, hair, fabric).\n- **sampler:** the green line under the graph tells you what tested best for your model and its shift (Krea 2 at its own shift: euler + beta57). RES4LYF / ClownShark samplers work too, and a ClownSampler Selector can be wired straight in.\n- **sigma_curve_presets:** the shape of the schedule. **base** = a plain scheduler (picked in **base_scheduler**), **beta** = your own alpha / beta, **flowmatch**, **hyperbolic** and **gaussian** = the base curve bent by tanh, a bell curve, etc., plus any curve you saved. Only the settings for the one you pick show up.\n- **Drag a point on the graph** to bend the curve. **smooth** pulls the neighbours along (**smooth_radius** = how many), **spike** moves just that point. **reset curve** undoes it, **save curve** keeps it as a preset.\n- The graph shows your schedule: orange = first pass, blue = second pass, dashed = the model's plain schedule (or your preset before you bent it). It updates live once you have run it. Drag the node taller and the graph grows.\n- **step_swap** splits the render into two passes. 0 = one pass. A second model (model_2) can take the second pass, and it always starts at exactly the noise level where the first stopped (no jump).\n- **first_pass_resample:** walks the first pass in more steps along the same path. 1 = off.\n- **low_pass:** **continue noise schedule** = the second pass finishes the leftover noise. **renoise** = the first pass finishes the picture, then fresh noise goes back up to the swap level, so the clean model has something to refine. This is the one for cleaning up ControlNet. The step swap sets how much it gets: late = clean-up, earlier = heavier refining.\n- **denoise** is for image to image. The info line tells you the real starting noise, because on Krea 2 \"denoise 0.5\" actually starts at 76% noise. **denoise_steps:** **full schedule** = denoise covers the whole run. **at step swap** = it covers the first pass only, so the second pass refines on its own.\n- **sigma_shift:** leave it on **use model default**. Higher shift = more steps on composition, lower = more on detail. flowmatch and saved curves ignore it.\n- ⚠️ Go easy dragging a **gaussian** curve down. It already keeps the noise high, and a big drag cuts the detail steps short and burns the picture.\n- It also outputs the noise for each pass and the sampler, so you do not need RandomNoise, DisableNoise or KSamplerSelect nodes.\n\n**LC Detail Daemon (BETA) 😈**\n- Adds detail by telling the model there is a little less noise than there really is, so it removes a little less and keeps more fine texture.\n- **amount** uses the same scale as the original Detail Daemon (1.0 = 10% less noise at the peak), but it is never multiplied by your CFG.\n- **start / end** are steps, like the original: 0.15 to 0.85.\n- **peak** and **exponent** do more than the amount. **peak 0** = strongest at the start of the window, on the noisy steps where it shapes things. **exponent 0** = full strength across the whole window.\n- **mode:**\n    - **look only** (default): crisp detail without big reshuffles.\n    - **classic:** the original. Small things shift (folds, windows, background focus).\n    - **keep structure:** only the fine part of the change is kept, so the layout stays exactly where it was. About 45% slower.\n- It sits on the first pass only. Want detail later in the render too? Wire it into the second sampler as well.\n- ⚠️ Samplers that add their own noise (dpmpp_2m_sde, euler_ancestral, er_sde, ClownShark at eta 0.5) plus Detail Daemon can leave specks. Lower the amount with those, or stay on euler.\n\n**Baseline**\n- Plain KSampler, euler / simple. Compare it against the new path in the image comparer and judge for yourself.\n\n**Best LC Sigmas Settings**\n| Model | sampler + base_scheduler | steps | step_swap (ControlNet) | Detail Daemon amount (look only) | Notes |\n|---|---|---|---|---|---|\n| **Krea 2 Turbo / Krealism** | euler + beta57 | 8 | 7 | 1.0 | The everyday setup |\n| **Krea 2 Raw** | euler + beta57 | 20 - 30 | 18 - 27 | 0.5 | More steps = it hits harder |\n| **Krea 2 + ModelSamplingAuraFlow (shift 4)** | euler + simple | 8 - 10 | 7 - 8 | 1.0 | beta57 at this shift = grain and crunchy skin |\n| **Z-Image Turbo** | uni_pc + simple | 8 - 9 | 8 | 0.75 | Takes detail the best |\n| **Flux 2 Klein** | uni_pc + simple | 4 | off | off | Too few steps: it shifts the light instead of adding detail |\n| **SDXL / Illustrious / Pony** | dpmpp_2m + karras | 25 - 30 | 23 - 27 | 0.75 | Karras is fine here, not on flow models |\n\n**Best Detail Daemon Settings**\n| Preset | amount | start | end | peak | exponent | mode | Recommended for | Notes |\n|---|---|---|---|---|---|---|---|---|\n| **Balanced** (default) | 1.0 | 0.15 | 0.85 | 0 | 0 | look only | Everyday use | The tested setting |\n| **Gentle sharpen** | 0.5 | 0.20 | 0.80 | 0.5 | 1 | look only | Portraits, skin | Barely moves anything |\n| **Original look** | 0.5 | 0.15 | 0.85 | 0 | 0 | classic | The old Detail Daemon feel | Small things shift |\n| **Keep layout** | 0.5 | 0.15 | 0.85 | 0 | 0 | keep structure | When nothing may move | About 45% slower |\n| **Smooth** | -0.5 | 0.15 | 0.85 | 0 | 0 | look only | Busy or grainy renders | Negative = smoother, less detail |\n\n### Quick Tips:\n- **peak** and **exponent** at 0 is where the punch comes from. Raise them for a gentler sharpen.\n- **amount** is the original Detail Daemon's scale: 1.0 = 10% less noise at the peak.\n- **classic** and **keep structure** hit harder than look only: start them at half the amount.\n- **start / end:** leave the last steps alone, or noise stays in the image.\n- 4-step models: not worth it.\n\n---\n\n***\"True Nothing is. Permitted Everything is\"***- Yoda Auditore, *Assassin's Wars*"
             }
           },
           "titles": {
@@ -521,11 +521,11 @@
       },
       "widgets_values": [
         "English ✏️",
-        "## Instructions\n---\n\n@[card: Follow me](https://civitai.com/user/lonecatone23)\n\n@[card: Follow me](https://www.instagram.com/synth.studio.models/)\n\n@[card: Get my stuff here](https://github.com/lonecatone23)\n\n@[card: Get my models here](https://huggingface.co/Lonecatone23)\n\n\n@[card: Buy me a ☕](https://ko-fi.com/lonecatone)\n\n### This is many hours of work. If you enjoy it, please 👍 like, 💬 comment, and feel free to ⚡ tip 😉\n\n---\n\n### 🛑🚫✋ What this workflow is for\n- A test bench for two new nodes: **LC Sigmas** and **LC Detail Daemon**. Same prompt, same model, run two ways, and the comparer shows you the difference.\n- **Top path (new):** LC Sigmas builds the schedule, LC Detail Daemon adds detail, and two samplers split the work (first pass, then second pass).\n- **Bottom path (baseline):** a plain KSampler on euler / simple. This is \"what you would normally get\".\n- Every setting here came out of a 3,432 image test across Krea 2 Turbo and Raw, Z-Image, Flux 2 Klein, SDXL and Illustrious.\n\n---\n\n**LC Sigmas (BETA) 📉**\n- A sigma is just how much noise is left at a step. The schedule is the list of those amounts, start to finish. Big noise = the model decides the big stuff (pose, composition, light). Small noise = fine detail (skin, hair, fabric).\n- **sampler / scheduler_shape:** the green line under the graph tells you what tested best for your model (Krea 2: euler + beta57). RES4LYF / ClownShark samplers work too, and a ClownSampler Selector can be wired straight in.\n- The graph shows your schedule: orange = first pass, blue = second pass, dashed = the model's plain schedule for comparison. It updates live once you have run it. Drag the node taller and the graph grows.\n- **step_swap** splits the render into two passes. 0 = one pass. A second model (model_2) can take the second pass, and it always starts at exactly the noise level where the first stopped (no jump).\n- **low_pass:** **continue noise schedule** = the second pass finishes the leftover noise. **renoise** = the first pass finishes the picture, then fresh noise goes back up to the swap level, so the clean model has something to refine. This is the one for cleaning up ControlNet. The step swap sets how much it gets: late = clean-up, earlier = heavier refining.\n- **denoise** is for image to image. The info line tells you the real starting noise, because on Krea 2 \"denoise 0.5\" actually starts at 76% noise. **denoise_steps:** **full schedule** = denoise covers the whole run. **at step swap** = it covers the first pass only, so the second pass refines on its own.\n- **sigma_shift:** leave it on **use model default**. Higher shift = more steps on composition, lower = more on detail.\n- It also outputs the noise for each pass and the sampler, so you do not need RandomNoise, DisableNoise or KSamplerSelect nodes.\n\n**LC Detail Daemon (BETA) 😈**\n- Adds detail by telling the model there is a little less noise than there really is, so it removes a little less and keeps more fine texture.\n- **amount** uses the same scale as the original Detail Daemon (1.0 = 10% less noise at the peak), but it is never multiplied by your CFG.\n- **start / end** are steps, like the original: 0.15 to 0.85.\n- **peak** and **exponent** do more than the amount. **peak 0** = strongest at the start of the window, on the noisy steps where it shapes things. **exponent 0** = full strength across the whole window.\n- **mode:**\n    - **look only** (default): crisp detail without big reshuffles.\n    - **classic:** the original. Small things shift (folds, windows, background focus).\n    - **keep structure:** only the fine part of the change is kept, so the layout stays exactly where it was. About 45% slower.\n- It sits on the first pass only. Want detail later in the render too? Wire it into the second sampler as well.\n- ⚠️ Samplers that add their own noise (dpmpp_2m_sde, euler_ancestral, er_sde, ClownShark at eta 0.5) plus Detail Daemon can leave specks. Lower the amount with those, or stay on euler.\n\n**Baseline**\n- Plain KSampler, euler / simple. Compare it against the new path in the image comparer and judge for yourself.\n\n**Best LC Sigmas Settings**\n| Model | sampler + scheduler_shape | steps | step_swap (ControlNet) | Detail Daemon amount (look only) | Notes |\n|---|---|---|---|---|---|\n| **Krea 2 Turbo / Krealism** | euler + beta57 | 8 | 7 | 1.0 | The everyday setup |\n| **Krea 2 Raw** | euler + beta57 | 20 - 30 | 18 - 27 | 0.5 | More steps = it hits harder |\n| **Z-Image Turbo** | uni_pc + simple | 8 - 9 | 8 | 0.75 | Takes detail the best |\n| **Flux 2 Klein** | uni_pc + simple | 4 | off | off | Too few steps: it shifts the light instead of adding detail |\n| **SDXL / Illustrious / Pony** | dpmpp_2m + karras | 25 - 30 | 23 - 27 | 0.75 | Karras is fine here, not on flow models |\n\n**Best Detail Daemon Settings**\n| Preset | amount | start | end | peak | exponent | mode | Recommended for | Notes |\n|---|---|---|---|---|---|---|---|---|\n| **Balanced** (default) | 1.0 | 0.15 | 0.85 | 0 | 0 | look only | Everyday use | The tested setting |\n| **Gentle sharpen** | 0.5 | 0.20 | 0.80 | 0.5 | 1 | look only | Portraits, skin | Barely moves anything |\n| **Original look** | 0.5 | 0.15 | 0.85 | 0 | 0 | classic | The old Detail Daemon feel | Small things shift |\n| **Keep layout** | 0.5 | 0.15 | 0.85 | 0 | 0 | keep structure | When nothing may move | About 45% slower |\n| **Smooth** | -0.5 | 0.15 | 0.85 | 0 | 0 | look only | Busy or grainy renders | Negative = smoother, less detail |\n\n### Quick Tips:\n- **peak** and **exponent** at 0 is where the punch comes from. Raise them for a gentler sharpen.\n- **amount** is the original Detail Daemon's scale: 1.0 = 10% less noise at the peak.\n- **classic** and **keep structure** hit harder than look only: start them at half the amount.\n- **start / end:** leave the last steps alone, or noise stays in the image.\n- 4-step models: not worth it.\n\n---\n\n***\"True Nothing is. Permitted Everything is\"***- Yoda Auditore, *Assassin's Wars*"
+        "## Instructions\n---\n\n@[card: Follow me](https://civitai.com/user/lonecatone23)\n\n@[card: Follow me](https://www.instagram.com/synth.studio.models/)\n\n@[card: Get my stuff here](https://github.com/lonecatone23)\n\n@[card: Get my models here](https://huggingface.co/Lonecatone23)\n\n\n@[card: Buy me a ☕](https://ko-fi.com/lonecatone)\n\n### This is many hours of work. If you enjoy it, please 👍 like, 💬 comment, and feel free to ⚡ tip 😉\n\n---\n\n### 🛑🚫✋ What this workflow is for\n- A test bench for two new nodes: **LC Sigmas** and **LC Detail Daemon**. Same prompt, same model, run two ways, and the comparer shows you the difference.\n- **Top path (new):** LC Sigmas builds the schedule, LC Detail Daemon adds detail, and two samplers split the work (first pass, then second pass).\n- **Bottom path (baseline):** a plain KSampler on euler / simple. This is \"what you would normally get\".\n- Every setting here came out of a 3,432 image test across Krea 2 Turbo and Raw, Z-Image, Flux 2 Klein, SDXL and Illustrious.\n\n---\n\n**LC Sigmas (BETA) 📉**\n- A sigma is just how much noise is left at a step. The schedule is the list of those amounts, start to finish. Big noise = the model decides the big stuff (pose, composition, light). Small noise = fine detail (skin, hair, fabric).\n- **sampler:** the green line under the graph tells you what tested best for your model and its shift (Krea 2 at its own shift: euler + beta57). RES4LYF / ClownShark samplers work too, and a ClownSampler Selector can be wired straight in.\n- **sigma_curve_presets:** the shape of the schedule. **base** = a plain scheduler (picked in **base_scheduler**), **beta** = your own alpha / beta, **flowmatch**, **hyperbolic** and **gaussian** = the base curve bent by tanh, a bell curve, etc., plus any curve you saved. Only the settings for the one you pick show up.\n- **Drag a point on the graph** to bend the curve. **smooth** pulls the neighbours along (**smooth_radius** = how many), **spike** moves just that point. **reset curve** undoes it, **save curve** keeps it as a preset.\n- The graph shows your schedule: orange = first pass, blue = second pass, dashed = the model's plain schedule (or your preset before you bent it). It updates live once you have run it. Drag the node taller and the graph grows.\n- **step_swap** splits the render into two passes. 0 = one pass. A second model (model_2) can take the second pass, and it always starts at exactly the noise level where the first stopped (no jump).\n- **first_pass_resample:** walks the first pass in more steps along the same path. 1 = off.\n- **low_pass:** **continue noise schedule** = the second pass finishes the leftover noise. **renoise** = the first pass finishes the picture, then fresh noise goes back up to the swap level, so the clean model has something to refine. This is the one for cleaning up ControlNet. The step swap sets how much it gets: late = clean-up, earlier = heavier refining.\n- **denoise** is for image to image. The info line tells you the real starting noise, because on Krea 2 \"denoise 0.5\" actually starts at 76% noise. **denoise_steps:** **full schedule** = denoise covers the whole run. **at step swap** = it covers the first pass only, so the second pass refines on its own.\n- **sigma_shift:** leave it on **use model default**. Higher shift = more steps on composition, lower = more on detail. flowmatch and saved curves ignore it.\n- ⚠️ Go easy dragging a **gaussian** curve down. It already keeps the noise high, and a big drag cuts the detail steps short and burns the picture.\n- It also outputs the noise for each pass and the sampler, so you do not need RandomNoise, DisableNoise or KSamplerSelect nodes.\n\n**LC Detail Daemon (BETA) 😈**\n- Adds detail by telling the model there is a little less noise than there really is, so it removes a little less and keeps more fine texture.\n- **amount** uses the same scale as the original Detail Daemon (1.0 = 10% less noise at the peak), but it is never multiplied by your CFG.\n- **start / end** are steps, like the original: 0.15 to 0.85.\n- **peak** and **exponent** do more than the amount. **peak 0** = strongest at the start of the window, on the noisy steps where it shapes things. **exponent 0** = full strength across the whole window.\n- **mode:**\n    - **look only** (default): crisp detail without big reshuffles.\n    - **classic:** the original. Small things shift (folds, windows, background focus).\n    - **keep structure:** only the fine part of the change is kept, so the layout stays exactly where it was. About 45% slower.\n- It sits on the first pass only. Want detail later in the render too? Wire it into the second sampler as well.\n- ⚠️ Samplers that add their own noise (dpmpp_2m_sde, euler_ancestral, er_sde, ClownShark at eta 0.5) plus Detail Daemon can leave specks. Lower the amount with those, or stay on euler.\n\n**Baseline**\n- Plain KSampler, euler / simple. Compare it against the new path in the image comparer and judge for yourself.\n\n**Best LC Sigmas Settings**\n| Model | sampler + base_scheduler | steps | step_swap (ControlNet) | Detail Daemon amount (look only) | Notes |\n|---|---|---|---|---|---|\n| **Krea 2 Turbo / Krealism** | euler + beta57 | 8 | 7 | 1.0 | The everyday setup |\n| **Krea 2 Raw** | euler + beta57 | 20 - 30 | 18 - 27 | 0.5 | More steps = it hits harder |\n| **Krea 2 + ModelSamplingAuraFlow (shift 4)** | euler + simple | 8 - 10 | 7 - 8 | 1.0 | beta57 at this shift = grain and crunchy skin |\n| **Z-Image Turbo** | uni_pc + simple | 8 - 9 | 8 | 0.75 | Takes detail the best |\n| **Flux 2 Klein** | uni_pc + simple | 4 | off | off | Too few steps: it shifts the light instead of adding detail |\n| **SDXL / Illustrious / Pony** | dpmpp_2m + karras | 25 - 30 | 23 - 27 | 0.75 | Karras is fine here, not on flow models |\n\n**Best Detail Daemon Settings**\n| Preset | amount | start | end | peak | exponent | mode | Recommended for | Notes |\n|---|---|---|---|---|---|---|---|---|\n| **Balanced** (default) | 1.0 | 0.15 | 0.85 | 0 | 0 | look only | Everyday use | The tested setting |\n| **Gentle sharpen** | 0.5 | 0.20 | 0.80 | 0.5 | 1 | look only | Portraits, skin | Barely moves anything |\n| **Original look** | 0.5 | 0.15 | 0.85 | 0 | 0 | classic | The old Detail Daemon feel | Small things shift |\n| **Keep layout** | 0.5 | 0.15 | 0.85 | 0 | 0 | keep structure | When nothing may move | About 45% slower |\n| **Smooth** | -0.5 | 0.15 | 0.85 | 0 | 0 | look only | Busy or grainy renders | Negative = smoother, less detail |\n\n### Quick Tips:\n- **peak** and **exponent** at 0 is where the punch comes from. Raise them for a gentler sharpen.\n- **amount** is the original Detail Daemon's scale: 1.0 = 10% less noise at the peak.\n- **classic** and **keep structure** hit harder than look only: start them at half the amount.\n- **start / end:** leave the last steps alone, or noise stays in the image.\n- 4-step models: not worth it.\n\n---\n\n***\"True Nothing is. Permitted Everything is\"***- Yoda Auditore, *Assassin's Wars*"
       ],
       "widgets_values_named": {
         "language": "English ✏️",
-        "text": "## Instructions\n---\n\n@[card: Follow me](https://civitai.com/user/lonecatone23)\n\n@[card: Follow me](https://www.instagram.com/synth.studio.models/)\n\n@[card: Get my stuff here](https://github.com/lonecatone23)\n\n@[card: Get my models here](https://huggingface.co/Lonecatone23)\n\n\n@[card: Buy me a ☕](https://ko-fi.com/lonecatone)\n\n### This is many hours of work. If you enjoy it, please 👍 like, 💬 comment, and feel free to ⚡ tip 😉\n\n---\n\n### 🛑🚫✋ What this workflow is for\n- A test bench for two new nodes: **LC Sigmas** and **LC Detail Daemon**. Same prompt, same model, run two ways, and the comparer shows you the difference.\n- **Top path (new):** LC Sigmas builds the schedule, LC Detail Daemon adds detail, and two samplers split the work (first pass, then second pass).\n- **Bottom path (baseline):** a plain KSampler on euler / simple. This is \"what you would normally get\".\n- Every setting here came out of a 3,432 image test across Krea 2 Turbo and Raw, Z-Image, Flux 2 Klein, SDXL and Illustrious.\n\n---\n\n**LC Sigmas (BETA) 📉**\n- A sigma is just how much noise is left at a step. The schedule is the list of those amounts, start to finish. Big noise = the model decides the big stuff (pose, composition, light). Small noise = fine detail (skin, hair, fabric).\n- **sampler / scheduler_shape:** the green line under the graph tells you what tested best for your model (Krea 2: euler + beta57). RES4LYF / ClownShark samplers work too, and a ClownSampler Selector can be wired straight in.\n- The graph shows your schedule: orange = first pass, blue = second pass, dashed = the model's plain schedule for comparison. It updates live once you have run it. Drag the node taller and the graph grows.\n- **step_swap** splits the render into two passes. 0 = one pass. A second model (model_2) can take the second pass, and it always starts at exactly the noise level where the first stopped (no jump).\n- **low_pass:** **continue noise schedule** = the second pass finishes the leftover noise. **renoise** = the first pass finishes the picture, then fresh noise goes back up to the swap level, so the clean model has something to refine. This is the one for cleaning up ControlNet. The step swap sets how much it gets: late = clean-up, earlier = heavier refining.\n- **denoise** is for image to image. The info line tells you the real starting noise, because on Krea 2 \"denoise 0.5\" actually starts at 76% noise. **denoise_steps:** **full schedule** = denoise covers the whole run. **at step swap** = it covers the first pass only, so the second pass refines on its own.\n- **sigma_shift:** leave it on **use model default**. Higher shift = more steps on composition, lower = more on detail.\n- It also outputs the noise for each pass and the sampler, so you do not need RandomNoise, DisableNoise or KSamplerSelect nodes.\n\n**LC Detail Daemon (BETA) 😈**\n- Adds detail by telling the model there is a little less noise than there really is, so it removes a little less and keeps more fine texture.\n- **amount** uses the same scale as the original Detail Daemon (1.0 = 10% less noise at the peak), but it is never multiplied by your CFG.\n- **start / end** are steps, like the original: 0.15 to 0.85.\n- **peak** and **exponent** do more than the amount. **peak 0** = strongest at the start of the window, on the noisy steps where it shapes things. **exponent 0** = full strength across the whole window.\n- **mode:**\n    - **look only** (default): crisp detail without big reshuffles.\n    - **classic:** the original. Small things shift (folds, windows, background focus).\n    - **keep structure:** only the fine part of the change is kept, so the layout stays exactly where it was. About 45% slower.\n- It sits on the first pass only. Want detail later in the render too? Wire it into the second sampler as well.\n- ⚠️ Samplers that add their own noise (dpmpp_2m_sde, euler_ancestral, er_sde, ClownShark at eta 0.5) plus Detail Daemon can leave specks. Lower the amount with those, or stay on euler.\n\n**Baseline**\n- Plain KSampler, euler / simple. Compare it against the new path in the image comparer and judge for yourself.\n\n**Best LC Sigmas Settings**\n| Model | sampler + scheduler_shape | steps | step_swap (ControlNet) | Detail Daemon amount (look only) | Notes |\n|---|---|---|---|---|---|\n| **Krea 2 Turbo / Krealism** | euler + beta57 | 8 | 7 | 1.0 | The everyday setup |\n| **Krea 2 Raw** | euler + beta57 | 20 - 30 | 18 - 27 | 0.5 | More steps = it hits harder |\n| **Z-Image Turbo** | uni_pc + simple | 8 - 9 | 8 | 0.75 | Takes detail the best |\n| **Flux 2 Klein** | uni_pc + simple | 4 | off | off | Too few steps: it shifts the light instead of adding detail |\n| **SDXL / Illustrious / Pony** | dpmpp_2m + karras | 25 - 30 | 23 - 27 | 0.75 | Karras is fine here, not on flow models |\n\n**Best Detail Daemon Settings**\n| Preset | amount | start | end | peak | exponent | mode | Recommended for | Notes |\n|---|---|---|---|---|---|---|---|---|\n| **Balanced** (default) | 1.0 | 0.15 | 0.85 | 0 | 0 | look only | Everyday use | The tested setting |\n| **Gentle sharpen** | 0.5 | 0.20 | 0.80 | 0.5 | 1 | look only | Portraits, skin | Barely moves anything |\n| **Original look** | 0.5 | 0.15 | 0.85 | 0 | 0 | classic | The old Detail Daemon feel | Small things shift |\n| **Keep layout** | 0.5 | 0.15 | 0.85 | 0 | 0 | keep structure | When nothing may move | About 45% slower |\n| **Smooth** | -0.5 | 0.15 | 0.85 | 0 | 0 | look only | Busy or grainy renders | Negative = smoother, less detail |\n\n### Quick Tips:\n- **peak** and **exponent** at 0 is where the punch comes from. Raise them for a gentler sharpen.\n- **amount** is the original Detail Daemon's scale: 1.0 = 10% less noise at the peak.\n- **classic** and **keep structure** hit harder than look only: start them at half the amount.\n- **start / end:** leave the last steps alone, or noise stays in the image.\n- 4-step models: not worth it.\n\n---\n\n***\"True Nothing is. Permitted Everything is\"***- Yoda Auditore, *Assassin's Wars*"
+        "text": "## Instructions\n---\n\n@[card: Follow me](https://civitai.com/user/lonecatone23)\n\n@[card: Follow me](https://www.instagram.com/synth.studio.models/)\n\n@[card: Get my stuff here](https://github.com/lonecatone23)\n\n@[card: Get my models here](https://huggingface.co/Lonecatone23)\n\n\n@[card: Buy me a ☕](https://ko-fi.com/lonecatone)\n\n### This is many hours of work. If you enjoy it, please 👍 like, 💬 comment, and feel free to ⚡ tip 😉\n\n---\n\n### 🛑🚫✋ What this workflow is for\n- A test bench for two new nodes: **LC Sigmas** and **LC Detail Daemon**. Same prompt, same model, run two ways, and the comparer shows you the difference.\n- **Top path (new):** LC Sigmas builds the schedule, LC Detail Daemon adds detail, and two samplers split the work (first pass, then second pass).\n- **Bottom path (baseline):** a plain KSampler on euler / simple. This is \"what you would normally get\".\n- Every setting here came out of a 3,432 image test across Krea 2 Turbo and Raw, Z-Image, Flux 2 Klein, SDXL and Illustrious.\n\n---\n\n**LC Sigmas (BETA) 📉**\n- A sigma is just how much noise is left at a step. The schedule is the list of those amounts, start to finish. Big noise = the model decides the big stuff (pose, composition, light). Small noise = fine detail (skin, hair, fabric).\n- **sampler:** the green line under the graph tells you what tested best for your model and its shift (Krea 2 at its own shift: euler + beta57). RES4LYF / ClownShark samplers work too, and a ClownSampler Selector can be wired straight in.\n- **sigma_curve_presets:** the shape of the schedule. **base** = a plain scheduler (picked in **base_scheduler**), **beta** = your own alpha / beta, **flowmatch**, **hyperbolic** and **gaussian** = the base curve bent by tanh, a bell curve, etc., plus any curve you saved. Only the settings for the one you pick show up.\n- **Drag a point on the graph** to bend the curve. **smooth** pulls the neighbours along (**smooth_radius** = how many), **spike** moves just that point. **reset curve** undoes it, **save curve** keeps it as a preset.\n- The graph shows your schedule: orange = first pass, blue = second pass, dashed = the model's plain schedule (or your preset before you bent it). It updates live once you have run it. Drag the node taller and the graph grows.\n- **step_swap** splits the render into two passes. 0 = one pass. A second model (model_2) can take the second pass, and it always starts at exactly the noise level where the first stopped (no jump).\n- **first_pass_resample:** walks the first pass in more steps along the same path. 1 = off.\n- **low_pass:** **continue noise schedule** = the second pass finishes the leftover noise. **renoise** = the first pass finishes the picture, then fresh noise goes back up to the swap level, so the clean model has something to refine. This is the one for cleaning up ControlNet. The step swap sets how much it gets: late = clean-up, earlier = heavier refining.\n- **denoise** is for image to image. The info line tells you the real starting noise, because on Krea 2 \"denoise 0.5\" actually starts at 76% noise. **denoise_steps:** **full schedule** = denoise covers the whole run. **at step swap** = it covers the first pass only, so the second pass refines on its own.\n- **sigma_shift:** leave it on **use model default**. Higher shift = more steps on composition, lower = more on detail. flowmatch and saved curves ignore it.\n- ⚠️ Go easy dragging a **gaussian** curve down. It already keeps the noise high, and a big drag cuts the detail steps short and burns the picture.\n- It also outputs the noise for each pass and the sampler, so you do not need RandomNoise, DisableNoise or KSamplerSelect nodes.\n\n**LC Detail Daemon (BETA) 😈**\n- Adds detail by telling the model there is a little less noise than there really is, so it removes a little less and keeps more fine texture.\n- **amount** uses the same scale as the original Detail Daemon (1.0 = 10% less noise at the peak), but it is never multiplied by your CFG.\n- **start / end** are steps, like the original: 0.15 to 0.85.\n- **peak** and **exponent** do more than the amount. **peak 0** = strongest at the start of the window, on the noisy steps where it shapes things. **exponent 0** = full strength across the whole window.\n- **mode:**\n    - **look only** (default): crisp detail without big reshuffles.\n    - **classic:** the original. Small things shift (folds, windows, background focus).\n    - **keep structure:** only the fine part of the change is kept, so the layout stays exactly where it was. About 45% slower.\n- It sits on the first pass only. Want detail later in the render too? Wire it into the second sampler as well.\n- ⚠️ Samplers that add their own noise (dpmpp_2m_sde, euler_ancestral, er_sde, ClownShark at eta 0.5) plus Detail Daemon can leave specks. Lower the amount with those, or stay on euler.\n\n**Baseline**\n- Plain KSampler, euler / simple. Compare it against the new path in the image comparer and judge for yourself.\n\n**Best LC Sigmas Settings**\n| Model | sampler + base_scheduler | steps | step_swap (ControlNet) | Detail Daemon amount (look only) | Notes |\n|---|---|---|---|---|---|\n| **Krea 2 Turbo / Krealism** | euler + beta57 | 8 | 7 | 1.0 | The everyday setup |\n| **Krea 2 Raw** | euler + beta57 | 20 - 30 | 18 - 27 | 0.5 | More steps = it hits harder |\n| **Krea 2 + ModelSamplingAuraFlow (shift 4)** | euler + simple | 8 - 10 | 7 - 8 | 1.0 | beta57 at this shift = grain and crunchy skin |\n| **Z-Image Turbo** | uni_pc + simple | 8 - 9 | 8 | 0.75 | Takes detail the best |\n| **Flux 2 Klein** | uni_pc + simple | 4 | off | off | Too few steps: it shifts the light instead of adding detail |\n| **SDXL / Illustrious / Pony** | dpmpp_2m + karras | 25 - 30 | 23 - 27 | 0.75 | Karras is fine here, not on flow models |\n\n**Best Detail Daemon Settings**\n| Preset | amount | start | end | peak | exponent | mode | Recommended for | Notes |\n|---|---|---|---|---|---|---|---|---|\n| **Balanced** (default) | 1.0 | 0.15 | 0.85 | 0 | 0 | look only | Everyday use | The tested setting |\n| **Gentle sharpen** | 0.5 | 0.20 | 0.80 | 0.5 | 1 | look only | Portraits, skin | Barely moves anything |\n| **Original look** | 0.5 | 0.15 | 0.85 | 0 | 0 | classic | The old Detail Daemon feel | Small things shift |\n| **Keep layout** | 0.5 | 0.15 | 0.85 | 0 | 0 | keep structure | When nothing may move | About 45% slower |\n| **Smooth** | -0.5 | 0.15 | 0.85 | 0 | 0 | look only | Busy or grainy renders | Negative = smoother, less detail |\n\n### Quick Tips:\n- **peak** and **exponent** at 0 is where the punch comes from. Raise them for a gentler sharpen.\n- **amount** is the original Detail Daemon's scale: 1.0 = 10% less noise at the peak.\n- **classic** and **keep structure** hit harder than look only: start them at half the amount.\n- **start / end:** leave the last steps alone, or noise stays in the image.\n- 4-step models: not worth it.\n\n---\n\n***\"True Nothing is. Permitted Everything is\"***- Yoda Auditore, *Assassin's Wars*"
       },
       "color": "#2E3A46",
       "bgcolor": "#2E3A46"
@@ -1147,7 +1147,7 @@
       ],
       "size": [
         330,
-        610
+        760
       ],
       "flags": {},
       "order": 22,
@@ -1171,6 +1171,7 @@
           "link": 56
         },
         {
+          "localized_name": "sampler",
           "name": "sampler",
           "type": "COMBO",
           "widget": {
@@ -1179,14 +1180,25 @@
           "link": 142
         },
         {
-          "name": "scheduler_shape",
+          "localized_name": "sigma_curve_presets",
+          "name": "sigma_curve_presets",
           "type": "COMBO",
           "widget": {
-            "name": "scheduler_shape"
+            "name": "sigma_curve_presets"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "base_scheduler",
+          "name": "base_scheduler",
+          "type": "COMBO",
+          "widget": {
+            "name": "base_scheduler"
           },
           "link": 140
         },
         {
+          "localized_name": "steps",
           "name": "steps",
           "type": "INT",
           "widget": {
@@ -1195,6 +1207,7 @@
           "link": 167
         },
         {
+          "localized_name": "step_swap",
           "name": "step_swap",
           "type": "INT",
           "widget": {
@@ -1203,6 +1216,7 @@
           "link": 170
         },
         {
+          "localized_name": "denoise",
           "name": "denoise",
           "type": "FLOAT",
           "widget": {
@@ -1211,6 +1225,178 @@
           "link": 169
         },
         {
+          "localized_name": "denoise_steps",
+          "name": "denoise_steps",
+          "type": "COMBO",
+          "widget": {
+            "name": "denoise_steps"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "low_pass",
+          "name": "low_pass",
+          "type": "COMBO",
+          "widget": {
+            "name": "low_pass"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "scheduler_shape_2",
+          "name": "scheduler_shape_2",
+          "type": "COMBO",
+          "widget": {
+            "name": "scheduler_shape_2"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "first_pass_resample",
+          "name": "first_pass_resample",
+          "type": "FLOAT",
+          "widget": {
+            "name": "first_pass_resample"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "sigma_shift",
+          "name": "sigma_shift",
+          "type": "COMBO",
+          "widget": {
+            "name": "sigma_shift"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "custom_shift",
+          "name": "custom_shift",
+          "type": "FLOAT",
+          "widget": {
+            "name": "custom_shift"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "beta_alpha",
+          "name": "beta_alpha",
+          "type": "FLOAT",
+          "widget": {
+            "name": "beta_alpha"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "beta_beta",
+          "name": "beta_beta",
+          "type": "FLOAT",
+          "widget": {
+            "name": "beta_beta"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "flowmatch_shift",
+          "name": "flowmatch_shift",
+          "type": "FLOAT",
+          "widget": {
+            "name": "flowmatch_shift"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "flowmatch_dynamic",
+          "name": "flowmatch_dynamic",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "flowmatch_dynamic"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "flowmatch_terminal",
+          "name": "flowmatch_terminal",
+          "type": "FLOAT",
+          "widget": {
+            "name": "flowmatch_terminal"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "hyperbolic_function",
+          "name": "hyperbolic_function",
+          "type": "COMBO",
+          "widget": {
+            "name": "hyperbolic_function"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "hyperbolic_scale",
+          "name": "hyperbolic_scale",
+          "type": "FLOAT",
+          "widget": {
+            "name": "hyperbolic_scale"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "gaussian_mean",
+          "name": "gaussian_mean",
+          "type": "FLOAT",
+          "widget": {
+            "name": "gaussian_mean"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "gaussian_std",
+          "name": "gaussian_std",
+          "type": "FLOAT",
+          "widget": {
+            "name": "gaussian_std"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "gaussian_operation",
+          "name": "gaussian_operation",
+          "type": "COMBO",
+          "widget": {
+            "name": "gaussian_operation"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "edit_mode",
+          "name": "edit_mode",
+          "type": "COMBO",
+          "widget": {
+            "name": "edit_mode"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "smooth_radius",
+          "name": "smooth_radius",
+          "type": "FLOAT",
+          "widget": {
+            "name": "smooth_radius"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "curve_edit",
+          "name": "curve_edit",
+          "type": "STRING",
+          "widget": {
+            "name": "curve_edit"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "seed",
           "name": "seed",
           "type": "INT",
           "widget": {
@@ -1280,6 +1466,7 @@
       },
       "widgets_values": [
         "euler",
+        "base",
         "simple",
         12,
         8,
@@ -1287,11 +1474,24 @@
         "full schedule",
         "continue noise schedule",
         "same as first",
+        1.0,
         "use model default",
         1.15,
+        0.6,
+        0.6,
+        3.0,
+        true,
+        0.0,
+        "tanh",
+        1.0,
+        0.04,
+        1.0,
+        "modulate",
+        "smooth",
+        1.5,
+        "",
         0,
-        "randomize",
-        ""
+        "randomize"
       ],
       "widgets_values_named": {
         "sampler": "euler",
@@ -2026,7 +2226,7 @@
           "source": "en",
           "texts": {
             "en": {
-              "text": "### ✋ How to use\n\n**1. Use I2I 🖼️ (toggle)**\n- **Off:** text to image. The empty latent comes from LC Aspect Ratio Simplifier.\n- **On:** image to image from **Load Image**. Then set **denoise** on LC Sigmas below 1 (start at 0.6). At 1 your picture gets fully replaced.\n\n**2. LC Aspect Ratio Simplifier 📐**\n- Pick a size preset (or custom width / height). This sets the size of everything.\n\n**3. LC Model Optimizer ⚡**\n- **base_model:** match your model (Krea 2 Turbo for Krealism).\n- **goal:** Optimal is the safe pick. Fast trades a little quality for speed.\n\n**4. Your prompt / Use Prompt Assist 📝 (toggle)**\n- Type your prompt in **Your Prompt**.\n- **Use Prompt Assist on:** LC Vision describes your loaded image and adds it to your prompt. Off = your prompt only.\n- **Final Prompt** shows exactly what gets sent.\n\n**5. LC Seed 🌱**\n- One seed for the whole run. Fix it when you compare settings, so only the setting changes.\n\n**6. LC Sigmas 📉**\n- **sampler / scheduler_shape:** euler + beta57 on Krea 2. The green line under the graph says what tested best for your model.\n- **steps:** total steps for both passes. Krea 2 Turbo: 8. Krea 2 Raw: 28 or more.\n- **step_swap:** 0 = one pass. For two passes put it near the end (6 of 8).\n- **low_pass:** **continue noise schedule**, or **renoise** when a second model on model_2 is cleaning up.\n- **denoise:** 1 for text to image. 0.4 to 0.7 for image to image. **denoise_steps:** full schedule.\n- **sigma_shift:** leave on use model default.\n\n**7. LC Detail Daemon 😈**\n- **amount:** 1.0 with look only on Krea 2 / Krealism. classic and keep structure hit harder: start at half.\n- **start / end:** 0.15 and 0.85.\n- **peak:** 0 = strongest at the start of the window, where it shapes things. **exponent:** 0 = full strength across the whole window. Those two do more than the amount.\n- **mode:** look only (default) for crisp detail without reshuffles. classic for the original look, keep structure when the layout must not move.\n\n**8. Compare**\n- The image comparer shows the baseline (A) against the new path (B). Drag across it.\n\n---"
+              "text": "### ✋ How to use\n\n**1. Use I2I 🖼️ (toggle)**\n- **Off:** text to image. The empty latent comes from LC Aspect Ratio Simplifier.\n- **On:** image to image from **Load Image**. Then set **denoise** on LC Sigmas below 1 (start at 0.6). At 1 your picture gets fully replaced.\n\n**2. LC Aspect Ratio Simplifier 📐**\n- Pick a size preset (or custom width / height). This sets the size of everything.\n\n**3. LC Model Optimizer ⚡**\n- **base_model:** match your model (Krea 2 Turbo for Krealism).\n- **goal:** Optimal is the safe pick. Fast trades a little quality for speed.\n\n**4. Your prompt / Use Prompt Assist 📝 (toggle)**\n- Type your prompt in **Your Prompt**.\n- **Use Prompt Assist on:** LC Vision describes your loaded image and adds it to your prompt. Off = your prompt only.\n- **Final Prompt** shows exactly what gets sent.\n\n**5. LC Seed 🌱**\n- One seed for the whole run. Fix it when you compare settings, so only the setting changes.\n\n**6. LC Sigmas 📉**\n- **sampler:** euler on Krea 2. The green line under the graph says what tested best for your model.\n- **sigma_curve_presets:** base, with **base_scheduler** on beta57 for Krea 2 (simple when a ModelSamplingAuraFlow shift 4 sits in front of the model). Drag the graph to bend it, **reset curve** to undo.\n- **steps:** total steps for both passes. Krea 2 Turbo: 8. Krea 2 Raw: 28 or more.\n- **step_swap:** 0 = one pass. For two passes put it near the end (6 of 8).\n- **low_pass:** **continue noise schedule**, or **renoise** when a second model on model_2 is cleaning up.\n- **denoise:** 1 for text to image. 0.4 to 0.7 for image to image. **denoise_steps:** full schedule.\n- **sigma_shift:** leave on use model default.\n\n**7. LC Detail Daemon 😈**\n- **amount:** 1.0 with look only on Krea 2 / Krealism. classic and keep structure hit harder: start at half.\n- **start / end:** 0.15 and 0.85.\n- **peak:** 0 = strongest at the start of the window, where it shapes things. **exponent:** 0 = full strength across the whole window. Those two do more than the amount.\n- **mode:** look only (default) for crisp detail without reshuffles. classic for the original look, keep structure when the layout must not move.\n\n**8. Compare**\n- The image comparer shows the baseline (A) against the new path (B). Drag across it.\n\n---"
             }
           },
           "titles": {
@@ -2041,11 +2241,11 @@
       },
       "widgets_values": [
         "English ✏️",
-        "### ✋ How to use\n\n**1. Use I2I 🖼️ (toggle)**\n- **Off:** text to image. The empty latent comes from LC Aspect Ratio Simplifier.\n- **On:** image to image from **Load Image**. Then set **denoise** on LC Sigmas below 1 (start at 0.6). At 1 your picture gets fully replaced.\n\n**2. LC Aspect Ratio Simplifier 📐**\n- Pick a size preset (or custom width / height). This sets the size of everything.\n\n**3. LC Model Optimizer ⚡**\n- **base_model:** match your model (Krea 2 Turbo for Krealism).\n- **goal:** Optimal is the safe pick. Fast trades a little quality for speed.\n\n**4. Your prompt / Use Prompt Assist 📝 (toggle)**\n- Type your prompt in **Your Prompt**.\n- **Use Prompt Assist on:** LC Vision describes your loaded image and adds it to your prompt. Off = your prompt only.\n- **Final Prompt** shows exactly what gets sent.\n\n**5. LC Seed 🌱**\n- One seed for the whole run. Fix it when you compare settings, so only the setting changes.\n\n**6. LC Sigmas 📉**\n- **sampler / scheduler_shape:** euler + beta57 on Krea 2. The green line under the graph says what tested best for your model.\n- **steps:** total steps for both passes. Krea 2 Turbo: 8. Krea 2 Raw: 28 or more.\n- **step_swap:** 0 = one pass. For two passes put it near the end (6 of 8).\n- **low_pass:** **continue noise schedule**, or **renoise** when a second model on model_2 is cleaning up.\n- **denoise:** 1 for text to image. 0.4 to 0.7 for image to image. **denoise_steps:** full schedule.\n- **sigma_shift:** leave on use model default.\n\n**7. LC Detail Daemon 😈**\n- **amount:** 1.0 with look only on Krea 2 / Krealism. classic and keep structure hit harder: start at half.\n- **start / end:** 0.15 and 0.85.\n- **peak:** 0 = strongest at the start of the window, where it shapes things. **exponent:** 0 = full strength across the whole window. Those two do more than the amount.\n- **mode:** look only (default) for crisp detail without reshuffles. classic for the original look, keep structure when the layout must not move.\n\n**8. Compare**\n- The image comparer shows the baseline (A) against the new path (B). Drag across it.\n\n---"
+        "### ✋ How to use\n\n**1. Use I2I 🖼️ (toggle)**\n- **Off:** text to image. The empty latent comes from LC Aspect Ratio Simplifier.\n- **On:** image to image from **Load Image**. Then set **denoise** on LC Sigmas below 1 (start at 0.6). At 1 your picture gets fully replaced.\n\n**2. LC Aspect Ratio Simplifier 📐**\n- Pick a size preset (or custom width / height). This sets the size of everything.\n\n**3. LC Model Optimizer ⚡**\n- **base_model:** match your model (Krea 2 Turbo for Krealism).\n- **goal:** Optimal is the safe pick. Fast trades a little quality for speed.\n\n**4. Your prompt / Use Prompt Assist 📝 (toggle)**\n- Type your prompt in **Your Prompt**.\n- **Use Prompt Assist on:** LC Vision describes your loaded image and adds it to your prompt. Off = your prompt only.\n- **Final Prompt** shows exactly what gets sent.\n\n**5. LC Seed 🌱**\n- One seed for the whole run. Fix it when you compare settings, so only the setting changes.\n\n**6. LC Sigmas 📉**\n- **sampler:** euler on Krea 2. The green line under the graph says what tested best for your model.\n- **sigma_curve_presets:** base, with **base_scheduler** on beta57 for Krea 2 (simple when a ModelSamplingAuraFlow shift 4 sits in front of the model). Drag the graph to bend it, **reset curve** to undo.\n- **steps:** total steps for both passes. Krea 2 Turbo: 8. Krea 2 Raw: 28 or more.\n- **step_swap:** 0 = one pass. For two passes put it near the end (6 of 8).\n- **low_pass:** **continue noise schedule**, or **renoise** when a second model on model_2 is cleaning up.\n- **denoise:** 1 for text to image. 0.4 to 0.7 for image to image. **denoise_steps:** full schedule.\n- **sigma_shift:** leave on use model default.\n\n**7. LC Detail Daemon 😈**\n- **amount:** 1.0 with look only on Krea 2 / Krealism. classic and keep structure hit harder: start at half.\n- **start / end:** 0.15 and 0.85.\n- **peak:** 0 = strongest at the start of the window, where it shapes things. **exponent:** 0 = full strength across the whole window. Those two do more than the amount.\n- **mode:** look only (default) for crisp detail without reshuffles. classic for the original look, keep structure when the layout must not move.\n\n**8. Compare**\n- The image comparer shows the baseline (A) against the new path (B). Drag across it.\n\n---"
       ],
       "widgets_values_named": {
         "language": "English ✏️",
-        "text": "### ✋ How to use\n\n**1. Use I2I 🖼️ (toggle)**\n- **Off:** text to image. The empty latent comes from LC Aspect Ratio Simplifier.\n- **On:** image to image from **Load Image**. Then set **denoise** on LC Sigmas below 1 (start at 0.6). At 1 your picture gets fully replaced.\n\n**2. LC Aspect Ratio Simplifier 📐**\n- Pick a size preset (or custom width / height). This sets the size of everything.\n\n**3. LC Model Optimizer ⚡**\n- **base_model:** match your model (Krea 2 Turbo for Krealism).\n- **goal:** Optimal is the safe pick. Fast trades a little quality for speed.\n\n**4. Your prompt / Use Prompt Assist 📝 (toggle)**\n- Type your prompt in **Your Prompt**.\n- **Use Prompt Assist on:** LC Vision describes your loaded image and adds it to your prompt. Off = your prompt only.\n- **Final Prompt** shows exactly what gets sent.\n\n**5. LC Seed 🌱**\n- One seed for the whole run. Fix it when you compare settings, so only the setting changes.\n\n**6. LC Sigmas 📉**\n- **sampler / scheduler_shape:** euler + beta57 on Krea 2. The green line under the graph says what tested best for your model.\n- **steps:** total steps for both passes. Krea 2 Turbo: 8. Krea 2 Raw: 28 or more.\n- **step_swap:** 0 = one pass. For two passes put it near the end (6 of 8).\n- **low_pass:** **continue noise schedule**, or **renoise** when a second model on model_2 is cleaning up.\n- **denoise:** 1 for text to image. 0.4 to 0.7 for image to image. **denoise_steps:** full schedule.\n- **sigma_shift:** leave on use model default.\n\n**7. LC Detail Daemon 😈**\n- **amount:** 1.0 with look only on Krea 2 / Krealism. classic and keep structure hit harder: start at half.\n- **start / end:** 0.15 and 0.85.\n- **peak:** 0 = strongest at the start of the window, where it shapes things. **exponent:** 0 = full strength across the whole window. Those two do more than the amount.\n- **mode:** look only (default) for crisp detail without reshuffles. classic for the original look, keep structure when the layout must not move.\n\n**8. Compare**\n- The image comparer shows the baseline (A) against the new path (B). Drag across it.\n\n---"
+        "text": "### ✋ How to use\n\n**1. Use I2I 🖼️ (toggle)**\n- **Off:** text to image. The empty latent comes from LC Aspect Ratio Simplifier.\n- **On:** image to image from **Load Image**. Then set **denoise** on LC Sigmas below 1 (start at 0.6). At 1 your picture gets fully replaced.\n\n**2. LC Aspect Ratio Simplifier 📐**\n- Pick a size preset (or custom width / height). This sets the size of everything.\n\n**3. LC Model Optimizer ⚡**\n- **base_model:** match your model (Krea 2 Turbo for Krealism).\n- **goal:** Optimal is the safe pick. Fast trades a little quality for speed.\n\n**4. Your prompt / Use Prompt Assist 📝 (toggle)**\n- Type your prompt in **Your Prompt**.\n- **Use Prompt Assist on:** LC Vision describes your loaded image and adds it to your prompt. Off = your prompt only.\n- **Final Prompt** shows exactly what gets sent.\n\n**5. LC Seed 🌱**\n- One seed for the whole run. Fix it when you compare settings, so only the setting changes.\n\n**6. LC Sigmas 📉**\n- **sampler:** euler on Krea 2. The green line under the graph says what tested best for your model.\n- **sigma_curve_presets:** base, with **base_scheduler** on beta57 for Krea 2 (simple when a ModelSamplingAuraFlow shift 4 sits in front of the model). Drag the graph to bend it, **reset curve** to undo.\n- **steps:** total steps for both passes. Krea 2 Turbo: 8. Krea 2 Raw: 28 or more.\n- **step_swap:** 0 = one pass. For two passes put it near the end (6 of 8).\n- **low_pass:** **continue noise schedule**, or **renoise** when a second model on model_2 is cleaning up.\n- **denoise:** 1 for text to image. 0.4 to 0.7 for image to image. **denoise_steps:** full schedule.\n- **sigma_shift:** leave on use model default.\n\n**7. LC Detail Daemon 😈**\n- **amount:** 1.0 with look only on Krea 2 / Krealism. classic and keep structure hit harder: start at half.\n- **start / end:** 0.15 and 0.85.\n- **peak:** 0 = strongest at the start of the window, where it shapes things. **exponent:** 0 = full strength across the whole window. Those two do more than the amount.\n- **mode:** look only (default) for crisp detail without reshuffles. classic for the original look, keep structure when the layout must not move.\n\n**8. Compare**\n- The image comparer shows the baseline (A) against the new path (B). Drag across it.\n\n---"
       },
       "color": "#2E3A46",
       "bgcolor": "#2E3A46"
@@ -3054,7 +3254,7 @@
       25,
       0,
       29,
-      8,
+      28,
       "INT"
     ],
     [
@@ -3110,7 +3310,7 @@
       72,
       4,
       29,
-      4,
+      5,
       "COMBO"
     ],
     [
@@ -3238,7 +3438,7 @@
       72,
       0,
       29,
-      5,
+      6,
       "INT"
     ],
     [
@@ -3254,7 +3454,7 @@
       72,
       2,
       29,
-      7,
+      8,
       "FLOAT"
     ],
     [
@@ -3262,7 +3462,7 @@
       72,
       5,
       29,
-      6,
+      7,
       "INT"
     ],
     [
