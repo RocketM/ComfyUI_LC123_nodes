@@ -6,7 +6,7 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 - **CivitAI:** [lonecatone23](https://civitai.com/user/lonecatone23)
 - **Instagram:** [synth.studio.models](https://www.instagram.com/synth.studio.models/)
 - **Support:** [Buy me a ☕](https://ko-fi.com/lonecatone)
-- **Version:** 1.46.0 · **137 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
+- **Version:** 1.47.0 · **137 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
 
 > Small tools that remove friction: less wire mess, fewer clicks, clearer workflows.
 
@@ -83,7 +83,7 @@ Tools for the canvas itself, not nodes. Nothing here touches your generations.
 - **When picking a model (includes custom models):** what file type to get on YOUR machine for Quality, Optimal and Fast, a size guide, and what to avoid. Works for finetunes and merges too.
 - **Model recommendations:** pick a model and a goal, get the exact files: download link, size, how close it is to bf16, time per step on your machine, and whether it fits. ✅ = you already have it.
     - **All base models at a glance** lists every model at once.
-    - Models covered: MiniMax H3, Krea 2 (Turbo and Raw), LTX 2.5, LTX 2.3, Anima, Z-Image Turbo, Qwen-Image 2.1, Flux.2 Klein 9B, Ideogram 4, SDXL, Illustrious XL, Pony Diffusion V6 XL.
+    - Models covered: MiniMax H3 (FL2VA and Ref2VA), Krea 2 (Turbo and Raw), LTX 2.5, LTX 2.3, Anima, Z-Image Turbo, Qwen-Image 2.1, Flux.2 Klein 9B, Ideogram 4, SDXL, Illustrious XL, Pony Diffusion V6 XL.
     - Measured on an RTX 5090 and an 8 GB RTX 5060 Laptop. Image models land within about 15 %; video models are rougher and it says so.
 - **Show last run** and **Copy report** work like the Comfy Optimization Report. It will not run while ComfyUI is generating.
 - Nothing is changed. Open it from **Settings > LC123 Settings ⚙️ > Optimization**, or right-click the empty canvas.
@@ -221,7 +221,7 @@ The **System & Model Optimization Report** tells you what suits your machine. Th
 
 **LC Model Optimizer Video ⚡ / LC Model Optimizer Video (pipe) ⚡** (video models)
 - Outputs: `model`, `clip`, `vae`, `audio_vae`, `latent_upscaler`, `summary`. The pipe version adds an `LC_PIPE` in front (vae 2 = audio VAE).
-- MiniMax H3, LTX 2.5, LTX 2.3 (its distilled LoRA is applied at 0.5, like Comfy's template).
+- MiniMax H3 FL2VA (first and last frame, the default) and MiniMax H3 Ref2VA (reference to video), LTX 2.5, LTX 2.3 (its distilled LoRA is applied at 0.5, like Comfy's template).
 - *note:* the outputs never change with the base model. These nodes sit at the start of the graph, so your wires stay put. A part the model doesn't use just shows **not used by** (e.g. no upscaler on MiniMax H3).
 
 **How it works**
@@ -433,7 +433,7 @@ Hover any of these to wipe against the original. Heavy graph? See **Performance*
 | **LC Tone Match** | **image** supplies the detail, **reference** supplies lighting / color. Optional **mask** (white = lock). **split**: **guided** (default) follows the image's own edges, so no bright or dark rim on hard edges; **blur** is the old split. Wipes against the reference |
 | **LC Image Desaturate** | Desaturate, plain and simple |
 | **LC Skin Beauty ✨** / **LC Skin Upscale** / **LC Photo Style 📷** | See above |
-| **LC Skin Texture ✨** | Adds real pore texture to skin that came out too smooth (after a strong denoise, a beauty pass or a plastic-looking model). Takes only the fine relief of a real skin photo, never its colour, and adds less where skin already has detail. **mask**: LC Person Mask (mediapipe, face + body, remove_features) is ideal; unwired, skin is found by colour. **reference**: your own skin close-up, or the bundled CC0 photo |
+| **LC Skin Texture ✨ (BETA)** | Adds real pore texture to skin that came out too smooth (after a strong denoise, a beauty pass or a plastic-looking model). Takes only the fine relief of a real skin photo, never its colour, and adds less where skin already has detail. **mask**: LC Person Mask (mediapipe, face + body, remove_features) is ideal; unwired, skin is found by colour. **reference**: your own skin close-up, or the bundled CC0 photo |
 | **LC Apply LUT** | Reads `.cube` files from **`ComfyUI/models/luts/`**. Launches with **LC_Crushed_Blacks** at 0.3. Sample LUTs copy over from `assets/luts/` and never overwrite yours. **interpolation**: **tetrahedral** (default, GPU, cleaner greys) or the old **trilinear** |
 | **LC Text Overlay** | Text on an image: align, drag or type the position. Shrinks to fit if the font would run off the edge. Includes the 14 bundled fonts |
 | **LC Phone Filters 📱** | The 37 phone-app presets (1977, Aden, Brooklyn, Xpro2, etc.). Pick one, dial strength, wipe to compare |
@@ -504,8 +504,8 @@ Full directions: [`LC_Prompt_Builder_Note.md`](LC_Prompt_Builder_Note.md)
 | **LC Basic Scheduler** | Scheduler + steps = sigmas. No denoise |
 | **LC Sigma Curve** | No MODEL needed. Named schedules (`simple`, `karras`, `beta57`, `bong_tangent`, `linear_quadratic`, `kl_optimal`, etc.), your saved curves, and **Custom**. Drag a knot and it becomes Custom. **Save curve** arms the save, you still queue it. Your saves live in `ComfyUI/user/LC123/sigma_curves/`, so an update never touches them (older saves in the pack still load) |
 | **LC Sigma Resample** | Same sigma path, new **real** step count: `new_steps = round(old x multiplier) + adder`. Put it **after** a split, on the slice you want denser |
-| **LC Sigmas (BETA)** | One scheduler for one- and two-pass sampling. **preset** fills in the sampler + shape that tested best for your model (Krea 2, Z-Image, Flux 2, SDXL / Illustrious), or **auto** reads the loaded model. **focus** (structure ↔ detail), **shift**, image-to-image **denoise** (the info line shows the real starting noise), a **handoff** split whose low pass always starts where the high pass stopped (also with a second **model_2**), and **renoise** for ControlNet cleanup. Outputs both sigmas, the noise for each pass and the sampler. Live graph on the node |
-| **LC Detail Daemon (BETA)** / **(model)** | Adds fine detail by hiding a little of the noise from the model. **amount** is a plain % (not multiplied by CFG), **start / end** are how far along the image is, so they land the same at any step count. **mode auto** fixes the classic method working backwards on Krea 2. Sampler version for SamplerCustomAdvanced, model version for a plain KSampler |
+| **LC Sigmas (BETA)** | One scheduler for one- and two-pass sampling. **sampler** + **scheduler_shape** (the line under the graph shows what tested best for your model; RES4LYF / ClownShark sampler names work too). **step_swap**: the step where the second model (**model_2**) takes over, starting exactly where the first pass stopped. **denoise** for image to image, with **denoise_steps**: **full schedule** (the whole run) or **at step swap** (the first pass only, so the second pass refines on its own). **low_pass**: **continue noise schedule** (the leftover noise, one schedule over two samplers) or **renoise** (the first pass finishes, fresh noise goes back up to the swap level, and the second pass refines like a detailer). **sigma_shift**: use model default, by image size or custom. Outputs both sigmas, the noise for each pass and the sampler. Live graph on the node: drag it taller and the graph grows |
+| **LC Detail Daemon (BETA)** / **(model)** | Adds fine detail by telling the model there is a little less noise than there really is. The same **amount** scale and step window (**start / end / peak / exponent**) as the original Detail Daemon, so settings carry over, but never multiplied by CFG. **mode**: **look only** (default) = crisp detail without big reshuffles, **classic** = the original (more detail, small things like folds and background focus shift), **keep structure** = only the fine part of the change is kept, so the layout stays (about 45% slower). Defaults peak 0 and exponent 0.1: full strength across the window, strongest at its start. 💡 Krea 2 / Krealism: look only 1.0, start 0.15, end 0.85, peak 0, exponent 0 (the defaults). classic and keep structure hit harder, so start them lower. Works on either pass of a two-sampler setup |
 | **LC Reference Latent** | Up to 8 optional reference latents into conditioning. All empty = pass-through |
 | **LC Denoise 💉** | Latent injection: `noise_std = 1 - denoise`. Match the sampler's denoise |
 | **LC Pipe (in/edit)** / **Pipe Out** / **Detail Pipe Out** | Bundle or unpack models, clips, VAEs, prompts, seed, steps, the works |
@@ -594,7 +594,7 @@ Details: [`LC123_Save_Image_Note.md`](LC123_Save_Image_Note.md)
 | [`workflows/LC Skin Beauty basic (no deps).json`](workflows/LC%20Skin%20Beauty%20basic%20(no%20deps).json) | Skin Beauty on its own |
 | [`workflows/LC Dual sigma workflow example.json`](workflows/LC%20Dual%20sigma%20workflow%20example.json) | Split sigma |
 | [`workflows/LC Dual Sigma Advanced workflow example.json`](workflows/LC%20Dual%20Sigma%20Advanced%20workflow%20example.json) | Advanced split sigmas |
-| [`workflows/LC Better Sigmas V1.0.json`](workflows/LC%20Better%20Sigmas%20V1.0.json) | LC Sigmas + LC Detail Daemon against a plain euler / simple baseline, with I2I and LC Vision prompt assist |
+| [`workflows/LC Better Sigmas V2.0.json`](workflows/LC%20Better%20Sigmas%20V2.0.json) | LC Sigmas + LC Detail Daemon against a plain euler / simple baseline, with I2I and LC Vision prompt assist |
 | [`workflows/Anima Regional Conditioning WF.json`](workflows/Anima%20Regional%20Conditioning%20WF.json) | Anima regional |
 | [`workflows/Anima Inline Regional Canvas workflow.json`](workflows/Anima%20Inline%20Regional%20Canvas%20workflow.json) | Anima inline canvas |
 | [`workflows/Anima Inline Regional Canvas example.json`](workflows/Anima%20Inline%20Regional%20Canvas%20example.json) | Anima inline canvas, example |

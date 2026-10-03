@@ -1,6 +1,6 @@
 # LC123 node inventory
 
-**137 Python nodes** + **5 JS-only** · version 1.46.0
+**137 Python nodes** + **5 JS-only** · version 1.47.0
 
 Registered class IDs: 138 (137 in search, 1 deprecated but still loads in old workflows).
 
@@ -65,7 +65,7 @@ Registered class IDs: 138 (137 in search, 1 deprecated but still loads in old wo
 - `LCClarity`: LC Sharpen Pro
 - `LCSkinBeauty`: LC Skin Beauty ✨
 - `LCSkinUpscale`: LC Skin Upscale
-- `LCSkinTexture`: LC Skin Texture ✨
+- `LCSkinTexture`: LC Skin Texture ✨ (BETA)
 - `LCTextOverlay`: LC Text Overlay
 - `LCToneMatch`: LC Tone Match
 - `LCVibrance`: LC Vibrance

@@ -57,6 +57,35 @@ function hookResize(node) {
   };
 }
 
+// LC Boolean Switch: the state toggle reads as the input it passes. A renamed socket's label wins, then the title of
+// the node wired into it, then the socket's own name (on_true / on_false).
+function sourceName(node, inputName) {
+  const inp = (node.inputs || []).find((i) => i?.name === inputName);
+  if (!inp) return inputName;
+  if (inp.label && inp.label !== inputName) return inp.label;
+  if (inp.link != null) {
+    const graph = node.graph ?? app.graph;
+    const link = graph?.links?.get?.(inp.link) ?? graph?.links?.[inp.link];
+    const src = link ? graph.getNodeById?.(link.origin_id) : null;
+    if (src) return src.title || src.type || inputName;
+  }
+  return inputName;
+}
+
+function syncStateLabels(node) {
+  const w = (node.widgets || []).find((x) => x?.name === "state");
+  if (!w) return;
+  const on = sourceName(node, "on_true"), off = sourceName(node, "on_false");
+  w.options = w.options || {};
+  if (w.options.on !== on || w.options.off !== off) {
+    w.options.on = on;
+    w.options.off = off;
+    w.options.label_on = on;
+    w.options.label_off = off;
+    node.setDirtyCanvas?.(true, false);
+  }
+}
+
 app.registerExtension({
   name: "LC123.BooleanSwitch",
   async beforeRegisterNodeDef(nodeType, nodeData) {
@@ -68,6 +97,13 @@ app.registerExtension({
       hookResize(this);
       defaultSizeOnce(this);
       return r;
+    };
+    if (nodeData.name !== "LCBooleanSwitch") return;
+    // cheap check on every draw: catches rewiring, renamed sockets and renamed source nodes
+    const onDrawFG = nodeType.prototype.onDrawForeground;
+    nodeType.prototype.onDrawForeground = function () {
+      syncStateLabels(this);
+      return onDrawFG?.apply(this, arguments);
     };
   },
   nodeCreated(node) {

@@ -194,4 +194,4 @@ class LCSkinTexture(PreviewImage):
 
 
 NODE_CLASS_MAPPINGS = {"LCSkinTexture": LCSkinTexture}
-NODE_DISPLAY_NAME_MAPPINGS = {"LCSkinTexture": "LC Skin Texture ✨"}
+NODE_DISPLAY_NAME_MAPPINGS = {"LCSkinTexture": "LC Skin Texture ✨ (BETA)"}

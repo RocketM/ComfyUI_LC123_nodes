@@ -325,6 +325,9 @@ app.registerExtension({
   nodeCreated(node) { if (TYPES[node.comfyClass]) setup(node); },
   loadedGraphNode(node) {
     if (!TYPES[node.comfyClass]) return;
+    // base model names that changed (MiniMax H3 is now MiniMax H3 Ref2VA, next to FL2VA)
+    const bw = wByName(node, "base_model");
+    if (bw && bw.value === "MiniMax H3") bw.value = "MiniMax H3 Ref2VA";
     setup(node);
     applyManual(node);
     node._lcOptRefresh?.();

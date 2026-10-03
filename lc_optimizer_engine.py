@@ -44,7 +44,7 @@ TE_EXPECTS = {
     "anima": ("Qwen3 0.6B", 28, 1024, False), "flux2_klein_9b": ("Qwen3 8B", 36, 4096, False),
     "ideogram4": ("Qwen3-VL 8B", 36, 4096, True), "krea2": ("Qwen3-VL 4B", 36, 2560, True),
     "ltx23": ("Gemma 3 12B", 48, 3840, True), "ltx25": ("Gemma 4 12B", 48, 3840, True),
-    "minimax_h3": ("Qwen3-VL 32B (H3)", 50, 5120, True), "qwen_image_21": ("Qwen3-VL 8B", 36, 4096, True),
+    "minimax_h3": ("Qwen3-VL 32B (H3)", 50, 5120, True), "minimax_h3_fl2va": ("Qwen3-VL 32B (H3)", 50, 5120, True), "qwen_image_21": ("Qwen3-VL 8B", 36, 4096, True),
     "z_image_turbo": ("Qwen3 4B", 36, 2560, False), "krea2_raw": ("Qwen3-VL 4B", 36, 2560, True),
 }
 TE_NAMES = {(28, 1024, False): "Qwen3 0.6B", (36, 2560, False): "Qwen3 4B", (36, 4096, False): "Qwen3 8B",
@@ -57,13 +57,14 @@ VAE_EXPECTS = {"anima": (16, 5), "krea2": (16, 5), "z_image_turbo": (16, 4), "fl
 VAE_NAMES = {(16, 4): "16-channel 2D (Flux 1 / Z-Image)", (16, 5): "16-channel 3D (Wan / Qwen-Image)", (32, 4): "32-channel (Flux 2)",
              (64, 5): "64-channel (Qwen-Image 2.1)", (4, 4): "4-channel (SD / SDXL)", (128, 2): "128-channel (LTX)"}
 MODEL_CLASSES = {"anima": "Anima", "flux2_klein_9b": "Flux2", "ideogram4": "Ideogram4", "krea2": "Krea2", "ltx23": "LTXAV",
-                 "ltx25": "LTXAV", "minimax_h3": "MiniMaxH3", "qwen_image_21": "QwenImage21", "z_image_turbo": "ZImage",
+                 "ltx25": "LTXAV", "minimax_h3": "MiniMaxH3", "minimax_h3_fl2va": "MiniMaxH3", "qwen_image_21": "QwenImage21", "z_image_turbo": "ZImage",
                  "krea2_raw": "Krea2", "sdxl": "SDXL", "illustrious": "SDXL", "pony": "SDXL"}
 
 
 # the extra parts each base model uses (the nodes are static; this only decides which pickers matter)
 EXTRAS = {
     "minimax_h3": [("audio_vae", "VAE")],
+    "minimax_h3_fl2va": [("audio_vae", "VAE")],
     "ltx23": [("audio_vae", "VAE"), ("latent_upscaler", "LATENT_UPSCALE_MODEL")],
     "ltx25": [("audio_vae", "VAE"), ("latent_upscaler", "LATENT_UPSCALE_MODEL")],
     "ideogram4": [("model_2", "MODEL")],
@@ -111,6 +112,10 @@ def profiles(kind=None):
     for pid, k in CUSTOM.items():
         out[pid] = {"id": pid, "name": CUSTOM_NAME, "kind": k, "custom": True, "components": {}, "notes": []}
     return {k: v for k, v in out.items() if kind is None or v.get("kind") == kind}
+
+
+# base model names that changed: saved workflows keep loading
+LEGACY_BASE = {"MiniMax H3": "MiniMax H3 Ref2VA"}
 
 
 def base_names(kind):
@@ -603,6 +608,7 @@ def loaded_files(inputs):
     by the time metadata is written the node has run, so the files are on disk."""
     out = []
     base = inputs.get("base_model")
+    base = LEGACY_BASE.get(base, base)
     pid = next((p for p, n in base_names(None) if n == base), None)
     prof = profiles().get(pid) if pid else None
     goal = inputs.get("goal") or "Optimal"

@@ -66,6 +66,7 @@ DESC_VIDEO = (
 
 class _LCOptimizerBase:
     KIND = "image"
+    DEFAULT_BASE = None  # first in the list
     ROLES = ROLES_IMAGE
     PIPE = False
     CATEGORY = "LC123/optimizer"
@@ -75,7 +76,8 @@ class _LCOptimizerBase:
     def INPUT_TYPES(cls):
         names = [n for _, n in E.base_names(cls.KIND)] or ["(no profiles)"]
         req = {
-            "base_model": (names, {"tooltip": "The model family. Picks the recommended files and the checks."}),
+            "base_model": (names, {"default": cls.DEFAULT_BASE if cls.DEFAULT_BASE in names else names[0],
+                                   "tooltip": "The model family. Picks the recommended files and the checks."}),
             "goal": (E.GOALS, {"default": "Optimal", "tooltip": "Quality = closest to bf16. Optimal = fast and near identical. Fast = fastest that still looks right."}),
         }
         for role in cls.ROLES:
@@ -102,6 +104,7 @@ class _LCOptimizerBase:
 
     # ------------------------------------------------------------------
     def _profile_id(self, base_model):
+        base_model = E.LEGACY_BASE.get(base_model, base_model)
         for pid, name in E.base_names(self.KIND):
             if name == base_model:
                 return pid
@@ -222,6 +225,7 @@ class LCOptimizerPipe(_LCOptimizerBase):
 
 class LCOptimizerVideo(_LCOptimizerBase):
     KIND = "video"
+    DEFAULT_BASE = "MiniMax H3 FL2VA"
     ROLES = ROLES_VIDEO
     RETURN_TYPES = ("MODEL", "CLIP", "VAE", "VAE", "LATENT_UPSCALE_MODEL", "STRING")
     RETURN_NAMES = ("model", "clip", "vae", "audio_vae", "latent_upscaler", "summary")
@@ -233,6 +237,7 @@ class LCOptimizerVideo(_LCOptimizerBase):
 
 class LCOptimizerVideoPipe(_LCOptimizerBase):
     KIND = "video"
+    DEFAULT_BASE = "MiniMax H3 FL2VA"
     ROLES = ROLES_VIDEO
     PIPE = True
     RETURN_TYPES = ("LC_PIPE", "MODEL", "CLIP", "VAE", "VAE", "LATENT_UPSCALE_MODEL", "STRING")
@@ -269,7 +274,8 @@ try:
     async def _lc_opt_choices(request):
         q = request.rel_url.query
         kind = q.get("kind", "image")
-        pid = next((p for p, n in E.base_names(kind) if n == q.get("base")), None)
+        base = E.LEGACY_BASE.get(q.get("base"), q.get("base"))
+        pid = next((p for p, n in E.base_names(kind) if n == base), None)
         return web.json_response(E.choices(pid, q.get("role", "model"), q.get("goal", "Optimal")) if pid else {"error": "unknown base model"})
 
     @PromptServer.instance.routes.post("/lc123/optimizer_node/plan")
@@ -278,7 +284,8 @@ try:
 
         body = await request.json()
         kind = body.get("kind", "image")
-        pid = next((p for p, n in E.base_names(kind) if n == body.get("base")), None)
+        base = E.LEGACY_BASE.get(body.get("base"), body.get("base"))
+        pid = next((p for p, n in E.base_names(kind) if n == base), None)
         if not pid:
             return web.json_response({"error": "unknown base model"}, status=400)
         manual = body.get("manual") if body.get("speed_ups") == "Manual" else None

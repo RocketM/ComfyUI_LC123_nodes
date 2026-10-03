@@ -1,11 +1,11 @@
 {
-  "id": "minimax_h3",
-  "name": "MiniMax H3 Ref2VA",
+  "id": "minimax_h3_fl2va",
+  "name": "MiniMax H3 FL2VA",
   "kind": "video",
   "notes": [
     "Pruned files drop ~13B parameters that are not used when generating: same output as full, 60 % of the size.",
     "No smaller text encoder: the model reads layer 50 of the full Qwen3-VL-32B.",
-    "Reference to video. First-last-frame to video is MiniMax H3 FL2VA (same sizes)."
+    "First and last frame to video (MiniMaxH3ImageToVideo). Same architecture and sizes as Ref2VA, so its speed and quality numbers carry over."
   ],
   "components": {
     "diffusion": {
@@ -13,7 +13,7 @@
       "role": "diffusion",
       "variants": [
         {
-          "file": "minimax_h3_ref2va_bf16.safetensors",
+          "file": "minimax_h3_fl2va_bf16.safetensors",
           "format": "bf16",
           "gb": 61.73,
           "bits": 16,
@@ -21,7 +21,7 @@
           "loader": "UNETLoader"
         },
         {
-          "file": "minimax_h3_ref2va_pruned_bf16.safetensors",
+          "file": "minimax_h3_fl2va_pruned_bf16.safetensors",
           "format": "bf16",
           "gb": 37.47,
           "bits": 16,
@@ -30,7 +30,7 @@
           "pruned": true
         },
         {
-          "file": "minimax_h3_ref2va_int8_convrot.safetensors",
+          "file": "minimax_h3_fl2va_int8_convrot.safetensors",
           "format": "int8_convrot",
           "gb": 31.7,
           "bits": 8,
@@ -38,7 +38,7 @@
           "loader": "UNETLoader"
         },
         {
-          "file": "minimax_h3_ref2va_pruned_int8_convrot.safetensors",
+          "file": "minimax_h3_fl2va_pruned_int8_convrot.safetensors",
           "format": "int8_convrot",
           "gb": 19.53,
           "bits": 8,
@@ -48,7 +48,7 @@
           "default": true
         },
         {
-          "file": "minimax_h3_ref2va_pruned_fp8_scaled.safetensors",
+          "file": "minimax_h3_fl2va_pruned_fp8_scaled.safetensors",
           "format": "fp8_scaled",
           "gb": 19.52,
           "bits": 8,
@@ -58,7 +58,7 @@
           "note": "Comfy: only if int8_convrot cannot be used"
         },
         {
-          "file": "minimax_h3_ref2va_pruned_nvfp4.safetensors",
+          "file": "minimax_h3_fl2va_pruned_nvfp4.safetensors",
           "format": "nvfp4",
           "gb": 11.67,
           "bits": 4,
@@ -68,9 +68,9 @@
           "community": true
         },
         {
-          "file": "minimax_h3_ref2va_pruned_w4a8_mixed.safetensors",
+          "file": "minimax_h3_fl2va_pruned_w4a8_mixed.safetensors",
           "format": "w4a8",
-          "gb": 10.96,
+          "gb": 11.68,
           "bits": 4,
           "repo": "Kijai/MiniMax-H3-experimental",
           "loader": "UNETLoader",
@@ -79,7 +79,7 @@
           "note": "experimental"
         },
         {
-          "file": "MiniMax-H3-Ref2VA-Q8_0.gguf",
+          "file": "MiniMax-H3-FL2VA-Q8_0.gguf",
           "format": "gguf_q8_0",
           "gb": 33.56,
           "bits": 8,
@@ -88,7 +88,7 @@
           "community": true
         },
         {
-          "file": "MiniMax-H3-Ref2VA-Q6_K.gguf",
+          "file": "MiniMax-H3-FL2VA-Q6_K.gguf",
           "format": "gguf_q6_k",
           "gb": 26.28,
           "bits": 6,
@@ -97,7 +97,7 @@
           "community": true
         },
         {
-          "file": "MiniMax-H3-Ref2VA-Q5_K_M.gguf",
+          "file": "MiniMax-H3-FL2VA-Q5_K_M.gguf",
           "format": "gguf_q5_k_m",
           "gb": 22.25,
           "bits": 5,
@@ -106,7 +106,7 @@
           "community": true
         },
         {
-          "file": "MiniMax-H3-Ref2VA-Q4_K_M.gguf",
+          "file": "MiniMax-H3-FL2VA-Q4_K_M.gguf",
           "format": "gguf_q4_k_m",
           "gb": 18.5,
           "bits": 4,
@@ -115,7 +115,7 @@
           "community": true
         },
         {
-          "file": "MiniMax-H3-Ref2VA-Q3_K_M.gguf",
+          "file": "MiniMax-H3-FL2VA-Q3_K_M.gguf",
           "format": "gguf_q3_k_m",
           "gb": 14.5,
           "bits": 3,
@@ -124,9 +124,9 @@
           "community": true
         },
         {
-          "file": "minimax_h3_ref2va_pruned-Q8_0.gguf",
+          "file": "minimax_h3_fl2va_pruned-Q8_0.gguf",
           "format": "gguf_q8_0",
-          "gb": 19.94,
+          "gb": 19.97,
           "bits": 8,
           "repo": "unsloth/MiniMax-H3-GGUF",
           "loader": "UnetLoaderGGUF",
@@ -135,9 +135,9 @@
           "unconfirmed": "built for stable-diffusion.cpp; ComfyUI loading not confirmed"
         },
         {
-          "file": "minimax_h3_ref2va_pruned-Q5_0.gguf",
+          "file": "minimax_h3_fl2va_pruned-Q5_0.gguf",
           "format": "gguf_q5_0",
-          "gb": 12.94,
+          "gb": 12.96,
           "bits": 5,
           "repo": "unsloth/MiniMax-H3-GGUF",
           "loader": "UnetLoaderGGUF",
@@ -146,9 +146,9 @@
           "unconfirmed": "built for stable-diffusion.cpp; ComfyUI loading not confirmed"
         },
         {
-          "file": "minimax_h3_ref2va_pruned-Q4_K.gguf",
+          "file": "minimax_h3_fl2va_pruned-Q4_K.gguf",
           "format": "gguf_q4_k",
-          "gb": 10.6,
+          "gb": 10.64,
           "bits": 4,
           "repo": "unsloth/MiniMax-H3-GGUF",
           "loader": "UnetLoaderGGUF",
@@ -157,7 +157,7 @@
           "unconfirmed": "built for stable-diffusion.cpp; ComfyUI loading not confirmed"
         },
         {
-          "file": "minimax_h3_ref2va_pruned-Q2_K.gguf",
+          "file": "minimax_h3_fl2va_pruned-Q2_K.gguf",
           "format": "gguf_q2_k",
           "gb": 6.26,
           "bits": 2,
@@ -262,12 +262,12 @@
       ]
     }
   },
-  "source": "Hugging Face tree API sizes and Comfy-Org workflow templates, researched 2026-09-27",
+  "source": "Hugging Face tree API sizes and Comfy-Org workflow templates, researched 2026-09-27; FL2VA file names from the Hugging Face trees, 2026-10-02",
   "benchmarks": {
     "workflow": "Comfy-Org video_minimax_h3_r2v template, 8 steps, res_multistep, 3 s (73 frames), 16:9, TE nvfp4_awq, cfg 1",
     "checks": [
       {
-        "file": "minimax_h3_ref2va_pruned_int8_convrot.safetensors",
+        "file": "minimax_h3_fl2va_pruned_int8_convrot.safetensors",
         "megapixels": 0.2,
         "gpu": "NVIDIA GeForce RTX 5060 Laptop GPU",
         "vram_gb": 8.0,
@@ -277,7 +277,7 @@
         "peak_swap_gib": 0.09
       },
       {
-        "file": "minimax_h3_ref2va_pruned_int8_convrot.safetensors",
+        "file": "minimax_h3_fl2va_pruned_int8_convrot.safetensors",
         "megapixels": 0.4,
         "gpu": "NVIDIA GeForce RTX 5060 Laptop GPU",
         "vram_gb": 8.0,
@@ -287,7 +287,7 @@
         "peak_swap_gib": 0.09
       },
       {
-        "file": "MiniMax-H3-Ref2VA-Q5_K_M.gguf",
+        "file": "MiniMax-H3-FL2VA-Q5_K_M.gguf",
         "megapixels": 0.2,
         "gpu": "NVIDIA GeForce RTX 5060 Laptop GPU",
         "vram_gb": 8.0,
@@ -297,7 +297,7 @@
         "peak_swap_gib": 1.66
       },
       {
-        "file": "MiniMax-H3-Ref2VA-Q5_K_M.gguf",
+        "file": "MiniMax-H3-FL2VA-Q5_K_M.gguf",
         "megapixels": 0.4,
         "gpu": "NVIDIA GeForce RTX 5060 Laptop GPU",
         "vram_gb": 8.0,
@@ -337,28 +337,28 @@
         },
         "runs": [
           {
-            "file": "minimax_h3_ref2va_pruned_int8_convrot.safetensors",
+            "file": "minimax_h3_fl2va_pruned_int8_convrot.safetensors",
             "megapixels": 0.2,
             "frames": 73,
             "step_s": 0.65,
             "first_step_s": 3.9
           },
           {
-            "file": "minimax_h3_ref2va_pruned_int8_convrot.safetensors",
+            "file": "minimax_h3_fl2va_pruned_int8_convrot.safetensors",
             "megapixels": 0.4,
             "frames": 73,
             "step_s": 1.6,
             "first_step_s": 4.29
           },
           {
-            "file": "MiniMax-H3-Ref2VA-Q5_K_M.gguf",
+            "file": "MiniMax-H3-FL2VA-Q5_K_M.gguf",
             "megapixels": 0.2,
             "frames": 73,
             "step_s": 2.02,
             "first_step_s": 22.85
           },
           {
-            "file": "MiniMax-H3-Ref2VA-Q5_K_M.gguf",
+            "file": "MiniMax-H3-FL2VA-Q5_K_M.gguf",
             "megapixels": 0.4,
             "frames": 73,
             "step_s": 3.59,
@@ -390,28 +390,28 @@
         },
         "runs": [
           {
-            "file": "minimax_h3_ref2va_pruned_int8_convrot.safetensors",
+            "file": "minimax_h3_fl2va_pruned_int8_convrot.safetensors",
             "megapixels": 0.2,
             "step_s": 4.28,
             "peak_ram_gib": 60.25,
             "peak_swap_gib": 0.09
           },
           {
-            "file": "minimax_h3_ref2va_pruned_int8_convrot.safetensors",
+            "file": "minimax_h3_fl2va_pruned_int8_convrot.safetensors",
             "megapixels": 0.4,
             "step_s": 10.43,
             "peak_ram_gib": 60.34,
             "peak_swap_gib": 0.09
           },
           {
-            "file": "MiniMax-H3-Ref2VA-Q5_K_M.gguf",
+            "file": "MiniMax-H3-FL2VA-Q5_K_M.gguf",
             "megapixels": 0.2,
             "step_s": 14.81,
             "peak_ram_gib": 63.32,
             "peak_swap_gib": 1.66
           },
           {
-            "file": "MiniMax-H3-Ref2VA-Q5_K_M.gguf",
+            "file": "MiniMax-H3-FL2VA-Q5_K_M.gguf",
             "megapixels": 0.4,
             "step_s": 23.5,
             "peak_ram_gib": 62.58,
@@ -437,9 +437,9 @@
   },
   "quality": {
     "method": "single step from the same bf16 half-denoised latent (steps 2, 4, 6 of 8), decoded, LPIPS against bf16's step; 0 = identical",
-    "reference": "minimax_h3_ref2va_bf16.safetensors",
+    "reference": "minimax_h3_fl2va_bf16.safetensors",
     "files": {
-      "minimax_h3_ref2va_pruned_int8_convrot.safetensors": {
+      "minimax_h3_fl2va_pruned_int8_convrot.safetensors": {
         "k2": {
           "lpips": 0.0636,
           "ssim": 0.9036,
@@ -457,7 +457,7 @@
         },
         "lpips_avg": 0.0374
       },
-      "MiniMax-H3-Ref2VA-Q5_K_M.gguf": {
+      "MiniMax-H3-FL2VA-Q5_K_M.gguf": {
         "k2": {
           "lpips": 0.2309,
           "ssim": 0.6909,
