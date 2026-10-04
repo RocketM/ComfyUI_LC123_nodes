@@ -9,6 +9,7 @@
  */
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
+import { addCsvButton } from "./lc_report_csv.js";
 
 // ---------------------------------------------------------------- source attribution
 const SELF = "lc_optimizer.js";
@@ -600,6 +601,7 @@ function openWindow() {
   };
   box.querySelector(".lc-opt-copy").onclick = () => navigator.clipboard?.writeText(text);
   box.querySelector(".lc-opt-again").onclick = () => go();
+  addCsvButton(box, ".lc-opt-copy", ".lc-opt-body", "Comfy Optimization Report");
 
   async function go() {
     if (running) {

@@ -666,6 +666,9 @@ class LCSigmas:
     def build(self, model, sampler, sigma_curve_presets, base_scheduler, steps, step_swap, denoise, denoise_steps, low_pass,
               scheduler_shape_2, first_pass_resample, sigma_shift, custom_shift, edit_mode, smooth_radius, curve_edit, seed,
               model_2=None, image_size_latent=None, unique_id=None, **params):
+        if model is None:
+            raise ValueError("[LC Sigmas] model arrived empty: whatever feeds it (a pipe, or a switch whose chosen input is "
+                             "bypassed or unplugged) sent nothing. Check that node.")
         ms1 = model.get_model_object("model_sampling")
         ms2 = model_2.get_model_object("model_sampling") if model_2 is not None else None
         size = None

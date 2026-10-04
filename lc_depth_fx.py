@@ -4,6 +4,11 @@ LC Depth FX: the scene part of a real camera, driven by a depth map.
   light wrap  = background light bleeding over the subject's edges
   depth of field = blur that grows with distance from focus, back to front, so the subject never smears
 Works in linear light. The depth direction is detected automatically.
+
+Big pictures (the node is meant for the end of a run, fully upscaled): the effects are worked out at WORK_EDGE (they are
+all smooth: haze, light wrap, blur, bokeh discs) and applied to the full picture. In-focus areas keep every pixel and
+only get the haze / light-wrap change; blurred areas take the upscaled blur (a blur has no fine detail left). The full-size
+mixing runs on the CPU, so a 4K picture needs well under 1 GB of VRAM.
 """
 
 import math
@@ -13,7 +18,20 @@ from nodes import PreviewImage
 
 from .lc_image_tools import _preview, _look_input, _lin, _srgb, _luma, LCClarity
 
-_gblur = LCClarity._gblur
+_gblur_full = LCClarity._gblur
+WORK_EDGE = 2048  # long edge the effects are worked out at; bigger pictures are mixed back at full size
+
+
+def _gblur(t, sigma):
+    """Gaussian blur; wide ones run at lower resolution (same look: a wide blur has no fine detail left), which keeps
+    big pictures from needing huge convolution kernels and the VRAM spike that comes with them."""
+    if sigma <= 6:
+        return _gblur_full(t, sigma)
+    h, w = t.shape[2], t.shape[3]
+    f = max(1, int(sigma // 3))
+    small = F.avg_pool2d(t, f, ceil_mode=True)
+    out = _gblur_full(small, sigma / f)
+    return F.interpolate(out, size=(h, w), mode="bilinear", align_corners=False)
 
 
 def _smooth(e0, e1, x):
@@ -58,6 +76,23 @@ def _level_weights(c, radii):
             wk = torch.where(c > r, torch.ones_like(c), wk)
         ws.append(wk)
     return ws
+
+
+def _level_weight(c, radii, k):
+    """One level of _level_weights, so the depth of field never holds all the levels at once."""
+    r = radii[k]
+    lo = radii[k - 1] if k > 0 else None
+    hi = radii[k + 1] if k + 1 < len(radii) else None
+    wk = torch.zeros_like(c)
+    if lo is not None:
+        wk = torch.where((c >= lo) & (c <= r), (c - lo) / max(r - lo, 1e-6), wk)
+    else:
+        wk = torch.where(c <= r, torch.ones_like(c), wk)
+    if hi is not None:
+        wk = torch.where((c > r) & (c <= hi), (hi - c) / max(hi - r, 1e-6), wk)
+    else:
+        wk = torch.where(c > r, torch.ones_like(c), wk)
+    return wk
 
 
 def _match_depth_batch(depth, b):
@@ -143,9 +178,61 @@ class LCDepthFX(PreviewImage):
             dof_blur=0.10, focus_range=0.15, bokeh=0.2, auto_focus=True, focus_depth=0.2, depth_direction="Auto",
             focus_mask=None):
         src = image
-        image = image[..., :3]
         if haze <= 0 and light_wrap <= 0 and dof_blur <= 0 and bokeh <= 0:
             return _preview(self, src, src)
+        try:
+            import comfy.model_management as mm
+        except Exception:
+            mm = None
+        depth = _match_depth_batch(depth_map, image.shape[0])
+        outs = []
+        for i in range(image.shape[0]):  # one picture at a time: a batch never stacks up in VRAM
+            if mm is not None:
+                mm.throw_exception_if_processing_interrupted()
+                h, w = image.shape[1], image.shape[2]
+                sc = max(1.0, max(h, w) / float(WORK_EDGE))
+                mm.free_memory(int(h * w / (sc * sc)) * 4 * 48, mm.get_torch_device())  # about 48 work-size layers at peak
+            fm = None
+            if focus_mask is not None:
+                fm = focus_mask[min(i, focus_mask.shape[0] - 1):][:1]
+            outs.append(self._one(image[i:i + 1], depth[i:i + 1], haze, haze_distance, haze_warmth, light_wrap, dof_blur,
+                                  focus_range, bokeh, auto_focus, focus_depth, depth_direction, fm).cpu())
+            if mm is not None:
+                mm.soft_empty_cache()
+        return _preview(self, torch.cat(outs, 0).to(src.dtype), src)
+
+    def _one(self, src, depth_map, haze, haze_distance, haze_warmth, light_wrap, dof_blur, focus_range, bokeh, auto_focus,
+             focus_depth, depth_direction, focus_mask):
+        args = (haze, haze_distance, haze_warmth, light_wrap, dof_blur, focus_range, bokeh, auto_focus, focus_depth,
+                depth_direction)
+        h, w = src.shape[1], src.shape[2]
+        scale = max(h, w) / float(WORK_EDGE)
+        if scale <= 1.0:
+            return self._fx(src, depth_map, *args, focus_mask)[0]
+        # work out the effects at WORK_EDGE, then apply them to the full picture
+        sw, sh = max(8, round(w / scale)), max(8, round(h / scale))
+        rs = lambda t, ww, hh, mode: F.interpolate(t, size=(hh, ww), mode=mode, align_corners=False) if mode != "area" \
+            else F.interpolate(t, size=(hh, ww), mode="area")
+        full = src[..., :3].float().cpu().permute(0, 3, 1, 2)
+        small = rs(full, sw, sh, "area")
+        fx_small, blur_px = self._fx(small.permute(0, 2, 3, 1), depth_map, *args, focus_mask)
+        fx_small = fx_small[..., :3].float().cpu().permute(0, 3, 1, 2)
+        up = rs(fx_small, w, h, "bicubic").clamp(0, 1)
+        change = up - rs(small, w, h, "bicubic")  # the smooth part of the effect (haze, light wrap, discs)
+        # where the blur is at least a couple of full-size pixels wide, the fine detail must go: take the blurred picture
+        m = rs(blur_px.float().cpu() * scale, w, h, "bilinear")
+        m = _smooth(0.75 * scale, 2.0 * scale, m)
+        out = ((full + change) * (1 - m) + up * m).clamp(0, 1)
+        del up, change, m, small, fx_small
+        out = out.permute(0, 2, 3, 1)
+        if src.shape[-1] == 4:
+            out = torch.cat([out, src[..., 3:4].float().cpu()], dim=-1)
+        return out
+
+    def _fx(self, src, depth_map, haze, haze_distance, haze_warmth, light_wrap, dof_blur, focus_range, bokeh, auto_focus,
+            focus_depth, depth_direction, focus_mask):
+        """All the effects at this picture's size. Returns (picture, blur radius in pixels per pixel)."""
+        image = src[..., :3]
         try:
             import comfy.model_management as mm
             dev = mm.get_torch_device()
@@ -197,6 +284,8 @@ class LCDepthFX(PreviewImage):
         near_room = (fd - rng).clamp(min=0.1)
         coc_n = torch.where(s_ >= 0, (s_ - rng) / far_room, (-s_ - rng) / near_room).clamp(0, 1)
         behind = (s_ > -rng).float()
+        del s_, far_room, near_room
+        blur_px = coc_n * (float(dof_blur) * 0.025 * base)  # the depth of field's blur, for mixing big pictures back
 
         # 1. Atmosphere (aerial perspective): the far distance loses contrast and color toward the TYPICAL
         #    color out there, not its brightest pixel, and only in the real distance. A dark room stays dark.
@@ -218,6 +307,7 @@ class LCDepthFX(PreviewImage):
             beyond = _smooth(fd + rng, fd + rng + 0.25, dist)  # the subject in focus never gets hazed
             amount = (1.0 - torch.exp(-1.2 * float(haze) * depth_in)) * beyond
             lin = lin + (A - lin) * amount
+            del flat, far, A, warm, depth_in, beyond, amount
 
         # 2. Light wrap: background light screens over the subject's edges. The band widens with the slider.
         if light_wrap > 0:
@@ -229,6 +319,7 @@ class LCDepthFX(PreviewImage):
             edge = ((spread * 2.0).clamp(0, 1) * (1 - bg)).clamp(0, 1)
             k = (bg_col * edge * min(1.0, 1.2 * lw)).clamp(0, 1)
             lin = 1.0 - (1.0 - lin) * (1.0 - k)
+            del bg, spread, bg_col, edge, k
 
         # 3. Depth of field: blur grows with distance from focus; background is blurred without the subject in it,
         #    foreground blur spreads over the subject, like a real lens
@@ -237,26 +328,28 @@ class LCDepthFX(PreviewImage):
             coc = coc_n * max_r
             front = 1.0 - behind
             radii = [0.0] + [max_r * f for f in (0.12, 0.25, 0.45, 0.7, 1.0)]
-            wts = _level_weights(coc, radii)
-            bg_out = lin * wts[0]
-            f_col = lin * front * wts[0]
-            f_a = front * wts[0]
+            w0 = _level_weight(coc, radii, 0)
+            bg_out = lin * w0
+            f_col = lin * front * w0
+            f_a = front * w0
             for k in range(1, len(radii)):
                 r = radii[k]
+                wk = _level_weight(coc, radii, k)
                 # background level: only pixels at least this blurry feed it, so the sharp subject never bleeds out
                 wb = behind * _smooth(0.4 * r, 0.8 * r, coc)
                 num = _disc_blur(lin * wb, r)
                 den = _disc_blur(wb, r)
-                level = torch.where(den > 1e-3, num / den.clamp(min=1e-3), lin)
-                bg_out = bg_out + level * wts[k] * behind
+                bg_out = bg_out + torch.where(den > 1e-3, num / den.clamp(min=1e-3), lin) * wk * behind
+                del wb, num, den
                 # foreground level: spreads outward over whatever is behind it
-                fk = front * wts[k]
+                fk = front * wk
                 f_col = f_col + _disc_blur(lin * fk, r)
                 f_a = f_a + _disc_blur(fk, r)
-            bg_out = bg_out + lin * front * (1 - wts[0])  # front pixels are drawn by the foreground layer
+                del wk, fk
+            bg_out = bg_out + lin * front * (1 - w0)  # front pixels are drawn by the foreground layer
             alpha = f_a.clamp(0, 1)
-            fg = f_col / f_a.clamp(min=1e-4)
-            lin = fg * alpha + bg_out * (1 - alpha)
+            lin = (f_col / f_a.clamp(min=1e-4)) * alpha + bg_out * (1 - alpha)
+            del w0, bg_out, f_col, f_a, alpha, coc, front
 
         # 4. Bokeh: small bright points out of focus bloom into lens-shaped discs. Their size comes from the
         #    bokeh slider (and grows with dof_blur), so it shows even with a light depth of field.
@@ -281,6 +374,7 @@ class LCDepthFX(PreviewImage):
             jxx, jyy, jxy = _gblur(gx * gx, st), _gblur(gy * gy, st), _gblur(gx * gy, st)
             coh = ((jxx - jyy) ** 2 + 4 * jxy * jxy).sqrt() / (jxx + jyy + 1e-6)
             points = points * (1.0 - _smooth(0.35, 0.65, coh))
+            del eroded, opened, ratio, gy, gx, jxx, jyy, jxy, coh
             # a handful of lights is bokeh; highlights everywhere (sun glinting off a whole city) is texture,
             # so the more of the frame they cover, the fainter their discs
             cover = (points > 0.3).float().mean((1, 2, 3)).view(b, 1, 1, 1)
@@ -289,6 +383,7 @@ class LCDepthFX(PreviewImage):
             # lone lights bloom; tight clusters (sky through hair, glitter) would only stack into a haze
             iso = 1.0 / (1.0 + 30.0 * _gblur(points, 0.5 * rb))
             pts = points * iso * behind * _smooth(0.05, 0.3, coc_n)
+            del points, iso
             lit = _lin(x)  # its own name: `src` is the original image, needed below for alpha and the wipe
             b_radii = [0.0] + [rb * f for f in (0.35, 0.65, 1.0)]
             bw = _level_weights(coc_n * rb, b_radii)
@@ -313,7 +408,7 @@ class LCDepthFX(PreviewImage):
         out = _srgb(lin.clamp(0, 1)).permute(0, 2, 3, 1)
         if src.shape[-1] == 4:
             out = torch.cat([out, src[..., 3:4].to(out.device)], dim=-1)
-        return _preview(self, out.to(src.device, src.dtype), src)
+        return out, blur_px
 
 
 NODE_CLASS_MAPPINGS = {"LCDepthFX": LCDepthFX}

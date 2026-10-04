@@ -6,7 +6,7 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 - **CivitAI:** [lonecatone23](https://civitai.com/user/lonecatone23)
 - **Instagram:** [synth.studio.models](https://www.instagram.com/synth.studio.models/)
 - **Support:** [Buy me a ☕](https://ko-fi.com/lonecatone)
-- **Version:** 1.48.0 · **137 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
+- **Version:** 1.49.0 · **137 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
 
 > Small tools that remove friction: less wire mess, fewer clicks, clearer workflows.
 
@@ -15,7 +15,7 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 - For **Anima regional attention**, also grab [Sen-sou Anima Regional Conditioning](https://github.com/Sen-sou/Comfyui-Anima-Regional-Conditioning).
 
 **On this page**
-1. [Canvas tools](#-canvas-tools) (Align, Connection FX, Comfy Optimization Report, System & Model Optimization Report, Pin all)
+1. [Canvas tools](#-canvas-tools) (Align, Connection FX, Comfy Optimization Report, System & Model Optimization Report, Node Pack Usage Report, Pin all)
 2. [Settings](#%EF%B8%8F-lc123-settings)
 3. [Notes, labels and previews](#-notes-labels-and-previews)
 4. [LC Model Optimizer](#-lc-model-optimizer-loader--speed-ups) (loads the right files and speed-ups for your machine)
@@ -67,6 +67,7 @@ Tools for the canvas itself, not nodes. Nothing here touches your generations.
     - ⚠️ big gain · ✅ worthwhile gain · 💡 small gain · ⚪ already set · ➖ does not apply · ℹ️ required, no setting for it
 - Sorted into: **that pack's own settings** (exact name, where it lives, current value), **LC123 settings**, **ComfyUI settings**, **sidebar tabs**, and **required to function**.
 - **Show last run** flips to the previous report. Each new run shows what got faster and which fixes are done.
+- **Download CSV** saves the report as a .csv file for Excel or Sheets. Made in your browser, and safe to open (no cell can run as a formula).
 - Only node packs used in the open workflow are analyzed. Nothing is changed. (Keep the mouse still while it runs.)
 - Open it from **Settings > LC123 Settings ⚙️ > Optimization**, or right-click the empty canvas.
 - 💡 On a big workflow, the usual winner is links: **Link Render Mode** set to Linear instead of Spline.
@@ -85,9 +86,15 @@ Tools for the canvas itself, not nodes. Nothing here touches your generations.
     - **All base models at a glance** lists every model at once.
     - Models covered: MiniMax H3 (FL2VA and Ref2VA), Krea 2 (Turbo and Raw), LTX 2.5, LTX 2.3, Anima, Z-Image Turbo, Qwen-Image 2.1, Flux.2 Klein 9B, Ideogram 4, SDXL, Illustrious XL, Pony Diffusion V6 XL.
     - Measured on an RTX 5090 and an 8 GB RTX 5060 Laptop. Image models land within about 15 %; video models are rougher and it says so.
-- **Show last run** and **Copy report** work like the Comfy Optimization Report. It will not run while ComfyUI is generating.
+- **Show last run**, **Copy report** and **Download CSV** work like the Comfy Optimization Report. It will not run while ComfyUI is generating.
 - Nothing is changed. Open it from **Settings > LC123 Settings ⚙️ > Optimization**, or right-click the empty canvas.
 - The **[LC Model Optimizer](#-lc-model-optimizer-loader--speed-ups)** nodes use this report to load the right files and speed-ups for you.
+
+**Node Pack Usage Report 🧹**
+- Which of your installed node packs do your workflows actually use? This tells you.
+- ⚠️ It **scans your ComfyUI workflows folder** and reads every saved workflow (subgraphs included). Read-only: nothing is changed or uninstalled.
+- Lists the packs no workflow uses (with their size on disk), the ones only one or two workflows use, the tools worth keeping anyway, and nodes your workflows need that no installed pack provides.
+- **Show last run**, **Copy report** and **Download CSV** work like the other reports. Open it from **Settings > LC123 Settings ⚙️ > Optimization**, or right-click the empty canvas.
 
 **Pin (all) / Unpin (all) 📌**
 - Right-click any node, group or the empty canvas.
@@ -136,6 +143,7 @@ Open **Settings** (the gear) and pick **LC123 Settings ⚙️**. These are **UI 
 |--------|---------|--------|
 | **Comfy Optimization Report** | button | See [Canvas tools](#-canvas-tools) |
 | **System & Model Optimization Report** | button | See [Canvas tools](#-canvas-tools) |
+| **Node Pack Usage Report** | button | See [Canvas tools](#-canvas-tools) |
 
 **Performance**
 

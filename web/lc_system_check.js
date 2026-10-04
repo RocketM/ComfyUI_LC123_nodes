@@ -3,6 +3,7 @@
 // LC Optimizer node reads to pick the best settings per model. Nothing is changed.
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
+import { addCsvButton } from "./lc_report_csv.js";
 
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch]);
 const ICON = { 3: "⚠️", 2: "✅", 1: "💡", 0: "ℹ️", "-1": "➖" };
@@ -380,6 +381,7 @@ function openWindow(opts = {}) {
   const recState = {};
   box.querySelector(".lc-sys-copy").onclick = () => navigator.clipboard?.writeText(text + (recState.rec || ""));
   box.querySelector(".lc-sys-again").onclick = () => go();
+  addCsvButton(box, ".lc-sys-copy", ".lc-sys-body", "System and Model Optimization Report");
 
   async function go() {
     if (running) return;
