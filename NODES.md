@@ -1,6 +1,6 @@
 # LC123 node inventory
 
-**139 Python nodes** + **5 JS-only** · version 1.49.1
+**140 Python nodes** + **5 JS-only** · version 1.49.2
 
 Registered class IDs: 138 (137 in search, 1 deprecated but still loads in old workflows).
 
@@ -179,6 +179,7 @@ Registered class IDs: 138 (137 in search, 1 deprecated but still loads in old wo
 - `LCShowText`: LC Show Text 🔤
 - `LCSlider`: LC Slider
 - `LCControlPanel`: LC Control Panel 🎛️
+- `LCTimer`: LC Timer ⏱️
 - `LCStop`: LC Stop 🛑
 - `LCTextRemove`: LC Text Remove 🔪
 - `LCTextReplace`: LC Text Replace ✂️
