@@ -6,7 +6,7 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 - **CivitAI:** [lonecatone23](https://civitai.com/user/lonecatone23)
 - **Instagram:** [synth.studio.models](https://www.instagram.com/synth.studio.models/)
 - **Support:** [Buy me a ☕](https://ko-fi.com/lonecatone)
-- **Version:** 1.49.0 · **137 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
+- **Version:** 1.49.1 · **139 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
 
 > Small tools that remove friction: less wire mess, fewer clicks, clearer workflows.
 
@@ -58,6 +58,7 @@ Tools for the canvas itself, not nodes. Nothing here touches your generations.
 - While you drag a wire, every socket it can plug into glows in its own socket color.
 - Get close and rings pulse out of the socket. Closer = bigger and brighter.
 - Zoomed out, every valid socket glows brighter so you can still find it.
+- A collapsed node with a socket that fits glows around its title, so you can drop the wire straight on it.
 - Costs nothing unless you are holding a wire.
 
 **Comfy Optimization Report 🩺**
@@ -234,7 +235,7 @@ The **System & Model Optimization Report** tells you what suits your machine. Th
 
 **How it works**
 - Pick the **base model** and a **goal** (Quality / Optimal / Fast, same as the report).
-- **Every file defaults to ★ Recommended:** the file the report picked for this machine. No report yet? Comfy's own default files, and a 💡 to run the report.
+- **Every file defaults to ★ Recommended:** the file the report picked for this machine. No report yet? Comfy's own default files, and a 💡⚠️ banner on the node telling you to run the report first.
 - **File pickers work like the LC LoRA Loader:** click to browse your folders, with a search box. On top:
     - **★ Recommended** (and the actual file name it will use)
     - **From checkpoint** / **None**
@@ -513,7 +514,8 @@ Full directions: [`LC_Prompt_Builder_Note.md`](LC_Prompt_Builder_Note.md)
 | **LC Sigma Curve** | No MODEL needed. Named schedules (`simple`, `karras`, `beta57`, `bong_tangent`, `linear_quadratic`, `kl_optimal`, etc.), your saved curves, and **Custom**. Drag a knot and it becomes Custom. **Save curve** arms the save, you still queue it. Your saves live in `ComfyUI/user/LC123/sigma_curves/`, so an update never touches them (older saves in the pack still load) |
 | **LC Sigma Resample** | Same sigma path, new **real** step count: `new_steps = round(old x multiplier) + adder`. Put it **after** a split, on the slice you want denser |
 | **LC Sigmas (BETA)** | One scheduler for one- and two-pass sampling. **sampler** (the line under the graph shows what tested best for your model; RES4LYF / ClownShark sampler names work too) + **sigma_curve_presets**: **base** (any scheduler, picked in **base_scheduler**), **beta** (your own alpha / beta), **flowmatch**, **hyperbolic** and **gaussian** (the same curves as the FlowMatch, RES4LYF Sigmas Hyperbolic / Gaussian nodes, without needing them), plus every curve you saved. Drag the points on the graph to bend the curve (**edit_mode** smooth or spike, **smooth_radius**); **reset curve** clears it, **save curve** adds it to the presets. **first_pass_resample** spreads the first pass over more steps along the same path. **step_swap**: the step where the second model (**model_2**) takes over, starting exactly where the first pass stopped. **denoise** for image to image, with **denoise_steps**: **full schedule** (the whole run) or **at step swap** (the first pass only, so the second pass refines on its own). **low_pass**: **continue noise schedule** (the leftover noise, one schedule over two samplers) or **renoise** (the first pass finishes, fresh noise goes back up to the swap level, and the second pass refines like a detailer). **sigma_shift**: use model default, by image size or custom. Outputs both sigmas, the noise for each pass and the sampler. Live graph on the node: drag it taller and the graph grows. Only the settings for the chosen preset are shown |
-| **LC Detail Daemon (BETA)** / **(model)** | Adds fine detail by telling the model there is a little less noise than there really is. The same **amount** scale and step window (**start / end / peak / exponent**) as the original Detail Daemon, so settings carry over, but never multiplied by CFG. **mode**: **look only** (default) = crisp detail without big reshuffles, **classic** = the original (more detail, small things like folds and background focus shift), **keep structure** = only the fine part of the change is kept, so the layout stays (about 45% slower). Defaults peak 0 and exponent 0.1: full strength across the window, strongest at its start. 💡 Krea 2 / Krealism: look only 1.0, start 0.15, end 0.85, peak 0, exponent 0 (the defaults). classic and keep structure hit harder, so start them lower. Works on either pass of a two-sampler setup |
+| **LC Detail Daemon (BETA)** / **(model)** | Adds fine detail by telling the model there is a little less noise than there really is. The same **amount** scale and step window (**start / end / peak / exponent**) as the original Detail Daemon, so settings carry over, but never multiplied by CFG. **mode**: **look only** (default) = crisp detail without big reshuffles, **classic** = the original (more detail, small things like folds and background focus shift), **keep structure** = only the fine part of the change is kept, so the layout stays (about 45% slower). Defaults peak 0 and exponent 0.1: full strength across the window, strongest at its start. 💡 Krea 2 / Krealism: look only 1.0, start 0.15, end 0.85, peak 0, exponent 0 (the defaults). classic and keep structure hit harder, so start them lower. ✋ **Put it on the low pass sampler:** detail is made in the last steps, and on the high pass it moves the layout. The window follows the sampler it's plugged into; `sigmas` only draws the graph |
+| **LC Speed Boost (BETA) 🚀** | About **2x faster** first passes, same quality. Plug it into the **high pass sampler only**: it starts the picture at half size and grows it to full size partway through (LC Detail Daemon goes on the low pass). **auto** picks the grow step from the schedule; **grow_at_step** sets it yourself, counted like step_swap (0 = off). The layout follows the model's trained size, so a seed frames differently with it on. Works on Krea 2, Z-Image, Flux.2 Klein, Qwen-Image and Wan; it switches itself off on SDXL-family models, upscale / image to image passes (denoise under 0.9) and inpaint masks, and the console says why. Based on [SPEED](https://github.com/howardhx/speed) (Xiao, Chao, Yariv and Wetzstein, 2026) and ComfyUI-SPEED-SwarmNeo (MIT) |
 | **LC Reference Latent** | Up to 8 optional reference latents into conditioning. All empty = pass-through |
 | **LC Denoise 💉** | Latent injection: `noise_std = 1 - denoise`. Match the sampler's denoise |
 | **LC Pipe (in/edit)** / **Pipe Out** / **Detail Pipe Out** | Bundle or unpack models, clips, VAEs, prompts, seed, steps, the works |
@@ -570,6 +572,7 @@ Details: [`LC123_Save_Image_Note.md`](LC123_Save_Image_Note.md)
 | **LC Seed Jump 🌱** | One seed + a jump = six stepped seeds |
 | **🌱LC Seed** | Type a number for a fixed seed, or **Randomize Each Time** / **New Fixed Random**. A **seed history** remembers the last 10 seeds this node actually ran with. Capped at 2^53-1, the browser's safe integer limit |
 | **LC Slider** | A plain slider that looks the same in classic and Nodes 2.0. Double-click the value to type. min / max / step / decimals behind the faint gear |
+| **LC Control Panel 🎛️** | Up to 16 LC Sliders on one node, each on its own output. The ⚙ at the end of a row sets its name, min, max, step and decimals (0 = INT, otherwise FLOAT), or deletes it. **+ Add slider** adds a row. Plug a new row into a number input and it copies that input's name, range and value. Double-click a value to type one |
 | **LC Node Snapshot 📋** | Reads another node's widgets: value / dump / JSON. With **source** wired it shows the values the node actually ran with, so a seed or slider plugged into a widget shows its real value. |
 | **LC Notify 🔊** | Plays a sound from `assets/sounds/` when the run reaches it. always / on empty queue / never |
 | **LC Bypasser** / **LC Mute** / **Groups Bypasser** / **Bypasser Panel** | Remote **bypass** (pass-through) or **mute** (never runs). Panel's `hub` accepts any of the three |

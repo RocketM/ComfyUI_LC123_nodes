@@ -18,6 +18,7 @@ const COLORS = {
     LCChangeStepCount: { color: "#1c6d6d", bgcolor: "#1c6d6d" },
     LCSigmaResample: { color: "#1c6d6d", bgcolor: "#1c6d6d" },
     LCSigmaCurve: { color: "#1c6d6d", bgcolor: "#1c6d6d" },
+    LCSpeedBoost: { color: "#7d1919", bgcolor: "#7d1919" },
     LCVRAMCacheClear: { color: "#28281E", bgcolor: "#28281E", size: [270, 30] },
     // LCPipeIn is now painted #707070 by lc_pipe_sampler_chrome.js, same as
     // LCPipeOut/LCPipeEdit — do not re-add an entry for it here.

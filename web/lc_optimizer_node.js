@@ -191,6 +191,12 @@ function renderFace(node) {
   }
   if (!pl) { f.status.innerHTML = `<div style="color:#8a95a5">Checking…</div>`; f.foot.textContent = ""; return; }
   const lines = [];
+  if (!pl.report) {
+    // no saved report: say so loudly, above everything else
+    lines.push(`<div style="margin-bottom:6px;padding:6px 8px;border:1px solid #f3c969;border-radius:6px;background:rgba(243,201,105,0.12);color:#f3c969">
+      <div style="font-weight:700;font-size:14px">💡⚠️ Run the System &amp; Model Optimization Report first</div>
+      <div style="color:#dfe5ec;margin-top:2px">${pl.custom ? "Without it, the speed-ups can't be matched to your card." : "Without it, you get Comfy's default files and speed-ups that aren't matched to your card."} Click <b>Run or Open Report</b> below (about 10 seconds).</div></div>`);
+  }
   for (const x of pl.files || []) {
     const what = x.state === "download" ? `downloads ${x.gb ?? "?"} GB` : x.state === "disk" ? "on disk" : x.state === "ckpt" ? "" : x.state === "unsupported" ? "" : "not found";
     lines.push(`<div style="display:flex;gap:6px" title="${tip(baseName(x.label), LEGEND.file)}"><span>${ICON[x.state] || "•"}</span><span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(baseName(x.label))}</span><span style="color:#8a95a5;white-space:nowrap">${what}</span></div>`);
@@ -199,8 +205,10 @@ function renderFace(node) {
     const applied = !pl.applied || pl.applied.includes(s.label) || s.key === "kitchen";
     lines.push(`<div style="display:flex;gap:6px" title="${tip(s.why, LEGEND.speed)}"><span>${ICON[s.state]}</span><span style="flex:1">${esc(s.label)}</span><span style="color:#8a95a5;white-space:nowrap;max-width:48%;overflow:hidden;text-overflow:ellipsis">${s.state === "on" ? (pl.applied ? (applied ? "applied" : "failed") : "will apply") : esc(s.why)}</span></div>`);
   }
-  for (const [icon, text] of pl.hints || [])
+  for (const [icon, text] of pl.hints || []) {
+    if (!pl.report && String(text).startsWith("No report yet")) continue; // shown in the banner above
     lines.push(`<div style="display:flex;gap:6px;color:${icon === "⚠️" ? "#f3c969" : "#b8c2d0"}" title="${tip("", LEGEND.hint)}"><span>${icon}</span><span style="flex:1">${esc(text)}</span></div>`);
+  }
   f.status.innerHTML = lines.join("");
   const e = pl.estimate, rep = pl.report;
   const est = e === "unsupported" ? "Estimate: unsupported" : e ? `~${e.step_s} s/step${e.total_s ? ` · ~${e.total_s} s` : ""}${e.fits === "vram" ? " · fits on the card" : e.fits ? " · streams from RAM" : ""}` : "";
@@ -208,7 +216,9 @@ function renderFace(node) {
   const b = document.createElement("button");
   b.textContent = "Run or Open Report";
   b.title = "Run the optimization report or view saved one";
-  b.style.cssText = "background:#2a313b;color:#dfe5ec;border:1px solid #3a4250;border-radius:4px;padding:2px 8px;cursor:pointer;font:12px sans-serif";
+  b.style.cssText = rep
+    ? "background:#2a313b;color:#dfe5ec;border:1px solid #3a4250;border-radius:4px;padding:2px 8px;cursor:pointer;font:12px sans-serif"
+    : "background:#f3c969;color:#1e2227;border:1px solid #f3c969;border-radius:4px;padding:3px 10px;cursor:pointer;font:bold 13px sans-serif"; // no report: make it the obvious next click
   b.onclick = (ev) => { ev.stopPropagation(); window.LC123SystemCheck?.open?.({ saved: true }); };
   f.foot.appendChild(b);
   fit(node);

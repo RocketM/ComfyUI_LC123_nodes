@@ -2,6 +2,7 @@
  * LC Connection FX: while you drag a wire, every socket it can plug into glows in its own socket color.
  * Close to the cursor, rings pulse out of the socket and grow brighter the closer you get.
  * Zoomed out, every valid socket glows brighter so the options stay easy to spot.
+ * A collapsed node with a socket that fits glows around its title, so you can drop the wire on it.
  *
  * Draws only while a wire is being dragged (classic canvas renderer). Otherwise the cost is one flag check per frame.
  */
@@ -63,7 +64,7 @@ function typesMatch(a, b) {
   return String(a).split(",").some((x) => B.includes(x.trim()));
 }
 
-// every socket the wire being dragged could connect to: [{x, y, color}] in graph space
+// every socket the wire being dragged could connect to: [{x, y, color}] in graph space (a collapsed node: {rect, x, y, color})
 function targets(canvas) {
   const lc = canvas.linkConnector;
   if (!lc?.isConnecting) return null;
@@ -75,9 +76,9 @@ function targets(canvas) {
   const out = [];
   out.anyWire = !fromType || fromType === "*"; // an "any" wire lights up nearly every socket
   for (const node of canvas.visible_nodes || []) {
-    if (node.flags?.collapsed) continue;
     const slots = toInputs ? node.inputs : node.outputs;
     if (!slots?.length) continue;
+    const collapsed = !!node.flags?.collapsed;
     for (let i = 0; i < slots.length; i++) {
       const slot = slots[i];
       let ok = false;
@@ -86,11 +87,51 @@ function targets(canvas) {
       } catch (_) {}
       if (!ok) continue;
       if (!typesMatch(fromType, realType(node, toInputs, i, slot))) continue;
+      if (collapsed) {
+        // one glow for the whole title pill; dropping the wire on it connects to the first socket that fits
+        const b = node.boundingRect;
+        out.push({ rect: [b[0], b[1], b[2], b[3]], x: b[0] + b[2] / 2, y: b[1] + b[3] / 2, color: slotColor(canvas, slot, fromType) });
+        break;
+      }
       const p = node.getConnectionPos(toInputs, i);
       out.push({ x: p[0], y: p[1], color: slotColor(canvas, slot, fromType) });
     }
   }
   return out;
+}
+
+function pillPath(ctx, x, y, w, h, grow) {
+  const r = h / 2 + grow;
+  ctx.beginPath();
+  ctx.roundRect ? ctx.roundRect(x - grow, y - grow, w + grow * 2, h + grow * 2, r) : ctx.rect(x - grow, y - grow, w + grow * 2, h + grow * 2);
+}
+
+// a collapsed node that fits: a soft halo around its title pill, rings growing out of it as the cursor gets close
+function drawPill(ctx, it, mouse, s, px, R, zoomOut, dim, t) {
+  const [x, y, w, h] = it.rect;
+  const dx = Math.max(x - mouse[0], 0, mouse[0] - (x + w));
+  const dy = Math.max(y - mouse[1], 0, mouse[1] - (y + h));
+  const near = Math.max(0, 1 - (Math.hypot(dx, dy) * s) / R);
+  const [r, g, b] = rgb(it.color);
+  const a = Math.min(1, 0.3 + 0.5 * zoomOut + 0.55 * near) * dim;
+  ctx.save();
+  ctx.shadowColor = `rgba(${r},${g},${b},${a})`;
+  ctx.shadowBlur = (10 + 10 * zoomOut + 14 * near) * s; // shadowBlur is in screen pixels
+  ctx.strokeStyle = `rgba(${r},${g},${b},${a})`;
+  ctx.lineWidth = (2 + 1.5 * near) * px;
+  pillPath(ctx, x, y, w, h, 2 * px);
+  ctx.stroke();
+  ctx.restore();
+  if (near > 0) {
+    const speed = 0.7 + 1.3 * near;
+    ctx.lineWidth = (1.2 + 1.6 * near) * px;
+    for (let k = 0; k < 3; k++) {
+      const phase = (t * speed + k / 3) % 1;
+      ctx.strokeStyle = `rgba(${r},${g},${b},${(1 - phase) * (0.25 + 0.75 * near) * dim})`;
+      pillPath(ctx, x, y, w, h, (3 + phase * (6 + 16 * near)) * px);
+      ctx.stroke();
+    }
+  }
 }
 
 function draw(canvas) {
@@ -114,6 +155,10 @@ function draw(canvas) {
   ctx.globalCompositeOperation = "lighter";
   let best = null;
   for (const it of list) {
+    if (it.rect) {
+      drawPill(ctx, it, mouse, s, px, R, zoomOut, dim, t);
+      continue;
+    }
     const d = Math.hypot(it.x - mouse[0], it.y - mouse[1]) * s; // screen px
     const near = Math.max(0, 1 - d / R);
     const [r, g, b] = rgb(it.color);

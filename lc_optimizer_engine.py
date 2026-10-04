@@ -850,9 +850,9 @@ def plan(profile_id, goal, picks, manual=None):
         g = (sysp.get("gpus") or [{}])[0]
         out["report"] = {"when": sysp.get("when"), "gpu": g.get("name"), "vram_gb": g.get("vram_gb")}
     elif custom:
-        out["hints"].append(("💡", "No report yet: run the System & Model Optimization Report so the speed-ups suit this machine."))
+        out["hints"].append(("💡⚠️", "No report yet: run the System & Model Optimization Report so the speed-ups suit this machine."))
     else:
-        out["hints"].append(("💡", "No report yet: using Comfy's default files. Run the System & Model Optimization Report for picks that suit this machine."))
+        out["hints"].append(("💡⚠️", "No report yet: using Comfy's default files. Run the System & Model Optimization Report for picks that suit this machine."))
     if custom:
         out["hints"].append(("ℹ️", "Custom: recommended files, downloads, estimates and file checks are unsupported. Pick your own files; the speed-ups still apply."))
     paths = {}

@@ -114,13 +114,14 @@ def _sampler(model, x, sigmas, *, lc_wrapped, lc_amount, lc_start, lc_end, lc_pe
         mult = _at(float(sigma.max()), sig, sched)
         return _call(model, x, sigma, mult, lc_mode, **extra_args)
 
-    for k in ("inner_model", "sigmas"):
+    for k in ("inner_model", "sigmas", "latent_image", "noise"):  # LC Speed Boost reads the last two
         if hasattr(model, k):
             setattr(model_wrapper, k, getattr(model, k))
     return lc_wrapped.sampler_function(model_wrapper, x, sigmas, **kwargs, **lc_wrapped.extra_options)
 
 
-DD_TIP = ("Krea 2 / Krealism: look only 1.0, start 0.15, end 0.85, peak 0, exponent 0 (the defaults). classic and keep "
+DD_TIP = ("Put it on the low pass sampler. Detail is made in the last steps; on the high pass it moves the layout.\n"
+          "Krea 2 / Krealism: look only 0.5 to 1.0, start 0.15, end 0.85, peak 0, exponent 0. classic and keep "
           "structure hit harder: start lower. At 16+ steps use less. Samplers that add their own noise (dpmpp_2m_sde, euler_ancestral, "
           "er_sde, res_* / ClownSampler with eta): lower it, or it can leave specks.")
 
@@ -149,7 +150,8 @@ def _inputs(first):
                                 "in the window)."}),
         },
         "optional": {
-            "sigmas": ("SIGMAS", {"tooltip": "Optional, for the graph only: shows where your steps land."}),
+            "sigmas": ("SIGMAS", {"tooltip": "Draws the graph only. Wire the sigmas of the sampler this feeds (sigmas_low for the "
+                                              "low pass). The window always follows that sampler's own steps."}),
         },
     }
 
@@ -169,7 +171,8 @@ class LCDetailDaemon:
     FUNCTION = "go"
     CATEGORY = "LC123/sampling"
     DESCRIPTION = ("Adds fine detail by telling the model there is a little less noise than there really is, in a window of "
-                   "the steps. Same scale and window as the original Detail Daemon, plus keep structure mode, and no CFG maths.")
+                   "the steps. Same scale and window as the original Detail Daemon, plus keep structure mode, and no CFG maths.\n"
+                   "Put it on the low pass sampler. Detail is made in the last steps.")
 
     def go(self, sampler, amount, start, end, peak, exponent=0.0, mode="look only", sigmas=None):
         s = KSAMPLER(_sampler, extra_options={"lc_wrapped": sampler, "lc_amount": float(amount), "lc_start": float(start),
