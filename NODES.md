@@ -1,6 +1,6 @@
 # LC123 node inventory
 
-**140 Python nodes** + **5 JS-only** · version 1.49.2
+**141 Python nodes** + **5 JS-only** · version 1.49.3
 
 Registered class IDs: 138 (137 in search, 1 deprecated but still loads in old workflows).
 
@@ -133,6 +133,7 @@ Registered class IDs: 138 (137 in search, 1 deprecated but still loads in old wo
 - `LCDetailDaemon`: LC Detail Daemon (BETA)
 - `LCDetailDaemonModel`: LC Detail Daemon (model) (BETA)
 - `LCSpeedBoost`: LC Speed Boost (BETA) 🚀
+- `LCSpeedBoostKSampler`: LC Speed Boost KSampler (BETA) 🚀
 - `LCSamplerConfigure`: LC Sampler Configure
 - `LCSamplerConfigurePipeOut`: LC Sampler Configure (pipe)
 - `LCSamplerConfigurePipe`: LC Sampler Configure Pipe Out

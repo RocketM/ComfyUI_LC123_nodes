@@ -21,7 +21,9 @@ function ensureStyle() {
   const st = document.createElement("style");
   st.id = "lc-rt-style";
   st.textContent = `
-.lc-rt{box-sizing:border-box;width:100%;padding:4px 8px 6px;color:#ddd;font:12px system-ui,sans-serif;user-select:none}
+.lc-rt{box-sizing:border-box;width:100%;height:100%;display:flex;flex-direction:column;overflow:hidden;padding:4px 8px 6px;color:#ddd;font:12px system-ui,sans-serif;user-select:none}
+.lc-rt-list{flex:1 1 auto;min-height:0;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#ffffff40 transparent}
+.lc-rt-list::-webkit-scrollbar{width:6px}.lc-rt-list::-webkit-scrollbar-thumb{background:#ffffff40;border-radius:3px}
 .lc-rt-now{font-size:26px;font-weight:600;font-variant-numeric:tabular-nums;text-align:center;padding:2px 0 4px}
 .lc-rt-now.run{color:#9fd3ff}
 .lc-rt-sum{text-align:center;color:#aaa;margin-bottom:4px;min-height:15px}
@@ -124,13 +126,27 @@ function attach(node) {
   const wrap = Object.assign(document.createElement("div"), { className: "lc-rt" });
   const now = Object.assign(document.createElement("div"), { className: "lc-rt-now", textContent: "--" });
   const sum = Object.assign(document.createElement("div"), { className: "lc-rt-sum" });
-  const list = document.createElement("div");
+  const list = Object.assign(document.createElement("div"), { className: "lc-rt-list" }); // squeeze the node: this scrolls
   wrap.append(now, sum, list);
   node._lcRt = { wrap, now, sum, list };
-  node.addDOMWidget("lc_rt", "LC_RT", wrap, { serialize: false, getMinHeight: () => 150 });
+  node.addDOMWidget("lc_rt", "LC_RT", wrap, { serialize: false, getMinHeight: () => 64 }); // the time + one line; the list scrolls
   nodes.add(node);
   render(node);
+  fitBox(node);
 }
+
+// The box gets the node's own height, so a squeezed node scrolls its list instead of spilling past the bottom
+// (and in Nodes 2.0 instead of the node growing to fit every row). Checked on resize and twice a second.
+const BOX_PAD = 10;
+function fitBox(node) {
+  const ui = node._lcRt;
+  if (!ui || !node.size) return;
+  const h = Math.max(54, Math.round(node.size[1] - BOX_PAD)) + "px";
+  const st = ui.wrap.style;
+  // Nodes 2.0 stretches widget children (flex-1) and lets them grow to their content: pin the box to this height
+  if (st.height !== h) { st.height = h; st.maxHeight = h; st.flex = "0 0 auto"; st.minHeight = "0"; }
+}
+setInterval(() => { for (const n of nodes) fitBox(n); }, 500);
 
 app.registerExtension({
   name: "LC123.Timer",
@@ -146,9 +162,21 @@ app.registerExtension({
       return r;
     };
     const configured = nodeType.prototype.onConfigure;
-    nodeType.prototype.onConfigure = function () {
+    nodeType.prototype.onConfigure = function (data) {
+      // keep a squeezed (or stretched) size through reloads and tab switches: put the saved size back once loading settles
+      const saved = Array.isArray(data?.size) ? [Number(data.size[0]), Number(data.size[1])] : null;
       const r = configured?.apply(this, arguments);
+      if (saved && saved[0] > 0 && saved[1] > 0) {
+        const put = () => { if (Math.abs(this.size[0] - saved[0]) > 1 || Math.abs(this.size[1] - saved[1]) > 1) this.setSize(saved); };
+        for (const ms of [0, 150, 450, 900]) setTimeout(put, ms);
+      }
       setTimeout(() => attach(this), 0);
+      return r;
+    };
+    const resized = nodeType.prototype.onResize;
+    nodeType.prototype.onResize = function () {
+      const r = resized?.apply(this, arguments);
+      fitBox(this);
       return r;
     };
     const removed = nodeType.prototype.onRemoved;

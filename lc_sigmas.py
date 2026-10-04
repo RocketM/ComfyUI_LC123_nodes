@@ -581,7 +581,7 @@ class LCSigmas:
                 "base_scheduler": (shapes, {"default": "beta57" if "beta57" in shapes else "simple",
                                    "tooltip": "The scheduler under base, hyperbolic and gaussian (sigma_curve_presets). Flow models (Krea 2, Z-Image, Flux 2): "
                                               "beta, beta57 and simple are safe; karras, kl_optimal and linear_quadratic burn."}),
-                "steps": ("INT", {"default": 20, "min": 1, "max": 1000, "tooltip": "Total steps, both passes together."}),
+                "steps": ("INT", {"default": 10, "min": 1, "max": 1000, "tooltip": "Total steps, both passes together."}),
                 "step_swap": ("INT", {"default": 0, "min": 0, "max": 1000,
                               "tooltip": "The step where the second model (model_2) takes over. 0 = one pass only."}),
                 "denoise": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01,

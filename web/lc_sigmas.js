@@ -255,6 +255,22 @@ function syncVisible(node) {
   fit(node);
 }
 
+// A reloaded node (refresh, tab switch) forgets that it was dragged taller, so the widget show / hide above would
+// shrink it back to the fitted height. Take the size from the saved workflow: taller than fitted = the user's size.
+// Put back once now and again after the graph and the frontend's own fit have settled.
+function restoreSize(node, saved) {
+  const apply = () => {
+    const need = node.computeSize?.()?.[1] || 0;
+    node._lcUserTall = saved[1] > need + 2;
+    const h = Math.max(saved[1], need);
+    const w = Math.max(saved[0], 320);
+    if (Math.abs(node.size[0] - w) > 1 || Math.abs(node.size[1] - h) > 1) node.setSize([w, h]);
+    node.setDirtyCanvas?.(true, true);
+  };
+  apply();
+  for (const ms of [0, 150, 450, 900]) setTimeout(apply, ms);
+}
+
 async function refresh(node) {
   const body = { node: String(node.id) };
   for (const k of LIVE) body[k] = W(node, k)?.value;
@@ -372,10 +388,13 @@ app.registerExtension({
     };
     const onConfigure = nodeType.prototype.onConfigure;
     nodeType.prototype.onConfigure = function (data) {
+      // the saved size, read from the workflow before anything here (or the frontend's auto-fit) moves it
+      const saved = Array.isArray(data?.size) ? [Number(data.size[0]), Number(data.size[1])] : null;
       const r = onConfigure?.apply(this, arguments);
       migrate(this, data?.widgets_values);
       rewire(this, data);
       syncVisible(this);
+      if (saved && saved[0] > 0 && saved[1] > 0) restoreSize(this, saved);
       setTimeout(() => refresh(this), 50); // now the saved id and the wires are in place: ask for the graph again
       return r;
     };

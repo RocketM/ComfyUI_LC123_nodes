@@ -199,5 +199,111 @@ class LCSpeedBoost:
         return (_wrap(sampler, auto, grow_at_step),)
 
 
-NODE_CLASS_MAPPINGS = {"LCSpeedBoost": LCSpeedBoost}
-NODE_DISPLAY_NAME_MAPPINGS = {"LCSpeedBoost": "LC Speed Boost (BETA) 🚀"}
+class LCSpeedBoostKSampler:
+    """A KSampler with Speed Boost built in. Same inputs, same results with Speed Boost off. start / end / leftover noise
+    work like KSampler (Advanced), so it can hand off to a regular or ClownShark sampler."""
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        import comfy.samplers
+        from .lc_sampler_configure import _gap
+        from .lc_sigmas import clown_names  # RES4LYF / ClownShark sampler names, empty without RES4LYF
+        samplers = list(comfy.samplers.KSampler.SAMPLERS) + [n for n in dict.fromkeys(clown_names().values())
+                                                             if n not in comfy.samplers.KSampler.SAMPLERS]
+        return {"required": {
+            "model": ("MODEL", {"tooltip": "The model used for denoising the input latent."}),
+            "positive": ("CONDITIONING", {"tooltip": "What you want in the image."}),
+            "negative": ("CONDITIONING", {"tooltip": "What you want out of the image."}),
+            "latent_image": ("LATENT", {"tooltip": "The latent to denoise."}),
+            "speed_boost": ("BOOLEAN", {"default": True, "label_on": "auto", "label_off": "grow_at_step",
+                                        "tooltip": "auto = Speed Boost picks the switch step from the schedule (about 2x "
+                                                   "faster, same quality). grow_at_step = set it yourself below."}),
+            "grow_at_step": ("INT", {"default": 4, "min": 0, "max": 200, "step": 1,
+                                     "tooltip": "Used when speed_boost is on grow_at_step: the step where it switches to "
+                                                "full resolution. 0 = a plain KSampler."}),
+            "_gap1": _gap(),
+            "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff, "control_after_generate": True,
+                             "tooltip": "The random seed used for creating the noise."}),
+            "steps": ("INT", {"default": 10, "min": 1, "max": 10000, "tooltip": "The number of steps."}),
+            "cfg": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 100.0, "step": 0.1, "round": 0.01,
+                              "tooltip": "How closely it follows the prompt."}),
+            "sampler_name": (samplers, {"tooltip": "The sampling algorithm. ClownShark (RES4LYF) samplers are listed "
+                                                   "too when RES4LYF is installed, and a ClownSampler Selector can be wired in."}),
+            "scheduler": (comfy.samplers.KSampler.SCHEDULERS, {"tooltip": "How the noise is removed over the steps."}),
+            "denoise": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01,
+                                  "tooltip": "1 = a new picture. Lower = image to image (Speed Boost steps aside under 0.9)."}),
+            "_gap2": _gap(),
+            "start_at_step": ("INT", {"default": 0, "min": 0, "max": 10000,
+                                      "tooltip": "Start partway through the steps, like KSampler (Advanced). Above 0, Speed "
+                                                 "Boost steps aside (the picture is already past the layout steps)."}),
+            "end_at_step": ("INT", {"default": 10000, "min": 0, "max": 10000,
+                                    "tooltip": "Stop at this step. Hand the rest to another sampler with "
+                                               "return_with_leftover_noise on."}),
+            "return_with_leftover_noise": ("BOOLEAN", {"default": False, "label_on": "enable", "label_off": "disable",
+                                                       "tooltip": "enable = stop at end_at_step with the noise left in, for "
+                                                                  "a regular or ClownShark sampler to finish (add_noise off, "
+                                                                  "start_at_step = this end_at_step)."}),
+        }, "optional": {
+            "sampler": ("SAMPLER", {"tooltip": "Optional. A ClownSampler (or any SAMPLER) with its own settings, like eta. "
+                                               "Replaces sampler_name."}),
+        }}
+
+    RETURN_TYPES = ("LATENT",)
+    FUNCTION = "sample"
+    CATEGORY = "LC123/sampling"
+    DESCRIPTION = ("BETA. A KSampler with LC Speed Boost built in: about half the processing time, same VRAM, same detail. "
+                   "Drop it in where your KSampler was. The layout is worked out at a lower resolution, so a seed frames "
+                   "a bit tighter with it on.\n"
+                   "start_at_step, end_at_step and return_with_leftover_noise work like KSampler (Advanced): stop early "
+                   "with the noise left in and let a regular or ClownShark sampler finish.\n"
+                   "ClownShark (RES4LYF) samplers are in the sampler list when RES4LYF is installed. Wire a ClownSampler "
+                   "into sampler to use its own settings.\n"
+                   "Works on Krea 2, Z-Image, Flux.2 Klein, Qwen-Image and Wan. On SDXL-family models, image to image "
+                   "(denoise under 0.9) and inpaint masks it samples like a plain KSampler.\n"
+                   "Based on SPEED (Xiao, Chao, Yariv and Wetzstein, 2026).")
+
+    def sample(self, model, positive, negative, latent_image, speed_boost=True, grow_at_step=4, seed=0, steps=20, cfg=8.0,
+               sampler_name="euler", scheduler="simple", denoise=1.0, start_at_step=0, end_at_step=10000,
+               return_with_leftover_noise=False, sampler=None, **_gaps):
+        import comfy.sample
+        import comfy.samplers
+        import comfy.utils
+        import latent_preview
+        from .lc_sigmas import make_sampler  # Comfy names and RES4LYF / ClownShark names
+
+        latent = latent_image["samples"]
+        latent = comfy.sample.fix_empty_latent_channels(model, latent, latent_image.get("downscale_ratio_spacial", None),
+                                                        latent_image.get("downscale_ratio_temporal", None))
+        out = latent_image.copy()
+        out.pop("downscale_ratio_spacial", None)
+        out.pop("downscale_ratio_temporal", None)
+        # the same steps a KSampler would take (denoise included), then start / end like KSampler (Advanced)
+        ks = comfy.samplers.KSampler(model, steps=steps, device=model.load_device, sampler="euler",  # sigmas only
+                                     scheduler=scheduler, denoise=denoise, model_options=model.model_options)
+        sigmas = ks.sigmas
+        last = int(end_at_step)
+        if last < sigmas.shape[-1] - 1:
+            sigmas = sigmas[: last + 1]
+            if not return_with_leftover_noise:
+                sigmas = sigmas.clone()
+                sigmas[-1] = 0
+        first = int(start_at_step)
+        if first > 0:
+            if first >= sigmas.shape[-1] - 1:
+                out["samples"] = latent
+                return (out,)
+            sigmas = sigmas[first:]
+        if sigmas.shape[-1] < 2:  # denoise 0: nothing to do, like KSampler
+            out["samples"] = latent
+            return (out,)
+        noise = comfy.sample.prepare_noise(latent, seed, latent_image.get("batch_index", None))
+        boosted = _wrap(sampler if sampler is not None else make_sampler(sampler_name), speed_boost, grow_at_step)
+        callback = latent_preview.prepare_callback(model, sigmas.shape[-1] - 1)
+        out["samples"] = comfy.sample.sample_custom(model, noise, cfg, boosted, sigmas, positive, negative, latent,
+                                                    noise_mask=latent_image.get("noise_mask", None), callback=callback,
+                                                    disable_pbar=not comfy.utils.PROGRESS_BAR_ENABLED, seed=seed)
+        return (out,)
+
+
+NODE_CLASS_MAPPINGS = {"LCSpeedBoost": LCSpeedBoost, "LCSpeedBoostKSampler": LCSpeedBoostKSampler}
+NODE_DISPLAY_NAME_MAPPINGS = {"LCSpeedBoost": "LC Speed Boost (BETA) 🚀", "LCSpeedBoostKSampler": "LC Speed Boost KSampler (BETA) 🚀"}
