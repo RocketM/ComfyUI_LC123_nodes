@@ -42,6 +42,7 @@ ROLE_FOLDERS = {
 # (latent channels, conv dims) for the VAE. Used only for hints.
 TE_EXPECTS = {
     "anima": ("Qwen3 0.6B", 28, 1024, False), "flux2_klein_9b": ("Qwen3 8B", 36, 4096, False),
+    "flux2_klein_9b_distilled": ("Qwen3 8B", 36, 4096, False),
     "ideogram4": ("Qwen3-VL 8B", 36, 4096, True), "krea2": ("Qwen3-VL 4B", 36, 2560, True),
     "ltx23": ("Gemma 3 12B", 48, 3840, True), "ltx25": ("Gemma 4 12B", 48, 3840, True),
     "minimax_h3": ("Qwen3-VL 32B (H3)", 50, 5120, True), "minimax_h3_fl2va": ("Qwen3-VL 32B (H3)", 50, 5120, True), "qwen_image_21": ("Qwen3-VL 8B", 36, 4096, True),
@@ -52,11 +53,11 @@ TE_NAMES = {(28, 1024, False): "Qwen3 0.6B", (36, 2560, False): "Qwen3 4B", (36,
             (48, 3840, True): "Gemma 12B", (32, 4096, True): "Qwen3.5 9B", (32, 4096, False): "Llama 3.1 8B",
             (26, 2304, False): "Gemma 2 2B", (30, 5120, True): "Mistral Small 3", (35, 1536, True): "Gemma 4 E2B",
             (42, 2560, True): "Gemma 4 E4B"}
-VAE_EXPECTS = {"anima": (16, 5), "krea2": (16, 5), "z_image_turbo": (16, 4), "flux2_klein_9b": (32, 4), "ideogram4": (32, 4),
+VAE_EXPECTS = {"anima": (16, 5), "krea2": (16, 5), "z_image_turbo": (16, 4), "flux2_klein_9b": (32, 4), "flux2_klein_9b_distilled": (32, 4), "ideogram4": (32, 4),
                "qwen_image_21": (64, 5), "ltx25": (128, 2), "krea2_raw": (16, 5), "sdxl": (4, 4), "illustrious": (4, 4), "pony": (4, 4)}
 VAE_NAMES = {(16, 4): "16-channel 2D (Flux 1 / Z-Image)", (16, 5): "16-channel 3D (Wan / Qwen-Image)", (32, 4): "32-channel (Flux 2)",
              (64, 5): "64-channel (Qwen-Image 2.1)", (4, 4): "4-channel (SD / SDXL)", (128, 2): "128-channel (LTX)"}
-MODEL_CLASSES = {"anima": "Anima", "flux2_klein_9b": "Flux2", "ideogram4": "Ideogram4", "krea2": "Krea2", "ltx23": "LTXAV",
+MODEL_CLASSES = {"anima": "Anima", "flux2_klein_9b": "Flux2", "flux2_klein_9b_distilled": "Flux2", "ideogram4": "Ideogram4", "krea2": "Krea2", "ltx23": "LTXAV",
                  "ltx25": "LTXAV", "minimax_h3": "MiniMaxH3", "minimax_h3_fl2va": "MiniMaxH3", "qwen_image_21": "QwenImage21", "z_image_turbo": "ZImage",
                  "krea2_raw": "Krea2", "sdxl": "SDXL", "illustrious": "SDXL", "pony": "SDXL"}
 
@@ -115,7 +116,7 @@ def profiles(kind=None):
 
 
 # base model names that changed: saved workflows keep loading
-LEGACY_BASE = {"MiniMax H3": "MiniMax H3 Ref2VA"}
+LEGACY_BASE = {"MiniMax H3": "MiniMax H3 Ref2VA", "Flux.2 Klein base 9B": "Flux.2 Klein 9B (Base)"}
 
 
 def base_names(kind):

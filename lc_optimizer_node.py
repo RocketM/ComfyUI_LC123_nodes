@@ -49,7 +49,7 @@ DESC_IMAGE = (
     "Finetunes work too. Pick your own file and it still gets the speed-ups, plus a ⚠️ if the text encoder or VAE doesn't match.\n"
     "Any other model: set the base model to Custom and pick your own files (and the text encoder type). The speed-ups "
     "still apply; recommendations, estimates and checks show as unsupported.\n"
-    "Current available models: Krea 2, Krea 2 (Raw), Qwen-Image 2.1, Z-Image Turbo, Flux.2 Klein 9B, Ideogram 4, Anima, "
+    "Current available models: Krea 2, Krea 2 (Raw), Qwen-Image 2.1, Z-Image Turbo, Flux.2 Klein 9B (Distilled and Base), Ideogram 4, Anima, "
     "SDXL, Illustrious, Pony, Custom."
 )
 DESC_VIDEO = (

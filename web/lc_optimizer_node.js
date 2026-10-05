@@ -335,9 +335,10 @@ app.registerExtension({
   nodeCreated(node) { if (TYPES[node.comfyClass]) setup(node); },
   loadedGraphNode(node) {
     if (!TYPES[node.comfyClass]) return;
-    // base model names that changed (MiniMax H3 is now MiniMax H3 Ref2VA, next to FL2VA)
+    // base model names that changed (MiniMax H3 is now MiniMax H3 Ref2VA, next to FL2VA; Klein base 9B is now Klein 9B (Base))
     const bw = wByName(node, "base_model");
     if (bw && bw.value === "MiniMax H3") bw.value = "MiniMax H3 Ref2VA";
+    if (bw && bw.value === "Flux.2 Klein base 9B") bw.value = "Flux.2 Klein 9B (Base)";
     setup(node);
     applyManual(node);
     node._lcOptRefresh?.();
