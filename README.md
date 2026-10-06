@@ -6,7 +6,7 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 - **CivitAI:** [lonecatone23](https://civitai.com/user/lonecatone23)
 - **Instagram:** [synth.studio.models](https://www.instagram.com/synth.studio.models/)
 - **Support:** [Buy me a ☕](https://ko-fi.com/lonecatone)
-- **Version:** 1.49.3 · **141 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
+- **Version:** 1.49.5 · **142 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
 
 > Small tools that remove friction: less wire mess, fewer clicks, clearer workflows.
 
@@ -545,6 +545,7 @@ Full directions: [`LC_Prompt_Builder_Note.md`](LC_Prompt_Builder_Note.md)
 | **LC Show Text 🔤** | Text on the node |
 | **LC Show Any 🔤** | Wire in anything, it shows on the node and the **same value** comes out. Images, masks and latents show their size |
 | **LC Text Replace ✂️** / **LC Text Remove 🔪** | Up to 20 pairs, the node grows as you add them |
+| **LC ✂️ Duplicate Tags 🏷️** | Removes repeated tags so none gets double weight. `long_hair`, `Long Hair` and `(long hair:1.2)` count as one. **keep**: **first** (as written) or **strongest** (the most heavily weighted copy). Optional **text_2** merges a second prompt (your own plus a generated one) and cleans both together. Sentences, blank-line breaks and BREAK pass through. **removed** shows what it took out |
 | **CivitAI 🚩🔪** | Removes the words in `assets/lists/civitai_compliance_remove.txt` from a prompt (whole words only), like the "child" / "late teens" wording LLMs sometimes (and abliterated models especially) add to adults. **Off when you place it:** switching it on is your choice. Workflows saved before the switch keep stripping. ⚠️ A word filter, not a safety system: it guarantees nothing, and what you post is on you. Read [`assets/lists/README_civitai_compliance.txt`](assets/lists/README_civitai_compliance.txt) |
 
 - 💡 **Name tokens:** type **%model %seed %steps %cfg %sampler %scheduler %denoise %width %height** anywhere in Easy Folder, Advanced Folder or LC Save Image, e.g. `Krea2/%model/Test_%seed`. LC Save Image fills them from the **LC Save Metadata** pipe. Missing value? The token drops out and the leftover `_` is tidied up. ComfyUI's `%date:yyyy-MM-dd%` still works too.

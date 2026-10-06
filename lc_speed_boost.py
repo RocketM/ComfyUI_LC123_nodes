@@ -102,7 +102,8 @@ def plan(sigmas, auto, step):
         return None
     s = [float(v) for v in sigmas]
     keep = 1 if s[-1] > 0 else (2 if n >= 4 else 1)  # a pass that ends above 0 hands over to a low pass at full size
-    j = next((i for i in range(1, n) if s[i] <= AUTO_NOISE), n - keep) if auto else int(step)
+    # auto: the step nearest noise 0.7 (a 9-step Turbo schedule has 0.706 then 0.600: "first under 0.7" lost a full size step)
+    j = min(range(1, n), key=lambda i: (abs(s[i] - AUTO_NOISE), i)) if auto else int(step)
     return max(1, min(j, n - keep))
 
 

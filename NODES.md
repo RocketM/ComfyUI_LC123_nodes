@@ -1,6 +1,6 @@
 # LC123 node inventory
 
-**141 Python nodes** + **5 JS-only** · version 1.49.3
+**142 Python nodes** + **5 JS-only** · version 1.49.5
 
 Registered class IDs: 138 (137 in search, 1 deprecated but still loads in old workflows).
 
@@ -184,6 +184,7 @@ Registered class IDs: 138 (137 in search, 1 deprecated but still loads in old wo
 - `LCStop`: LC Stop 🛑
 - `LCTextRemove`: LC Text Remove 🔪
 - `LCTextReplace`: LC Text Replace ✂️
+- `LCDuplicateTags`: LC ✂️ Duplicate Tags 🏷️
 - `LCVRAMCacheClear`: LC VRAM Cache Clear
 - `LCSeed`: 🌱LC Seed
 - `LC123SaveText`: 📝 LC Save Text
