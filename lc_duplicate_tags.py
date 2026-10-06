@@ -24,13 +24,16 @@ def _split_top(block: str) -> list[str]:
     while i < len(block):
         c = block[i]
         if c == "\\" and i + 1 < len(block):  # escaped bracket, e.g. hatsune miku \(cosplay\)
-            cur.append(block[i:i + 2]); i += 2; continue
+            cur.append(block[i:i + 2])
+            i += 2
+            continue
         if c in "([":
             depth += 1
         elif c in ")]":
             depth = max(0, depth - 1)
         if c in ",\n" and depth == 0:
-            out.append("".join(cur)); cur = []
+            out.append("".join(cur))
+            cur = []
         else:
             cur.append(c)
         i += 1
