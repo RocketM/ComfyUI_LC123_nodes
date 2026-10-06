@@ -1,7 +1,8 @@
 """
 LC Speed Boost (BETA): starts the render at half size, then grows it to full size partway through, so the early steps
 cost about a quarter as much. The layout is decided while the picture is small (like the model's own trained size), the
-detail at full size. Roughly 1.5x to 2x faster first passes on Krea 2, Z-Image and Flux.2 Klein, with the same quality.
+detail at full size. Roughly 1.5x to 2x faster first passes on Krea 2, Z-Image and Flux.2 Klein, with the same quality,
+and about 1.4x on SDXL, Pony and Illustrious.
 
 Based on SPEED, "Spectral Progressive Diffusion for Efficient Image and Video Generation" (Xiao, Chao, Yariv and
 Wetzstein, 2026), and the MIT licensed ComfyUI-SPEED-SwarmNeo. This is LC's own version: it runs on the GPU, it always
@@ -12,6 +13,8 @@ cosine spectrum (still pure noise, same strength). At the grow point the small s
 same spectrum and the new fine part is filled with fresh noise. Padding leaves the picture 1/r as strong as the noise
 (r = full size / small size, per side), so the state is scaled by k = r / (1 + (r - 1) * t) and sampling carries on at
 the matching noise level k * t.
+SDXL family (x = picture + sigma * noise): the same padding, then the state is scaled by r and sampling carries on at
+r * sigma. Its switch point is set on the same 0..1 scale (t = sigma / (1 + sigma)) and sits a little later (0.6).
 """
 
 from __future__ import annotations
@@ -53,8 +56,10 @@ def shrink(x, h, w):
     return _unspec(_spec(x)[..., :h, :w].contiguous()).to(x.dtype)
 
 
-def grow(y, H, W, t, seed):
-    """Small state at noise level t -> full size state, and its noise level. See the module notes."""
+def grow(y, H, W, t, seed, kind="flow"):
+    """Small state at noise level t -> full size state, and its noise level. See the module notes.
+    kind "sigma" (SDXL family: x = picture + sigma * noise): padding leaves the picture 1/r as strong, so the state is
+    scaled by r and sampling carries on at r * sigma."""
     h, w = y.shape[-2:]
     c = torch.zeros(*y.shape[:-2], H, W, device=y.device, dtype=torch.float32)
     c[..., :h, :w] = _spec(y)
@@ -63,7 +68,7 @@ def grow(y, H, W, t, seed):
     fresh[..., :h, :w] = 0.0  # fresh noise only where the small picture had nothing (white noise in this basis)
     c += t * fresh
     r = math.sqrt((H * W) / float(h * w))
-    k = r / (1.0 + (r - 1.0) * t)
+    k = r if kind == "sigma" else r / (1.0 + (r - 1.0) * t)
     return (_unspec(c) * k).to(y.dtype), k * t
 
 
@@ -76,6 +81,29 @@ def _patcher(model):
         if m is None:
             return None
     return None
+
+
+def _kind(model, sigmas):
+    """'flow' (Krea 2, Z-Image, Flux, Qwen-Image, Wan), 'sigma' (SDXL family: eps / v prediction), or None."""
+    try:
+        import comfy.model_sampling as ms
+
+        p = _patcher(model)
+        if p is not None:
+            m = p.get_model_object("model_sampling")
+            if isinstance(m, ms.CONST):
+                return "flow"
+            if isinstance(m, (ms.EPS, ms.V_PREDICTION)) and not isinstance(m, getattr(ms, "EDM", ())):
+                return "sigma"
+            return None
+    except Exception:
+        pass
+    return "flow" if float(sigmas.max()) <= 1.001 else None
+
+
+def _flow_t(s, kind):
+    """A noise level on the 0..1 flow scale (SDXL's sigma s is the same mix as flow t = s / (1 + s))."""
+    return s if kind == "flow" else s / (1.0 + s)
 
 
 def _is_flow(model, sigmas):
@@ -92,22 +120,27 @@ def _is_flow(model, sigmas):
 
 MIN_START = 0.9  # below this it's an upscale / image to image pass: nothing to gain
 AUTO_NOISE = 0.7  # tested sweet spot on Krea 2, Z-Image and Klein: about 2x faster, same quality
+# SDXL family (on the same 0..1 scale, t = sigma / (1 + sigma)): clean down to 0.56, harsh skin at 0.44, broken at 0.31
+# (SDXL base, Juggernaut, two Illustrious, Pony; dpmpp_2m, euler, euler_a, dpmpp_2m_sde, dpmpp_sde). 0.6 keeps a step
+# of margin: about 45 % of the steps at half size, 1.4 - 1.5x faster on an RTX 5060 Laptop.
+AUTO_NOISE_SDXL = 0.6
 
 
-def plan(sigmas, auto, step):
+def plan(sigmas, auto, step, kind="flow"):
     """Step where the picture grows to full size, counted from the start of the run. None = stay at full size.
     The last step always runs at full size, the last two when nothing follows (a single pass)."""
     n = len(sigmas) - 1
     if n < 2 or (not auto and step <= 0):
         return None
-    s = [float(v) for v in sigmas]
+    s = [_flow_t(float(v), kind) for v in sigmas]
     keep = 1 if s[-1] > 0 else (2 if n >= 4 else 1)  # a pass that ends above 0 hands over to a low pass at full size
     # auto: the step nearest noise 0.7 (a 9-step Turbo schedule has 0.706 then 0.600: "first under 0.7" lost a full size step)
-    j = min(range(1, n), key=lambda i: (abs(s[i] - AUTO_NOISE), i)) if auto else int(step)
+    target = AUTO_NOISE if kind == "flow" else AUTO_NOISE_SDXL
+    j = min(range(1, n), key=lambda i: (abs(s[i] - target), i)) if auto else int(step)
     return max(1, min(j, n - keep))
 
 
-def _shrink_start(model, x, s0, h, w):
+def _shrink_start(model, x, s0, h, w, kind="flow"):
     """The starting state at half size. x = (1 - s0) * latent + s0 * noise: the noise shrinks as noise, the latent as a
     picture (its spectrum is r times its half size version's). An empty latent is just noise."""
     lat, nz = getattr(model, "latent_image", None), getattr(model, "noise", None)
@@ -115,7 +148,10 @@ def _shrink_start(model, x, s0, h, w):
         if not torch.count_nonzero(lat):
             return shrink(x, h, w)
         r = math.sqrt((x.shape[-2] * x.shape[-1]) / float(h * w))
-        return ((1.0 - s0) * shrink(lat.to(x.device), h, w) / r + s0 * shrink(nz.to(x.device), h, w)).to(x.dtype)
+        lat = lat.to(x.device)
+        if kind == "sigma":  # x = picture + scaled noise: the noise part is x - picture
+            return (shrink(lat, h, w) / r + shrink(x - lat, h, w)).to(x.dtype)
+        return ((1.0 - s0) * shrink(lat, h, w) / r + s0 * shrink(nz.to(x.device), h, w)).to(x.dtype)
     return shrink(x, h, w) if s0 >= 0.99 else None
 
 
@@ -132,11 +168,14 @@ def _sampler(model, x, sigmas, extra_args=None, callback=None, disable=None, *, 
     why = None
     if extra_args.get("denoise_mask") is not None:
         why = "inpaint mask (it only works on the whole picture)"
-    elif not _is_flow(model, sigmas):
-        why = "not a flow model (Krea 2, Z-Image, Flux, Qwen-Image, Wan work; SDXL-family models don't)"
-    elif float(sigmas[0]) < MIN_START:
-        why = f"the run starts at noise {float(sigmas[0]):.2f}, too little to start small (upscale / image to image pass)"
-    j = None if why else plan(sigmas, lc_auto, lc_step)
+    kind = None if why else _kind(model, sigmas)
+    if why:
+        pass
+    elif kind is None:
+        why = "this model type isn't supported (flow models and SDXL-family models are)"
+    elif _flow_t(float(sigmas[0]), kind) < MIN_START:
+        why = f"the run starts at noise {_flow_t(float(sigmas[0]), kind):.2f}, too little to start small (upscale / image to image pass)"
+    j = None if why else plan(sigmas, lc_auto, lc_step, kind)
     if j is None:
         if not why:
             why = "grow_at_step is 0" if not lc_auto and lc_step <= 0 else "too few steps"
@@ -146,12 +185,12 @@ def _sampler(model, x, sigmas, extra_args=None, callback=None, disable=None, *, 
     H, W = x.shape[-2:]
     h, w = max(2, round(H / 2)), max(2, round(W / 2))
     t = float(sigmas[j])
-    xs = _shrink_start(model, x, float(sigmas[0]), h, w)
+    xs = _shrink_start(model, x, float(sigmas[0]), h, w, kind)
     if xs is None:
         print("[LC Speed Boost] Off for this run: can't separate the starting picture from the noise. Sampling at full size.")
         return run(x, sigmas, 0)
     y = run(xs, sigmas[: j + 1], 0)
-    X, t2 = grow(y, H, W, t, extra_args.get("seed", 0) + 7)
+    X, t2 = grow(y, H, W, t, extra_args.get("seed", 0) + 7, kind)
     rest = torch.cat([torch.tensor([t2], dtype=sigmas.dtype, device=sigmas.device), sigmas[j + 1:]])
     n = len(sigmas) - 1
     print(f"[LC Speed Boost] {j} of {n} steps at half size (latent {w}x{h} of {W}x{H}), grew at noise {t:.3f} "
@@ -192,8 +231,8 @@ class LCSpeedBoost:
                    "Put LC Detail Daemon on the low pass. Detail is made in the last steps.\n"
                    "Speeds up passes that start from noise (denoise 0.9 and up). Upscale and image to image passes run as "
                    "normal: their layout comes from your image.\n"
-                   "Works on Krea 2, Z-Image, Flux.2 Klein, Qwen-Image and Wan. It switches itself off on SDXL-family models "
-                   "and inpaint masks (the console says why).\n"
+                   "Works on Krea 2, Z-Image, Flux.2 Klein, Qwen-Image, Wan, and SDXL / Pony / Illustrious (about 1.4x "
+                   "there). It switches itself off on inpaint masks (the console says why).\n"
                    "Based on SPEED (Xiao, Chao, Yariv and Wetzstein, 2026).")
 
     def go(self, sampler, auto, grow_at_step):
@@ -259,8 +298,8 @@ class LCSpeedBoostKSampler:
                    "with the noise left in and let a regular or ClownShark sampler finish.\n"
                    "ClownShark (RES4LYF) samplers are in the sampler list when RES4LYF is installed. Wire a ClownSampler "
                    "into sampler to use its own settings.\n"
-                   "Works on Krea 2, Z-Image, Flux.2 Klein, Qwen-Image and Wan. On SDXL-family models, image to image "
-                   "(denoise under 0.9) and inpaint masks it samples like a plain KSampler.\n"
+                   "Works on Krea 2, Z-Image, Flux.2 Klein, Qwen-Image, Wan, and SDXL / Pony / Illustrious (about 1.4x "
+                   "there). On image to image (denoise under 0.9) and inpaint masks it samples like a plain KSampler.\n"
                    "Based on SPEED (Xiao, Chao, Yariv and Wetzstein, 2026).")
 
     def sample(self, model, positive, negative, latent_image, speed_boost=True, grow_at_step=4, seed=0, steps=20, cfg=8.0,
