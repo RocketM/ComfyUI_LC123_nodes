@@ -1,6 +1,7 @@
 // LC 🚦 - a light for a boolean. One input socket, a round light on the face, and a faint gear that opens a small
 // panel to pick the true / false colors (or none). Colors live in node.properties.
 // The light follows the upstream boolean widget live when there is one, otherwise the last run's value.
+// Dark when the light or its source is muted or bypassed.
 import { app } from "../../scripts/app.js";
 import { lcApplyLaunchColor } from "./lc_color.js";
 
@@ -20,7 +21,8 @@ function upstreamValue(node) {
   const link = node.graph?.links?.[node.inputs?.[0]?.link];
   if (!link) return undefined;
   const src = node.graph.getNodeById(link.origin_id);
-  if (!src || src.mode === 2 || src.mode === 4) return undefined;
+  if (!src) return undefined;
+  if (src.mode === 2 || src.mode === 4) return null; // muted / bypassed source: dark
   const out = src.outputs?.[link.origin_slot];
   const bools = (src.widgets || []).filter((w) => typeof w.value === "boolean");
   const w = bools.find((b) => b.name === out?.name) || (bools.length === 1 ? bools[0] : null);
@@ -28,7 +30,9 @@ function upstreamValue(node) {
 }
 
 function currentState(node) {
+  if (node.mode === 2 || node.mode === 4) return undefined; // the light itself muted / bypassed: dark
   const live = upstreamValue(node);
+  if (live === null) return undefined;
   if (live !== undefined) return live;
   if (!node.inputs?.[0]?.link) return undefined;
   return node._lcLightRan;

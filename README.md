@@ -6,7 +6,7 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 - **CivitAI:** [lonecatone23](https://civitai.com/user/lonecatone23)
 - **Instagram:** [synth.studio.models](https://www.instagram.com/synth.studio.models/)
 - **Support:** [Buy me a ☕](https://ko-fi.com/lonecatone)
-- **Version:** 1.49.7 · **143 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
+- **Version:** 1.49.8 · **143 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
 
 > Small tools that remove friction: less wire mess, fewer clicks, clearer workflows.
 
@@ -574,7 +574,7 @@ Details: [`LC123_Save_Image_Note.md`](LC123_Save_Image_Note.md)
 | **LC Seed Jump 🌱** | One seed + a jump = six stepped seeds |
 | **🌱LC Seed** | Type a number for a fixed seed, or **Randomize Each Time** / **New Fixed Random**. A **seed history** remembers the last 10 seeds this node actually ran with. Capped at 2^53-1, the browser's safe integer limit |
 | **LC Slider** | A plain slider that looks the same in classic and Nodes 2.0. Double-click the value to type. min / max / step / decimals behind the faint gear |
-| **LC 🚦** | A light for a boolean. One input, no widgets: lit in one color for true, another for false. The faint ⚙ sets each color, or none. Follows a boolean widget upstream live, otherwise shows the last run |
+| **LC 🚦** | A light for a boolean. One input, no widgets: lit in one color for true, another for false. The faint ⚙ sets each color, or none. Follows a boolean widget upstream live, otherwise shows the last run. Dark when it or its source is muted or bypassed |
 | **LC Timer ⏱️** | Times every run and scores the newest one against the 5 before it: faster in green, slower in red, plus how it compares to their average. Stopped and fully cached runs are left out. The history saves with the workflow; right-click to clear it |
 | **LC Control Panel 🎛️** | Up to 16 LC Sliders on one node, each on its own output. The ⚙ at the end of a row sets its name, min, max, step and decimals (0 = INT, otherwise FLOAT), or deletes it. **+ Add slider** adds a row. Plug a new row into a number input and it copies that input's name, range and value. Double-click a value to type one |
 | **LC Node Snapshot 📋** | Reads another node's widgets: value / dump / JSON. With **source** wired it shows the values the node actually ran with, so a seed or slider plugged into a widget shows its real value. |
