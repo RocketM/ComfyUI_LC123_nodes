@@ -828,9 +828,11 @@ def _vignette_mask(h, w, midpoint, roundness, feather, use_cos4):
         transition = np.clip((r - midpoint * 0.8) / max(feather, 0.01), 0.0, 1.0)
         mask = 1.0 - transition * (1.0 - falloff)
     else:
+        # print / old-photo vignette: a smooth edge that never reaches 0, so intensity (not a hard cut) decides
+        # how dark it gets; high intensity takes it all the way to black
         outer = midpoint + feather * (1.414 - midpoint)
-        mask = 1.0 - np.clip((r - midpoint) / max(outer - midpoint, 0.01), 0.0, 1.0)
-        mask = mask ** 1.5
+        t = np.clip((r - midpoint) / max(outer - midpoint, 0.01), 0.0, 1.0)
+        mask = 1.0 - (t * t * (3.0 - 2.0 * t)) * 0.9
     return mask.astype(np.float32)
 
 
@@ -841,15 +843,20 @@ class LCVignette(PreviewImage):
             "required": {
                 "image": ("IMAGE",),
                 "intensity": ("FLOAT", {
-                    "default": 0.25, "min": -1.0, "max": 1.0, "step": 0.05,
-                    "tooltip": "Darken edges. Negative = brighten edges",
+                    "default": 0.25, "min": -1.0, "max": 2.0, "step": 0.05,
+                    "tooltip": "Darken edges. Negative = brighten edges. 0.1 - 0.25 = a real lens. "
+                               "1 - 2 with cos4 off = an old photo, up to black corners.",
                 }),
             },
             "optional": {
-                "midpoint": ("FLOAT", {"default": 0.55, "min": 0.1, "max": 1.0, "step": 0.05}),
+                "midpoint": ("FLOAT", {"default": 0.55, "min": 0.0, "max": 1.0, "step": 0.05,
+                                       "tooltip": "Where the darkening starts. Lower = closer to the middle."}),
                 "roundness": ("FLOAT", {"default": 0.8, "min": 0.3, "max": 2.0, "step": 0.1}),
-                "feather": ("FLOAT", {"default": 0.35, "min": 0.05, "max": 1.0, "step": 0.05}),
-                "cos4_falloff": ("BOOLEAN", {"default": True}),
+                "feather": ("FLOAT", {"default": 0.35, "min": 0.02, "max": 2.0, "step": 0.02,
+                                      "tooltip": "How soft the edge is. Low = a hard oval, high = a long gentle fade."}),
+                "cos4_falloff": ("BOOLEAN", {"default": True,
+                                             "tooltip": "On: real lens light falloff. Off: a printed / old-photo vignette "
+                                                        "with a smooth edge that can go all the way to black."}),
                 "tint_r": ("FLOAT", {"default": 1.0, "min": 0.5, "max": 1.5, "step": 0.05}),
                 "tint_g": ("FLOAT", {"default": 1.0, "min": 0.5, "max": 1.5, "step": 0.05}),
                 "tint_b": ("FLOAT", {"default": 1.05, "min": 0.5, "max": 1.5, "step": 0.05}),

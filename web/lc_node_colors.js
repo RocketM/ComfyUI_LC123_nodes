@@ -48,6 +48,7 @@ const COLORS = {
     LCFilmStockBW: { color: "#324B4B", bgcolor: "#324B4B" },
     LCVignette: { color: "#324B4B", bgcolor: "#324B4B" },
     LCVibrance: { color: "#324B4B", bgcolor: "#324B4B" },
+    LCNaturalLook: { color: "#324B4B", bgcolor: "#324B4B" },
     LCImageRGB: { color: "#324B4B", bgcolor: "#324B4B" },
     LCLiftGammaGain: { color: "#324B4B", bgcolor: "#324B4B" },
     LCLensFX: { color: "#324B4B", bgcolor: "#324B4B" },

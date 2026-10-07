@@ -66,7 +66,7 @@ DESC_VIDEO = (
 
 class _LCOptimizerBase:
     KIND = "image"
-    DEFAULT_BASE = None  # first in the list
+    DEFAULT_BASE = "Krea 2 (Turbo)"  # a new node starts on Krea 2
     ROLES = ROLES_IMAGE
     PIPE = False
     CATEGORY = "LC123/optimizer"

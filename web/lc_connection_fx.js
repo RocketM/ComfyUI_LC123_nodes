@@ -14,6 +14,7 @@ const ID = {
   zoomGlow: "LC123.Connections.FXZoomGlow",
 };
 const cfg = { on: false, radius: 160, zoomGlow: 60 };
+const BRIGHT = 0.75; // overall glow / ring brightness
 
 function get(id, fallback) {
   try {
@@ -100,6 +101,18 @@ function targets(canvas) {
   return out;
 }
 
+// half the distance to the nearest other socket in the list (graph units): glow and rings stay inside it,
+// so sockets side by side never glow over each other
+function addRoom(list) {
+  const pts = list.filter((it) => !it.rect).sort((a, b) => a.x - b.x);
+  for (let i = 0; i < pts.length; i++) {
+    let best = Infinity;
+    for (let j = i - 1; j >= 0 && pts[i].x - pts[j].x < best; j--) best = Math.min(best, Math.hypot(pts[i].x - pts[j].x, pts[i].y - pts[j].y));
+    for (let j = i + 1; j < pts.length && pts[j].x - pts[i].x < best; j++) best = Math.min(best, Math.hypot(pts[i].x - pts[j].x, pts[i].y - pts[j].y));
+    pts[i].room = best / 2;
+  }
+}
+
 function pillPath(ctx, x, y, w, h, grow) {
   const r = h / 2 + grow;
   ctx.beginPath();
@@ -113,7 +126,7 @@ function drawPill(ctx, it, mouse, s, px, R, zoomOut, dim, t) {
   const dy = Math.max(y - mouse[1], 0, mouse[1] - (y + h));
   const near = Math.max(0, 1 - (Math.hypot(dx, dy) * s) / R);
   const [r, g, b] = rgb(it.color);
-  const a = Math.min(1, 0.3 + 0.5 * zoomOut + 0.55 * near) * dim;
+  const a = Math.min(1, 0.3 + 0.5 * zoomOut + 0.55 * near) * dim * BRIGHT;
   ctx.save();
   ctx.shadowColor = `rgba(${r},${g},${b},${a})`;
   ctx.shadowBlur = (10 + 10 * zoomOut + 14 * near) * s; // shadowBlur is in screen pixels
@@ -127,7 +140,7 @@ function drawPill(ctx, it, mouse, s, px, R, zoomOut, dim, t) {
     ctx.lineWidth = (1.2 + 1.6 * near) * px;
     for (let k = 0; k < 3; k++) {
       const phase = (t * speed + k / 3) % 1;
-      ctx.strokeStyle = `rgba(${r},${g},${b},${(1 - phase) * (0.25 + 0.75 * near) * dim})`;
+      ctx.strokeStyle = `rgba(${r},${g},${b},${(1 - phase) * (0.25 + 0.75 * near) * dim * BRIGHT})`;
       pillPath(ctx, x, y, w, h, (3 + phase * (6 + 16 * near)) * px);
       ctx.stroke();
     }
@@ -148,6 +161,7 @@ function draw(canvas) {
   const px = 1 / s; // one screen pixel in graph units, so the effect keeps its screen size at any zoom
   // "any" wire: everything glows, so glow and rings run at half brightness to keep the canvas readable
   const dim = list.anyWire ? 0.5 : 1;
+  addRoom(list);
 
   ctx.save();
   try {
@@ -164,8 +178,9 @@ function draw(canvas) {
     const [r, g, b] = rgb(it.color);
 
     // glow on every valid socket: stronger when zoomed out, and as the cursor gets close
-    const glowR = (9 + 10 * zoomOut + 12 * near) * px;
-    const a = Math.min(1, 0.22 + 0.5 * zoomOut + 0.55 * near) * dim;
+    const room = Math.max((it.room ?? Infinity) * 0.85, 4 * px); // a small gap to the next socket, never smaller than the socket itself
+    const glowR = Math.min((9 + 10 * zoomOut + 12 * near) * px, room);
+    const a = Math.min(1, 0.22 + 0.5 * zoomOut + 0.55 * near) * dim * BRIGHT;
     const grad = ctx.createRadialGradient(it.x, it.y, 0, it.x, it.y, glowR);
     grad.addColorStop(0, `rgba(${r},${g},${b},${a})`);
     grad.addColorStop(1, `rgba(${r},${g},${b},0)`);
@@ -178,10 +193,12 @@ function draw(canvas) {
       // three rings pulse outward; closer = bigger, brighter and faster
       const speed = 0.7 + 1.3 * near;
       ctx.lineWidth = (1.2 + 1.6 * near) * px;
+      const ringMax = Math.min((17 + 26 * near) * px, room);
+      const ringMin = Math.min(7 * px, ringMax * 0.6);
       for (let k = 0; k < 3; k++) {
         const phase = (t * speed + k / 3) % 1;
-        const rr = (7 + phase * (10 + 26 * near)) * px;
-        ctx.strokeStyle = `rgba(${r},${g},${b},${(1 - phase) * (0.25 + 0.75 * near) * dim})`;
+        const rr = ringMin + phase * (ringMax - ringMin);
+        ctx.strokeStyle = `rgba(${r},${g},${b},${(1 - phase) * (0.25 + 0.75 * near) * dim * BRIGHT})`;
         ctx.beginPath();
         ctx.arc(it.x, it.y, rr, 0, Math.PI * 2);
         ctx.stroke();
@@ -192,7 +209,7 @@ function draw(canvas) {
   // the closest socket gets a solid bright core
   if (best) {
     const { it, near, r, g, b } = best;
-    ctx.fillStyle = `rgba(${Math.min(255, r + 80)},${Math.min(255, g + 80)},${Math.min(255, b + 80)},${0.5 + 0.5 * near})`;
+    ctx.fillStyle = `rgba(${Math.min(255, r + 80)},${Math.min(255, g + 80)},${Math.min(255, b + 80)},${(0.5 + 0.5 * near) * BRIGHT})`;
     ctx.beginPath();
     ctx.arc(it.x, it.y, (3 + 2.5 * near) * px, 0, Math.PI * 2);
     ctx.fill();

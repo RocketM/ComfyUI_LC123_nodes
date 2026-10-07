@@ -346,4 +346,4 @@ class LCSpeedBoostKSampler:
 
 
 NODE_CLASS_MAPPINGS = {"LCSpeedBoost": LCSpeedBoost, "LCSpeedBoostKSampler": LCSpeedBoostKSampler}
-NODE_DISPLAY_NAME_MAPPINGS = {"LCSpeedBoost": "LC Speed Boost (BETA) 🚀", "LCSpeedBoostKSampler": "LC Speed Boost KSampler (BETA) 🚀"}
+NODE_DISPLAY_NAME_MAPPINGS = {"LCSpeedBoost": "LC Speed Boost (BETA) 🚀", "LCSpeedBoostKSampler": "LC Speed Boost 🚀 KSampler (BETA)"}

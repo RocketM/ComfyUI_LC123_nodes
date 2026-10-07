@@ -21,6 +21,7 @@ const NODE_CLASSES = new Set([
   "LCFilmGrain",
   "LCApplyLUT",
   "LCVibrance",
+  "LCNaturalLook",
   "LCVignette",
   "LCBloom",
   "LCDepthFX",

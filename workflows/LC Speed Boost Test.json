@@ -1758,7 +1758,7 @@
       "mode": 0,
       "inputs": [],
       "outputs": [],
-      "title": "LC Speed Boost KSampler (BETA) 🚀",
+      "title": "LC Speed Boost 🚀 KSampler (BETA)",
       "properties": {
         "lc_note": {
           "source": "en",
@@ -1768,7 +1768,7 @@
             }
           },
           "titles": {
-            "en": "LC Speed Boost KSampler (BETA) 🚀"
+            "en": "LC Speed Boost 🚀 KSampler (BETA)"
           }
         },
         "ue_properties": {

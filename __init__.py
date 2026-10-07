@@ -149,6 +149,7 @@ _load("lc_reference_latent")  # LC Reference Latent
 _load("lc_denoise")  # LC Denoise
 _load("lc_relight")  # LC Relight
 _load("lc_light")  # LC Light
+_load("lc_natural_look")  # LC Natural Look
 
 try:  # the Lonecat banner (first LC pack to load) or this pack's one line under it
     from .lc_banner import pack_version as _pv, show as _banner

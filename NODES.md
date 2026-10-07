@@ -69,6 +69,7 @@ Registered class IDs: 138 (137 in search, 1 deprecated but still loads in old wo
 - `LCTextOverlay`: LC Text Overlay
 - `LCToneMatch`: LC Tone Match
 - `LCVibrance`: LC Vibrance
+- `LCNaturalLook`: LC Natural Look 🍃
 - `LCVignette`: LC Vignette
 - `LCWatermark`: LC Watermark 💧
 - `AspectRatioSimplifier`: 📐 LC Aspect Ratio Simplifier
@@ -133,7 +134,7 @@ Registered class IDs: 138 (137 in search, 1 deprecated but still loads in old wo
 - `LCDetailDaemon`: LC Detail Daemon (BETA)
 - `LCDetailDaemonModel`: LC Detail Daemon (model) (BETA)
 - `LCSpeedBoost`: LC Speed Boost (BETA) 🚀
-- `LCSpeedBoostKSampler`: LC Speed Boost KSampler (BETA) 🚀
+- `LCSpeedBoostKSampler`: LC Speed Boost 🚀 KSampler (BETA)
 - `LCSamplerConfigure`: LC Sampler Configure
 - `LCSamplerConfigurePipeOut`: LC Sampler Configure (pipe)
 - `LCSamplerConfigurePipe`: LC Sampler Configure Pipe Out
