@@ -169,7 +169,9 @@ function hubControl(g) {
       const o = originOf(g, hub.inputs[p * 2]);
       if (!o || map.has(o.id)) continue;
       const w = hub.widgets?.[p];
-      const on = !w || w.value !== false;
+      // no toggle yet: the hub is still loading (it builds its toggles from the relay's saved mode), so it has no say
+      if (!w) continue;
+      const on = w.value !== false;
       map.set(o.id, on ? LIVE : hub.type === "LC Mute" || hub._lcOffMode === MUTE ? MUTE : BYPASS);
     }
   }
@@ -291,7 +293,8 @@ app.registerExtension({
     nodeType.prototype.onConnectionsChange = function () {
       const r = onConn?.apply(this, arguments);
       grow(this);
-      stampOne(this);
+      // links restored while a workflow loads are not new wires: the saved mode stands, the tick stamps after
+      if (!isLoading(this.graph)) stampOne(this);
       return r;
     };
   },
@@ -308,6 +311,7 @@ app.registerExtension({
   async setup() {
     // Safety tick. Hub toggles and mode events stamp at once, so this only catches what has no event (a new wire
     // to a hub, a hub finishing its load settle). A frontend without graph events keeps the old 80 ms pace.
+    patchHubSettle(); // before the first workflow loads, so a page refresh gets the hub settle window too
     hookGraph(graph()); // hooked before the first workflow loads, so that load is seen as a load
     // mode changes arrive as events (lc_graph_events.js), so the safety tick only needs 300 ms; 80 ms without events
     const period = graphEventsAvailable(graph()) ? 300 : 80;

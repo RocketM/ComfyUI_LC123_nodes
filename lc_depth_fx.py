@@ -316,7 +316,8 @@ class LCDepthFX(PreviewImage):
             for i in range(b):
                 bgv = dist[i][beyond[i] > 0.5]
                 if bgv.numel() < 64:
-                    local.append(torch.zeros_like(dist[i])); scale.append(0.0)
+                    local.append(torch.zeros_like(dist[i]))
+                    scale.append(0.0)
                     continue
                 smp = bgv[:: max(1, bgv.numel() // 250000)]
                 lo, hi = smp.quantile(0.05), smp.quantile(0.98)
