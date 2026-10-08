@@ -135,6 +135,24 @@ def _is_provided(val):
     return True
 
 
+def _merged(key, old, new):
+    """Pipe Combine: the LC detailers' protect masks and SAM 3 finds add up when both pipes carry them for the same
+    image (combining a face branch with a hands branch keeps both). Anything else: the edit pipe wins."""
+    if key not in ("lc_protect", "lc_found") or not (isinstance(old, dict) and isinstance(new, dict)):
+        return new
+    if old.get("tag") != new.get("tag"):
+        return new
+    if key == "lc_found":
+        return {"tag": new["tag"], "hits": {**old.get("hits", {}), **new.get("hits", {})}}
+    import torch
+    a, b = old.get("mask"), new.get("mask")
+    if a is None or b is None:
+        return new if b is not None else old
+    if a.shape != b.shape:
+        return new
+    return {"tag": new["tag"], "mask": torch.maximum(a, b)}
+
+
 class LCPipeIn:
     @classmethod
     def INPUT_TYPES(cls):
@@ -293,7 +311,7 @@ class LCPipeCombine:
         if isinstance(edit_pipe, dict):
             for key, val in edit_pipe.items():
                 if key != "_type" and _is_provided(val):
-                    out[key] = val
+                    out[key] = _merged(key, out.get(key), val)
         out["_type"] = PIPE_TYPE
         return (out,)
 

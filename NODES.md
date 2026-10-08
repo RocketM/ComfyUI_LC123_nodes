@@ -1,8 +1,8 @@
 # LC123 node inventory
 
-**132 Python nodes** + **5 JS-only** · version 1.45.3
+**142 Python nodes** + **5 JS-only** · version 1.49.7
 
-Registered class IDs: 133 (132 in search, 1 deprecated but still loads in old workflows).
+Registered class IDs: 138 (137 in search, 1 deprecated but still loads in old workflows).
 
 ## LC123/Regional Canvas/Anima (1)
 
@@ -27,6 +27,7 @@ Registered class IDs: 133 (132 in search, 1 deprecated but still loads in old wo
 - `LCAspectRatioPipe`: LC Aspect Ratio Pipe Out
 - `LCAutoWhiteBalance`: LC Auto White Balance
 - `LCBatchImage`: LC Batch Image 🖼️
+- `LCImageStitchMulti`: LC Image Stitch Multi 🖼️🪡
 - `LCBloom`: LC Bloom
 - `LCChromaticAberration`: LC Chromatic Aberration
 - `LCColorMatch`: LC Color Match 🎨
@@ -64,9 +65,11 @@ Registered class IDs: 133 (132 in search, 1 deprecated but still loads in old wo
 - `LCClarity`: LC Sharpen Pro
 - `LCSkinBeauty`: LC Skin Beauty ✨
 - `LCSkinUpscale`: LC Skin Upscale
+- `LCSkinTexture`: LC Skin Texture ✨ (BETA)
 - `LCTextOverlay`: LC Text Overlay
 - `LCToneMatch`: LC Tone Match
 - `LCVibrance`: LC Vibrance
+- `LCNaturalLook`: LC Natural Look 🍃
 - `LCVignette`: LC Vignette
 - `LCWatermark`: LC Watermark 💧
 - `AspectRatioSimplifier`: 📐 LC Aspect Ratio Simplifier
@@ -125,9 +128,13 @@ Registered class IDs: 133 (132 in search, 1 deprecated but still loads in old wo
 - `LCSubjectArray`: 🗒️LC Subject Array
 - `LCPromptAssembler`: 🧩LC Prompt Assembler
 
-## LC123/sampling (11)
+## LC123/sampling (14)
 
 - `LCBasicScheduler`: LC Basic Scheduler
+- `LCDetailDaemon`: LC Detail Daemon (BETA)
+- `LCDetailDaemonModel`: LC Detail Daemon (model) (BETA)
+- `LCSpeedBoost`: LC Speed Boost (BETA) 🚀
+- `LCSpeedBoostKSampler`: LC Speed Boost 🚀 KSampler (BETA)
 - `LCSamplerConfigure`: LC Sampler Configure
 - `LCSamplerConfigurePipeOut`: LC Sampler Configure (pipe)
 - `LCSamplerConfigurePipe`: LC Sampler Configure Pipe Out
@@ -136,6 +143,7 @@ Registered class IDs: 133 (132 in search, 1 deprecated but still loads in old wo
 - `LCSigmaCurve`: LC Sigma Curve
 - `LCSigmaResample`: LC Sigma Resample
 - `LCChangeStepCount`: LC Sigma Resample
+- `LCSigmas`: LC Sigmas (BETA)
 - `LCSplitSigmaScheduler`: LC Split Sigma Scheduler
 - `LCSplitSigmasAdvanced`: LC Split Sigmas (Advanced)
 
@@ -172,9 +180,13 @@ Registered class IDs: 133 (132 in search, 1 deprecated but still loads in old wo
 - `LCShowAny`: LC Show Any 🔤
 - `LCShowText`: LC Show Text 🔤
 - `LCSlider`: LC Slider
+- `LCLight`: LC 🚦
+- `LCControlPanel`: LC Control Panel 🎛️
+- `LCTimer`: LC Timer ⏱️
 - `LCStop`: LC Stop 🛑
 - `LCTextRemove`: LC Text Remove 🔪
 - `LCTextReplace`: LC Text Replace ✂️
+- `LCDuplicateTags`: LC ✂️ Duplicate Tags 🏷️
 - `LCVRAMCacheClear`: LC VRAM Cache Clear
 - `LCSeed`: 🌱LC Seed
 - `LC123SaveText`: 📝 LC Save Text

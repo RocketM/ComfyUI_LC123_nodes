@@ -8,7 +8,6 @@ https://ko-fi.com/lonecatone
 import os as _os
 
 _PACK_DIR = _os.path.dirname(_os.path.abspath(__file__))
-print(f"[LC123] loading from {_PACK_DIR}")
 _nested = _os.path.join(_PACK_DIR, "ComfyUI_LC123_nodes", "__init__.py")
 if _os.path.isfile(_nested):
     print(
@@ -23,6 +22,7 @@ except Exception as _lut_e:
     print(f"[LC123] LUT install skip: {_lut_e}")
 
 NODE_CLASS_MAPPINGS = {}
+_FAILED = []  # modules that did not load (shown in full, and counted on the banner line)
 NODE_DISPLAY_NAME_MAPPINGS = {}
 
 
@@ -37,8 +37,8 @@ def _load(module_name: str) -> None:
         disp = getattr(mod, "NODE_DISPLAY_NAME_MAPPINGS", None) or {}
         NODE_CLASS_MAPPINGS.update(maps)
         NODE_DISPLAY_NAME_MAPPINGS.update(disp)
-        print(f"[LC123] + {module_name} ({len(maps)})")
     except Exception as e:
+        _FAILED.append(module_name)
         print(f"[LC123] ! failed to load {module_name}: {e}")
         traceback.print_exc()
 
@@ -64,6 +64,7 @@ _load("lc_join_strings")
 _load("lc_show_text")
 _load("lc_widget_to_string")
 _load("lc_text_replace")
+_load("lc_duplicate_tags")
 _load("lc_text_remove")
 _load("lc_compare")
 _load("lc_seed_jump")
@@ -75,6 +76,7 @@ _load("lc_save_text")
 
 # Image tools
 _load("lc_batch_image")
+_load("lc_image_stitch_multi")
 _load("lc_batch_image_comparer")
 _load("lc_image_split")
 _load("lc_last_image_holder")
@@ -100,6 +102,7 @@ _load("lc_image_grid")
 _load("lc_image_tools")
 _load("lc_skin_beauty")
 _load("lc_skin_upscale")
+_load("lc_skin_texture")
 _load("lc_phone_look")
 _load("lc_apply_lut")
 _load("lc_text_overlay")
@@ -111,6 +114,7 @@ _load("lc_split_sigmas_advanced")
 _load("lc_prompt_box")
 _load("lc_optimizer")
 _load("lc_system_check")
+_load("lc_pack_usage")
 _load("lc_optimizer_node")
 _load("lc_link_card")
 _load("lc_vram_cache_clear")
@@ -122,6 +126,11 @@ _load("lc_any_empty")
 _load("lc_int_split")
 _load("lc_change_step_count")
 _load("lc_sigma_curve")
+_load("lc_sigmas")
+_load("lc_detail_daemon")
+_load("lc_speed_boost")
+_load("lc_control_panel")
+_load("lc_timer")
 _load("lc_pass")
 _load("lc_bypass_relay")
 _load("lc_directional_blur")
@@ -141,5 +150,12 @@ _load("lc_seed")  # LC Seed (utility)
 _load("lc_reference_latent")  # LC Reference Latent
 _load("lc_denoise")  # LC Denoise
 _load("lc_relight")  # LC Relight
+_load("lc_light")  # LC Light
+_load("lc_natural_look")  # LC Natural Look
 
-print(f"[LC123] total {len(NODE_CLASS_MAPPINGS)} nodes: {sorted(NODE_CLASS_MAPPINGS.keys())}")
+try:  # the Lonecat banner (first LC pack to load) or this pack's one line under it
+    from .lc_banner import pack_version as _pv, show as _banner
+
+    _banner("LC123", _pv(_PACK_DIR), len(NODE_CLASS_MAPPINGS), len(_FAILED))
+except Exception as _banner_e:
+    print(f"[LC123] {len(NODE_CLASS_MAPPINGS)} nodes ({_banner_e})")

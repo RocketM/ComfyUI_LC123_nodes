@@ -98,7 +98,7 @@ function hasAnyConnection(node) {
 function resolveLockedType(node) {
   for (const inp of node.inputs || []) {
     const t = typeOfInput(node, inp);
-    if (t) return t;
+    if (t && t !== "*") return t;
   }
   return null;
 }
@@ -208,6 +208,11 @@ app.registerExtension({
       return size;
     };
 
+    // Connection FX: once a wire has set the type, every slot on the switch is that type
+    nodeType.prototype.lcFxType = function () {
+      return this._lcLockedType || resolveLockedType(this);
+    };
+
     const onCreated = nodeType.prototype.onNodeCreated;
     nodeType.prototype.onNodeCreated = function () {
       const r = onCreated?.apply(this, arguments);
@@ -269,6 +274,7 @@ app.registerExtension({
         if (
           this._lcLockedType &&
           incoming &&
+          incoming !== "*" && // a Get / Reroute that has not resolved its type yet: let it in, the lock catches up
           incoming !== this._lcLockedType &&
           this._lcLockedType !== "*"
         ) {

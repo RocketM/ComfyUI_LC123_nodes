@@ -8,6 +8,7 @@ import math
 import numpy as np
 import torch
 import torch.nn.functional as F
+from .lc_guided import guided as _guided, luma as _guided_luma
 from nodes import PreviewImage
 
 from .lc_image_helpers import (
@@ -207,6 +208,8 @@ class LCAutoWhiteBalance(PreviewImage):
         for img in arrays:
             original = img.copy()
             linear = srgb_to_linear(img)
+            # Tested 2026-09-30: skipping clipped / near-black pixels (as ChromaGrade does) made the estimate worse on
+            # warm and cool casts, with and without a blown highlight, so every pixel is still measured.
             e = np.empty(3, dtype=np.float64)
             for c in range(3):
                 ch = linear[..., c]
@@ -276,7 +279,7 @@ class LCClarity(PreviewImage):
                     "tooltip": "Capture sharpening. Undoes softness (deconvolution) instead of drawing outlines. 0 = off.",
                 }),
                 "strength": ("FLOAT", {
-                    "default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01,
+                    "default": 0.7, "min": 0.0, "max": 1.0, "step": 0.01,
                     "tooltip": "Mix with the original. 0 = original, 1 = full effect.",
                 }),
                 "halo": ("FLOAT", {
@@ -799,41 +802,11 @@ class LCVibrance(PreviewImage):
     def run(self, image, vibrance=0.0, saturation=0.0, protect_skin=True, strength=1.0):
         if strength <= 0 or (abs(vibrance) < 0.5 and abs(saturation) < 0.5):
             return _preview(self, image, image)
-        arrays = tensor_to_np(image)
+        from .lc_oklab import vibrance as _vibrance  # Oklab chroma scaling: hue never shifts, no clipped patches
         out = []
-        for img in arrays:
+        for img in tensor_to_np(image):
             original = img.copy()
-            linear = srgb_to_linear(img)
-            result = linear.copy()
-            if abs(vibrance) > 0.5:
-                r, g, b = result[..., 0], result[..., 1], result[..., 2]
-                lum = luminance(result)
-                cmax = np.maximum(np.maximum(r, g), b)
-                cmin = np.minimum(np.minimum(r, g), b)
-                chroma = cmax - cmin
-                weight = (1.0 - np.clip(chroma * 2.0, 0.0, 1.0)).astype(np.float32)
-                if protect_skin:
-                    delta = cmax - cmin
-                    h = np.zeros_like(r)
-                    m = delta > 1e-7
-                    mr = m & (cmax == r)
-                    mg = m & (cmax == g) & ~mr
-                    mb = m & ~mr & ~mg
-                    h[mr] = 60.0 * (((g[mr] - b[mr]) / (delta[mr] + 1e-10)) % 6)
-                    h[mg] = 60.0 * (((b[mg] - r[mg]) / (delta[mg] + 1e-10)) + 2)
-                    h[mb] = 60.0 * (((r[mb] - g[mb]) / (delta[mb] + 1e-10)) + 4)
-                    h = h % 360.0
-                    diff = np.abs(h - 30.0)
-                    diff = np.minimum(diff, 360.0 - diff)
-                    skin = np.clip((1.0 + np.cos(np.pi * diff / 30.0)) * 0.5, 0.0, 1.0)
-                    skin[diff > 30.0] = 0.0
-                    weight *= (1.0 - 0.7 * skin)
-                vib = 1.0 + (vibrance / 100.0) * weight
-                result = lum[..., None] + vib[..., None] * (result - lum[..., None])
-            if abs(saturation) > 0.5:
-                lum = luminance(result)
-                result = lum[..., None] + (1.0 + saturation / 100.0) * (result - lum[..., None])
-            result = linear_to_srgb(np.clip(result, 0, 1).astype(np.float32))
+            result = _vibrance(img, vibrance, saturation, protect_skin)
             out.append(blend(original, result, strength))
         return _preview(self, np_to_tensor(out), image)
 
@@ -855,9 +828,11 @@ def _vignette_mask(h, w, midpoint, roundness, feather, use_cos4):
         transition = np.clip((r - midpoint * 0.8) / max(feather, 0.01), 0.0, 1.0)
         mask = 1.0 - transition * (1.0 - falloff)
     else:
+        # print / old-photo vignette: a smooth edge that never reaches 0, so intensity (not a hard cut) decides
+        # how dark it gets; high intensity takes it all the way to black
         outer = midpoint + feather * (1.414 - midpoint)
-        mask = 1.0 - np.clip((r - midpoint) / max(outer - midpoint, 0.01), 0.0, 1.0)
-        mask = mask ** 1.5
+        t = np.clip((r - midpoint) / max(outer - midpoint, 0.01), 0.0, 1.0)
+        mask = 1.0 - (t * t * (3.0 - 2.0 * t)) * 0.9
     return mask.astype(np.float32)
 
 
@@ -868,15 +843,20 @@ class LCVignette(PreviewImage):
             "required": {
                 "image": ("IMAGE",),
                 "intensity": ("FLOAT", {
-                    "default": 0.25, "min": -1.0, "max": 1.0, "step": 0.05,
-                    "tooltip": "Darken edges. Negative = brighten edges",
+                    "default": 0.25, "min": -1.0, "max": 2.0, "step": 0.05,
+                    "tooltip": "Darken edges. Negative = brighten edges. 0.1 - 0.25 = a real lens. "
+                               "1 - 2 with cos4 off = an old photo, up to black corners.",
                 }),
             },
             "optional": {
-                "midpoint": ("FLOAT", {"default": 0.55, "min": 0.1, "max": 1.0, "step": 0.05}),
+                "midpoint": ("FLOAT", {"default": 0.55, "min": 0.0, "max": 1.0, "step": 0.05,
+                                       "tooltip": "Where the darkening starts. Lower = closer to the middle."}),
                 "roundness": ("FLOAT", {"default": 0.8, "min": 0.3, "max": 2.0, "step": 0.1}),
-                "feather": ("FLOAT", {"default": 0.35, "min": 0.05, "max": 1.0, "step": 0.05}),
-                "cos4_falloff": ("BOOLEAN", {"default": True}),
+                "feather": ("FLOAT", {"default": 0.35, "min": 0.02, "max": 2.0, "step": 0.02,
+                                      "tooltip": "How soft the edge is. Low = a hard oval, high = a long gentle fade."}),
+                "cos4_falloff": ("BOOLEAN", {"default": True,
+                                             "tooltip": "On: real lens light falloff. Off: a printed / old-photo vignette "
+                                                        "with a smooth edge that can go all the way to black."}),
                 "tint_r": ("FLOAT", {"default": 1.0, "min": 0.5, "max": 1.5, "step": 0.05}),
                 "tint_g": ("FLOAT", {"default": 1.0, "min": 0.5, "max": 1.5, "step": 0.05}),
                 "tint_b": ("FLOAT", {"default": 1.05, "min": 0.5, "max": 1.5, "step": 0.05}),
@@ -1108,27 +1088,72 @@ class LCImageDenoise(PreviewImage):
                     "default": 0.75, "min": 0.0, "max": 1.0, "step": 0.05,
                     "tooltip": "Blend between original (0) and denoised (1)",
                 }),
+                "mode": (["smart", "legacy"], {
+                    "default": "smart",
+                    "tooltip": "smart = measures the noise in each image and cleans brightness and colour noise "
+                               "separately, keeping pores and hair (uses luma / chroma / keep_detail). "
+                               "legacy = the old edge-gated blur (uses blur_strength / edge_preservation / radius_multiplier).",
+                }),
+                "luma": ("FLOAT", {
+                    "default": 1.0, "min": 0.0, "max": 3.0, "step": 0.05,
+                    "tooltip": "smart: how hard brightness noise (grain) is cleaned, relative to the noise measured in "
+                               "the image. 1 = tuned default, 0 = leave brightness alone.",
+                }),
+                "chroma": ("FLOAT", {
+                    "default": 1.0, "min": 0.0, "max": 3.0, "step": 0.05,
+                    "tooltip": "smart: how hard colour noise (blotches, rainbow speckle) is cleaned. Colour edges follow "
+                               "the brightness edges, so they stay sharp. 0 = leave colour alone.",
+                }),
+                "keep_detail": ("FLOAT", {
+                    "default": 0.5, "min": 0.0, "max": 1.0, "step": 0.05,
+                    "tooltip": "smart: how much of the original texture comes back where it stands clearly above the "
+                               "noise (pores, hair, fabric). Smooth areas stay clean either way.",
+                }),
             }
         }
 
-    RETURN_TYPES = ("IMAGE",)
-    RETURN_NAMES = ("image",)
+    RETURN_TYPES = ("IMAGE", "STRING")
+    RETURN_NAMES = ("image", "noise_report")
+    OUTPUT_TOOLTIPS = ("The denoised image.", "smart mode: the noise measured in each image (brightness and colour, out of 255).")
     FUNCTION = "run"
     CATEGORY = "LC123/image"
     OUTPUT_NODE = True
     DESCRIPTION = (
-        "Smart denoise: blur strength, edge preservation, radius scale, and blend. On-node preview with before/after wipe."
+        "Denoise. smart: measures the noise in each image, cleans brightness and colour noise separately and keeps "
+        "pores and hair. legacy: the old edge-gated blur. On-node preview with before/after wipe."
     )
 
-    def run(self, image, blur_strength, edge_preservation, radius_multiplier, strength=1.0):
+    def run(self, image, blur_strength, edge_preservation, radius_multiplier, strength=0.75, mode="smart",
+            luma=1.0, chroma=1.0, keep_detail=0.5):
+        out = self._denoise(image, blur_strength, edge_preservation, radius_multiplier, strength, mode, luma, chroma,
+                            keep_detail)
+        res, report = out
+        p = _preview(self, res, image)
+        p["result"] = (res, report)
+        return p
+
+    def _denoise(self, image, blur_strength, edge_preservation, radius_multiplier, strength, mode, luma, chroma,
+                 keep_detail):
+        if mode == "smart":
+            from .lc_denoise_smart import smart_denoise
+            try:
+                import comfy.model_management as mm
+                dev = mm.get_torch_device()
+            except Exception:
+                dev = image.device
+            den, reports = smart_denoise(image[..., :3], luma, chroma, keep_detail, device=dev)
+            den = torch.lerp(image[..., :3].float(), den, float(strength)).clamp(0, 1)
+            if image.shape[-1] == 4:
+                den = torch.cat([den, image[..., 3:4]], -1)
+            return den, "\n".join(f"image {i + 1}: {r}" for i, r in enumerate(reports))
         if strength <= 0:
-            return _preview(self, image, image)
+            return image, ""
         x = image.permute(0, 3, 1, 2)
         device, dtype = x.device, x.dtype
         sigma = max(float(blur_strength), 1e-3)
         radius = int(round(max(0.0, radius_multiplier) * sigma * 2.0))
         if radius <= 0:
-            return _preview(self, image.clamp(0, 1), image)
+            return image.clamp(0, 1), ""
         max_r = max(1, min(x.shape[-2], x.shape[-1]) // 2)
         radius = min(radius, max_r)
 
@@ -1148,7 +1173,7 @@ class LCImageDenoise(PreviewImage):
         if strength < 1.0:
             denoised = torch.lerp(x, denoised, float(strength))
         result = denoised.permute(0, 2, 3, 1).clamp(0, 1)
-        return _preview(self, result, image)
+        return result, ""
 
 
 
@@ -1236,9 +1261,13 @@ class LCColorMatch(PreviewImage):
                 "image": ("IMAGE", {
                     "tooltip": "Image to recolor (content)",
                 }),
-                "method": (["adain", "mean_std"], {
-                    "default": "adain",
-                    "tooltip": "adain = channel mean/std match; mean_std = same in linear light",
+                "method": (["oklab", "oklab + distribution", "adain", "mean_std"], {
+                    "default": "oklab",
+                    "tooltip": "oklab = matches the whole colour cloud (how the colours relate, not each channel on its "
+                               "own) in a colour space built for the eye; out-of-range colours roll off instead of "
+                               "clipping. oklab + distribution = also matches the cloud's shape (separate colour "
+                               "groups, different tints in shadows and highlights); slower. "
+                               "adain = old per-channel mean/std match; mean_std = the same in linear light.",
                 }),
                 "strength": ("FLOAT", {
                     "default": 1.0, "min": 0.0, "max": 1.0, "step": 0.05,
@@ -1247,7 +1276,9 @@ class LCColorMatch(PreviewImage):
             },
             "optional": {
                 "reference": ("IMAGE", {
-                    "tooltip": "Color reference (style). If empty, node bypasses and passes image through.",
+                    "tooltip": "Color reference (style). If empty, node bypasses and passes image through. oklab methods: "
+                               "a reference batch the same size as the image batch matches frame to frame; any other batch "
+                               "is pooled into one look (adain / mean_std use only the first reference).",
                 }),
                 "skin_protect": ("FLOAT", {
                     "default": 0.5,
@@ -1268,7 +1299,7 @@ class LCColorMatch(PreviewImage):
     CATEGORY = "LC123/image"
     OUTPUT_NODE = True
     DESCRIPTION = (
-        "Match colors to a reference (AdaIN / mean-std). Optional skin_protect holds face hue. "
+        "Match colors to a reference (Oklab full-colour match, or the old AdaIN / mean-std). Optional skin_protect holds face hue. "
         "Optional mask: white = match, black = keep image. No reference = bypass. On-node preview + wipe."
     )
 
@@ -1279,6 +1310,13 @@ class LCColorMatch(PreviewImage):
             return out
         if strength <= 0:
             return _preview(self, image, image)
+
+        if method.startswith("oklab"):
+            from .lc_oklab import match as _oklab_match
+            matched = _oklab_match(image[..., :3], reference[..., :3], distribution=(method != "oklab"),
+                                   skin_protect=float(skin_protect))
+            result = torch.lerp(image[..., :3].float(), matched.float(), float(strength)).clamp(0, 1)
+            return self._finish(image, reference, result, mask)
 
         ref = reference[0:1, ..., :3]  # an RGBA reference: match its color, not its alpha
         arrays = tensor_to_np(image)
@@ -1312,12 +1350,15 @@ class LCColorMatch(PreviewImage):
                 matched = apply_skin_protect(original, matched, skin_protect)
                 out.append(blend(original, matched, strength))
 
-        result = np_to_tensor(out)
+        return self._finish(image, reference, np_to_tensor(out), mask)
+
+    def _finish(self, image, reference, result, mask):
+        """Mask (white = matched, black = original), then the on-node preview."""
         if mask is not None:
             nchw = result[..., :3].movedim(-1, 1)
             m = _mask_to_nchw(mask, nchw)
             if m is not None:
-                src = image[..., :3].movedim(-1, 1)
+                src = image[..., :3].movedim(-1, 1).to(nchw.device, nchw.dtype)
                 if src.shape[-2:] != nchw.shape[-2:]:
                     src = F.interpolate(src, size=nchw.shape[-2:], mode="bilinear", align_corners=False)
                 if src.shape[0] != nchw.shape[0]:
@@ -1401,6 +1442,12 @@ class LCToneMatch(PreviewImage):
                     "default": 0.5, "min": 0.0, "max": 1.0, "step": 0.05,
                     "tooltip": "Hold reference skin hue after the lock (0 = off). Same idea as Color Match.",
                 }),
+                "split": (["guided (no halos)", "blur (old)"], {
+                    "default": "guided (no halos)",
+                    "tooltip": "How broad tone is separated from detail. guided follows the image's own edges: where the two "
+                               "images line up (a refined copy of the same picture) there is no bright or dark rim along hard "
+                               "edges. If the refiner moved edges a lot, the two are about even. blur is the old Gaussian split.",
+                }),
             },
             "optional": {
                 "mask": ("MASK", {
@@ -1420,7 +1467,8 @@ class LCToneMatch(PreviewImage):
         "Same job as H3 Detail Tone Lock, for any two images. On-node preview + wipe vs reference."
     )
 
-    def run(self, image, reference, tone_match, refinement_strength, detail_radius, skin_protect=0.5, mask=None):
+    def run(self, image, reference, tone_match, refinement_strength, detail_radius, skin_protect=0.5,
+            split="guided (no halos)", mask=None):
         source = reference[..., :3].movedim(-1, 1)
         refined = image[..., :3].movedim(-1, 1)
         if refined.shape[0] > source.shape[0]:
@@ -1434,8 +1482,16 @@ class LCToneMatch(PreviewImage):
         if source.shape[-2:] != refined.shape[-2:]:
             refined = F.interpolate(refined, size=source.shape[-2:], mode="bicubic", align_corners=False)
 
-        source_low = _gaussian_blur_nchw(source, int(detail_radius))
-        refined_low = _gaussian_blur_nchw(refined, int(detail_radius))
+        if split == "blur (old)":
+            source_low = _gaussian_blur_nchw(source, int(detail_radius))
+            refined_low = _gaussian_blur_nchw(refined, int(detail_radius))
+        else:
+            # both split on the image's own luminance: the two low layers share its edges, so no halo
+            # box radius half the blur radius covers the same scale; eps 0.01 keeps fine detail out of the low layer
+            g = _guided_luma(refined)
+            r = max(2, int(detail_radius) // 2)
+            source_low = _guided(g, source, r, 1e-2)
+            refined_low = _guided(g, refined, r, 1e-2)
         tone_locked = refined + float(tone_match) * (source_low - refined_low)
         mixed = source + float(refinement_strength) * (tone_locked - source)
 
@@ -1624,7 +1680,8 @@ class LCFilmStockColor(PreviewImage):
             w_sh = np.clip(1.0 - lum * 2.0, 0, 1)[..., None]
             w_hi = np.clip(lum * 2.0 - 1.0, 0, 1)[..., None]
             curved = curved + sh * w_sh + hi * w_hi
-            result = linear_to_srgb(np.clip(curved, 0, 1).astype(np.float32))
+            from .lc_oklab import linear_to_srgb_safe  # over-range colours keep their hue instead of clipping per channel
+            result = linear_to_srgb_safe(curved)
             out.append(blend(original, result, strength))
         return _preview(self, np_to_tensor(out), image)
 

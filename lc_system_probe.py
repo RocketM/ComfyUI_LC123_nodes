@@ -451,6 +451,11 @@ def _test_import_run(mod, fn, sync):
         fn(m)
         sync()
         return {"ok": True, "detail": "Installed and works"}
+    except TypeError as e:
+        if "NoneType" in str(e):  # the package imported, but its compiled part did not load, so its functions are None
+            return {"ok": False, "detail": "Installed, but its compiled part did not load: it was built for a different PyTorch / CUDA. "
+                                           "Reinstall a build made for your PyTorch and CUDA, or uninstall it (ComfyUI does not need it). " + _err(e)}
+        return {"ok": False, "detail": "Installed, but fails on this card: " + _err(e)}
     except Exception as e:
         return {"ok": False, "detail": "Installed, but fails on this card: " + _err(e)}
 
@@ -495,6 +500,13 @@ def _test_sol_kitchen(torch, sync):
         import comfy_kitchen as ck
     except Exception as e:
         return _missing_or_broken("comfy_kitchen", e)
+    if not hasattr(ck, "sol_attn_is_available"):  # older Comfy Kitchen builds have no Sol-Attn at all
+        try:
+            from importlib import metadata
+            ver = metadata.version("comfy-kitchen")
+        except Exception:
+            ver = ""
+        return {"ok": None, "detail": f"Your Comfy Kitchen{' ' + ver if ver else ''} has no Sol-Attn yet. Update ComfyUI (it installs the matching comfy-kitchen) to get it."}
     try:
         if not ck.sol_attn_is_available():
             return {"ok": False, "detail": "Comfy Kitchen is installed, but its compiled Sol-Attn kernel is not available on this card"}
@@ -737,6 +749,20 @@ def comfy_info():
         out["version"] = comfyui_version.__version__
     except Exception:
         pass
+    # which quantized formats this ComfyUI can load at all (older builds lack mxfp8, w4a8, int8 convrot, etc.)
+    try:
+        import comfy.quant_ops as qo
+
+        out["quant_algos"] = sorted(getattr(qo, "QUANT_ALGOS", {}).keys())
+    except Exception:
+        pass
+    try:
+        import inspect
+        import comfy.ops
+
+        out["int8_convrot"] = "convrot" in inspect.getsource(comfy.ops)
+    except Exception:
+        pass
     for k, f in (("dynamic_vram", getattr(ca, "enables_dynamic_vram", None)), ("sage", mm.sage_attention_enabled), ("flash", mm.flash_attention_enabled),
                  ("xformers", mm.xformers_enabled), ("pytorch_attention", mm.pytorch_attention_enabled)):
         try:
@@ -971,6 +997,16 @@ def findings(p):
     if c:
         fl = c.get("flags") or {}
         add("setup", 0, f"ComfyUI {c.get('version', '?')}", f"Dynamic VRAM {'on' if c.get('dynamic_vram') else 'off'}; memory mode {c.get('vram_state', '?')}. Launch flags: {' '.join(c.get('argv') or []) or 'none'}.")
+        algos = c.get("quant_algos")
+        if algos is not None:
+            names = {"mxfp8": "mxfp8", "asym_w4a8_int8": "w4a8", "int8_tensorwise": "int8", "nvfp4": "nvfp4", "convrot_w4a4": "int4_convrot"}
+            miss = [v for k, v in names.items() if k not in algos]
+            if "int8_tensorwise" in algos and c.get("int8_convrot") is False:
+                miss.append("int8_convrot")
+            if miss:
+                add("setup", 1, "Update ComfyUI for newer model formats",
+                    f"This ComfyUI cannot load {', '.join(miss)} files yet, so the picks below leave them out. Updating ComfyUI "
+                    "(it brings the matching comfy-kitchen) adds them. On RTX 40 and 50 cards they are often the fastest choice.")
         if fl.get("lowvram") and c.get("dynamic_vram"):
             add("setup", 1, "--lowvram does nothing here", "Dynamic VRAM is on, which already offloads as needed. The flag can be removed.")
         if fl.get("highvram") or fl.get("gpu_only"):

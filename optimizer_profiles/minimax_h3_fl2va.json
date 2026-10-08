@@ -1,0 +1,499 @@
+{
+  "id": "minimax_h3_fl2va",
+  "name": "MiniMax H3 FL2VA",
+  "kind": "video",
+  "notes": [
+    "Pruned files drop ~13B parameters that are not used when generating: same output as full, 60 % of the size.",
+    "No smaller text encoder: the model reads layer 50 of the full Qwen3-VL-32B.",
+    "First and last frame to video (MiniMaxH3ImageToVideo). Same architecture and sizes as Ref2VA, so its speed and quality numbers carry over."
+  ],
+  "components": {
+    "diffusion": {
+      "label": "Video model",
+      "role": "diffusion",
+      "variants": [
+        {
+          "file": "minimax_h3_fl2va_bf16.safetensors",
+          "format": "bf16",
+          "gb": 61.73,
+          "bits": 16,
+          "repo": "Comfy-Org/MiniMax-H3",
+          "loader": "UNETLoader"
+        },
+        {
+          "file": "minimax_h3_fl2va_pruned_bf16.safetensors",
+          "format": "bf16",
+          "gb": 37.47,
+          "bits": 16,
+          "repo": "Comfy-Org/MiniMax-H3",
+          "loader": "UNETLoader",
+          "pruned": true
+        },
+        {
+          "file": "minimax_h3_fl2va_int8_convrot.safetensors",
+          "format": "int8_convrot",
+          "gb": 31.7,
+          "bits": 8,
+          "repo": "Comfy-Org/MiniMax-H3",
+          "loader": "UNETLoader"
+        },
+        {
+          "file": "minimax_h3_fl2va_pruned_int8_convrot.safetensors",
+          "format": "int8_convrot",
+          "gb": 19.53,
+          "bits": 8,
+          "repo": "Comfy-Org/MiniMax-H3",
+          "loader": "UNETLoader",
+          "pruned": true,
+          "default": true
+        },
+        {
+          "file": "minimax_h3_fl2va_pruned_fp8_scaled.safetensors",
+          "format": "fp8_scaled",
+          "gb": 19.52,
+          "bits": 8,
+          "repo": "Comfy-Org/MiniMax-H3",
+          "loader": "UNETLoader",
+          "pruned": true,
+          "note": "Comfy: only if int8_convrot cannot be used"
+        },
+        {
+          "file": "minimax_h3_fl2va_pruned_nvfp4.safetensors",
+          "format": "nvfp4",
+          "gb": 11.67,
+          "bits": 4,
+          "repo": "coolthor/MiniMax-H3-pruned-NVFP4",
+          "loader": "UNETLoader",
+          "pruned": true,
+          "community": true
+        },
+        {
+          "file": "minimax_h3_fl2va_pruned_w4a8_mixed.safetensors",
+          "format": "w4a8",
+          "gb": 11.68,
+          "bits": 4,
+          "repo": "Kijai/MiniMax-H3-experimental",
+          "loader": "UNETLoader",
+          "pruned": true,
+          "community": true,
+          "note": "experimental"
+        },
+        {
+          "file": "MiniMax-H3-FL2VA-Q8_0.gguf",
+          "format": "gguf_q8_0",
+          "gb": 33.56,
+          "bits": 8,
+          "repo": "Abiray/MiniMax-H3-GGUF",
+          "loader": "UnetLoaderGGUF",
+          "community": true
+        },
+        {
+          "file": "MiniMax-H3-FL2VA-Q6_K.gguf",
+          "format": "gguf_q6_k",
+          "gb": 26.28,
+          "bits": 6,
+          "repo": "Abiray/MiniMax-H3-GGUF",
+          "loader": "UnetLoaderGGUF",
+          "community": true
+        },
+        {
+          "file": "MiniMax-H3-FL2VA-Q5_K_M.gguf",
+          "format": "gguf_q5_k_m",
+          "gb": 22.25,
+          "bits": 5,
+          "repo": "Abiray/MiniMax-H3-GGUF",
+          "loader": "UnetLoaderGGUF",
+          "community": true
+        },
+        {
+          "file": "MiniMax-H3-FL2VA-Q4_K_M.gguf",
+          "format": "gguf_q4_k_m",
+          "gb": 18.5,
+          "bits": 4,
+          "repo": "Abiray/MiniMax-H3-GGUF",
+          "loader": "UnetLoaderGGUF",
+          "community": true
+        },
+        {
+          "file": "MiniMax-H3-FL2VA-Q3_K_M.gguf",
+          "format": "gguf_q3_k_m",
+          "gb": 14.5,
+          "bits": 3,
+          "repo": "Abiray/MiniMax-H3-GGUF",
+          "loader": "UnetLoaderGGUF",
+          "community": true
+        },
+        {
+          "file": "minimax_h3_fl2va_pruned-Q8_0.gguf",
+          "format": "gguf_q8_0",
+          "gb": 19.97,
+          "bits": 8,
+          "repo": "unsloth/MiniMax-H3-GGUF",
+          "loader": "UnetLoaderGGUF",
+          "pruned": true,
+          "community": true,
+          "unconfirmed": "built for stable-diffusion.cpp; ComfyUI loading not confirmed"
+        },
+        {
+          "file": "minimax_h3_fl2va_pruned-Q5_0.gguf",
+          "format": "gguf_q5_0",
+          "gb": 12.96,
+          "bits": 5,
+          "repo": "unsloth/MiniMax-H3-GGUF",
+          "loader": "UnetLoaderGGUF",
+          "pruned": true,
+          "community": true,
+          "unconfirmed": "built for stable-diffusion.cpp; ComfyUI loading not confirmed"
+        },
+        {
+          "file": "minimax_h3_fl2va_pruned-Q4_K.gguf",
+          "format": "gguf_q4_k",
+          "gb": 10.64,
+          "bits": 4,
+          "repo": "unsloth/MiniMax-H3-GGUF",
+          "loader": "UnetLoaderGGUF",
+          "pruned": true,
+          "community": true,
+          "unconfirmed": "built for stable-diffusion.cpp; ComfyUI loading not confirmed"
+        },
+        {
+          "file": "minimax_h3_fl2va_pruned-Q2_K.gguf",
+          "format": "gguf_q2_k",
+          "gb": 6.26,
+          "bits": 2,
+          "repo": "unsloth/MiniMax-H3-GGUF",
+          "loader": "UnetLoaderGGUF",
+          "pruned": true,
+          "community": true,
+          "unconfirmed": "built for stable-diffusion.cpp; ComfyUI loading not confirmed"
+        }
+      ]
+    },
+    "text_encoder": {
+      "label": "Text encoder (Qwen3-VL-32B)",
+      "role": "text_encoder",
+      "clip_type": "minimax",
+      "variants": [
+        {
+          "file": "qwen3vl_32b_minimax_h3_bf16.safetensors",
+          "format": "bf16",
+          "gb": 47.97,
+          "bits": 16,
+          "repo": "Comfy-Org/MiniMax-H3",
+          "loader": "CLIPLoader"
+        },
+        {
+          "file": "qwen3vl_32b_minimax_h3_int8_convrot.safetensors",
+          "format": "int8_convrot",
+          "gb": 25.28,
+          "bits": 8,
+          "repo": "Comfy-Org/MiniMax-H3",
+          "loader": "CLIPLoader"
+        },
+        {
+          "file": "qwen3vl_32b_minimax_h3_w4a8_mixed.safetensors",
+          "format": "w4a8",
+          "gb": 15.35,
+          "bits": 4,
+          "repo": "AX1Y2JP/MiniMax-H3-W4A8-ConvRot",
+          "loader": "CLIPLoader",
+          "community": true
+        },
+        {
+          "file": "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+          "format": "nvfp4",
+          "gb": 14.61,
+          "bits": 4,
+          "repo": "Comfy-Org/MiniMax-H3",
+          "loader": "CLIPLoader",
+          "default": true,
+          "note": "Comfy: does not need a Blackwell GPU"
+        },
+        {
+          "file": "qwen3vl_32b_minimax_h3-Q4_K_M.gguf",
+          "format": "gguf_q4_k_m",
+          "gb": 13.58,
+          "bits": 4,
+          "repo": "Abiray/MiniMax-H3-GGUF",
+          "loader": "CLIPLoaderGGUF",
+          "community": true
+        },
+        {
+          "file": "qwen3vl-32B-MiniMax-H3-Q2_K.gguf",
+          "format": "gguf_q2_k",
+          "gb": 7.91,
+          "bits": 2,
+          "repo": "realrebelai/MiniMax-H3_GGUFs",
+          "loader": "CLIPLoaderGGUF",
+          "community": true
+        }
+      ]
+    },
+    "vae": {
+      "label": "Video and audio VAE",
+      "role": "fixed",
+      "variants": [
+        {
+          "file": "minimax_h3_video_vae_int8_convrot.safetensors",
+          "format": "int8_convrot",
+          "gb": 2.62,
+          "bits": 8,
+          "repo": "Comfy-Org/MiniMax-H3",
+          "loader": "VAELoader",
+          "default": true
+        },
+        {
+          "file": "minimax_h3_video_vae_fp16.safetensors",
+          "format": "fp16",
+          "gb": 4.85,
+          "bits": 16,
+          "repo": "Comfy-Org/MiniMax-H3",
+          "loader": "VAELoader"
+        },
+        {
+          "file": "minimax_h3_audio_vae_fp32.safetensors",
+          "format": "fp32",
+          "gb": 0.57,
+          "bits": 32,
+          "repo": "Comfy-Org/MiniMax-H3",
+          "loader": "VAELoader",
+          "always": true
+        }
+      ]
+    }
+  },
+  "source": "Hugging Face tree API sizes and Comfy-Org workflow templates, researched 2026-09-27; FL2VA file names from the Hugging Face trees, 2026-10-02",
+  "benchmarks": {
+    "workflow": "Comfy-Org video_minimax_h3_r2v template, 8 steps, res_multistep, 3 s (73 frames), 16:9, TE nvfp4_awq, cfg 1",
+    "checks": [
+      {
+        "file": "minimax_h3_fl2va_pruned_int8_convrot.safetensors",
+        "megapixels": 0.2,
+        "gpu": "NVIDIA GeForce RTX 5060 Laptop GPU",
+        "vram_gb": 8.0,
+        "attention_sdpa_ms": 17.2,
+        "step_s": 4.28,
+        "peak_ram_gib": 60.25,
+        "peak_swap_gib": 0.09
+      },
+      {
+        "file": "minimax_h3_fl2va_pruned_int8_convrot.safetensors",
+        "megapixels": 0.4,
+        "gpu": "NVIDIA GeForce RTX 5060 Laptop GPU",
+        "vram_gb": 8.0,
+        "attention_sdpa_ms": 17.2,
+        "step_s": 10.43,
+        "peak_ram_gib": 60.34,
+        "peak_swap_gib": 0.09
+      },
+      {
+        "file": "MiniMax-H3-FL2VA-Q5_K_M.gguf",
+        "megapixels": 0.2,
+        "gpu": "NVIDIA GeForce RTX 5060 Laptop GPU",
+        "vram_gb": 8.0,
+        "attention_sdpa_ms": 17.2,
+        "step_s": 14.81,
+        "peak_ram_gib": 63.32,
+        "peak_swap_gib": 1.66
+      },
+      {
+        "file": "MiniMax-H3-FL2VA-Q5_K_M.gguf",
+        "megapixels": 0.4,
+        "gpu": "NVIDIA GeForce RTX 5060 Laptop GPU",
+        "vram_gb": 8.0,
+        "attention_sdpa_ms": 17.2,
+        "step_s": 23.5,
+        "peak_ram_gib": 62.58,
+        "peak_swap_gib": 1.66
+      },
+      {
+        "file": "10Eros_Max_h3_TURBO-hybrid_beta5.safetensors",
+        "megapixels": 0.2,
+        "gpu": "NVIDIA GeForce RTX 5060 Laptop GPU",
+        "vram_gb": 8.0,
+        "attention_sdpa_ms": 17.2,
+        "step_s": 9.0,
+        "peak_ram_gib": 60.22,
+        "peak_swap_gib": 0.83
+      },
+      {
+        "file": "10Eros_Max_h3_TURBO-hybrid_beta5.safetensors",
+        "megapixels": 0.4,
+        "gpu": "NVIDIA GeForce RTX 5060 Laptop GPU",
+        "vram_gb": 8.0,
+        "attention_sdpa_ms": 17.2,
+        "step_s": 18.34,
+        "peak_ram_gib": 60.29,
+        "peak_swap_gib": 0.84
+      }
+    ],
+    "references": [
+      {
+        "machine": {
+          "gpu": "NVIDIA GeForce RTX 5090",
+          "vram_gb": 31.8,
+          "attention_sdpa_ms": 2.42,
+          "fp8_tflops": 399.8
+        },
+        "runs": [
+          {
+            "file": "minimax_h3_fl2va_pruned_int8_convrot.safetensors",
+            "megapixels": 0.2,
+            "frames": 73,
+            "step_s": 0.65,
+            "first_step_s": 3.9
+          },
+          {
+            "file": "minimax_h3_fl2va_pruned_int8_convrot.safetensors",
+            "megapixels": 0.4,
+            "frames": 73,
+            "step_s": 1.6,
+            "first_step_s": 4.29
+          },
+          {
+            "file": "MiniMax-H3-FL2VA-Q5_K_M.gguf",
+            "megapixels": 0.2,
+            "frames": 73,
+            "step_s": 2.02,
+            "first_step_s": 22.85
+          },
+          {
+            "file": "MiniMax-H3-FL2VA-Q5_K_M.gguf",
+            "megapixels": 0.4,
+            "frames": 73,
+            "step_s": 3.59,
+            "first_step_s": 6.83
+          },
+          {
+            "file": "10Eros_Max_h3_TURBO-hybrid_beta5.safetensors",
+            "megapixels": 0.2,
+            "frames": 73,
+            "step_s": 1.43,
+            "first_step_s": 9.07
+          },
+          {
+            "file": "10Eros_Max_h3_TURBO-hybrid_beta5.safetensors",
+            "megapixels": 0.4,
+            "frames": 73,
+            "step_s": 2.97,
+            "first_step_s": 4.89
+          }
+        ]
+      },
+      {
+        "machine": {
+          "gpu": "NVIDIA GeForce RTX 5060 Laptop GPU",
+          "vram_gb": 8.0,
+          "attention_sdpa_ms": 17.2,
+          "fp8_tflops": 66.5,
+          "note": "64 GB RAM, PCIe Gen5 x8, no SageAttention"
+        },
+        "runs": [
+          {
+            "file": "minimax_h3_fl2va_pruned_int8_convrot.safetensors",
+            "megapixels": 0.2,
+            "step_s": 4.28,
+            "peak_ram_gib": 60.25,
+            "peak_swap_gib": 0.09
+          },
+          {
+            "file": "minimax_h3_fl2va_pruned_int8_convrot.safetensors",
+            "megapixels": 0.4,
+            "step_s": 10.43,
+            "peak_ram_gib": 60.34,
+            "peak_swap_gib": 0.09
+          },
+          {
+            "file": "MiniMax-H3-FL2VA-Q5_K_M.gguf",
+            "megapixels": 0.2,
+            "step_s": 14.81,
+            "peak_ram_gib": 63.32,
+            "peak_swap_gib": 1.66
+          },
+          {
+            "file": "MiniMax-H3-FL2VA-Q5_K_M.gguf",
+            "megapixels": 0.4,
+            "step_s": 23.5,
+            "peak_ram_gib": 62.58,
+            "peak_swap_gib": 1.66
+          },
+          {
+            "file": "10Eros_Max_h3_TURBO-hybrid_beta5.safetensors",
+            "megapixels": 0.2,
+            "step_s": 9.0,
+            "peak_ram_gib": 60.22,
+            "peak_swap_gib": 0.83
+          },
+          {
+            "file": "10Eros_Max_h3_TURBO-hybrid_beta5.safetensors",
+            "megapixels": 0.4,
+            "step_s": 18.34,
+            "peak_ram_gib": 60.29,
+            "peak_swap_gib": 0.84
+          }
+        ]
+      }
+    ]
+  },
+  "quality": {
+    "method": "single step from the same bf16 half-denoised latent (steps 2, 4, 6 of 8), decoded, LPIPS against bf16's step; 0 = identical",
+    "reference": "minimax_h3_fl2va_bf16.safetensors",
+    "files": {
+      "minimax_h3_fl2va_pruned_int8_convrot.safetensors": {
+        "k2": {
+          "lpips": 0.0636,
+          "ssim": 0.9036,
+          "psnr": 26.21
+        },
+        "k4": {
+          "lpips": 0.0356,
+          "ssim": 0.9271,
+          "psnr": 26.55
+        },
+        "k6": {
+          "lpips": 0.0131,
+          "ssim": 0.9769,
+          "psnr": 34.15
+        },
+        "lpips_avg": 0.0374
+      },
+      "MiniMax-H3-FL2VA-Q5_K_M.gguf": {
+        "k2": {
+          "lpips": 0.2309,
+          "ssim": 0.6909,
+          "psnr": 18.52
+        },
+        "k4": {
+          "lpips": 0.0979,
+          "ssim": 0.8253,
+          "psnr": 21.62
+        },
+        "k6": {
+          "lpips": 0.0302,
+          "ssim": 0.9419,
+          "psnr": 29.41
+        },
+        "lpips_avg": 0.1197
+      },
+      "10Eros_Max_h3_TURBO-hybrid_beta5.safetensors": {
+        "k2": {
+          "lpips": 0.6502,
+          "ssim": 0.3057,
+          "psnr": 9.88
+        },
+        "k4": {
+          "lpips": 0.3518,
+          "ssim": 0.5107,
+          "psnr": 13.38
+        },
+        "k6": {
+          "lpips": 0.1667,
+          "ssim": 0.7186,
+          "psnr": 19.62
+        },
+        "lpips_avg": 0.3896
+      }
+    }
+  },
+  "params_b": 20
+}

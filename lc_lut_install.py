@@ -56,7 +56,7 @@ def install_sample_luts() -> None:
         except Exception as e:
             print(f"[LC123] LUT install: failed {name}: {e}")
 
-    if copied or skipped:
+    if copied:  # quiet when everything was already there
         print(
             f"[LC123] LUTs → {dst_dir}: "
             f"{copied} new file(s) copied, {skipped} existing skipped (no overwrite)"

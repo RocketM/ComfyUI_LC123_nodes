@@ -1,0 +1,2196 @@
+{
+  "id": "bcd743b2-a53d-4af0-af5b-d4ffeff5c700",
+  "revision": 0,
+  "last_node_id": 35,
+  "last_link_id": 43,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "LCOptimizer",
+      "pos": [
+        -1000,
+        230
+      ],
+      "size": [
+        330,
+        438
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "links": [
+            1,
+            43
+          ]
+        },
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "links": [
+            5
+          ]
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "links": [
+            27,
+            41
+          ]
+        },
+        {
+          "name": "summary",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "845a2b692a1a623f42579b69c3a0978c28df90cd",
+        "Node name for S&R": "LCOptimizer",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        "Krea 2 (Turbo)",
+        "Quality",
+        "Krea 2\\Your models\\Krealism V3.1\\Krealism_V3.1_int8_convrot.safetensors",
+        "Qwen 3\\qwen3VL-4B - Instruct-Heretic_v10.safetensors",
+        "krea2RealVae_v10.safetensors",
+        "Auto",
+        "auto",
+        "auto",
+        "auto",
+        "off",
+        "auto",
+        "auto",
+        ""
+      ],
+      "widgets_values_named": {
+        "base_model": "Krea 2 (Turbo)",
+        "goal": "Quality",
+        "model_file": "Krea 2\\Your models\\Krealism V3.1\\Krealism_V3.1_int8_convrot.safetensors",
+        "text_encoder": "Qwen 3\\qwen3VL-4B - Instruct-Heretic_v10.safetensors",
+        "vae": "krea2RealVae_v10.safetensors",
+        "speed_ups": "Auto",
+        "attention": "auto",
+        "fp16_accumulation": "auto",
+        "step_cache": "auto",
+        "torch_compile": "off",
+        "qwen21_cache": "auto",
+        "clip_type": "auto",
+        "lc_optimizer_face": ""
+      },
+      "color": "#2E4A3B",
+      "bgcolor": "#2E4A3B"
+    },
+    {
+      "id": 2,
+      "type": "ModelSamplingAuraFlow",
+      "pos": [
+        -580,
+        230
+      ],
+      "size": [
+        270,
+        90
+      ],
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 1
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            2,
+            3,
+            4
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.37.0",
+        "Node name for S&R": "ModelSamplingAuraFlow",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        4,
+        "flow"
+      ],
+      "widgets_values_named": {
+        "shift": 4,
+        "sampling": "flow"
+      },
+      "color": "#222",
+      "bgcolor": "#000"
+    },
+    {
+      "id": 3,
+      "type": "AspectRatioSimplifier",
+      "pos": [
+        -1000,
+        720
+      ],
+      "size": [
+        330,
+        460
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "mask",
+          "shape": 7,
+          "type": "MASK",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": null
+        },
+        {
+          "name": "mask",
+          "type": "MASK",
+          "links": null
+        },
+        {
+          "name": "width",
+          "type": "INT",
+          "links": null
+        },
+        {
+          "name": "height",
+          "type": "INT",
+          "links": null
+        },
+        {
+          "name": "latent",
+          "type": "LATENT",
+          "links": [
+            11,
+            21,
+            36
+          ]
+        },
+        {
+          "name": "batch",
+          "type": "INT",
+          "links": null
+        },
+        {
+          "name": "resolution",
+          "type": "INT",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "845a2b692a1a623f42579b69c3a0978c28df90cd",
+        "Node name for S&R": "AspectRatioSimplifier",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        2048,
+        false,
+        "Instagram Portrait (4:5) - 1080x1350",
+        1080,
+        1352,
+        "Off",
+        "lanczos",
+        "crop",
+        "center",
+        "0, 0, 0",
+        8,
+        1
+      ],
+      "widgets_values_named": {
+        "max_resolution": 2048,
+        "resolution_source": false,
+        "aspect_ratio": "Instagram Portrait (4:5) - 1080x1350",
+        "custom_width": 1080,
+        "custom_height": 1352,
+        "swap_dimensions": "Off",
+        "upscale_method": "lanczos",
+        "proportion": "crop",
+        "crop_location": "center",
+        "pad_color": "0, 0, 0",
+        "divisible_by": 8,
+        "batch_size": 1
+      },
+      "color": "#324b4b",
+      "bgcolor": "#324b4b"
+    },
+    {
+      "id": 4,
+      "type": "LCPositive",
+      "pos": [
+        -580,
+        360
+      ],
+      "size": [
+        400,
+        200
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "positive",
+          "type": "STRING",
+          "links": [
+            6
+          ]
+        }
+      ],
+      "title": "Prompt",
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "845a2b692a1a623f42579b69c3a0978c28df90cd",
+        "Node name for S&R": "LCPositive",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        "Candid close-up photo of a 30 year old woman with freckles sitting by a window in soft afternoon light, natural skin texture, slight smile, wool sweater, shallow depth of field, shot on a 50mm lens."
+      ],
+      "widgets_values_named": {
+        "positive": "Candid close-up photo of a 30 year old woman with freckles sitting by a window in soft afternoon light, natural skin texture, slight smile, wool sweater, shallow depth of field, shot on a 50mm lens."
+      },
+      "color": "#326432",
+      "bgcolor": "#326432"
+    },
+    {
+      "id": 5,
+      "type": "LCPromptToConditioningZero",
+      "pos": [
+        -580,
+        600
+      ],
+      "size": [
+        270,
+        60
+      ],
+      "flags": {
+        "collapsed": false
+      },
+      "order": 15,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 5
+        },
+        {
+          "name": "string",
+          "type": "STRING",
+          "link": 6
+        }
+      ],
+      "outputs": [
+        {
+          "name": "conditioning",
+          "type": "CONDITIONING",
+          "links": [
+            7,
+            9,
+            38
+          ]
+        },
+        {
+          "name": "zero out",
+          "type": "CONDITIONING",
+          "links": [
+            8,
+            10,
+            39
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "845a2b692a1a623f42579b69c3a0978c28df90cd",
+        "Node name for S&R": "LCPromptToConditioningZero",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "color": "#28281E",
+      "bgcolor": "#28281E"
+    },
+    {
+      "id": 6,
+      "type": "LCSeed",
+      "pos": [
+        -580,
+        700
+      ],
+      "size": [
+        270,
+        130
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "seed",
+          "type": "INT",
+          "links": [
+            12,
+            37
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "845a2b692a1a623f42579b69c3a0978c28df90cd",
+        "Node name for S&R": "LCSeed",
+        "lc_seed_history": [
+          0
+        ],
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        -1,
+        "",
+        "",
+        "— last used seeds —"
+      ],
+      "widgets_values_named": {
+        "base_seed": -1,
+        "🎲 Randomize Each Time": "",
+        "🎲 New Fixed Random": "",
+        "seed history": "— last used seeds —"
+      },
+      "color": "#822305",
+      "bgcolor": "#822305"
+    },
+    {
+      "id": 7,
+      "type": "LCSigmas",
+      "pos": [
+        990,
+        270
+      ],
+      "size": [
+        320,
+        760
+      ],
+      "flags": {},
+      "order": 16,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 2
+        },
+        {
+          "name": "model_2",
+          "shape": 7,
+          "type": "MODEL",
+          "link": null
+        },
+        {
+          "name": "image_size_latent",
+          "shape": 7,
+          "type": "LATENT",
+          "link": 11
+        },
+        {
+          "name": "seed",
+          "type": "INT",
+          "widget": {
+            "name": "seed"
+          },
+          "link": 12
+        }
+      ],
+      "outputs": [
+        {
+          "name": "sigmas_high",
+          "type": "SIGMAS",
+          "links": [
+            20
+          ]
+        },
+        {
+          "name": "sigmas_low",
+          "type": "SIGMAS",
+          "links": [
+            16,
+            24
+          ]
+        },
+        {
+          "name": "noise_high",
+          "type": "NOISE",
+          "links": [
+            18
+          ]
+        },
+        {
+          "name": "noise_low",
+          "type": "NOISE",
+          "links": [
+            22
+          ]
+        },
+        {
+          "name": "info",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "sigmas_full",
+          "type": "SIGMAS",
+          "links": null
+        },
+        {
+          "name": "sampler",
+          "type": "SAMPLER",
+          "links": [
+            13,
+            15
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "845a2b692a1a623f42579b69c3a0978c28df90cd",
+        "Node name for S&R": "LCSigmas",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        "euler",
+        "base",
+        "simple",
+        10,
+        6,
+        1,
+        "full schedule",
+        "continue noise schedule",
+        "same as first",
+        1,
+        "use model default",
+        1.15,
+        0.6,
+        0.6,
+        3,
+        true,
+        0,
+        "tanh",
+        1,
+        0.04,
+        1,
+        "modulate",
+        "smooth",
+        1.5,
+        "",
+        0,
+        "randomize",
+        ""
+      ],
+      "widgets_values_named": {
+        "sampler": "euler",
+        "sigma_curve_presets": "base",
+        "base_scheduler": "simple",
+        "steps": 10,
+        "step_swap": 6,
+        "denoise": 1,
+        "denoise_steps": "full schedule",
+        "low_pass": "continue noise schedule",
+        "scheduler_shape_2": "same as first",
+        "first_pass_resample": 1,
+        "sigma_shift": "use model default",
+        "custom_shift": 1.15,
+        "beta_alpha": 0.6,
+        "beta_beta": 0.6,
+        "flowmatch_shift": 3,
+        "flowmatch_dynamic": true,
+        "flowmatch_terminal": 0,
+        "hyperbolic_function": "tanh",
+        "hyperbolic_scale": 1,
+        "gaussian_mean": 0.04,
+        "gaussian_std": 1,
+        "gaussian_operation": "modulate",
+        "edit_mode": "smooth",
+        "smooth_radius": 1.5,
+        "curve_edit": "",
+        "seed": 0,
+        "control_after_generate": "randomize",
+        "lc_sigmas_graph": ""
+      },
+      "color": "#643264",
+      "bgcolor": "#643264"
+    },
+    {
+      "id": 8,
+      "type": "LCSpeedBoost",
+      "pos": [
+        1330,
+        270
+      ],
+      "size": [
+        300,
+        90
+      ],
+      "flags": {},
+      "order": 20,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "sampler",
+          "type": "SAMPLER",
+          "link": 13
+        }
+      ],
+      "outputs": [
+        {
+          "name": "SAMPLER",
+          "type": "SAMPLER",
+          "links": [
+            14,
+            29
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "845a2b692a1a623f42579b69c3a0978c28df90cd",
+        "Node name for S&R": "LCSpeedBoost",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        true,
+        4
+      ],
+      "widgets_values_named": {
+        "auto": true,
+        "grow_at_step": 4
+      },
+      "color": "#7d1919",
+      "bgcolor": "#7d1919"
+    },
+    {
+      "id": 9,
+      "type": "LCDetailDaemon",
+      "pos": [
+        1330,
+        420
+      ],
+      "size": [
+        300,
+        350
+      ],
+      "flags": {},
+      "order": 21,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "sampler",
+          "type": "SAMPLER",
+          "link": 15
+        },
+        {
+          "name": "sigmas",
+          "shape": 7,
+          "type": "SIGMAS",
+          "link": 16
+        }
+      ],
+      "outputs": [
+        {
+          "name": "SAMPLER",
+          "type": "SAMPLER",
+          "links": [
+            17
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "845a2b692a1a623f42579b69c3a0978c28df90cd",
+        "Node name for S&R": "LCDetailDaemon",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        0.5,
+        0.15,
+        0.85,
+        0,
+        0,
+        "look only",
+        ""
+      ],
+      "widgets_values_named": {
+        "amount": 0.5,
+        "start": 0.15,
+        "end": 0.85,
+        "peak": 0,
+        "exponent": 0,
+        "mode": "look only",
+        "lc_dd_graph": ""
+      },
+      "color": "#643264",
+      "bgcolor": "#643264"
+    },
+    {
+      "id": 10,
+      "type": "CFGGuider",
+      "pos": [
+        1330,
+        820
+      ],
+      "size": [
+        270,
+        100
+      ],
+      "flags": {},
+      "order": 17,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 3
+        },
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "link": 7
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "link": 8
+        }
+      ],
+      "outputs": [
+        {
+          "name": "GUIDER",
+          "type": "GUIDER",
+          "links": [
+            19
+          ]
+        }
+      ],
+      "title": "CFG Guider High",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.37.0",
+        "Node name for S&R": "CFGGuider",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        2
+      ],
+      "widgets_values_named": {
+        "cfg": 2
+      },
+      "color": "#222",
+      "bgcolor": "#000"
+    },
+    {
+      "id": 11,
+      "type": "CFGGuider",
+      "pos": [
+        1330,
+        960
+      ],
+      "size": [
+        270,
+        100
+      ],
+      "flags": {},
+      "order": 18,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 4
+        },
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "link": 9
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "link": 10
+        }
+      ],
+      "outputs": [
+        {
+          "name": "GUIDER",
+          "type": "GUIDER",
+          "links": [
+            23
+          ]
+        }
+      ],
+      "title": "CFG Guider Low",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.37.0",
+        "Node name for S&R": "CFGGuider",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        1
+      ],
+      "widgets_values_named": {
+        "cfg": 1
+      },
+      "color": "#222",
+      "bgcolor": "#000"
+    },
+    {
+      "id": 12,
+      "type": "SamplerCustomAdvanced",
+      "pos": [
+        1720,
+        280
+      ],
+      "size": [
+        220,
+        110
+      ],
+      "flags": {},
+      "order": 23,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "noise",
+          "type": "NOISE",
+          "link": 18
+        },
+        {
+          "name": "guider",
+          "type": "GUIDER",
+          "link": 19
+        },
+        {
+          "name": "sampler",
+          "type": "SAMPLER",
+          "link": 14
+        },
+        {
+          "name": "sigmas",
+          "type": "SIGMAS",
+          "link": 20
+        },
+        {
+          "name": "latent_image",
+          "type": "LATENT",
+          "link": 21
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "LATENT",
+          "links": [
+            25
+          ]
+        },
+        {
+          "name": "denoised_output",
+          "type": "LATENT",
+          "links": null
+        }
+      ],
+      "title": "High Pass Sampler",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.37.0",
+        "Node name for S&R": "SamplerCustomAdvanced",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "color": "#223",
+      "bgcolor": "#335"
+    },
+    {
+      "id": 13,
+      "type": "SamplerCustomAdvanced",
+      "pos": [
+        1720,
+        440
+      ],
+      "size": [
+        220,
+        110
+      ],
+      "flags": {},
+      "order": 26,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "noise",
+          "type": "NOISE",
+          "link": 22
+        },
+        {
+          "name": "guider",
+          "type": "GUIDER",
+          "link": 23
+        },
+        {
+          "name": "sampler",
+          "type": "SAMPLER",
+          "link": 17
+        },
+        {
+          "name": "sigmas",
+          "type": "SIGMAS",
+          "link": 24
+        },
+        {
+          "name": "latent_image",
+          "type": "LATENT",
+          "link": 25
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "LATENT",
+          "links": [
+            26
+          ]
+        },
+        {
+          "name": "denoised_output",
+          "type": "LATENT",
+          "links": null
+        }
+      ],
+      "title": "Low Pass Sampler",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.37.0",
+        "Node name for S&R": "SamplerCustomAdvanced",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "color": "#223",
+      "bgcolor": "#335"
+    },
+    {
+      "id": 14,
+      "type": "VAEDecode",
+      "pos": [
+        1690,
+        620
+      ],
+      "size": [
+        140,
+        50
+      ],
+      "flags": {
+        "collapsed": true
+      },
+      "order": 27,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "samples",
+          "type": "LATENT",
+          "link": 26
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 27
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            28
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.37.0",
+        "Node name for S&R": "VAEDecode",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "color": "#322",
+      "bgcolor": "#533"
+    },
+    {
+      "id": 15,
+      "type": "LCSaveImage",
+      "pos": [
+        1970,
+        280
+      ],
+      "size": [
+        290,
+        480
+      ],
+      "flags": {},
+      "order": 28,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 28
+        },
+        {
+          "name": "metadata",
+          "shape": 7,
+          "type": "LC_SAVE_META",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": null
+        },
+        {
+          "name": "saved_as",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "845a2b692a1a623f42579b69c3a0978c28df90cd",
+        "Node name for S&R": "LCSaveImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        "Speed Boost",
+        "Test",
+        "png",
+        95,
+        true,
+        true,
+        true,
+        "Speed Boost/test"
+      ],
+      "widgets_values_named": {
+        "filename": "Speed Boost",
+        "path": "Test",
+        "format": "png",
+        "quality": 95,
+        "embed_workflow": true,
+        "embed_civitai": true,
+        "hash_resources": true,
+        "filename_prefix": "Speed Boost/test"
+      },
+      "color": "#28281E",
+      "bgcolor": "#28281E"
+    },
+    {
+      "id": 17,
+      "type": "LC Bypasser",
+      "pos": [
+        670,
+        270
+      ],
+      "size": [
+        310,
+        120
+      ],
+      "flags": {},
+      "order": 24,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "LC Speed Boost (BETA) 🚀",
+          "type": "*",
+          "link": 29
+        },
+        {
+          "name": "enable",
+          "type": "BOOLEAN",
+          "link": null
+        },
+        {
+          "name": "",
+          "type": "*",
+          "link": null
+        },
+        {
+          "name": "enable",
+          "type": "BOOLEAN",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "label": " ",
+          "name": "OPT_CONNECTION",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "title": "Speed Boost Bypasser",
+      "properties": {
+        "toggleRestriction": "default",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        true
+      ],
+      "widgets_values_named": {
+        "Enable 1": true
+      },
+      "color": "#dc6946",
+      "bgcolor": "#c85532"
+    },
+    {
+      "id": 20,
+      "type": "LCLabel",
+      "pos": [
+        670,
+        -20
+      ],
+      "size": [
+        1033,
+        160
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "text": "Speed Boost 🚀",
+        "font": "Arial",
+        "size": 132,
+        "bold": true,
+        "italic": false,
+        "color": "#ffffff",
+        "align": "center",
+        "outline": false,
+        "outlineColor": "#000000",
+        "outlineWidth": 4,
+        "shadow": false,
+        "shadowBlur": 10,
+        "bg": false,
+        "bgColor": "#324B4B",
+        "radius": 12,
+        "padding": 8,
+        "angle": 0,
+        "width": 0,
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "845a2b692a1a623f42579b69c3a0978c28df90cd",
+        "Node name for S&R": "LCLabel",
+        "_w": 1033,
+        "_h": 160,
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "color": "#fff0",
+      "bgcolor": "#fff0"
+    },
+    {
+      "id": 21,
+      "type": "LCLabel",
+      "pos": [
+        1720,
+        20
+      ],
+      "size": [
+        233,
+        94
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "text": "Test 🧪",
+        "font": "Bebas Neue",
+        "size": 75,
+        "bold": true,
+        "italic": false,
+        "color": "#999999",
+        "align": "center",
+        "outline": false,
+        "outlineColor": "#000000",
+        "outlineWidth": 4,
+        "shadow": false,
+        "shadowBlur": 10,
+        "bg": false,
+        "bgColor": "#324B4B",
+        "radius": 12,
+        "padding": 8,
+        "angle": 0,
+        "width": 0,
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "845a2b692a1a623f42579b69c3a0978c28df90cd",
+        "Node name for S&R": "LCLabel",
+        "_w": 233,
+        "_h": 94,
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "color": "#fff0",
+      "bgcolor": "#fff0"
+    },
+    {
+      "id": 22,
+      "type": "LCNote",
+      "pos": [
+        680,
+        430
+      ],
+      "size": [
+        300,
+        310
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "LC Speed Boost (BETA) 🚀",
+      "properties": {
+        "lc_note": {
+          "source": "en",
+          "texts": {
+            "en": {
+              "text": "**LC Speed Boost (BETA) 🚀**\n- Starts the picture at half size and grows it to full size partway through. About 2x faster sampling, same quality **(roughly 33% off a full run).**\n- Lives on the **High Pass Sampler** only. The low pass finishes at full size.\n- **auto (pick):** grows at the right step for the schedule.\n- **grow_at_step:** set it yourself when auto is off. **0 = off.**\n- ⚠️ The layout follows the model's trained size, so a seed frames a bit tighter with it on. Re-rendering an old seed? Set grow_at_step to 0 for that run.\n- Upscale and image to image passes run as normal: their layout comes from your image.\n- 🤔 **meh** factor: This changes the image slightly when turned on and off on the same seed 🌱"
+            }
+          },
+          "titles": {
+            "en": "LC Speed Boost (BETA) 🚀"
+          }
+        },
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "English ✏️",
+        "**LC Speed Boost (BETA) 🚀**\n- Starts the picture at half size and grows it to full size partway through. About 2x faster sampling, same quality **(roughly 33% off a full run).**\n- Lives on the **High Pass Sampler** only. The low pass finishes at full size.\n- **auto (pick):** grows at the right step for the schedule.\n- **grow_at_step:** set it yourself when auto is off. **0 = off.**\n- ⚠️ The layout follows the model's trained size, so a seed frames a bit tighter with it on. Re-rendering an old seed? Set grow_at_step to 0 for that run.\n- Upscale and image to image passes run as normal: their layout comes from your image.\n- 🤔 **meh** factor: This changes the image slightly when turned on and off on the same seed 🌱"
+      ],
+      "widgets_values_named": {
+        "language": "English ✏️",
+        "text": "**LC Speed Boost (BETA) 🚀**\n- Starts the picture at half size and grows it to full size partway through. About 2x faster sampling, same quality **(roughly 33% off a full run).**\n- Lives on the **High Pass Sampler** only. The low pass finishes at full size.\n- **auto (pick):** grows at the right step for the schedule.\n- **grow_at_step:** set it yourself when auto is off. **0 = off.**\n- ⚠️ The layout follows the model's trained size, so a seed frames a bit tighter with it on. Re-rendering an old seed? Set grow_at_step to 0 for that run.\n- Upscale and image to image passes run as normal: their layout comes from your image.\n- 🤔 **meh** factor: This changes the image slightly when turned on and off on the same seed 🌱"
+      },
+      "color": "#2E3A46",
+      "bgcolor": "#2E3A46"
+    },
+    {
+      "id": 23,
+      "type": "LCNote",
+      "pos": [
+        -1330,
+        230
+      ],
+      "size": [
+        320,
+        390
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "LC Model Optimizer ⚡",
+      "properties": {
+        "lc_note": {
+          "source": "en",
+          "texts": {
+            "en": {
+              "text": "## 🛑🚫✋ Run the report first!\n- **Settings > LC123 Settings ⚙️ > Optimization > System & Model Optimization Report**. It tests your machine in about 10 seconds.\n- The optimizer reads that report to pick the right files and speed-ups for YOUR card. No report = Comfy's default files.\n\n**LC Model Optimizer ⚡**\n- It replaces your model, text encoder and VAE loaders. One node, the first thing in the graph.\n- Pick the **base model** (Krea 2, Z-Image, Qwen-Image, SDXL, etc.).\n- Pick a **goal**:\n    - **Quality:** closest to the full model.\n    - **Optimal:** fast and near identical (the default, and the one most people want).\n    - **Fast:** the fastest that still looks right.\n- Leave every file on **★ Recommended** and hit Run. That's it.\n- Missing a file? It shows as **⬇ Download** and grabs it on the first run (check the console, big files take a while).\n- Want your own file (a finetune, a merge, Krealism)? Click the picker and choose it. Your files that match the base model are listed first.\n- Using something it doesn't know? Set the base model to **Custom**, pick your files, and the speed-ups still apply.\n- 💡 Leave **speed_ups** on **Auto**. It only turns on what actually passed the test on your machine. Manual is for people who like to tinker.\n\n**Read the panel on the node before you run**\n- ✅ the file is on disk · ⬇️ it will download · 📦 it comes from the checkpoint.\n- It shows your time per step and whether the model fits on your card.\n- ⚠️ means a file doesn't belong to the base model (e.g. the wrong text encoder). It will still let you run it, but expect errors or bad results.\n\n**LC Model Optimizer Video ⚡**\n- The same thing for video (MiniMax H3, LTX 2.5 / 2.3), plus the audio VAE and the latent upscaler.\n- A part the model doesn't use says **not used by**. Leave it wired, it does no harm.\n\n---\n"
+            }
+          },
+          "titles": {
+            "en": "LC Model Optimizer ⚡"
+          }
+        },
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "English ✏️",
+        "## 🛑🚫✋ Run the report first!\n- **Settings > LC123 Settings ⚙️ > Optimization > System & Model Optimization Report**. It tests your machine in about 10 seconds.\n- The optimizer reads that report to pick the right files and speed-ups for YOUR card. No report = Comfy's default files.\n\n**LC Model Optimizer ⚡**\n- It replaces your model, text encoder and VAE loaders. One node, the first thing in the graph.\n- Pick the **base model** (Krea 2, Z-Image, Qwen-Image, SDXL, etc.).\n- Pick a **goal**:\n    - **Quality:** closest to the full model.\n    - **Optimal:** fast and near identical (the default, and the one most people want).\n    - **Fast:** the fastest that still looks right.\n- Leave every file on **★ Recommended** and hit Run. That's it.\n- Missing a file? It shows as **⬇ Download** and grabs it on the first run (check the console, big files take a while).\n- Want your own file (a finetune, a merge, Krealism)? Click the picker and choose it. Your files that match the base model are listed first.\n- Using something it doesn't know? Set the base model to **Custom**, pick your files, and the speed-ups still apply.\n- 💡 Leave **speed_ups** on **Auto**. It only turns on what actually passed the test on your machine. Manual is for people who like to tinker.\n\n**Read the panel on the node before you run**\n- ✅ the file is on disk · ⬇️ it will download · 📦 it comes from the checkpoint.\n- It shows your time per step and whether the model fits on your card.\n- ⚠️ means a file doesn't belong to the base model (e.g. the wrong text encoder). It will still let you run it, but expect errors or bad results.\n\n**LC Model Optimizer Video ⚡**\n- The same thing for video (MiniMax H3, LTX 2.5 / 2.3), plus the audio VAE and the latent upscaler.\n- A part the model doesn't use says **not used by**. Leave it wired, it does no harm.\n\n---\n"
+      ],
+      "widgets_values_named": {
+        "language": "English ✏️",
+        "text": "## 🛑🚫✋ Run the report first!\n- **Settings > LC123 Settings ⚙️ > Optimization > System & Model Optimization Report**. It tests your machine in about 10 seconds.\n- The optimizer reads that report to pick the right files and speed-ups for YOUR card. No report = Comfy's default files.\n\n**LC Model Optimizer ⚡**\n- It replaces your model, text encoder and VAE loaders. One node, the first thing in the graph.\n- Pick the **base model** (Krea 2, Z-Image, Qwen-Image, SDXL, etc.).\n- Pick a **goal**:\n    - **Quality:** closest to the full model.\n    - **Optimal:** fast and near identical (the default, and the one most people want).\n    - **Fast:** the fastest that still looks right.\n- Leave every file on **★ Recommended** and hit Run. That's it.\n- Missing a file? It shows as **⬇ Download** and grabs it on the first run (check the console, big files take a while).\n- Want your own file (a finetune, a merge, Krealism)? Click the picker and choose it. Your files that match the base model are listed first.\n- Using something it doesn't know? Set the base model to **Custom**, pick your files, and the speed-ups still apply.\n- 💡 Leave **speed_ups** on **Auto**. It only turns on what actually passed the test on your machine. Manual is for people who like to tinker.\n\n**Read the panel on the node before you run**\n- ✅ the file is on disk · ⬇️ it will download · 📦 it comes from the checkpoint.\n- It shows your time per step and whether the model fits on your card.\n- ⚠️ means a file doesn't belong to the base model (e.g. the wrong text encoder). It will still let you run it, but expect errors or bad results.\n\n**LC Model Optimizer Video ⚡**\n- The same thing for video (MiniMax H3, LTX 2.5 / 2.3), plus the audio VAE and the latent upscaler.\n- A part the model doesn't use says **not used by**. Leave it wired, it does no harm.\n\n---\n"
+      },
+      "color": "#233",
+      "bgcolor": "#355"
+    },
+    {
+      "id": 24,
+      "type": "LCTimer",
+      "pos": [
+        180,
+        450
+      ],
+      "size": [
+        310,
+        190
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "845a2b692a1a623f42579b69c3a0978c28df90cd",
+        "Node name for S&R": "LCTimer",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        },
+        "lc_runs": []
+      },
+      "widgets_values": [
+        ""
+      ],
+      "widgets_values_named": {
+        "lc_rt": ""
+      },
+      "color": "#222",
+      "bgcolor": "#000"
+    },
+    {
+      "id": 27,
+      "type": "LCSpeedBoostKSampler",
+      "pos": [
+        1070,
+        1180
+      ],
+      "size": [
+        350,
+        450
+      ],
+      "flags": {},
+      "order": 19,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 43
+        },
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "link": 38
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "link": 39
+        },
+        {
+          "name": "latent_image",
+          "type": "LATENT",
+          "link": 36
+        },
+        {
+          "name": "sampler",
+          "shape": 7,
+          "type": "SAMPLER",
+          "link": null
+        },
+        {
+          "name": "seed",
+          "type": "INT",
+          "widget": {
+            "name": "seed"
+          },
+          "link": 37
+        }
+      ],
+      "outputs": [
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            40
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "e73bdd3aca64c207c821d188ff17356f0963f205",
+        "Node name for S&R": "LCSpeedBoostKSampler",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        true,
+        4,
+        "",
+        0,
+        "randomize",
+        10,
+        1,
+        "euler",
+        "simple",
+        1,
+        "",
+        0,
+        10000,
+        false
+      ],
+      "widgets_values_named": {
+        "speed_boost": true,
+        "grow_at_step": 4,
+        "_gap1": "",
+        "seed": 0,
+        "control_after_generate": "randomize",
+        "steps": 10,
+        "cfg": 1,
+        "sampler_name": "euler",
+        "scheduler": "simple",
+        "denoise": 1,
+        "_gap2": "",
+        "start_at_step": 0,
+        "end_at_step": 10000,
+        "return_with_leftover_noise": false
+      },
+      "color": "#7d1919",
+      "bgcolor": "#7d1919"
+    },
+    {
+      "id": 28,
+      "type": "VAEDecode",
+      "pos": [
+        1440,
+        1210
+      ],
+      "size": [
+        140,
+        50
+      ],
+      "flags": {
+        "collapsed": true
+      },
+      "order": 22,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "samples",
+          "type": "LATENT",
+          "link": 40
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 41
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            42
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.37.0",
+        "Node name for S&R": "VAEDecode",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "color": "#322",
+      "bgcolor": "#533"
+    },
+    {
+      "id": 29,
+      "type": "LCSaveImage",
+      "pos": [
+        1600,
+        1180
+      ],
+      "size": [
+        290,
+        480
+      ],
+      "flags": {},
+      "order": 25,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 42
+        },
+        {
+          "name": "metadata",
+          "shape": 7,
+          "type": "LC_SAVE_META",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": []
+        },
+        {
+          "name": "saved_as",
+          "type": "STRING",
+          "links": []
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "845a2b692a1a623f42579b69c3a0978c28df90cd",
+        "Node name for S&R": "LCSaveImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        "Speed Boost",
+        "Ksampler",
+        "png",
+        95,
+        true,
+        true,
+        true,
+        "Speed Boost/test"
+      ],
+      "widgets_values_named": {
+        "filename": "Speed Boost",
+        "path": "Ksampler",
+        "format": "png",
+        "quality": 95,
+        "embed_workflow": true,
+        "embed_civitai": true,
+        "hash_resources": true,
+        "filename_prefix": "Speed Boost/test"
+      },
+      "color": "#28281E",
+      "bgcolor": "#28281E"
+    },
+    {
+      "id": 30,
+      "type": "ClownSamplerSelector_Beta",
+      "pos": [
+        750,
+        1520
+      ],
+      "size": [
+        270,
+        60
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "sampler_name",
+          "type": "COMBO",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "RES4LYF",
+        "ver": "56e44755d866c87ff9cb4b6608c8e42155db6ecc",
+        "Node name for S&R": "ClownSamplerSelector_Beta",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        "fully_implicit/radau_iia_3s"
+      ],
+      "widgets_values_named": {
+        "sampler_name": "fully_implicit/radau_iia_3s"
+      }
+    },
+    {
+      "id": 31,
+      "type": "LC Groups Bypasser",
+      "pos": [
+        0,
+        700
+      ],
+      "size": [
+        500,
+        120
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "Super advanced Lonecat is out of his frigging mind sampler",
+          "type": "BOOLEAN",
+          "link": null
+        },
+        {
+          "name": "Ksampler 🥱",
+          "type": "BOOLEAN",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "OPT_CONNECTION",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "matchTitle": "",
+        "matchColors": "",
+        "sort": "position",
+        "toggleRestriction": "always one",
+        "lcBindings": {
+          "id:2": {
+            "value": false,
+            "originId": null
+          },
+          "id:3": {
+            "value": true,
+            "originId": null
+          }
+        },
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        false,
+        true
+      ],
+      "widgets_values_named": {
+        "Enable 1": false,
+        "Enable 2": true
+      },
+      "color": "#c87a2c",
+      "bgcolor": "#b46618"
+    },
+    {
+      "id": 32,
+      "type": "LCLabel",
+      "pos": [
+        570,
+        1540
+      ],
+      "size": [
+        161,
+        20
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "text": "I'm not saying try it, but try it 👉🏼",
+        "font": "Arial",
+        "size": 10,
+        "bold": true,
+        "italic": false,
+        "color": "#ffffff",
+        "align": "center",
+        "outline": false,
+        "outlineColor": "#000000",
+        "outlineWidth": 4,
+        "shadow": false,
+        "shadowBlur": 10,
+        "bg": false,
+        "bgColor": "#324B4B",
+        "radius": 12,
+        "padding": 8,
+        "angle": 0,
+        "width": 0,
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "e73bdd3aca64c207c821d188ff17356f0963f205",
+        "Node name for S&R": "LCLabel",
+        "_w": 161,
+        "_h": 20,
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "color": "#fff0",
+      "bgcolor": "#fff0"
+    },
+    {
+      "id": 34,
+      "type": "LCNote",
+      "pos": [
+        660,
+        1140
+      ],
+      "size": [
+        370,
+        310
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "LC Speed Boost 🚀 KSampler (BETA)",
+      "properties": {
+        "lc_note": {
+          "source": "en",
+          "texts": {
+            "en": {
+              "text": "**Acts like a standard Ksampler, but with the following exceptions...**\n\nRuns **SPEED**\n\n**speed_boost**\n- *auto* determines the best place in the schedule to change depending on the model and steps. if you want to do it manually or bypass, turn it off (grow_at_step)\n- grow_at_step is the step the size increases and SPEED stops. \n   - set to 0 to *bypass*\n   - always leave 1-2 steps for it to grow\n\n**Options**\n- you can plug a sampler in directly if you want to use a detailer daemon or custom sampler\n- you can use this as the **first pass** of a chained set of samplers\n- you can plug a **ClownSamplerSelector** in and use *Res4Lyf* samplers (you're welcome)\n\n\n"
+            }
+          },
+          "titles": {
+            "en": "LC Speed Boost 🚀 KSampler (BETA)"
+          }
+        },
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "English ✏️",
+        "**Acts like a standard Ksampler, but with the following exceptions...**\n\nRuns **SPEED**\n\n**speed_boost**\n- *auto* determines the best place in the schedule to change depending on the model and steps. if you want to do it manually or bypass, turn it off (grow_at_step)\n- grow_at_step is the step the size increases and SPEED stops. \n   - set to 0 to *bypass*\n   - always leave 1-2 steps for it to grow\n\n**Options**\n- you can plug a sampler in directly if you want to use a detailer daemon or custom sampler\n- you can use this as the **first pass** of a chained set of samplers\n- you can plug a **ClownSamplerSelector** in and use *Res4Lyf* samplers (you're welcome)\n\n\n"
+      ],
+      "widgets_values_named": {
+        "language": "English ✏️",
+        "text": "**Acts like a standard Ksampler, but with the following exceptions...**\n\nRuns **SPEED**\n\n**speed_boost**\n- *auto* determines the best place in the schedule to change depending on the model and steps. if you want to do it manually or bypass, turn it off (grow_at_step)\n- grow_at_step is the step the size increases and SPEED stops. \n   - set to 0 to *bypass*\n   - always leave 1-2 steps for it to grow\n\n**Options**\n- you can plug a sampler in directly if you want to use a detailer daemon or custom sampler\n- you can use this as the **first pass** of a chained set of samplers\n- you can plug a **ClownSamplerSelector** in and use *Res4Lyf* samplers (you're welcome)\n\n\n"
+      },
+      "color": "#2E3A46",
+      "bgcolor": "#2E3A46"
+    },
+    {
+      "id": 35,
+      "type": "LCLabel",
+      "pos": [
+        1960,
+        30
+      ],
+      "size": [
+        74,
+        63
+      ],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "text": "V1.1",
+        "font": "Bebas Neue",
+        "size": 48,
+        "bold": true,
+        "italic": false,
+        "color": "#ffdd77",
+        "align": "center",
+        "outline": false,
+        "outlineColor": "#000000",
+        "outlineWidth": 4,
+        "shadow": false,
+        "shadowBlur": 10,
+        "bg": false,
+        "bgColor": "#324B4B",
+        "radius": 12,
+        "padding": 8,
+        "angle": 0,
+        "width": 0,
+        "cnr_id": "ComfyUI_LC123_nodes",
+        "ver": "e73bdd3aca64c207c821d188ff17356f0963f205",
+        "Node name for S&R": "LCLabel",
+        "_w": 74,
+        "_h": 63,
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "color": "#fff0",
+      "bgcolor": "#fff0"
+    }
+  ],
+  "links": [
+    [
+      1,
+      1,
+      0,
+      2,
+      0,
+      "MODEL"
+    ],
+    [
+      2,
+      2,
+      0,
+      7,
+      0,
+      "MODEL"
+    ],
+    [
+      3,
+      2,
+      0,
+      10,
+      0,
+      "MODEL"
+    ],
+    [
+      4,
+      2,
+      0,
+      11,
+      0,
+      "MODEL"
+    ],
+    [
+      5,
+      1,
+      1,
+      5,
+      0,
+      "CLIP"
+    ],
+    [
+      6,
+      4,
+      0,
+      5,
+      1,
+      "STRING"
+    ],
+    [
+      7,
+      5,
+      0,
+      10,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      8,
+      5,
+      1,
+      10,
+      2,
+      "CONDITIONING"
+    ],
+    [
+      9,
+      5,
+      0,
+      11,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      10,
+      5,
+      1,
+      11,
+      2,
+      "CONDITIONING"
+    ],
+    [
+      11,
+      3,
+      4,
+      7,
+      2,
+      "LATENT"
+    ],
+    [
+      12,
+      6,
+      0,
+      7,
+      3,
+      "INT"
+    ],
+    [
+      13,
+      7,
+      6,
+      8,
+      0,
+      "SAMPLER"
+    ],
+    [
+      14,
+      8,
+      0,
+      12,
+      2,
+      "SAMPLER"
+    ],
+    [
+      15,
+      7,
+      6,
+      9,
+      0,
+      "SAMPLER"
+    ],
+    [
+      16,
+      7,
+      1,
+      9,
+      1,
+      "SIGMAS"
+    ],
+    [
+      17,
+      9,
+      0,
+      13,
+      2,
+      "SAMPLER"
+    ],
+    [
+      18,
+      7,
+      2,
+      12,
+      0,
+      "NOISE"
+    ],
+    [
+      19,
+      10,
+      0,
+      12,
+      1,
+      "GUIDER"
+    ],
+    [
+      20,
+      7,
+      0,
+      12,
+      3,
+      "SIGMAS"
+    ],
+    [
+      21,
+      3,
+      4,
+      12,
+      4,
+      "LATENT"
+    ],
+    [
+      22,
+      7,
+      3,
+      13,
+      0,
+      "NOISE"
+    ],
+    [
+      23,
+      11,
+      0,
+      13,
+      1,
+      "GUIDER"
+    ],
+    [
+      24,
+      7,
+      1,
+      13,
+      3,
+      "SIGMAS"
+    ],
+    [
+      25,
+      12,
+      0,
+      13,
+      4,
+      "LATENT"
+    ],
+    [
+      26,
+      13,
+      0,
+      14,
+      0,
+      "LATENT"
+    ],
+    [
+      27,
+      1,
+      2,
+      14,
+      1,
+      "VAE"
+    ],
+    [
+      28,
+      14,
+      0,
+      15,
+      0,
+      "IMAGE"
+    ],
+    [
+      36,
+      3,
+      4,
+      27,
+      3,
+      "LATENT"
+    ],
+    [
+      37,
+      6,
+      0,
+      27,
+      5,
+      "INT"
+    ],
+    [
+      38,
+      5,
+      0,
+      27,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      39,
+      5,
+      1,
+      27,
+      2,
+      "CONDITIONING"
+    ],
+    [
+      40,
+      27,
+      0,
+      28,
+      0,
+      "LATENT"
+    ],
+    [
+      41,
+      1,
+      2,
+      28,
+      1,
+      "VAE"
+    ],
+    [
+      42,
+      28,
+      0,
+      29,
+      0,
+      "IMAGE"
+    ],
+    [
+      43,
+      1,
+      0,
+      27,
+      0,
+      "MODEL"
+    ],
+    [
+      29,
+      8,
+      0,
+      17,
+      0,
+      "SAMPLER"
+    ]
+  ],
+  "groups": [
+    {
+      "id": 2,
+      "title": "Super advanced Lonecat is out of his frigging mind sampler",
+      "bounding": [
+        660,
+        200,
+        1610,
+        870
+      ],
+      "color": "#3f789e",
+      "flags": {}
+    },
+    {
+      "id": 3,
+      "title": "Ksampler 🥱",
+      "bounding": [
+        1060,
+        1110,
+        840,
+        560
+      ],
+      "color": "#3f789e",
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ue_links": [],
+    "links_added_by_ue": [],
+    "ds": {
+      "scale": 0.23325369010487104,
+      "offset": [
+        3201.2860231324985,
+        1480.1540125417637
+      ]
+    },
+    "k2cf_state_id": "k2cf_1782395516386_1ufts1mp18p",
+    "lc_guides": [
+      {
+        "axis": "y",
+        "v": 200,
+        "kind": "group"
+      },
+      {
+        "axis": "x",
+        "v": 660,
+        "kind": "group"
+      }
+    ],
+    "frontendVersion": "1.53.6",
+    "VHS_latentpreview": false,
+    "VHS_latentpreviewrate": 0,
+    "VHS_MetadataImage": true,
+    "VHS_KeepIntermediate": true
+  },
+  "version": 0.4
+}

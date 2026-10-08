@@ -10,6 +10,7 @@ const TYPES = new Set([
   "LCSamplerConfigurePipe",
   "LCSamplerConfigureSimple",
   "LCSamplerConfigureSimplePipeOut",
+  "LCSpeedBoostKSampler",
 ]);
 
 const GAP_PX = 6;

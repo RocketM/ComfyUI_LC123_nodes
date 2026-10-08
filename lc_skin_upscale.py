@@ -16,6 +16,7 @@ import torch
 from nodes import PreviewImage
 
 from .lc_image_helpers import tensor_to_np, np_to_tensor, blend
+from .lc_detail_band import transfer_detail
 
 
 def _box_blur(ch: np.ndarray, rad: int) -> np.ndarray:
@@ -266,6 +267,25 @@ class LCSkinUpscale(PreviewImage):
                         "tooltip": "Tile overlap in pixels.",
                     },
                 ),
+                "transfer": (
+                    ["detail band", "full paste"],
+                    {
+                        "default": "detail band",
+                        "tooltip": "detail band = take only the model's pore and fold detail (brightness only, softly capped, "
+                        "eased off at edges and in deep shadow / bright highlights): no colour shift, no 1-pixel grain. "
+                        "full paste = paste the model's whole output (the old behaviour).",
+                    },
+                ),
+                "softness": (
+                    "FLOAT",
+                    {
+                        "default": 0.5,
+                        "min": 0.0,
+                        "max": 1.0,
+                        "step": 0.05,
+                        "tooltip": "detail band only: higher = smoother, gentler detail. Lower = crisper.",
+                    },
+                ),
             },
             "optional": {
                 "mask": (
@@ -296,8 +316,16 @@ class LCSkinUpscale(PreviewImage):
         mask_feather=0.45,
         tile=512,
         overlap=32,
+        transfer="detail band",
+        softness=0.5,
         mask=None,
     ):
+        def detail(src, pred):
+            if transfer != "detail band":
+                return pred
+            out = transfer_detail(torch.from_numpy(src[None].copy()), torch.from_numpy(pred[None].copy()), softness)
+            return out[0].numpy()
+
         frames = tensor_to_np(image)
         mask_raw = None
         if mask is not None:
@@ -351,7 +379,7 @@ class LCSkinUpscale(PreviewImage):
 
             scale = float(getattr(upscale_model, "scale", 1.0) or 1.0)
             if mode == "detail 1x":
-                up_fit = _resize_hw(up, y1 - y0, x1 - x0)
+                up_fit = detail(crop, _resize_hw(up, y1 - y0, x1 - x0)[..., :3])
                 patch = rgb.copy()
                 patch[y0:y1, x0:x1] = up_fit
                 m3 = matte[..., None] * float(blend)
@@ -363,7 +391,7 @@ class LCSkinUpscale(PreviewImage):
                 base = _resize_hw(rgb, out_h, out_w)
                 cy0, cy1 = int(round(y0 * scale)), int(round(y1 * scale))
                 cx0, cx1 = int(round(x0 * scale)), int(round(x1 * scale))
-                up_fit = _resize_hw(up, max(1, cy1 - cy0), max(1, cx1 - cx0))
+                up_fit = detail(base[cy0:cy1, cx0:cx1], _resize_hw(up, max(1, cy1 - cy0), max(1, cx1 - cx0))[..., :3])
                 patch = base.copy()
                 patch[cy0:cy1, cx0:cx1] = up_fit
                 matte_out = _resize_hw(matte, out_h, out_w)

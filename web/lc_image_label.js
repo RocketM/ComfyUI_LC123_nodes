@@ -445,7 +445,12 @@ app.registerExtension({
         nodeType.prototype.onSerialize = function (o) {
             if (!o.properties) o.properties = {};
             for (const key in this.properties) {
-                o.properties[key] = this.properties[key];
+                // plain copies only: other extensions keep live objects (Use Everywhere's are proxies) in properties,
+                // and a live reference here makes the saved workflow uncloneable ("Unable to find workflow")
+                const v = this.properties[key];
+                try {
+                    o.properties[key] = v && typeof v === "object" ? JSON.parse(JSON.stringify(v)) : v;
+                } catch (_) {}
             }
             const pathWidget = this.widgets?.find((w) => w.name === "_image_path");
             if (pathWidget) {

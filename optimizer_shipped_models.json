@@ -1,201 +1,248 @@
 {
- "note": "Lonecat's own models. A workflow that saved one of these names gets it downloaded from Hugging Face on the first run; never listed as a choice.",
- "models": [
-  {
-   "family": "Krealism",
-   "file": "Krealism_V1.0-fp8.safetensors",
-   "repo": "Lonecatone23/Krealism",
-   "path": "Krealism_V1.0-fp8.safetensors",
-   "gb": 14.13,
-   "sha256": "cee7bffc274fce076fabaa99c1c35c7fc69dbe0f75806ed9337ff3d5dd384cc4",
-   "profile": "krea2",
-   "format": "fp8_scaled",
-   "names": [
-    "Krealism_V1.0-fp8.safetensors",
-    "krealism_v10TurboFP8.safetensors"
-   ]
-  },
-  {
-   "family": "Krealism",
-   "file": "Krealism_V1.0-nvfp4.safetensors",
-   "repo": "Lonecatone23/Krealism",
-   "path": "Krealism_V1.0-nvfp4.safetensors",
-   "gb": 8.81,
-   "sha256": "cef0ed66f283d3425abf40ad670111d149589cab4e8ed912044381903d86225d",
-   "profile": "krea2",
-   "format": "nvfp4",
-   "names": [
-    "Krealism_V1.0-nvfp4.safetensors",
-    "krealism_v10TurboNvfp4.safetensors"
-   ]
-  },
-  {
-   "family": "Krealism",
-   "file": "Krealism_V1.0.safetensors",
-   "repo": "Lonecatone23/Krealism",
-   "path": "Krealism_V1.0.safetensors",
-   "gb": 26.28,
-   "sha256": "d8094c1b88ff9b590c15c9ec465135fc562f9905049ce046597540abe27f2eca",
-   "profile": "krea2",
-   "format": "bf16",
-   "names": [
-    "Krealism_V1.0.safetensors",
-    "Krealism_V1.0_bf16.safetensors",
-    "krealism_v10TurboBf16.safetensors"
-   ]
-  },
-  {
-   "family": "Krealism",
-   "file": "Krealism_V1.0_int8_convrot.safetensors",
-   "repo": "Lonecatone23/Krealism",
-   "path": "Krealism_V1.0_int8_convrot.safetensors",
-   "gb": 12.83,
-   "sha256": "0921e72184415f38bfcbe6858ec8b18c6f27f833e6bf62e919540ddf4743ad55",
-   "profile": "krea2",
-   "format": "int8_convrot",
-   "names": [
-    "Krealism_V1.0_int8_convrot.safetensors",
-    "krealism_v10TurboInt8Convrot.safetensors"
-   ]
-  },
-  {
-   "family": "Krealism",
-   "file": "Krealism_V3.1_bf16.safetensors",
-   "repo": "Lonecatone23/Krealism",
-   "path": "Krealism_V3.1_bf16.safetensors",
-   "gb": 26.28,
-   "sha256": "1e02062cac51ed6ea22cd4b31c7e88fb3e2ea6f750948ef2b091b07c0c031595",
-   "profile": "krea2",
-   "format": "bf16",
-   "names": [
-    "Krealism_V3.1_bf16.safetensors",
-    "krealism_v31TurboBf16.safetensors"
-   ]
-  },
-  {
-   "family": "Krealism",
-   "file": "Krealism_V3.1_fp8.safetensors",
-   "repo": "Lonecatone23/Krealism",
-   "path": "Krealism_V3.1_fp8.safetensors",
-   "gb": 14.13,
-   "sha256": "fadea114dfc0f9a1a9583642026b4433e603c345379adf07810db118704c4f31",
-   "profile": "krea2",
-   "format": "fp8_scaled",
-   "names": [
-    "Krealism_V3.1_fp8.safetensors",
-    "krealism_v31TurboFP8.safetensors"
-   ]
-  },
-  {
-   "family": "Krealism",
-   "file": "Krealism_V3.1_int8_convrot.safetensors",
-   "repo": "Lonecatone23/Krealism",
-   "path": "Krealism_V3.1_int8_convrot.safetensors",
-   "gb": 14.13,
-   "sha256": "38fee0473ca7082852d7428fb6afca0293cc33742cd67e9f692a091b7804e6dc",
-   "profile": "krea2",
-   "format": "int8_convrot",
-   "names": [
-    "Krealism_V3.1_int8_convrot.safetensors",
-    "krealism_v31TurboInt8Convrot.safetensors"
-   ]
-  },
-  {
-   "family": "Krealism",
-   "file": "Krealism_V3.1_nvfp4.safetensors",
-   "repo": "Lonecatone23/Krealism",
-   "path": "Krealism_V3.1_nvfp4.safetensors",
-   "gb": 8.81,
-   "sha256": "3042da5cb6bf8a000396ffb895ad6e4f1ce55742ae350cbebf8fc7d98e6de4f8",
-   "profile": "krea2",
-   "format": "nvfp4",
-   "names": [
-    "Krealism_V3.1_nvfp4.safetensors",
-    "krealism_v31TurboNvfp4.safetensors"
-   ]
-  },
-  {
-   "family": "Krealism",
-   "file": "krealism_v10Turbo-q8_0.gguf",
-   "repo": "Lonecatone23/Krealism",
-   "path": "krealism_v10Turbo-q8_0.gguf",
-   "gb": 15.57,
-   "sha256": "b5914fe22b3f454f33c54dd4a2f65d1d094ece7e6664c462c30530e59dbddef1",
-   "profile": "krea2",
-   "format": "gguf_q8_0",
-   "names": [
-    "krealism_v10Turbo-q8_0.gguf",
-    "krealism_v10TurboQ80Gguf.gguf"
-   ]
-  },
-  {
-   "family": "Animosity",
-   "file": "animosity_animaV20Base.safetensors",
-   "repo": "Lonecatone23/Animosity",
-   "path": "anima/animosity_animaV20Base.safetensors",
-   "gb": 4.18,
-   "sha256": "d1daf049ed2b60b718fce9fd7b3ee207f1fadcfc1fd553d1cb4ce3f155587ef7",
-   "profile": "anima",
-   "format": "bf16",
-   "names": [
-    "animosity_animaV20Base.safetensors"
-   ]
-  },
-  {
-   "family": "Animosity",
-   "file": "Animosity_Krea2_V1.0.safetensors",
-   "repo": "Lonecatone23/Animosity",
-   "path": "krea2/Animosity_Krea2_V1.0.safetensors",
-   "gb": 26.28,
-   "sha256": "40d0a9864ef334d6622bff8779fc54fc0159191413a12cc0fcca97083ba59ba2",
-   "profile": "krea2",
-   "format": "bf16",
-   "names": [
-    "Animosity_Krea2_V1.0.safetensors",
-    "animosity_krea2Ver10Turbo.safetensors"
-   ]
-  },
-  {
-   "family": "Animosity",
-   "file": "Animosity_Krea2_V1.0_int8_convrot.safetensors",
-   "repo": "Lonecatone23/Animosity",
-   "path": "krea2/Animosity_Krea2_V1.0_int8_convrot.safetensors",
-   "gb": 14.13,
-   "sha256": "e8acdb9bed67c55cb4d97d995a4f288b981a254df3303c4ae2eb6b573eef2ca9",
-   "profile": "krea2",
-   "format": "int8_convrot",
-   "names": [
-    "Animosity_Krea2_V1.0_int8_convrot.safetensors",
-    "animosity_krea2V10Int8Convrot.safetensors"
-   ]
-  },
-  {
-   "family": "Animosity",
-   "file": "Animosity_krea2_V1.0-q8_0.gguf",
-   "repo": "Lonecatone23/Animosity",
-   "path": "krea2/Animosity_krea2_V1.0-q8_0.gguf",
-   "gb": 15.57,
-   "sha256": "e152b7b0cd6e095ce0399d914e00fb2f87ccb323a6fd2741c54c47840b88055d",
-   "profile": "krea2",
-   "format": "gguf_q8_0",
-   "names": [
-    "Animosity_krea2_V1.0-q8_0.gguf",
-    "animosity_krea2Turbov10Q80Gguf.gguf"
-   ]
-  },
-  {
-   "family": "Animosity",
-   "file": "Krea-Animosity_V1.0-fp8.safetensors",
-   "repo": "Lonecatone23/Animosity",
-   "path": "krea2/Krea-Animosity_V1.0-fp8.safetensors",
-   "gb": 14.13,
-   "sha256": "22a402254c4f805b9d4e2dc1abd7dcc027b7710c7e32fa358aab5a227e42eec6",
-   "profile": "krea2",
-   "format": "fp8_scaled",
-   "names": [
-    "animosity_krea2Ver10FP8.safetensors",
-    "Krea-Animosity_V1.0-fp8.safetensors"
-   ]
-  }
- ]
+  "note": "Lonecat's own models. A workflow that saved one of these names gets it downloaded from Hugging Face on the first run. \"featured\" ones are also offered at the top of the picker's downloads for their base model.",
+  "models": [
+    {
+      "family": "Krealism",
+      "file": "Krealism_V1.0-fp8.safetensors",
+      "repo": "Lonecatone23/Krealism",
+      "path": "Krealism_V1.0-fp8.safetensors",
+      "gb": 14.13,
+      "sha256": "2e0a0fe0e25755e2a4a7140aec8da7c061b2f9995c9f48cd37be0e0177eabfc8",
+      "profile": "krea2",
+      "format": "fp8_scaled",
+      "names": [
+        "Krealism_V1.0-fp8.safetensors",
+        "krealism_v10TurboFP8.safetensors"
+      ]
+    },
+    {
+      "family": "Krealism",
+      "file": "Krealism_V1.0-nvfp4.safetensors",
+      "repo": "Lonecatone23/Krealism",
+      "path": "Krealism_V1.0-nvfp4.safetensors",
+      "gb": 8.81,
+      "sha256": "cef0ed66f283d3425abf40ad670111d149589cab4e8ed912044381903d86225d",
+      "profile": "krea2",
+      "format": "nvfp4",
+      "names": [
+        "Krealism_V1.0-nvfp4.safetensors",
+        "krealism_v10TurboNvfp4.safetensors"
+      ]
+    },
+    {
+      "family": "Krealism",
+      "file": "Krealism_V1.0.safetensors",
+      "repo": "Lonecatone23/Krealism",
+      "path": "Krealism_V1.0.safetensors",
+      "gb": 26.28,
+      "sha256": "d8094c1b88ff9b590c15c9ec465135fc562f9905049ce046597540abe27f2eca",
+      "profile": "krea2",
+      "format": "bf16",
+      "names": [
+        "Krealism_V1.0.safetensors",
+        "Krealism_V1.0_bf16.safetensors",
+        "krealism_v10TurboBf16.safetensors"
+      ]
+    },
+    {
+      "family": "Krealism",
+      "file": "Krealism_V1.0_int8_convrot.safetensors",
+      "repo": "Lonecatone23/Krealism",
+      "path": "Krealism_V1.0_int8_convrot.safetensors",
+      "gb": 12.83,
+      "sha256": "0921e72184415f38bfcbe6858ec8b18c6f27f833e6bf62e919540ddf4743ad55",
+      "profile": "krea2",
+      "format": "int8_convrot",
+      "names": [
+        "Krealism_V1.0_int8_convrot.safetensors",
+        "krealism_v10TurboInt8Convrot.safetensors"
+      ]
+    },
+    {
+      "family": "Krealism",
+      "file": "Krealism_V3.1_bf16.safetensors",
+      "repo": "Lonecatone23/Krealism",
+      "path": "Krealism_V3.1_bf16.safetensors",
+      "gb": 26.28,
+      "sha256": "1e02062cac51ed6ea22cd4b31c7e88fb3e2ea6f750948ef2b091b07c0c031595",
+      "profile": "krea2",
+      "format": "bf16",
+      "names": [
+        "Krealism_V3.1_bf16.safetensors",
+        "krealism_v31TurboBf16.safetensors"
+      ],
+      "featured": true
+    },
+    {
+      "family": "Krealism",
+      "file": "Krealism_V3.1_fp8.safetensors",
+      "repo": "Lonecatone23/Krealism",
+      "path": "Krealism_V3.1_fp8.safetensors",
+      "gb": 14.13,
+      "sha256": "6f3f4528ba8bbbe4d166faeb3251d2e506b6c00f86f5d132abc2e9d694497806",
+      "profile": "krea2",
+      "format": "fp8_scaled",
+      "names": [
+        "Krealism_V3.1_fp8.safetensors",
+        "krealism_v31TurboFP8.safetensors"
+      ],
+      "featured": true
+    },
+    {
+      "family": "Krealism",
+      "file": "Krealism_V3.1_int8_convrot.safetensors",
+      "repo": "Lonecatone23/Krealism",
+      "path": "Krealism_V3.1_int8_convrot.safetensors",
+      "gb": 14.13,
+      "sha256": "38fee0473ca7082852d7428fb6afca0293cc33742cd67e9f692a091b7804e6dc",
+      "profile": "krea2",
+      "format": "int8_convrot",
+      "names": [
+        "Krealism_V3.1_int8_convrot.safetensors",
+        "krealism_v31TurboInt8Convrot.safetensors"
+      ],
+      "featured": true
+    },
+    {
+      "family": "Krealism",
+      "file": "Krealism_V3.1_mxfp8.safetensors",
+      "repo": "Lonecatone23/Krealism",
+      "path": "Krealism_V3.1_mxfp8.safetensors",
+      "gb": 14.51,
+      "sha256": "672a0428cd6922777c27160087bcf5202267e9411365891a352f4b2df1c64f10",
+      "profile": "krea2",
+      "format": "mxfp8",
+      "names": [
+        "Krealism_V3.1_mxfp8.safetensors"
+      ],
+      "featured": true
+    },
+    {
+      "family": "Krealism",
+      "file": "Krealism_V3.1_nvfp4.safetensors",
+      "repo": "Lonecatone23/Krealism",
+      "path": "Krealism_V3.1_nvfp4.safetensors",
+      "gb": 8.81,
+      "sha256": "3042da5cb6bf8a000396ffb895ad6e4f1ce55742ae350cbebf8fc7d98e6de4f8",
+      "profile": "krea2",
+      "format": "nvfp4",
+      "names": [
+        "Krealism_V3.1_nvfp4.safetensors",
+        "krealism_v31TurboNvfp4.safetensors"
+      ],
+      "featured": true
+    },
+    {
+      "family": "Krealism",
+      "file": "Krealism_V3.1_w4a8.safetensors",
+      "repo": "Lonecatone23/Krealism",
+      "path": "Krealism_V3.1_w4a8.safetensors",
+      "gb": 8.81,
+      "sha256": "e4078029c9a7cda7dbec9276c776073f2c9791d6ddd2b5d1f05cc5b601dad245",
+      "profile": "krea2",
+      "format": "w4a8",
+      "names": [
+        "Krealism_V3.1_w4a8.safetensors"
+      ],
+      "featured": true
+    },
+    {
+      "family": "Krealism",
+      "file": "krealism_v10Turbo-q8_0.gguf",
+      "repo": "Lonecatone23/Krealism",
+      "path": "krealism_v10Turbo-q8_0.gguf",
+      "gb": 15.57,
+      "sha256": "b5914fe22b3f454f33c54dd4a2f65d1d094ece7e6664c462c30530e59dbddef1",
+      "profile": "krea2",
+      "format": "gguf_q8_0",
+      "names": [
+        "krealism_v10Turbo-q8_0.gguf",
+        "krealism_v10TurboQ80Gguf.gguf"
+      ]
+    },
+    {
+      "family": "Animosity",
+      "file": "animosity_animaV20Base.safetensors",
+      "repo": "Lonecatone23/Animosity",
+      "path": "anima/animosity_animaV20Base.safetensors",
+      "gb": 4.18,
+      "sha256": "d1daf049ed2b60b718fce9fd7b3ee207f1fadcfc1fd553d1cb4ce3f155587ef7",
+      "profile": "anima",
+      "format": "bf16",
+      "names": [
+        "animosity_animaV20Base.safetensors"
+      ]
+    },
+    {
+      "family": "Animosity",
+      "file": "Animosity_Illustrious_v1.1.safetensors",
+      "repo": "Lonecatone23/Animosity",
+      "path": "illustrious/Animosity_Illustrious_v1.1.safetensors",
+      "gb": 7.25,
+      "sha256": "02548d80f16aaa290f16ce89d8dccd90b38f794300c414dce9d735de6a35fd34",
+      "profile": "illustrious",
+      "format": "fp16",
+      "names": [
+        "Animosity_Illustrious_v1.1.safetensors",
+        "animosity_illustriousV11.safetensors"
+      ],
+      "folder": "checkpoints"
+    },
+    {
+      "family": "Animosity",
+      "file": "Animosity_Krea2_V1.0.safetensors",
+      "repo": "Lonecatone23/Animosity",
+      "path": "krea2/Animosity_Krea2_V1.0.safetensors",
+      "gb": 26.28,
+      "sha256": "40d0a9864ef334d6622bff8779fc54fc0159191413a12cc0fcca97083ba59ba2",
+      "profile": "krea2",
+      "format": "bf16",
+      "names": [
+        "Animosity_Krea2_V1.0.safetensors",
+        "animosity_krea2Ver10Turbo.safetensors"
+      ]
+    },
+    {
+      "family": "Animosity",
+      "file": "Animosity_Krea2_V1.0_int8_convrot.safetensors",
+      "repo": "Lonecatone23/Animosity",
+      "path": "krea2/Animosity_Krea2_V1.0_int8_convrot.safetensors",
+      "gb": 14.13,
+      "sha256": "148e68835a5cea90c9a68a6b524766733ecf2b65c504b4f32fd217f615701eae",
+      "profile": "krea2",
+      "format": "int8_convrot",
+      "names": [
+        "Animosity_Krea2_V1.0_int8_convrot.safetensors",
+        "animosity_krea2V10Int8Convrot.safetensors"
+      ]
+    },
+    {
+      "family": "Animosity",
+      "file": "Animosity_krea2_V1.0-q8_0.gguf",
+      "repo": "Lonecatone23/Animosity",
+      "path": "krea2/Animosity_krea2_V1.0-q8_0.gguf",
+      "gb": 15.57,
+      "sha256": "e152b7b0cd6e095ce0399d914e00fb2f87ccb323a6fd2741c54c47840b88055d",
+      "profile": "krea2",
+      "format": "gguf_q8_0",
+      "names": [
+        "Animosity_krea2_V1.0-q8_0.gguf",
+        "animosity_krea2Turbov10Q80Gguf.gguf"
+      ]
+    },
+    {
+      "family": "Animosity",
+      "file": "Krea-Animosity_V1.0-fp8.safetensors",
+      "repo": "Lonecatone23/Animosity",
+      "path": "krea2/Krea-Animosity_V1.0-fp8.safetensors",
+      "gb": 14.13,
+      "sha256": "693aab0bcfd3b3871a79ad943b37dade1383adcc8ccdc2d855a7e153ef40b7bb",
+      "profile": "krea2",
+      "format": "fp8_scaled",
+      "names": [
+        "animosity_krea2Ver10FP8.safetensors",
+        "Krea-Animosity_V1.0-fp8.safetensors"
+      ]
+    }
+  ]
 }

@@ -1,9 +1,10 @@
 {
  "id": "flux2_klein_9b",
- "name": "Flux.2 Klein base 9B",
+ "name": "Flux.2 Klein 9B (Base)",
  "kind": "image",
  "params_b": 9,
  "notes": [
+  "The undistilled base: real cfg (about 5) and about 20 steps, a negative pass every step. Most people want Flux.2 Klein 9B (Distilled); Base is for training LoRAs.",
   "BFL's own bf16 / nvfp4 repos are gated (accept the license on Hugging Face).",
   "bf16 measured with unsloth's BF16 GGUF (same weights)."
  ],

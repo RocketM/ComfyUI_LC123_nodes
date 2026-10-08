@@ -364,22 +364,33 @@ def _process_frame(
     # --- Highlights (0 = no change). Soft compress brights ---
     hi = float(np.clip(highlights, 0, 1))
     if hi > 1e-5:
+        # Reinhard soft knee on luma, applied as a ratio so colour stays put. Monotonic: a brighter pixel always stays
+        # brighter (the old t^2 squeeze turned 1.0 darker than 0.85 at full strength), and it rolls toward 1, never clips.
         y = np.clip(_luma(lin), 0, None)
-        t = np.clip((y - 0.55) / 0.45, 0, 1)
-        compress = (t * t) * hi * 0.40
-        lin = lin * (1.0 - compress[..., None])
+        k = 1.0 - 0.45 * hi  # knee starts at 0.55 at full strength, as before
+        t = np.maximum(y - k, 0.0) / (1.0 - k)
+        y_new = np.where(y > k, k + (1.0 - k) * t / (1.0 + t), y)
+        lin = lin * ((y_new + 1e-6) / (y + 1e-6))[..., None]
 
     # --- Local HDR (0 = off) ---
     hl = float(np.clip(hdr_local, 0, 1))
     if hl > 1e-5:
-        y = np.clip(_luma(lin), 0, None)
-        r = max(2, min(28, int(min(h, w) * 0.028)))
-        yb = _box_blur(y, r)
-        detail = y - yb
-        y_new = yb + detail * (1.0 - 0.45 * hl)
-        # open shadows a touch via local mean
-        y_new = y_new + hl * 0.12 * (1.0 - np.clip(yb / 0.4, 0, 1))
-        ratio = np.clip((y_new + 1e-5) / (y + 1e-5), 0.65, 1.5)
+        # Durand-style local tone mapping (after ComfyUI-CameraForensicRealism, re-written): split log brightness into
+        # a broad base and the detail on top, compress only the base around its mean (local shadows up, local
+        # highlights down) and pass the detail through untouched, so texture never flattens. The base comes from
+        # an edge-aware guided filter, so bright edges do not grow halos; its reach scales with the frame.
+        import torch
+        from .lc_guided import guided
+        y = np.maximum(_luma(lin), 1e-6)
+        ly = torch.from_numpy(np.log2(y).astype(np.float32))[None, None]
+        r = max(4, int(min(h, w) * 0.05))
+        base = guided(ly, ly, r, 0.5)[0, 0].numpy()
+        detail = np.log2(y) - base
+        mean = float(base.mean())
+        new_log = mean + (base - mean) * (1.0 - 0.45 * hl) + detail
+        y_new = np.exp2(new_log)
+        y_new *= float(y.mean()) / max(1e-6, float(y_new.mean()))  # same overall brightness: the presets were tuned on it
+        ratio = np.clip(y_new / y, 0.35, 2.8)
         lin = lin * ratio[..., None]
 
     lin = np.clip(lin, 0, 1.25)
@@ -388,19 +399,9 @@ def _process_frame(
     # --- Vibrance (0 = no change; negative desaturates muted colors) ---
     vib = float(np.clip(vibrance, -1, 1))
     if abs(vib) > 1e-5:
-        rch, gch, bch = rgb[..., 0], rgb[..., 1], rgb[..., 2]
-        mx = np.maximum(np.maximum(rch, gch), bch)
-        mn = np.minimum(np.minimum(rch, gch), bch)
-        chroma = mx - mn
-        weight = (1.0 - np.clip(chroma * 2.0, 0, 1)) * abs(vib) * 0.7
-        skin = _skin_w(rgb) * float(np.clip(skin_protect, 0, 1))
-        weight = weight * (1.0 - 0.9 * skin)
-        mean = rgb.mean(axis=-1, keepdims=True)
-        if vib >= 0:
-            rgb = mean + (rgb - mean) * (1.0 + weight[..., None])
-        else:
-            rgb = mean + (rgb - mean) * (1.0 - weight[..., None])
-        rgb = np.clip(rgb, 0, 1)
+        # chroma scaled in Oklab (hue-safe, Oklab skin detection, gamut-mapped instead of clipped)
+        from .lc_oklab import vibrance_signed
+        rgb = vibrance_signed(rgb, vib, float(np.clip(skin_protect, 0, 1)))
 
     # --- Split tone (0 = off); skip pure blacks ---
     y = 0.2126 * rgb[..., 0] + 0.7152 * rgb[..., 1] + 0.0722 * rgb[..., 2]

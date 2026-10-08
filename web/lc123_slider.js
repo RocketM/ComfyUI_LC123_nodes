@@ -458,6 +458,12 @@ app.registerExtension({
       };
     }
 
+    // Connection FX: the socket stays "*", but the value is an INT at 0 decimals and a FLOAT otherwise
+    nodeType.prototype.lcFxType = function (isInput) {
+      if (isInput) return null;
+      return readConfig(this).decimals > 0 ? "FLOAT" : "INT";
+    };
+
     const onNodeCreated = nodeType.prototype.onNodeCreated;
     nodeType.prototype.onNodeCreated = function () {
       onNodeCreated?.apply(this, arguments);

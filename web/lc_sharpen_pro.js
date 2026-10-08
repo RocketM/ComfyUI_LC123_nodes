@@ -8,19 +8,19 @@ const TYPE = "LCClarity";
 
 const PRESETS = {
   // Realism: capture sharpening, a little texture
-  Natural: { clarity: 0.3, sharpen: 0.35, strength: 1.0, halo: 0.6, skin_protect: 0.5, radius: 0.35, blend_mode: "Soft Light", shadow_protect: 0.25, highlight_protect: 0.25, texture: 0.25 },
-  Subtle: { clarity: 0.15, sharpen: 0.25, strength: 1.0, halo: 0.7, skin_protect: 0.5, radius: 0.35, blend_mode: "Soft Light", shadow_protect: 0.25, highlight_protect: 0.25, texture: 0.1 },
-  Portrait: { clarity: 0.2, sharpen: 0.3, strength: 1.0, halo: 0.7, skin_protect: 0.8, radius: 0.4, blend_mode: "Soft Light", shadow_protect: 0.35, highlight_protect: 0.35, texture: 0.1 },
+  Natural: { clarity: 0.3, sharpen: 0.35, strength: 0.7, halo: 0.6, skin_protect: 0.5, radius: 0.35, blend_mode: "Soft Light", shadow_protect: 0.25, highlight_protect: 0.25, texture: 0.25 },
+  Subtle: { clarity: 0.15, sharpen: 0.25, strength: 0.7, halo: 0.7, skin_protect: 0.5, radius: 0.35, blend_mode: "Soft Light", shadow_protect: 0.25, highlight_protect: 0.25, texture: 0.1 },
+  Portrait: { clarity: 0.2, sharpen: 0.3, strength: 0.7, halo: 0.7, skin_protect: 0.8, radius: 0.4, blend_mode: "Soft Light", shadow_protect: 0.35, highlight_protect: 0.35, texture: 0.1 },
   // Hard surfaces and fabric
-  Product: { clarity: 0.4, sharpen: 0.5, strength: 1.0, halo: 0.55, skin_protect: 0.1, radius: 0.3, blend_mode: "Soft Light", shadow_protect: 0.2, highlight_protect: 0.2, texture: 0.35 },
-  Landscape: { clarity: 0.5, sharpen: 0.45, strength: 1.0, halo: 0.5, skin_protect: 0.1, radius: 0.45, blend_mode: "Overlay", shadow_protect: 0.15, highlight_protect: 0.2, texture: 0.45 },
-  Crisp: { clarity: 0.2, sharpen: 0.7, strength: 1.0, halo: 0.5, skin_protect: 0.4, radius: 0.2, blend_mode: "Soft Light", shadow_protect: 0.25, highlight_protect: 0.25, texture: 0.2 },
+  Product: { clarity: 0.4, sharpen: 0.5, strength: 0.7, halo: 0.55, skin_protect: 0.1, radius: 0.3, blend_mode: "Soft Light", shadow_protect: 0.2, highlight_protect: 0.2, texture: 0.35 },
+  Landscape: { clarity: 0.5, sharpen: 0.45, strength: 0.7, halo: 0.5, skin_protect: 0.1, radius: 0.45, blend_mode: "Overlay", shadow_protect: 0.15, highlight_protect: 0.2, texture: 0.45 },
+  Crisp: { clarity: 0.2, sharpen: 0.7, strength: 0.7, halo: 0.5, skin_protect: 0.4, radius: 0.2, blend_mode: "Soft Light", shadow_protect: 0.25, highlight_protect: 0.25, texture: 0.2 },
   // Line art and sketches: crisp lines, no skin logic
-  Lineart: { clarity: 0.1, sharpen: 0.85, strength: 1.0, halo: 0.3, skin_protect: 0.0, radius: 0.1, blend_mode: "Overlay", shadow_protect: 0.05, highlight_protect: 0.1, texture: 0.05 },
+  Lineart: { clarity: 0.1, sharpen: 0.85, strength: 0.7, halo: 0.3, skin_protect: 0.0, radius: 0.1, blend_mode: "Overlay", shadow_protect: 0.05, highlight_protect: 0.1, texture: 0.05 },
   // Anime: clean lines, flat fills stay flat
-  "Anime sharp": { clarity: 0.35, sharpen: 0.65, strength: 1.0, halo: 0.45, skin_protect: 0.0, radius: 0.2, blend_mode: "Overlay", shadow_protect: 0.1, highlight_protect: 0.15, texture: 0.1 },
+  "Anime sharp": { clarity: 0.35, sharpen: 0.65, strength: 0.7, halo: 0.45, skin_protect: 0.0, radius: 0.2, blend_mode: "Overlay", shadow_protect: 0.1, highlight_protect: 0.15, texture: 0.1 },
   // Painted and semi-real illustration: lines plus texture
-  Illustration: { clarity: 0.3, sharpen: 0.5, strength: 1.0, halo: 0.5, skin_protect: 0.0, radius: 0.3, blend_mode: "Soft Light", shadow_protect: 0.15, highlight_protect: 0.15, texture: 0.35 },
+  Illustration: { clarity: 0.3, sharpen: 0.5, strength: 0.7, halo: 0.5, skin_protect: 0.0, radius: 0.3, blend_mode: "Soft Light", shadow_protect: 0.15, highlight_protect: 0.15, texture: 0.35 },
   Custom: null,
 };
 

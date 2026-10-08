@@ -3,6 +3,7 @@
 // LC Optimizer node reads to pick the best settings per model. Nothing is changed.
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
+import { addCsvButton } from "./lc_report_csv.js";
 
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch]);
 const ICON = { 3: "⚠️", 2: "✅", 1: "💡", 0: "ℹ️", "-1": "➖" };
@@ -62,6 +63,7 @@ function sinceLast(prev, now, h, lines) {
   lines.push("", `Since the last run (${prev.when}):`);
   h.push(`<div style="color:#9aa3ad;font-size:12px;margin-bottom:4px">Grey = under 10%, which is normal run-to-run noise. Green = better, red = worse.</div>`);
   h.push(`<table style="width:100%;border-collapse:collapse;margin-bottom:8px;font-size:12px"><tr style="color:#9aa3ad;text-align:left"><th>Measured</th><th>Last run → this run</th></tr>`);
+  const bigDrop = [];
   for (const [k, b] of Object.entries(now.nums)) {
     const a = prev.snap.nums?.[k];
     if (a == null || b == null) continue;
@@ -70,8 +72,15 @@ function sinceLast(prev, now, h, lines) {
     const col = Math.abs(pct) < 10 ? "#9aa3ad" : good ? "#86efac" : "#f87171";
     h.push(`<tr><td>${esc(k)}</td><td style="color:${col}">${a} → ${b} (${pct > 0 ? "+" : ""}${pct}%)</td></tr>`);
     lines.push(`${k}: ${a} → ${b} (${pct > 0 ? "+" : ""}${pct}%)`);
+    if (!good && Math.abs(pct) >= 40) bigDrop.push(k);
   }
   h.push(`</table>`);
+  // a drop this big is almost never the card: something else was using the GPU while the tests ran
+  if (bigDrop.length) {
+    const msg = `⚠️ ${bigDrop.join(", ")} dropped 40% or more. That usually means something else was using the graphics card during the test (a generation, a game, a browser video). Run the report again with ComfyUI idle before trusting these numbers.`;
+    h.push(`<div style="margin:2px 0 6px 10px;color:#fbbf24">${esc(msg)}</div>`);
+    lines.push(msg);
+  }
   const changed = Object.entries(now.facts).filter(([k, v]) => (prev.snap.facts?.[k] ?? "") !== (v ?? ""));
   for (const [k, v] of changed) {
     h.push(`<div style="margin:2px 0 2px 10px;color:#fbbf24">Changed: <b>${esc(k)}</b>: ${esc(prev.snap.facts?.[k] || "none")} → ${esc(v || "none")}</div>`);
@@ -266,7 +275,7 @@ async function glance(root, goal) {
     const d = r.picks.find((p) => p.role === "diffusion");
     const te = r.picks.find((p) => p.role === "text_encoder");
     if (!d) return;
-    const link = (p) => (p.repo ? `<a href="https://huggingface.co/${esc(p.repo)}" target="_blank" rel="noopener" style="color:#60a5fa">${esc(p.file)}</a>` : esc(p.file)) + (p.on_disk ? " ✅" : "");
+    const link = (p) => (p.repo ? `<a href="https://huggingface.co/${esc(p.repo)}" target="_blank" rel="noopener" style="color:#60a5fa">${esc(p.display || p.file)}</a>` : esc(p.file)) + (p.on_disk ? " ✅" : "");
     const q = d.lpips_measured === "reference" ? (d.format && d.format !== "bf16" ? `reference (${esc(d.format.split("_")[0])})` : "bf16") : d.lpips === 0 && d.lpips_measured === true ? "bf16" : `${d.lpips}`;
     const tm = d.total_s != null ? `~${d.total_s} s <span style="color:#9aa3ad">(${d.steps} steps, ${d.at_mp} MP)</span>` : `<span style="color:#9aa3ad">not measured</span>`;
     h.push(`<tr style="border-top:1px solid #2d333b;vertical-align:top"><td style="padding:4px 8px 4px 0">${esc(r.name)}</td><td>${link(d)}</td><td>${d.gb} GB</td><td>${q}</td><td>${tm}</td><td>${te ? link(te) : ""}</td></tr>`);
@@ -278,7 +287,7 @@ async function glance(root, goal) {
 function recTable(r) {
   const h = [`<table style="width:100%;border-collapse:collapse;font-size:12px;color:#dfe3e8"><tr style="color:#9aa3ad;text-align:left"><th>Part</th><th>File</th><th>Size</th><th>Quality vs bf16</th><th>Speed on this machine</th><th>Fits</th></tr>`];
   for (const p of r.picks) {
-    const link = p.repo ? `<a href="https://huggingface.co/${esc(p.repo)}" target="_blank" rel="noopener" style="color:#60a5fa">${esc(p.file)}</a>` : esc(p.file);
+    const link = p.repo ? `<a href="https://huggingface.co/${esc(p.repo)}" target="_blank" rel="noopener" style="color:#60a5fa">${esc(p.display || p.file)}</a>` : esc(p.file);
     const have = p.on_disk ? ` <span style="color:#86efac">✅ you have it</span>` : "";
     let q = "";
     if (p.role !== "fixed") {
@@ -372,6 +381,7 @@ function openWindow(opts = {}) {
   const recState = {};
   box.querySelector(".lc-sys-copy").onclick = () => navigator.clipboard?.writeText(text + (recState.rec || ""));
   box.querySelector(".lc-sys-again").onclick = () => go();
+  addCsvButton(box, ".lc-sys-copy", ".lc-sys-body", "System and Model Optimization Report");
 
   async function go() {
     if (running) return;

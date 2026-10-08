@@ -15,6 +15,20 @@ import folder_paths
 import os
 import json
 
+import torch.nn.functional as F
+
+DISPLAY_EDGE = 2048  # the on-node view never needs more; a 20 MP upscale saved full size took seconds to write and load
+
+
+def _display(images):
+    """Copy for the node's view only, long side at most DISPLAY_EDGE. The pass-through output stays full size."""
+    h, w = images.shape[1], images.shape[2]
+    s = DISPLAY_EDGE / max(h, w)
+    if s >= 1:
+        return images
+    size = (max(1, round(h * s)), max(1, round(w * s)))
+    return F.interpolate(images.movedim(-1, 1).float(), size=size, mode="area").movedim(1, -1).clamp(0, 1)
+
 
 class LCBatchImageComparer(PreviewImage):
     """Compare two images (or batch pairs) with a stable layout and dropdown selector."""
@@ -59,7 +73,7 @@ class LCBatchImageComparer(PreviewImage):
 
         if image_a is not None and len(image_a) > 0:
             saved = self.save_images(
-                image_a,
+                _display(image_a),
                 filename_prefix=filename_prefix + "a_",
                 prompt=prompt,
                 extra_pnginfo=extra_pnginfo,
@@ -68,7 +82,7 @@ class LCBatchImageComparer(PreviewImage):
 
         if image_b is not None and len(image_b) > 0:
             saved = self.save_images(
-                image_b,
+                _display(image_b),
                 filename_prefix=filename_prefix + "b_",
                 prompt=prompt,
                 extra_pnginfo=extra_pnginfo,

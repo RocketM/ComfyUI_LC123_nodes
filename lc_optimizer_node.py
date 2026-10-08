@@ -28,6 +28,8 @@ QWEN_TIP = ("Qwen-Image 2.1 only (Qwen Image 2.1 Cache): where the KV cache live
             "but roughly doubles the per-step error. RAM costs little speed. off = slowest.")
 ROLES_IMAGE = ["model", "clip", "vae"]
 ROLES_VIDEO = ["model", "clip", "vae", "audio_vae", "upscaler", "lora"]
+CLIP_TIP = ("Custom only: how the text encoder is loaded (CLIPLoader's type). auto = from the encoder's shape when it "
+            "matches one known base model. Ignored for the other base models and for a checkpoint's own encoder.")
 WIDGET_OF = {"model": "model_file", "clip": "text_encoder", "vae": "vae", "audio_vae": "audio_vae", "upscaler": "latent_upscaler", "lora": "lora"}
 
 
@@ -44,21 +46,27 @@ DESC_IMAGE = (
     "that actually work on it (Sage, Comfy Kitchen, etc.).\n"
     "Run the report with the button below, or from the LC123 settings.\n"
     "Missing a file? Pick a ⬇ entry and it downloads on the first run.\n"
-    "Custom models work too. Pick your own file and it still gets the speed-ups, plus a ⚠️ if the text encoder or VAE doesn't match.\n"
-    "Current available models: Krea 2, Qwen-Image 2.1, Z-Image Turbo, Flux.2 Klein 9B, Ideogram 4, Anima."
+    "Finetunes work too. Pick your own file and it still gets the speed-ups, plus a ⚠️ if the text encoder or VAE doesn't match.\n"
+    "Any other model: set the base model to Custom and pick your own files (and the text encoder type). The speed-ups "
+    "still apply; recommendations, estimates and checks show as unsupported.\n"
+    "Current available models: Krea 2, Krea 2 (Raw), Qwen-Image 2.1, Z-Image Turbo, Flux.2 Klein 9B (Distilled and Base), Ideogram 4, Anima, "
+    "SDXL, Illustrious, Pony, Custom."
 )
 DESC_VIDEO = (
     "This node analyzes your machine and loads the model, text encoder, video and audio VAE and latent upscaler that suit "
     "YOUR card, with the speed-ups that actually work on it (Sage, Comfy Kitchen, etc.).\n"
     "Run the report with the button below, or from the LC123 settings.\n"
     "Missing a file? Pick a ⬇ entry and it downloads on the first run.\n"
-    "Custom models work too. Pick your own file and it still gets the speed-ups, plus a ⚠️ if the text encoder or VAE doesn't match.\n"
-    "Current available models: MiniMax H3, LTX 2.5, LTX 2.3."
+    "Finetunes work too. Pick your own file and it still gets the speed-ups, plus a ⚠️ if the text encoder or VAE doesn't match.\n"
+    "Any other model: set the base model to Custom and pick your own files (and the text encoder type). The speed-ups "
+    "still apply; recommendations, estimates and checks show as unsupported.\n"
+    "Current available models: MiniMax H3, LTX 2.5, LTX 2.3, Custom."
 )
 
 
 class _LCOptimizerBase:
     KIND = "image"
+    DEFAULT_BASE = "Krea 2 (Turbo)"  # a new node starts on Krea 2
     ROLES = ROLES_IMAGE
     PIPE = False
     CATEGORY = "LC123/optimizer"
@@ -68,7 +76,8 @@ class _LCOptimizerBase:
     def INPUT_TYPES(cls):
         names = [n for _, n in E.base_names(cls.KIND)] or ["(no profiles)"]
         req = {
-            "base_model": (names, {"tooltip": "The model family. Picks the recommended files and the checks."}),
+            "base_model": (names, {"default": cls.DEFAULT_BASE if cls.DEFAULT_BASE in names else names[0],
+                                   "tooltip": "The model family. Picks the recommended files and the checks."}),
             "goal": (E.GOALS, {"default": "Optimal", "tooltip": "Quality = closest to bf16. Optimal = fast and near identical. Fast = fastest that still looks right."}),
         }
         for role in cls.ROLES:
@@ -80,6 +89,7 @@ class _LCOptimizerBase:
             req[k] = (opts, {"default": d, "tooltip": tip})
         if cls.KIND == "image":  # last, so saved workflows keep their widget order
             req["qwen21_cache"] = (["auto"] + list(E.QWEN_CACHE), {"default": "auto", "tooltip": QWEN_TIP})
+        req["clip_type"] = (E.clip_types(cls.KIND), {"default": E.CLIP_AUTO, "tooltip": CLIP_TIP})  # last: Custom only
         return {"required": req}
 
     @classmethod
@@ -94,6 +104,7 @@ class _LCOptimizerBase:
 
     # ------------------------------------------------------------------
     def _profile_id(self, base_model):
+        base_model = E.LEGACY_BASE.get(base_model, base_model)
         for pid, name in E.base_names(self.KIND):
             if name == base_model:
                 return pid
@@ -113,9 +124,11 @@ class _LCOptimizerBase:
                 swap[WIDGET_OF[role]] = r[1]
             return r
 
+        custom = E.is_custom(pid)
         got["model"] = res("model")
         if not got["model"]:
-            raise ValueError("[LC Optimizer] Pick a model file.")
+            raise ValueError("[LC Optimizer] Custom: ★ Recommended is unsupported. Pick your own model file." if custom
+                             else "[LC Optimizer] Pick a model file.")
         folder, name, _ = got["model"]
         model, clip, vae, how = E.load_model(folder, name)
         loaded.append(("model", f"{name} ({how})"))
@@ -128,9 +141,17 @@ class _LCOptimizerBase:
             picks["audio_vae"] = E.FROM_CKPT
         if got.get("clip"):
             f, n, v = got["clip"]
-            ctype = (v or {}).get("clip_type") or next((c.get("clip_type") for c in prof["components"].values() if c["role"] == "text_encoder"), "stable_diffusion")
+            if custom:
+                ctype = kw.get("clip_type") or E.CLIP_AUTO
+                if ctype == E.CLIP_AUTO:
+                    ctype, seen = E.auto_clip_type(E.full_path(f, n))
+                    if not ctype:
+                        raise ValueError("[LC Optimizer] Custom: could not tell how to load this text encoder"
+                                         + (f" (it fits {', '.join(seen)})" if seen else "") + ". Set clip_type on the node.")
+            else:
+                ctype = (v or {}).get("clip_type") or next((c.get("clip_type") for c in prof["components"].values() if c["role"] == "text_encoder"), "stable_diffusion")
             clip = E.load_clip(f, n, ctype, ckpt_name)
-            loaded.append(("clip", n))
+            loaded.append(("clip", f"{n} ({ctype})" if custom else n))
         elif clip is not None:
             loaded.append(("clip", "from the checkpoint"))
         if got.get("vae"):
@@ -204,6 +225,7 @@ class LCOptimizerPipe(_LCOptimizerBase):
 
 class LCOptimizerVideo(_LCOptimizerBase):
     KIND = "video"
+    DEFAULT_BASE = "MiniMax H3 FL2VA"
     ROLES = ROLES_VIDEO
     RETURN_TYPES = ("MODEL", "CLIP", "VAE", "VAE", "LATENT_UPSCALE_MODEL", "STRING")
     RETURN_NAMES = ("model", "clip", "vae", "audio_vae", "latent_upscaler", "summary")
@@ -215,6 +237,7 @@ class LCOptimizerVideo(_LCOptimizerBase):
 
 class LCOptimizerVideoPipe(_LCOptimizerBase):
     KIND = "video"
+    DEFAULT_BASE = "MiniMax H3 FL2VA"
     ROLES = ROLES_VIDEO
     PIPE = True
     RETURN_TYPES = ("LC_PIPE", "MODEL", "CLIP", "VAE", "VAE", "LATENT_UPSCALE_MODEL", "STRING")
@@ -251,7 +274,8 @@ try:
     async def _lc_opt_choices(request):
         q = request.rel_url.query
         kind = q.get("kind", "image")
-        pid = next((p for p, n in E.base_names(kind) if n == q.get("base")), None)
+        base = E.LEGACY_BASE.get(q.get("base"), q.get("base"))
+        pid = next((p for p, n in E.base_names(kind) if n == base), None)
         return web.json_response(E.choices(pid, q.get("role", "model"), q.get("goal", "Optimal")) if pid else {"error": "unknown base model"})
 
     @PromptServer.instance.routes.post("/lc123/optimizer_node/plan")
@@ -260,7 +284,8 @@ try:
 
         body = await request.json()
         kind = body.get("kind", "image")
-        pid = next((p for p, n in E.base_names(kind) if n == body.get("base")), None)
+        base = E.LEGACY_BASE.get(body.get("base"), body.get("base"))
+        pid = next((p for p, n in E.base_names(kind) if n == base), None)
         if not pid:
             return web.json_response({"error": "unknown base model"}, status=400)
         manual = body.get("manual") if body.get("speed_ups") == "Manual" else None

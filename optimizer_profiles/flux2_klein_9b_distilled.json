@@ -1,0 +1,364 @@
+{
+ "id": "flux2_klein_9b_distilled",
+ "name": "Flux.2 Klein 9B (Distilled)",
+ "kind": "image",
+ "params_b": 9,
+ "notes": [
+  "The distilled model most people run: 4 steps at cfg 1 (no negative pass), so a full image takes about 1/10 the time of Base's 20 steps at cfg 5.",
+  "Same text encoder and VAE as Base. BFL's own bf16 / fp8 / nvfp4 repos are gated (accept the license on Hugging Face).",
+  "Only the bf16 file was measured. The other files' speed is Base's time x the cfg 1 cost measured on the RTX 5090 (same network), and their quality comes from Base's files."
+ ],
+ "components": {
+  "diffusion": {
+   "label": "Image model",
+   "role": "diffusion",
+   "variants": [
+    {
+     "file": "flux-2-klein-9b.safetensors",
+     "format": "bf16",
+     "gb": 16.91,
+     "bits": 16,
+     "repo": "black-forest-labs/FLUX.2-klein-9B",
+     "loader": "UNETLoader",
+     "note": "gated"
+    },
+    {
+     "file": "flux-2-klein-9b-BF16.gguf",
+     "format": "gguf_bf16",
+     "gb": 16.91,
+     "bits": 16,
+     "repo": "unsloth/FLUX.2-klein-9B-GGUF",
+     "loader": "UnetLoaderGGUF",
+     "community": true
+    },
+    {
+     "file": "flux-2-klein-9b-fp8.safetensors",
+     "format": "fp8",
+     "gb": 8.78,
+     "bits": 8,
+     "repo": "black-forest-labs/FLUX.2-klein-9b-fp8",
+     "loader": "UNETLoader",
+     "default": true,
+     "note": "gated"
+    },
+    {
+     "file": "flux-2-klein-9b-nvfp4.safetensors",
+     "format": "nvfp4",
+     "gb": 5.36,
+     "bits": 4,
+     "repo": "black-forest-labs/FLUX.2-klein-9b-nvfp4",
+     "loader": "UNETLoader",
+     "note": "gated"
+    },
+    {
+     "file": "flux-2-klein-9b-Q8_0.gguf",
+     "format": "gguf_q8_0",
+     "gb": 9.29,
+     "bits": 8,
+     "repo": "unsloth/FLUX.2-klein-9B-GGUF",
+     "loader": "UnetLoaderGGUF",
+     "community": true
+    },
+    {
+     "file": "flux-2-klein-9b-Q6_K.gguf",
+     "format": "gguf_q6_k",
+     "gb": 7.33,
+     "bits": 6,
+     "repo": "unsloth/FLUX.2-klein-9B-GGUF",
+     "loader": "UnetLoaderGGUF",
+     "community": true
+    },
+    {
+     "file": "flux-2-klein-9b-Q5_K_M.gguf",
+     "format": "gguf_q5_k_m",
+     "gb": 6.54,
+     "bits": 5,
+     "repo": "unsloth/FLUX.2-klein-9B-GGUF",
+     "loader": "UnetLoaderGGUF",
+     "community": true
+    },
+    {
+     "file": "flux-2-klein-9b-Q4_K_M.gguf",
+     "format": "gguf_q4_k_m",
+     "gb": 5.5,
+     "bits": 4,
+     "repo": "unsloth/FLUX.2-klein-9B-GGUF",
+     "loader": "UnetLoaderGGUF",
+     "community": true
+    },
+    {
+     "file": "flux-2-klein-9b-Q3_K_M.gguf",
+     "format": "gguf_q3_k_m",
+     "gb": 4.44,
+     "bits": 3,
+     "repo": "unsloth/FLUX.2-klein-9B-GGUF",
+     "loader": "UnetLoaderGGUF",
+     "community": true
+    }
+   ]
+  },
+  "text_encoder": {
+   "label": "Text encoder (Qwen3-8B)",
+   "role": "text_encoder",
+   "clip_type": "flux2",
+   "variants": [
+    {
+     "file": "qwen_3_8b.safetensors",
+     "format": "bf16",
+     "gb": 15.26,
+     "bits": 16,
+     "repo": "Comfy-Org/flux2-klein-9B",
+     "loader": "CLIPLoader"
+    },
+    {
+     "file": "qwen_3_8b_fp8mixed.safetensors",
+     "format": "fp8_mixed",
+     "gb": 8.07,
+     "bits": 8,
+     "repo": "Comfy-Org/flux2-klein-9B",
+     "loader": "CLIPLoader",
+     "default": true
+    },
+    {
+     "file": "qwen_3_8b_fp4mixed.safetensors",
+     "format": "fp4_mixed",
+     "gb": 6.33,
+     "bits": 4,
+     "repo": "Comfy-Org/flux2-klein-9B",
+     "loader": "CLIPLoader"
+    },
+    {
+     "file": "Qwen3-8B-Q4_K_M.gguf",
+     "format": "gguf_q4_k_m",
+     "gb": 4.68,
+     "bits": 4,
+     "repo": "unsloth/Qwen3-8B-GGUF",
+     "loader": "CLIPLoaderGGUF",
+     "community": true
+    }
+   ]
+  },
+  "vae": {
+   "label": "VAE",
+   "role": "fixed",
+   "variants": [
+    {
+     "file": "flux2-vae.safetensors",
+     "format": "bf16",
+     "gb": 0.32,
+     "bits": 16,
+     "repo": "Comfy-Org/flux2-klein-9B",
+     "loader": "VAELoader",
+     "always": true
+    }
+   ]
+  }
+ },
+ "benchmarks": {
+  "workflow": "KSampler, euler/simple, cfg 1, qwen_3_8b_fp8mixed, flux2-vae; step_s = slope of 4 and 12 steps",
+  "references": [
+   {
+    "machine": {
+     "gpu": "NVIDIA GeForce RTX 5090",
+     "vram_gb": 31.8,
+     "attention_sdpa_ms": 2.42,
+     "fp8_tflops": 399.8,
+     "note": ""
+    },
+    "runs": [
+     {
+      "file": "flux-2-klein-9b.safetensors",
+      "megapixels": 1.0,
+      "step_s": 0.25,
+      "note": "measured 2026-10-04"
+     },
+     {
+      "file": "flux-2-klein-9b.safetensors",
+      "megapixels": 2.0,
+      "step_s": 0.63,
+      "note": "measured 2026-10-04"
+     },
+     {
+      "file": "flux-2-klein-9b-BF16.gguf",
+      "megapixels": 1.0,
+      "step_s": 0.36,
+      "note": "derived: Base's time x the cfg 1 cost measured on the RTX 5090, 2026-10-04"
+     },
+     {
+      "file": "flux-2-klein-9b-BF16.gguf",
+      "megapixels": 2.0,
+      "step_s": 0.76,
+      "note": "derived: Base's time x the cfg 1 cost measured on the RTX 5090, 2026-10-04"
+     },
+     {
+      "file": "flux-2-klein-9b-fp8.safetensors",
+      "megapixels": 1.0,
+      "step_s": 0.21,
+      "note": "derived: Base's time x the cfg 1 cost measured on the RTX 5090, 2026-10-04"
+     },
+     {
+      "file": "flux-2-klein-9b-fp8.safetensors",
+      "megapixels": 2.0,
+      "step_s": 0.47,
+      "note": "derived: Base's time x the cfg 1 cost measured on the RTX 5090, 2026-10-04"
+     },
+     {
+      "file": "flux-2-klein-9b-Q8_0.gguf",
+      "megapixels": 1.0,
+      "step_s": 0.35,
+      "note": "derived: Base's time x the cfg 1 cost measured on the RTX 5090, 2026-10-04"
+     },
+     {
+      "file": "flux-2-klein-9b-Q8_0.gguf",
+      "megapixels": 2.0,
+      "step_s": 0.74,
+      "note": "derived: Base's time x the cfg 1 cost measured on the RTX 5090, 2026-10-04"
+     },
+     {
+      "file": "flux-2-klein-9b-Q4_K_M.gguf",
+      "megapixels": 1.0,
+      "step_s": 0.39,
+      "note": "derived: Base's time x the cfg 1 cost measured on the RTX 5090, 2026-10-04"
+     },
+     {
+      "file": "flux-2-klein-9b-Q4_K_M.gguf",
+      "megapixels": 2.0,
+      "step_s": 0.78,
+      "note": "derived: Base's time x the cfg 1 cost measured on the RTX 5090, 2026-10-04"
+     }
+    ]
+   },
+   {
+    "machine": {
+     "gpu": "NVIDIA GeForce RTX 5060 Laptop GPU",
+     "vram_gb": 8.0,
+     "attention_sdpa_ms": 17.2,
+     "fp8_tflops": 66.5,
+     "note": "64 GB RAM, PCIe Gen5 x8, no SageAttention"
+    },
+    "runs": [
+     {
+      "file": "flux-2-klein-9b-BF16.gguf",
+      "megapixels": 1.0,
+      "step_s": 4.52,
+      "peak_ram_gib": 44.8,
+      "note": "derived: Base's time x the cfg 1 cost measured on the RTX 5090, 2026-10-04"
+     },
+     {
+      "file": "flux-2-klein-9b-BF16.gguf",
+      "megapixels": 2.0,
+      "step_s": 8.42,
+      "peak_ram_gib": 32.82,
+      "note": "derived: Base's time x the cfg 1 cost measured on the RTX 5090, 2026-10-04"
+     },
+     {
+      "file": "flux-2-klein-9b-fp8.safetensors",
+      "megapixels": 1.0,
+      "step_s": 1.9,
+      "peak_ram_gib": 33.66,
+      "note": "derived: Base's time x the cfg 1 cost measured on the RTX 5090, 2026-10-04"
+     },
+     {
+      "file": "flux-2-klein-9b-fp8.safetensors",
+      "megapixels": 2.0,
+      "step_s": 4.4,
+      "peak_ram_gib": 33.91,
+      "note": "derived: Base's time x the cfg 1 cost measured on the RTX 5090, 2026-10-04"
+     },
+     {
+      "file": "flux-2-klein-9b-Q8_0.gguf",
+      "megapixels": 1.0,
+      "step_s": 3.91,
+      "peak_ram_gib": 30.45,
+      "note": "derived: Base's time x the cfg 1 cost measured on the RTX 5090, 2026-10-04"
+     },
+     {
+      "file": "flux-2-klein-9b-Q8_0.gguf",
+      "megapixels": 2.0,
+      "step_s": 7.72,
+      "peak_ram_gib": 25.84,
+      "note": "derived: Base's time x the cfg 1 cost measured on the RTX 5090, 2026-10-04"
+     },
+     {
+      "file": "flux-2-klein-9b-Q4_K_M.gguf",
+      "megapixels": 1.0,
+      "step_s": 4.21,
+      "peak_ram_gib": 24.54,
+      "note": "derived: Base's time x the cfg 1 cost measured on the RTX 5090, 2026-10-04"
+     },
+     {
+      "file": "flux-2-klein-9b-Q4_K_M.gguf",
+      "megapixels": 2.0,
+      "step_s": 8.06,
+      "peak_ram_gib": 22.05,
+      "note": "derived: Base's time x the cfg 1 cost measured on the RTX 5090, 2026-10-04"
+     }
+    ]
+   }
+  ]
+ },
+ "quality": {
+  "method": "single step from the same bf16 latent (steps 5, 10, 15 of 20), 3 prompts, LPIPS vs bf16 (unsloth BF16 GGUF)",
+  "reference": "flux-2-klein-9b.safetensors",
+  "files": {
+   "flux-2-klein-9b-fp8.safetensors": {
+    "lpips_avg": 0.0165,
+    "k5": {
+     "lpips": 0.0221,
+     "ssim": 0.9349,
+     "psnr": 32.39
+    },
+    "k10": {
+     "lpips": 0.0168,
+     "ssim": 0.9529,
+     "psnr": 33.23
+    },
+    "k15": {
+     "lpips": 0.0105,
+     "ssim": 0.9729,
+     "psnr": 36.01
+    },
+    "note": "Base's file vs Base bf16 (same network); distilled not measured"
+   },
+   "flux-2-klein-9b-Q8_0.gguf": {
+    "lpips_avg": 0.0043,
+    "k5": {
+     "lpips": 0.0056,
+     "ssim": 0.9766,
+     "psnr": 39.5
+    },
+    "k10": {
+     "lpips": 0.0046,
+     "ssim": 0.9822,
+     "psnr": 40.06
+    },
+    "k15": {
+     "lpips": 0.0026,
+     "ssim": 0.9909,
+     "psnr": 43.42
+    },
+    "note": "Base's file vs Base bf16 (same network); distilled not measured"
+   },
+   "flux-2-klein-9b-Q4_K_M.gguf": {
+    "lpips_avg": 0.0261,
+    "k5": {
+     "lpips": 0.0392,
+     "ssim": 0.9193,
+     "psnr": 28.78
+    },
+    "k10": {
+     "lpips": 0.0249,
+     "ssim": 0.9439,
+     "psnr": 30.97
+    },
+    "k15": {
+     "lpips": 0.0141,
+     "ssim": 0.9708,
+     "psnr": 34.56
+    },
+    "note": "Base's file vs Base bf16 (same network); distilled not measured"
+   }
+  }
+ },
+ "source": "Hugging Face tree API sizes (BFL and unsloth distilled repos), bf16 measured on an RTX 5090, 2026-10-04"
+}

@@ -57,6 +57,15 @@ def format_support(fmt, sysp):
     cap = (major, minor)
     if not g:
         return "no", "no usable GPU"
+    # the format has to exist in this ComfyUI first (read live from comfy.quant_ops); older builds cannot open newer files
+    algos = c.get("quant_algos")
+    need = {"mxfp8": "mxfp8", "nvfp4": "nvfp4", "int8": "int8_tensorwise", "int8_convrot": "int8_tensorwise",
+            "w4a8": "asym_w4a8_int8", "int4_convrot": "convrot_w4a4"}.get(fmt)
+    ver = f" {c['version']}" if c.get("version") else ""
+    if algos is not None and need and need not in algos:
+        return "no", f"your ComfyUI{ver} cannot load {fmt} files yet: update ComfyUI"
+    if fmt == "int8_convrot" and c.get("int8_convrot") is False:
+        return "no", f"your ComfyUI{ver} loads int8 but not int8_convrot files yet: update ComfyUI"
     if fmt in ("bf16",):
         return ("native", "fast bf16 on this card") if cap >= (8, 0) or not nv else ("slow", "no fast bf16 before RTX 30: ComfyUI runs it in fp16 / fp32")
     if fmt in ("fp16", "fp32"):
@@ -72,7 +81,11 @@ def format_support(fmt, sysp):
         return "cast", "stored as 8-bit (half the VRAM of bf16), computed in bf16: no speed gain before RTX 50"
     if fmt in ("w4a8", "int4_convrot"):
         ok = (t.get("matmul_int8") or {}).get("ok")
-        return ("native", "4-bit weights, int8 math") if ok else ("no", "needs int8 math, which failed on this card")
+        if not ok:
+            return "no", "needs int8 math, which failed on this card"
+        if nv and cap < (8, 0):  # Comfy Kitchen's fast W4A8 kernel needs sm 8.0
+            return "cast", "4-bit weights unpacked per layer before RTX 30: saves VRAM, no speed gain"
+        return "native", "4-bit weights, int8 math"
     if fmt == "nvfp4":
         if c.get("supports_nvfp4_compute") or (nv and cap >= (10, 0)):
             return "native", "fast nvfp4 on RTX 50 / Blackwell"
@@ -116,7 +129,7 @@ def assess(variant, sysp, role, others_gb=0.0):
     support, why = format_support(variant["format"], sysp)
     r = {"file": variant["file"], "format": variant["format"], "gb": size, "support": support, "support_why": why, "notes": [],
          "expected_quality": expected_quality(variant)}
-    for k in ("repo", "loader", "default", "pruned", "community", "unconfirmed", "note"):
+    for k in ("repo", "loader", "default", "pruned", "community", "unconfirmed", "note", "display"):
         if variant.get(k) is not None:
             r[k] = variant[k]
     if variant.get("unconfirmed"):
@@ -256,7 +269,8 @@ def calc(model, sysp):
 # landed at across 9 models (8-bit ~0.02, 6 ~0.03, 5 ~0.04, 4 ~0.07, 3 ~0.18, 2 ~0.35)
 BITS_TO_LPIPS = {32: 0.0, 16: 0.0, 8: 0.02, 6: 0.03, 5: 0.04, 4: 0.07, 3: 0.18, 2: 0.35}
 GOALS = {"Quality": None, "Optimal": 0.05, "Fast": 0.10}  # the most distance from bf16 each goal accepts (frame sheets: under ~0.05 looks the same)
-STEPS = {"minimax_h3": 8, "krea2": 8, "ltx25": 11, "anima": 30, "z_image_turbo": 8, "qwen_image_21": 25, "flux2_klein_9b": 20, "ideogram4": 20, "ltx23": 11}
+STEPS = {"minimax_h3": 8, "minimax_h3_fl2va": 8, "krea2": 8, "ltx25": 11, "anima": 30, "z_image_turbo": 8, "qwen_image_21": 25, "flux2_klein_9b": 20, "flux2_klein_9b_distilled": 4, "ideogram4": 20, "ltx23": 11,
+         "krea2_raw": 52, "sdxl": 30, "illustrious": 28, "pony": 25}
 LOADER_NEEDS = {"UnetLoaderGGUF": "needs the ComfyUI-GGUF pack", "CLIPLoaderGGUF": "needs the ComfyUI-GGUF pack"}
 
 
@@ -298,7 +312,7 @@ def recommend(model, sysp, goal="Optimal", megapixels=None):
         if role == "fixed":
             picks = [r for r in rows if (r.get("default") or r.get("note") == "always") or any(v["file"] == r["file"] and (v.get("always") or v.get("default")) for v in comps[key]["variants"])]
             for r in picks or rows[:1]:
-                out["picks"].append({"component": comp["label"], "file": r["file"], "gb": r["gb"], "repo": r.get("repo"), "on_disk": r["file"] in have, "role": role})
+                out["picks"].append({"component": comp["label"], "file": r["file"], "display": r.get("display"), "gb": r["gb"], "repo": r.get("repo"), "on_disk": r["file"] in have, "role": role})
                 chosen_gb[key] = chosen_gb.get(key, 0) + r["gb"]
             continue
         by_fmt = {}
@@ -360,7 +374,7 @@ def recommend(model, sysp, goal="Optimal", megapixels=None):
         warn = [w for w in (LOADER_NEEDS.get(r.get("loader", "")), "gated on Hugging Face: accept the license there first" if v.get("note") == "gated" else None,
                             "community file" if r.get("community") else None,
                             "RAM will spill into the page file: slower first run" if r["ram"] == "pagefile" else None) if w]
-        pick = {"component": comp["label"], "file": r["file"], "format": r["format"], "gb": r["gb"], "repo": r.get("repo"), "on_disk": r["file"] in have,
+        pick = {"component": comp["label"], "file": r["file"], "display": r.get("display"), "format": r["format"], "gb": r["gb"], "repo": r.get("repo"), "on_disk": r["file"] in have,
                 "role": role, "support": r["support"], "support_why": r.get("support_why"), "fits": r["fits"], "ram": r["ram"],
                 "lpips": round(r["_q"], 4), "lpips_measured": r["_q_measured"], "warnings": warn, "info": info, "load_s": r.get("load_s")}
         if role == "diffusion" and r.get("_t"):
@@ -394,6 +408,8 @@ def shopping_guide(sysp):
     fp8 = format_support("fp8_scaled", sysp)[0] == "native"
     nvfp4 = format_support("nvfp4", sysp)[0] == "native"
     int8 = format_support("int8_convrot", sysp)[0] == "native"
+    mxfp8 = format_support("mxfp8", sysp)[0] == "native"
+    w4a8 = format_support("w4a8", sysp)[0] == "native"
     gguf_pack = (sysp.get("packs") or {}).get("GGUF") is not False
     look, avoid = [], []
 
@@ -410,9 +426,13 @@ def shopping_guide(sysp):
     if int8:
         look.append({"what": "int8_convrot", "why": "Fast on this card (int8 math through Comfy Kitchen): 1.3 to 2.2x the speed of bf16 and usually near identical (0.002 to 0.04 vs bf16). Best default in most tests."})
     if fp8:
-        look.append({"what": "fp8_scaled / fp8mixed / mxfp8", "why": "Fast fp8 math on this card: 1.2 to 1.75x the speed of bf16, near identical (0.014 to 0.037)."})
+        look.append({"what": "fp8_scaled / fp8mixed", "why": "Fast fp8 math on this card: 1.2 to 1.75x the speed of bf16, near identical (0.014 to 0.037)."})
+    if mxfp8:
+        look.append({"what": "mxfp8", "why": "Native on RTX 50: 8-bit with a scale for every 32 values, so it stays close even without the per-layer settings a plain fp8 file needs (Krealism V3.1: 0.019). About int8 speed."})
     elif nv:
         look.append({"what": "fp8 files (to save VRAM only)", "why": "Half the size of bf16, but this card has no fast fp8 math: no speed gain."})
+    if w4a8:
+        look.append({"what": "w4a8 (small and close)", "why": "4-bit weights, int8 math: nvfp4 size, but closer to bf16 (Krealism V3.1: 0.031 vs 0.059 for nvfp4). As fast as int8 on an RTX 5090 and an RTX 5060 laptop."})
     if nvfp4:
         look.append({"what": "nvfp4 (for speed)", "why": "Native on this card: the fastest files and a quarter the size of bf16, with small but visible differences (0.05 to 0.15)."})
     if gguf_pack:
@@ -443,12 +463,16 @@ def shopping_guide(sysp):
         q.append(("GGUF Q8_0", "nearly identical to bf16, smaller"))
     if int8:
         o.append(("int8_convrot", "fast here, near identical"))
+    if mxfp8:
+        o.append(("mxfp8", "fast here, very close"))
     if fp8:
-        o.append(("fp8_scaled / mxfp8", "fast here, near identical"))
+        o.append(("fp8_scaled", "fast here, near identical"))
     if not o and gguf_pack:
         o.append(("GGUF Q8_0", "no fast 8-bit math on this card"))
     if nvfp4:
         f.append(("nvfp4", "fastest, small visible changes"))
+    if w4a8:
+        f.append(("w4a8", "nvfp4 size, closer to bf16"))
     if int8:
         f.append(("int8_convrot", "fast, near identical"))
     elif fp8:
