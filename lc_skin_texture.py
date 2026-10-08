@@ -151,6 +151,7 @@ class LCSkinTexture(PreviewImage):
                 "mask": ("MASK", {"tooltip": "Skin to texture (white). LC Person Mask with mediapipe, face + body and "
                                              "remove_features is ideal. Unwired: skin is found by colour."}),
                 "reference": ("IMAGE", {"tooltip": "Your own sharp close-up of bare skin. Unwired: the bundled CC0 skin photo."}),
+                "protect_mask": ("MASK", {"tooltip": "Optional. Areas left alone, e.g. the faces and hands the detailers already redrew (LC VOSR2 Upscale (pipe) 'protected' output, or LC Smart Detailer's mask). Keeps skin detail from being added twice."}),  # last: saved workflows keep their widget order
             },
         }
 
@@ -162,7 +163,7 @@ class LCSkinTexture(PreviewImage):
     DESCRIPTION = ("Adds real pore texture to skin that came out too smooth, from a real skin photo (only its fine "
                    "relief, never its colour). Skin that already has detail gets less. On-node before/after wipe.")
 
-    def run(self, image, strength=0.45, pore_size=1.0, softness=0.5, seed=0, mask=None, reference=None):
+    def run(self, image, strength=0.45, pore_size=1.0, softness=0.5, seed=0, mask=None, reference=None, protect_mask=None):
         if strength <= 0:
             return _preview(self, image, image)
         bank = _bundled_bank(round(float(pore_size), 3)) if reference is None else _bank(reference, pore_size)
@@ -177,6 +178,10 @@ class LCSkinTexture(PreviewImage):
                 m = m.numpy()
             else:
                 m = _feather_mask(_auto_skin_mask(rgb, 0.55, 0.45), 0.45)
+            if protect_mask is not None:  # the detailers' areas get no extra texture
+                pm = protect_mask[min(i, protect_mask.shape[0] - 1)] if protect_mask.ndim == 3 else protect_mask
+                pm = F.interpolate(pm[None, None].float().cpu(), size=(h, w), mode="bilinear", align_corners=False)[0, 0]
+                m = m * (1.0 - pm.clamp(0, 1).numpy())
             box = _bbox(m, 32)
             if box is None:
                 out.append(frame)

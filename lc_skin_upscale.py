@@ -292,6 +292,7 @@ class LCSkinUpscale(PreviewImage):
                     "MASK",
                     {"tooltip": "Person / skin matte from RMBG or similar. Stay external."},
                 ),
+                "protect_mask": ("MASK", {"tooltip": "Optional. Areas left alone, e.g. the faces and hands the detailers already redrew (LC VOSR2 Upscale (pipe) 'protected' output, or LC Smart Detailer's mask). Keeps skin detail from being added twice."}),  # last: saved workflows keep their widget order
             },
         }
 
@@ -319,6 +320,7 @@ class LCSkinUpscale(PreviewImage):
         transfer="detail band",
         softness=0.5,
         mask=None,
+        protect_mask=None,
     ):
         def detail(src, pred):
             if transfer != "detail band":
@@ -358,6 +360,11 @@ class LCSkinUpscale(PreviewImage):
                     matte = ext * (chroma if chroma is not None else 1.0)
 
             matte = _feather_mask(np.clip(matte, 0, 1), mask_feather)
+            if protect_mask is not None:  # the detailers' areas get no extra skin detail
+                pm = protect_mask[min(i, protect_mask.shape[0] - 1)] if protect_mask.ndim == 3 else protect_mask
+                pm = torch.nn.functional.interpolate(pm[None, None].float().cpu(), size=(h, w), mode="bilinear",
+                                                     align_corners=False)[0, 0].clamp(0, 1).numpy()
+                matte = matte * (1.0 - pm)
             box = _bbox(matte, pad=16)
             if box is None or float(blend) <= 0.001:
                 if mode == "scale":

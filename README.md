@@ -1,3 +1,5 @@
+<a id="top"></a>
+
 # ComfyUI LC123 Nodes
 
 Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [lonecatone23](https://github.com/lonecatone23).
@@ -6,7 +8,7 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 - **CivitAI:** [lonecatone23](https://civitai.com/user/lonecatone23)
 - **Instagram:** [synth.studio.models](https://www.instagram.com/synth.studio.models/)
 - **Support:** [Buy me a ☕](https://ko-fi.com/lonecatone)
-- **Version:** 1.49.10 · **144 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
+- **Version:** 1.49.11 · **144 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
 
 > Small tools that remove friction: less wire mess, fewer clicks, clearer workflows.
 
@@ -15,25 +17,29 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 - For **Anima regional attention**, also grab [Sen-sou Anima Regional Conditioning](https://github.com/Sen-sou/Comfyui-Anima-Regional-Conditioning).
 
 **On this page**
-1. [Canvas tools](#-canvas-tools) (Align, Connection FX, Comfy Optimization Report, System & Model Optimization Report, Node Pack Usage Report, Pin all)
-2. [Settings](#%EF%B8%8F-lc123-settings)
-3. [Notes, labels and previews](#-notes-labels-and-previews)
-4. [LC Model Optimizer](#-lc-model-optimizer-loader--speed-ups) (loads the right files and speed-ups for your machine)
-5. [LoRA loaders](#%EF%B8%8F-lora-loaders)
-6. [Lighting](#-lighting)
-7. [Skin, sharpening, depth and looks](#-skin-sharpening-depth-and-looks)
-8. [Image FX](#-image-fx-on-node-preview--wipe)
-9. [Image and size](#%EF%B8%8F-image-and-size)
-10. [Prompt Builder](#%EF%B8%8F-prompt-builder)
-11. [Sampling, sigmas, latents and pipes](#-sampling-sigmas-latents-and-pipes)
-12. [Saving, metadata and text](#-saving-metadata-and-text)
-13. [Switches, logic and control](#-switches-logic-and-control)
-14. [Regional canvas](#-regional-canvas)
-15. [Example workflows](#-example-workflows), [Assets](#-assets), [Quick tips](#-quick-tips), [Install](#install)
+1. [Canvas tools](#canvas-tools) (Align, Connection FX, Comfy Optimization Report, System & Model Optimization Report, Node Pack Usage Report, Pin all)
+2. [Settings](#settings)
+3. [Notes, labels and previews](#notes)
+4. [LC Model Optimizer](#optimizer) (loads the right files and speed-ups for your machine)
+5. [LoRA loaders](#lora)
+6. [Lighting](#lighting)
+7. [Skin, sharpening, depth and looks](#skin)
+8. [Image FX](#image-fx)
+9. [Image and size](#image-size)
+10. [Prompt Builder](#prompt-builder)
+11. [Sampling, sigmas, latents and pipes](#sampling)
+12. [Saving, metadata and text](#saving)
+13. [Switches, logic and control](#switches)
+14. [Regional canvas](#regional)
+15. [Example workflows](#workflows), [Assets](#assets), [Quick tips](#tips), [Install](#install)
 
 ---
 
+<a id="canvas-tools"></a>
 ## 🧭 Canvas tools
+
+<details>
+<summary><b>Click to open</b></summary>
 
 Tools for the canvas itself, not nodes. Nothing here touches your generations.
 
@@ -89,7 +95,7 @@ Tools for the canvas itself, not nodes. Nothing here touches your generations.
     - Measured on an RTX 5090 and an 8 GB RTX 5060 Laptop. Image models land within about 15 %; video models are rougher and it says so.
 - **Show last run**, **Copy report** and **Download CSV** work like the Comfy Optimization Report. It will not run while ComfyUI is generating.
 - Nothing is changed. Open it from **Settings > LC123 Settings ⚙️ > Optimization**, or right-click the empty canvas.
-- The **[LC Model Optimizer](#-lc-model-optimizer-loader--speed-ups)** nodes use this report to load the right files and speed-ups for you.
+- The **[LC Model Optimizer](#optimizer)** nodes use this report to load the right files and speed-ups for you.
 
 **Node Pack Usage Report 🧹**
 - Which of your installed node packs do your workflows actually use? This tells you.
@@ -105,9 +111,17 @@ Tools for the canvas itself, not nodes. Nothing here touches your generations.
 
 **Nodes 2.0:** every LC node works, but the live on-canvas extras (hover wipe, drag-to-place, the Sigma Curve editor, the crop box) are classic only. In Nodes 2.0 you get the result as it was at the last run instead: the finished image on FX nodes, the cropped image, a picture of the sigma curve, and the Get Image / Image-Mask Resize / Boolean readouts as a line of text. Classic always comes first.
 
+</details>
+
+[⬆ Back to top](#top)
+
 ---
 
+<a id="settings"></a>
 ## ⚙️ LC123 Settings
+
+<details>
+<summary><b>Click to open</b></summary>
 
 Open **Settings** (the gear) and pick **LC123 Settings ⚙️**. These are **UI only**: smoother canvas, lighter previews. They never touch VRAM, generation or the image that comes out of a socket. (A lighter preview never means a lighter image.)
 
@@ -142,9 +156,9 @@ Open **Settings** (the gear) and pick **LC123 Settings ⚙️**. These are **UI 
 
 | Setting | Default | What it does |
 |--------|---------|--------|
-| **Comfy Optimization Report** | button | See [Canvas tools](#-canvas-tools) |
-| **System & Model Optimization Report** | button | See [Canvas tools](#-canvas-tools) |
-| **Node Pack Usage Report** | button | See [Canvas tools](#-canvas-tools) |
+| **Comfy Optimization Report** | button | See [Canvas tools](#canvas-tools) |
+| **System & Model Optimization Report** | button | See [Canvas tools](#canvas-tools) |
+| **Node Pack Usage Report** | button | See [Canvas tools](#canvas-tools) |
 
 **Performance**
 
@@ -166,9 +180,17 @@ Open **Settings** (the gear) and pick **LC123 Settings ⚙️**. These are **UI 
 
 Full directions: [`LC123_Performance_Settings_Note.md`](LC123_Performance_Settings_Note.md)
 
+</details>
+
+[⬆ Back to top](#top)
+
 ---
 
+<a id="notes"></a>
 ## 📝 Notes, labels and previews
+
+<details>
+<summary><b>Click to open</b></summary>
 
 **LC Note 📝**
 
@@ -218,9 +240,17 @@ Previews that stay quiet when nothing arrives. The core previews complain when a
 - They show as soon as their image is ready, not after the whole workflow finishes. Batches show the first frame.
 - Preview Image launches in the LC teal. Preview Mask launches black.
 
+</details>
+
+[⬆ Back to top](#top)
+
 ---
 
+<a id="optimizer"></a>
 ## ⚡ LC Model Optimizer (loader + speed-ups)
+
+<details>
+<summary><b>Click to open</b></summary>
 
 The **System & Model Optimization Report** tells you what suits your machine. The **LC Model Optimizer** sets it up for you. It replaces your model, text encoder and VAE loaders: the first thing you wire in.
 
@@ -264,9 +294,17 @@ The **System & Model Optimization Report** tells you what suits your machine. Th
 
 ![LC Model Optimizer and LC Model Optimizer Video](assets/readme/lc_optimizer.png)
 
+</details>
+
+[⬆ Back to top](#top)
+
 ---
 
+<a id="lora"></a>
 ## 🎚️ LoRA loaders
+
+<details>
+<summary><b>Click to open</b></summary>
 
 **LC LoRA Loader 🎚️**
 
@@ -289,9 +327,17 @@ A multi-row LoRA loader modeled on rgthree's Power Lora Loader, rebuilt to fix t
 - **Apply:** `model` / `clip` / `lora_stack` in, `model` / `clip` out, and a **bypass** switch.
 - `LORA_STACK` is the standard community shape, so it also plugs into Comfyroll, Efficiency Nodes, Impact Pack, etc.
 
+</details>
+
+[⬆ Back to top](#top)
+
 ---
 
+<a id="lighting"></a>
 ## 🔦 Lighting
+
+<details>
+<summary><b>Click to open</b></summary>
 
 **LC Lighting Control V2 🔦**
 
@@ -322,9 +368,17 @@ Relight an image after the fact. Feed it a **normal map** + **depth map** (and o
 - Needs (not bundled): Depth Anything V2, a normal-map preprocessor, optional remBG.
 - 💡 Intensity ~1.0 to 1.3, ambient ~0.25 to 0.4, shadow strength ~0.4. Grey fringe? Turn the mask off.
 
+</details>
+
+[⬆ Back to top](#top)
+
 ---
 
+<a id="skin"></a>
 ## ✨ Skin, sharpening, depth and looks
+
+<details>
+<summary><b>Click to open</b></summary>
 
 **LC Skin Beauty ✨**
 
@@ -357,6 +411,7 @@ One **UPSCALE_MODEL** + an optional **MASK**. It crops to the matte, runs the mo
 - **`scale`**: keeps the model's native factor. Everything outside the mask stays bilinear.
 - Optional **MASK** (PersonMaskUltra `face` + `body` is the good combo). `mask_source`: **input** / **chroma** / **input+chroma**.
 - **blend** 0 = original, 1 = full patch under the matte.
+- Optional **protect_mask**: areas left alone, e.g. the faces and hands the detailers already redrew (LC VOSR2 Upscale (pipe) **protected** output), so skin detail is not added twice.
 - **transfer**: **detail band** (default) takes only the model's pore and fold detail, brightness only and softly capped, so no colour shift and no 1-pixel grain. **full paste** is the old behaviour. **softness** smooths the detail band.
 - ⚠️ Don't load a 4x model in `detail 1x`. You pay for 4x the time and throw the extra pixels in the trash.
 - 💡 Daily setup: `1xSkinContrast-High-SuperUltraCompact` · `detail 1x` · blend `0.75` · Ultra `face+body` · `mask_source: input` · tile `256` / overlap `16`.
@@ -416,11 +471,19 @@ What a real camera does to a scene, in the order light travels. Wire a depth map
 - **Strength** blends against the original so you can always pull it back.
 - Presets: Standard, Natural, Dramatic, Quiet, Muted, Amateur, Cool day, Warm evening, Bright open, iPhone, **Nikon Z7 II**, **Canon R5**. Full list: [`LC_Photo_Style_Note.md`](LC_Photo_Style_Note.md)
 
+</details>
+
+[⬆ Back to top](#top)
+
 ---
 
+<a id="image-fx"></a>
 ## 🎨 Image FX (on-node preview + wipe)
 
-Hover any of these to wipe against the original. Heavy graph? See **Performance** in [Settings](#%EF%B8%8F-lc123-settings).
+<details>
+<summary><b>Click to open</b></summary>
+
+Hover any of these to wipe against the original. Heavy graph? See **Performance** in [Settings](#settings).
 
 | Node | What it does |
 |------|----------------|
@@ -443,15 +506,23 @@ Hover any of these to wipe against the original. Heavy graph? See **Performance*
 | **LC Tone Match** | **image** supplies the detail, **reference** supplies lighting / color. Optional **mask** (white = lock). **split**: **guided** (default) follows the image's own edges, so no bright or dark rim on hard edges; **blur** is the old split. Wipes against the reference |
 | **LC Image Desaturate** | Desaturate, plain and simple |
 | **LC Skin Beauty ✨** / **LC Skin Upscale** / **LC Photo Style 📷** | See above |
-| **LC Skin Texture ✨ (BETA)** | Adds real pore texture to skin that came out too smooth (after a strong denoise, a beauty pass or a plastic-looking model). Takes only the fine relief of a real skin photo, never its colour, and adds less where skin already has detail. **mask**: LC Person Mask (mediapipe, face + body, remove_features) is ideal; unwired, skin is found by colour. **reference**: your own skin close-up, or the bundled CC0 photo |
+| **LC Skin Texture ✨ (BETA)** | Adds real pore texture to skin that came out too smooth (after a strong denoise, a beauty pass or a plastic-looking model). Takes only the fine relief of a real skin photo, never its colour, and adds less where skin already has detail. **mask**: LC Person Mask (mediapipe, face + body, remove_features) is ideal; unwired, skin is found by colour. **reference**: your own skin close-up, or the bundled CC0 photo **protect_mask** (optional): areas left alone, e.g. the faces and hands the detailers already redrew (LC VOSR2 Upscale (pipe) **protected** output), so skin detail is not added twice. |
 | **LC Apply LUT** | Reads `.cube` files from **`ComfyUI/models/luts/`**. Launches with **LC_Crushed_Blacks** at 0.3. Sample LUTs copy over from `assets/luts/` and never overwrite yours. **interpolation**: **tetrahedral** (default, GPU, cleaner greys) or the old **trilinear** |
 | **LC Text Overlay** | Text on an image: align, drag or type the position. Shrinks to fit if the font would run off the edge. Includes the 14 bundled fonts |
 | **LC Phone Filters 📱** | The 37 phone-app presets (1977, Aden, Brooklyn, Xpro2, etc.). Pick one, dial strength, wipe to compare |
 | **LC Directional Blur** | Motion blur along one angle/length. Drag the arrow on the node, or double-click a readout to type. **strength** blends back toward the original. **taps** = smoothness, **edge** = what it reads past the border |
 
+</details>
+
+[⬆ Back to top](#top)
+
 ---
 
+<a id="image-size"></a>
 ## 🖼️ Image and size
+
+<details>
+<summary><b>Click to open</b></summary>
 
 | Node | What it does |
 |------|----------------|
@@ -474,9 +545,17 @@ Hover any of these to wipe against the original. Heavy graph? See **Performance*
 | **LC Image Pass** / **LC Mask Pass** | Identity pass. `enable` off (widget or a wired BOOLEAN) blocks the output, so optional sockets downstream see nothing |
 | **LC Watermark 💧** | Image watermark with size, opacity and drag-to-place. Transparent PNG: wire Load Image's MASK to **watermark_mask** |
 
+</details>
+
+[⬆ Back to top](#top)
+
 ---
 
+<a id="prompt-builder"></a>
 ## 🗒️ Prompt Builder
+
+<details>
+<summary><b>Click to open</b></summary>
 
 A modular stack that funnels into **🧩LC Prompt Assembler**.
 
@@ -499,9 +578,17 @@ Subjects + Scene + Camera + Lighting + Style + Palette
 
 Full directions: [`LC_Prompt_Builder_Note.md`](LC_Prompt_Builder_Note.md)
 
+</details>
+
+[⬆ Back to top](#top)
+
 ---
 
+<a id="sampling"></a>
 ## 🧪 Sampling, sigmas, latents and pipes
+
+<details>
+<summary><b>Click to open</b></summary>
 
 | Node | What it does |
 |------|----------------|
@@ -531,9 +618,17 @@ Full directions: [`LC_Prompt_Builder_Note.md`](LC_Prompt_Builder_Note.md)
 - 💡 **H3 prompt tags are 1-based:** `<Picture 1>` = `ref_image_0`. Native MiniMax **Ref2V** needs `ref_video` to be at least **5 frames**.
 - 💡 Aspect Ratio Simplifier's pipe into the H3 **pipe** socket only copies the size. Length and fps still need their own wires.
 
+</details>
+
+[⬆ Back to top](#top)
+
 ---
 
+<a id="saving"></a>
 ## 📁 Saving, metadata and text
+
+<details>
+<summary><b>Click to open</b></summary>
 
 | Node | What it does |
 |------|----------------|
@@ -554,9 +649,17 @@ Full directions: [`LC_Prompt_Builder_Note.md`](LC_Prompt_Builder_Note.md)
 
 Details: [`LC123_Save_Image_Note.md`](LC123_Save_Image_Note.md)
 
+</details>
+
+[⬆ Back to top](#top)
+
 ---
 
+<a id="switches"></a>
 ## 🔀 Switches, logic and control
+
+<details>
+<summary><b>Click to open</b></summary>
 
 | Node | What it does |
 |------|----------------|
@@ -590,8 +693,13 @@ Details: [`LC123_Save_Image_Note.md`](LC123_Save_Image_Note.md)
 - 💡 **Bypass vs mute:** Bypasser passes through (mode 4). Mute never runs (mode 2).
 - Manual node sizes and colors you set yourself stick across a reload. Pack colors only apply on the first drop.
 
+</details>
+
+[⬆ Back to top](#top)
+
 ---
 
+<a id="regional"></a>
 ## 🎨 Regional canvas
 
 | Node | What it does |
@@ -599,9 +707,15 @@ Details: [`LC123_Save_Image_Note.md`](LC123_Save_Image_Note.md)
 | **LC Anima Regional Inline Canvas** | RGB paint for Sen-sou Anima regional conditioning |
 | **LC Krea2 Regional Inline Canvas** | Same idea for Krea2 CLIP regions (**beta**) |
 
+[⬆ Back to top](#top)
+
 ---
 
+<a id="workflows"></a>
 ## 📂 Example workflows
+
+<details>
+<summary><b>Click to open</b></summary>
 
 | File | Description |
 |------|-------------|
@@ -624,9 +738,17 @@ Details: [`LC123_Save_Image_Note.md`](LC123_Save_Image_Note.md)
 
 Workflow > Open, or just drag it onto the canvas.
 
+</details>
+
+[⬆ Back to top](#top)
+
 ---
 
+<a id="assets"></a>
 ## 📦 Assets
+
+<details>
+<summary><b>Click to open</b></summary>
 
 | Path | Use |
 |------|-----|
@@ -639,9 +761,17 @@ Workflow > Open, or just drag it onto the canvas.
 | `assets/skin_texture/` | LC Skin Texture's CC0 skin photo (credits in its README) |
 | `web/fonts/` | The 14 bundled fonts (with their licenses) |
 
+</details>
+
+[⬆ Back to top](#top)
+
 ---
 
+<a id="tips"></a>
 ## 💡 Quick tips
+
+<details>
+<summary><b>Click to open</b></summary>
 
 - **Skin Beauty:** check the **skin_mask** output first. Fabric leaking in? Lower the sensitivity.
 - **Image Split:** set the wipe, queue, and save the **split** output, not the two source images.
@@ -656,8 +786,13 @@ Workflow > Open, or just drag it onto the canvas.
 - **Bypass Relay:** wire A/B/C into the Relay's left side (`any_1` grows), Relay's OPT into a Bypasser or Mute. Hub off = all of them off together.
 - **Image / Mask Pass:** `enable` off mutes only that one tap.
 
+</details>
+
+[⬆ Back to top](#top)
+
 ---
 
+<a id="install"></a>
 ## Install
 
 1. **Get the files.** Clone into `ComfyUI/custom_nodes/`:
@@ -671,8 +806,11 @@ Workflow > Open, or just drag it onto the canvas.
 5. **Missing nodes in an example workflow?** ComfyUI Manager > Install Missing Custom Nodes (Depth Anything, SAM, remBG, etc. are separate installs).
 6. 💡 After any update, restart and press **Ctrl+F5** so the browser loads the new files.
 
+[⬆ Back to top](#top)
+
 ---
 
+<a id="license"></a>
 ## License
 
 MIT. See `LICENSE`.
