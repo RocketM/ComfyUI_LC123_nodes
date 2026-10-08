@@ -8,7 +8,7 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 - **CivitAI:** [lonecatone23](https://civitai.com/user/lonecatone23)
 - **Instagram:** [synth.studio.models](https://www.instagram.com/synth.studio.models/)
 - **Support:** [Buy me a ☕](https://ko-fi.com/lonecatone)
-- **Version:** 1.49.11 · **144 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
+- **Version:** 1.49.12 · **144 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
 
 > Small tools that remove friction: less wire mess, fewer clicks, clearer workflows.
 
@@ -607,7 +607,7 @@ Full directions: [`LC_Prompt_Builder_Note.md`](LC_Prompt_Builder_Note.md)
 | **LC Speed Boost 🚀 KSampler (BETA)** | A KSampler with LC Speed Boost built in, for everyone on a plain KSampler: drop it in where your KSampler was. About half the processing time, same VRAM, same detail. **speed_boost** (auto) and **grow_at_step** sit on top (grow_at_step 0 = a plain KSampler, pixel for pixel). **start_at_step**, **end_at_step** and **return_with_leftover_noise** work like KSampler (Advanced), so it can hand its leftover noise to a regular or ClownShark sampler to finish. ClownShark (RES4LYF) samplers are in the sampler list when RES4LYF is installed, or wire a ClownSampler into **sampler** to use its own settings. Works on SDXL / Pony / Illustrious too (about 1.4x faster). Samples like a plain KSampler on image to image (denoise under 0.9) and inpaint masks |
 | **LC Reference Latent** | Up to 8 optional reference latents into conditioning. All empty = pass-through |
 | **LC Denoise 💉** | Latent injection: `noise_std = 1 - denoise`. Match the sampler's denoise |
-| **LC Pipe (in/edit)** / **Pipe Out** / **Detail Pipe Out** | Bundle or unpack models, clips, VAEs, prompts, seed, steps, the works |
+| **LC Pipe (in/edit)** / **Pipe Out** / **Detail Pipe Out** | Bundle or unpack models, clips, VAEs, prompts, seed, steps, the works. **protect_mask** (bottom of both Outs): the areas LC MaskMaker's pipe detailers redrew, at the size of the pipe's picture. Wire it into LC Skin Upscale / LC Skin Texture **protect_mask** |
 | **LC Pipe Combine** | Edits the top pipe with a second pipe: whatever the edit pipe carries overwrites the top one, everything else rides along. The LC detailers' protect masks and SAM 3 finds add up instead (combining a face branch and a hands branch keeps both) |
 | **LC MiniMax H3 Pipe** / **Pipe Out** | H3 refs on one pipe: fl2va / ref2va model + clip, VAEs, size, length, frame rate, ref images and videos |
 | **LC MiniMax H3 Pipe V2** | Everything above plus `prompt`, `total_steps`, `cfg`, `sampler_name`, `scheduler`. Feed a V1 pipe in to upgrade it |

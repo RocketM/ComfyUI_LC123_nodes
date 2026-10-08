@@ -15,6 +15,8 @@ Slots (top → bottom):
 """
 
 import comfy.samplers
+import torch
+import torch.nn.functional as F
 
 PIPE_TYPE = "LC_PIPE"
 
@@ -177,6 +179,22 @@ class LCPipeIn:
         return (pipe,)
 
 
+def _protect_mask(pipe):
+    """The detailers' protect mask riding in the pipe (lc_protect, written by LC MaskMaker's pipe detailers and
+    LC VOSR2 Upscale (pipe)), at the size of the pipe's picture. Nothing there = an empty mask."""
+    img = pipe.get("image") if isinstance(pipe, dict) else None
+    p = pipe.get("lc_protect") if isinstance(pipe, dict) else None
+    m = p.get("mask") if isinstance(p, dict) else None
+    if not torch.is_tensor(m):
+        if torch.is_tensor(img):
+            return torch.zeros(img.shape[0], img.shape[1], img.shape[2])
+        return torch.zeros(1, 64, 64)
+    m = (m if m.ndim == 3 else m[None]).float().cpu()
+    if torch.is_tensor(img) and tuple(m.shape[-2:]) != tuple(img.shape[1:3]):
+        m = F.interpolate(m[:, None], size=tuple(img.shape[1:3]), mode="bilinear", align_corners=False)[:, 0]
+    return m.clamp(0, 1)
+
+
 class LCPipeOut:
     @classmethod
     def INPUT_TYPES(cls):
@@ -188,17 +206,19 @@ class LCPipeOut:
             },
         }
 
-    RETURN_TYPES = (PIPE_TYPE,) + tuple(_rtype(kind) for _, kind in SLOT_ORDER)
-    RETURN_NAMES = ("pipe",) + tuple(DISPLAY[k] for k, _ in SLOT_ORDER)
+    # protect_mask is last: saved workflows keep their wires
+    RETURN_TYPES = (PIPE_TYPE,) + tuple(_rtype(kind) for _, kind in SLOT_ORDER) + ("MASK",)
+    RETURN_NAMES = ("pipe",) + tuple(DISPLAY[k] for k, _ in SLOT_ORDER) + ("protect_mask",)
     FUNCTION = "unpack"
     CATEGORY = "LC123/pipe"
-    DESCRIPTION = "Unpacks a pipe back into separate sockets. The pipe keeps going out the top."
+    DESCRIPTION = ("Unpacks a pipe back into separate sockets. The pipe keeps going out the top. protect_mask (bottom): "
+                   "the areas the pipe detailers redrew, for LC Skin Upscale / LC Skin Texture protect_mask.")
 
     def unpack(self, pipe):
         if not isinstance(pipe, dict):
             pipe = _empty()
         values = tuple(pipe.get(key) for key, _ in SLOT_ORDER)
-        return (pipe,) + values
+        return (pipe,) + values + (_protect_mask(pipe),)
 
 
 class LCPipeEdit:
@@ -273,11 +293,12 @@ class LCDetailPipeOut:
             },
         }
 
-    RETURN_TYPES = (PIPE_TYPE,) + tuple(_rtype(kind) for _, kind in DETAIL_SLOTS)
-    RETURN_NAMES = ("pipe",) + tuple(DETAIL_DISPLAY[k] for k, _ in DETAIL_SLOTS)
+    # protect_mask is last: saved workflows keep their wires
+    RETURN_TYPES = (PIPE_TYPE,) + tuple(_rtype(kind) for _, kind in DETAIL_SLOTS) + ("MASK",)
+    RETURN_NAMES = ("pipe",) + tuple(DETAIL_DISPLAY[k] for k, _ in DETAIL_SLOTS) + ("protect_mask",)
     FUNCTION = "unpack"
     CATEGORY = "LC123/pipe"
-    DESCRIPTION = "Unpacks what a detailer needs from a pipe: model, clip, VAE, prompts, seed, CFG, sampler, scheduler and detailer steps. The pipe keeps going out the top."
+    DESCRIPTION = "Unpacks what a detailer needs from a pipe: model, clip, VAE, prompts, seed, CFG, sampler, scheduler and detailer steps. The pipe keeps going out the top. protect_mask (bottom): the areas the pipe detailers redrew."
 
     def unpack(self, pipe):
         if not isinstance(pipe, dict):
@@ -285,7 +306,7 @@ class LCDetailPipeOut:
         pipe = dict(pipe)
         pipe["_type"] = PIPE_TYPE
         values = tuple(pipe.get(key) for key, _ in DETAIL_SLOTS)
-        return (pipe,) + values
+        return (pipe,) + values + (_protect_mask(pipe),)
 
 
 class LCPipeCombine:
