@@ -91,6 +91,29 @@ function buildLoraTree(list) {
   return root;
 }
 
+// A new row starts in the folder last opened in the picker (or, after a reload, the folder of this node's last
+// LoRA), not on the alphabetically first file of the whole list. Falls back to a file further down that folder,
+// then to the first LoRA overall.
+function defaultLoraFor(node, list) {
+  let folder = lastLoraPath;
+  if (!folder.length) {
+    const prev = [...getRows(node)].reverse().find((r) => r.lora && r.lora !== "None");
+    if (prev) folder = prev.lora.replace(/\\/g, "/").split("/").slice(0, -1);
+  }
+  if (folder.length) {
+    let level = buildLoraTree(list);
+    for (const seg of folder) level = level?.folders.get(seg);
+    if (level) {
+      const here = [...level.files].sort((a, b) => a.localeCompare(b));
+      if (here.length) return here[0];
+      const prefix = folder.join("/") + "/";
+      const below = list.filter((n) => n.replace(/\\/g, "/").startsWith(prefix)).sort((a, b) => a.localeCompare(b));
+      if (below.length) return below[0];
+    }
+  }
+  return list[0] || "None";
+}
+
 // ---- strength control: rgthree Power Lora Loader's <arrow number arrow>, ported to DOM/pointer events
 // (rgthree draws it on canvas with its own hit-area framework, which this file doesn't have -- same visual
 // layout and the same two interactions: click an arrow to step by 0.05, or click-drag the number itself
@@ -673,7 +696,7 @@ function ensureFace(node) {
   addBtn.addEventListener("click", async () => {
     const list = await getLoraList();
     const rows = getRows(node);
-    rows.push({ on: true, lora: list[0] || "None", strength: 1.0 });
+    rows.push({ on: true, lora: defaultLoraFor(node, list), strength: 1.0 });
     setRows(node, rows);
   });
   footer.appendChild(addBtn);

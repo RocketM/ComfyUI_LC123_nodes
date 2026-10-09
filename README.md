@@ -8,7 +8,7 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 - **CivitAI:** [lonecatone23](https://civitai.com/user/lonecatone23)
 - **Instagram:** [synth.studio.models](https://www.instagram.com/synth.studio.models/)
 - **Support:** [Buy me a ☕](https://ko-fi.com/lonecatone)
-- **Version:** 1.49.15 · **144 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
+- **Version:** 1.49.16 · **144 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
 
 > Small tools that remove friction: less wire mess, fewer clicks, clearer workflows.
 
@@ -282,6 +282,7 @@ The **System & Model Optimization Report** tells you what suits your machine. Th
 
 **Speed-ups (Auto)**
 - **Attention:** Sage (or Flash) only if it passed the report's test on this machine.
+    - ⚠️ Don't put `--use-sage-attention` in your .bat. It forces Sage on every model, and some (e.g. Krea 2 image edit) give black images with it. Leave it out and let the node turn Sage on per model. The node shows a ⚠️ when the flag is on.
 - **Comfy Kitchen:** used on its own for int8 / fp8 / nvfp4 files. The node just tells you if it's working.
 - **fp16 accumulation** and **Step cache (EasyCache):** Fast goal only. The step cache only when it's worth it (20+ steps).
 - **Manual:** set `speed_ups` to Manual and pick each one yourself, **torch.compile** included.
