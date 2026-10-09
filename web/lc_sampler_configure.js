@@ -34,6 +34,17 @@ function hideGaps(node) {
   } catch (_) {}
 }
 
+// A brand-new node was sized while the gap widgets were still full STRING fields, which left empty space at the
+// bottom. Shrink it to what its widgets need now; nodes loaded from a workflow keep their size.
+function fitHeight(node) {
+  if (!node || node._lcCfgConfigured || !node.computeSize || !node.size) return;
+  const h = node.computeSize([node.size[0], 0])?.[1];
+  if (h && h < node.size[1]) {
+    node.size = [node.size[0], h];
+    node.setDirtyCanvas?.(true, true);
+  }
+}
+
 app.registerExtension({
   name: "LC123.SamplerConfigureGaps",
   async beforeRegisterNodeDef(nodeType, nodeData) {
@@ -42,8 +53,20 @@ app.registerExtension({
     nodeType.prototype.onNodeCreated = function () {
       const r = onCreated?.apply(this, arguments);
       hideGaps(this);
-      requestAnimationFrame(() => hideGaps(this));
+      fitHeight(this);
+      requestAnimationFrame(() => {
+        hideGaps(this);
+        fitHeight(this);
+      });
+      // the add-node search dialog re-assigns size right after this hook
+      setTimeout(() => fitHeight(this), 0);
       return r;
+    };
+
+    const onConfigure = nodeType.prototype.onConfigure;
+    nodeType.prototype.onConfigure = function () {
+      this._lcCfgConfigured = true; // restored from a workflow: keep its saved size
+      return onConfigure?.apply(this, arguments);
     };
   },
   nodeCreated(node) {

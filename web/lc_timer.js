@@ -156,7 +156,7 @@ app.registerExtension({
     const created = nodeType.prototype.onNodeCreated;
     nodeType.prototype.onNodeCreated = function () {
       const r = created?.apply(this, arguments);
-      lcApplyLaunchColor(this, "#28281E");
+      lcApplyLaunchColor(this, "#000000");
       if (!this.size || this.size[0] < 280) this.size = [300, 220];
       setTimeout(() => attach(this), 0);
       return r;

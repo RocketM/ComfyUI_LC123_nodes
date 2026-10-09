@@ -34,7 +34,7 @@ def _full_widgets():
             "total_steps": (
                 "INT",
                 {
-                    "default": 40,
+                    "default": 10,
                     "min": 1,
                     "max": 10000,
                     "tooltip": "Total sampling steps for the full schedule.",
@@ -43,7 +43,7 @@ def _full_widgets():
             "step_swap": (
                 "INT",
                 {
-                    "default": 30,
+                    "default": 8,
                     "min": 0,
                     "max": 10000,
                     "tooltip": "Step index where the first pass hands off to the second (SplitSigmas step).",
@@ -52,7 +52,7 @@ def _full_widgets():
             "detailer_steps": (
                 "INT",
                 {
-                    "default": 0,
+                    "default": 4,
                     "min": 0,
                     "max": 10000,
                     "tooltip": "Steps reserved for a detailer / refiner stage (0 = unused).",
@@ -73,7 +73,7 @@ def _full_widgets():
             "cfg_1": (
                 "FLOAT",
                 {
-                    "default": 8.0,
+                    "default": 1.0,
                     "min": 0.0,
                     "max": 100.0,
                     "step": 0.1,
@@ -101,7 +101,7 @@ def _full_widgets():
             "scheduler": (
                 comfy.samplers.KSampler.SCHEDULERS,
                 {
-                    "default": "normal",
+                    "default": "simple",
                     "tooltip": "Noise schedule.",
                 },
             ),
@@ -115,7 +115,7 @@ def _simple_widgets():
             "total_steps": (
                 "INT",
                 {
-                    "default": 40,
+                    "default": 10,
                     "min": 1,
                     "max": 10000,
                     "tooltip": "Total sampling steps.",
@@ -124,7 +124,7 @@ def _simple_widgets():
             "detailer_steps": (
                 "INT",
                 {
-                    "default": 0,
+                    "default": 4,
                     "min": 0,
                     "max": 10000,
                     "tooltip": "Steps reserved for a detailer / refiner stage (0 = unused).",
@@ -145,7 +145,7 @@ def _simple_widgets():
             "cfg": (
                 "FLOAT",
                 {
-                    "default": 8.0,
+                    "default": 1.0,
                     "min": 0.0,
                     "max": 100.0,
                     "step": 0.1,
@@ -163,7 +163,7 @@ def _simple_widgets():
             "scheduler": (
                 comfy.samplers.KSampler.SCHEDULERS,
                 {
-                    "default": "normal",
+                    "default": "simple",
                     "tooltip": "Noise schedule.",
                 },
             ),

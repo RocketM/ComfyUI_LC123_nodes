@@ -22,6 +22,9 @@ _gblur_full = LCClarity._gblur
 WORK_EDGE = 2048  # long edge the effects are worked out at; bigger pictures are mixed back at full size
 
 
+_LUMA = (0.2126, 0.7152, 0.0722)
+
+
 def _gblur(t, sigma):
     """Gaussian blur; wide ones run at lower resolution (same look: a wide blur has no fine detail left), which keeps
     big pictures from needing huge convolution kernels and the VRAM spike that comes with them."""
@@ -137,10 +140,12 @@ class LCDepthFX(PreviewImage):
                 "image": ("IMAGE",),
                 "depth_map": ("IMAGE", {"tooltip": "Depth map of the same image (LC Depth Anything). Either direction works."}),
                 "look": _look_input("Natural"),
-                "haze": ("FLOAT", {"default": 0.15, "min": 0.0, "max": 1.0, "step": 0.01,
-                                   "tooltip": "How thick the air is. Distant areas fade toward the haze color. 0 = off."}),
-                "haze_distance": ("FLOAT", {"default": 0.40, "min": 0.0, "max": 0.95, "step": 0.01,
-                                            "tooltip": "Where the haze starts. 0 = right in front of the camera, higher = only the far background."}),
+                "haze": ("FLOAT", {"default": 0.04, "min": 0.0, "max": 1.0, "step": 0.01,
+                                   "tooltip": "How thick the air is. Distant areas fade toward the haze color. 0 = off. "
+                                              "0.03 - 0.08 for people, more only for wide landscapes."}),
+                "haze_distance": ("FLOAT", {"default": 0.50, "min": 0.0, "max": 0.95, "step": 0.01,
+                                            "tooltip": "Where the haze starts, measured across the background: 0 = right behind "
+                                                       "the subject, higher = only its farthest part."}),
                 "haze_warmth": ("FLOAT", {"default": 0.0, "min": -1.0, "max": 1.0, "step": 0.05,
                                           "tooltip": "The haze color comes from the image's own distance. This nudges it cooler (-) or warmer (+)."}),
                 "light_wrap": ("FLOAT", {"default": 0.10, "min": 0.0, "max": 1.0, "step": 0.01,
@@ -303,11 +308,36 @@ class LCDepthFX(PreviewImage):
             A = torch.stack(A).view(b, 3, 1, 1)
             warm = torch.tensor([0.15, 0.0, -0.15], device=dev).view(1, 3, 1, 1) * float(haze_warmth)
             A = (A * (1 + warm)).clamp(0, 1)
-            depth_in = ((dist - haze_distance) / (1.0 - haze_distance + 1e-3)).clamp(0, 1) ** 1.5
             beyond = _smooth(fd + rng, fd + rng + 0.25, dist)  # the subject in focus never gets hazed
-            amount = (1.0 - torch.exp(-1.2 * float(haze) * depth_in)) * beyond
-            lin = lin + (A - lin) * amount
-            del flat, far, A, warm, depth_in, beyond, amount
+            # haze builds up across the background itself: from its near edge to its far end. A depth map often
+            # puts everything past a window or railing at the same "as far as it gets"; that flat wall gets a
+            # light, even touch instead of a full veil.
+            local, scale = [], []
+            for i in range(b):
+                bgv = dist[i][beyond[i] > 0.5]
+                if bgv.numel() < 64:
+                    local.append(torch.zeros_like(dist[i]))
+                    scale.append(0.0)
+                    continue
+                smp = bgv[:: max(1, bgv.numel() // 250000)]
+                lo, hi = smp.quantile(0.05), smp.quantile(0.98)
+                spread = float(hi - lo)
+                if spread < 0.02:
+                    local.append(torch.ones_like(dist[i]))
+                else:
+                    local.append(((dist[i] - lo) / (hi - lo)).clamp(0, 1))
+                scale.append(0.3 + 0.7 * float(_smooth(0.03, 0.3, torch.tensor(spread))))
+            local = torch.stack(local)
+            scale = torch.tensor(scale, device=dev).view(b, 1, 1, 1)
+            depth_in = ((local - haze_distance) / (1.0 - haze_distance + 1e-3)).clamp(0, 1) ** 1.5
+            amount = (1.0 - torch.exp(-1.2 * float(haze) * depth_in)) * beyond * scale
+            # real haze lifts the darks (it is light added by the air), but a full lift over every shadow reads as a
+            # white LUT: dark areas keep more of their depth
+            hazed = lin + (A - lin) * amount
+            lum = (lin * torch.tensor(_LUMA, device=dev).view(1, 3, 1, 1)).sum(1, keepdim=True)
+            keep = 0.35 + 0.65 * _smooth(0.0, 0.2, lum)
+            lin = hazed - (hazed - lin).clamp(min=0) * (1.0 - keep)
+            del flat, far, A, warm, depth_in, beyond, amount, local, scale, hazed, lum, keep
 
         # 2. Light wrap: background light screens over the subject's edges. The band widens with the slider.
         if light_wrap > 0:
