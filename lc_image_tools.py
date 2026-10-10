@@ -276,7 +276,7 @@ class LCClarity(PreviewImage):
                 }),
                 "sharpen": ("FLOAT", {
                     "default": 0.35, "min": 0.0, "max": 1.0, "step": 0.01,
-                    "tooltip": "Capture sharpening. Undoes softness (deconvolution) instead of drawing outlines. 0 = off.",
+                    "tooltip": "Capture sharpening. Undoes the softness measured in the picture (deconvolution) instead of drawing outlines, so an upscaled 4K image is not over-sharpened. 0 = off.",
                 }),
                 "strength": ("FLOAT", {
                     "default": 0.7, "min": 0.0, "max": 1.0, "step": 0.01,
@@ -288,7 +288,7 @@ class LCClarity(PreviewImage):
                 }),
                 "skin_protect": ("FLOAT", {
                     "default": 0.50, "min": 0.0, "max": 1.0, "step": 0.01,
-                    "tooltip": "Less texture and clarity on skin. Eyes, lashes and lips still get sharpened. 0 = off (use 0 for anime and lineart).",
+                    "tooltip": "Less sharpening, texture and clarity on skin, and pores can not be dug into pits. Eyes, lashes and lips still get sharpened. 0 = off (use 0 for anime and lineart).",
                 }),
                 "radius": ("FLOAT", {
                     "default": 0.35, "min": 0.0, "max": 1.0, "step": 0.01,
@@ -356,6 +356,28 @@ class LCClarity(PreviewImage):
         a = var / (var + eps)
         b = mean - a * mean
         return self._box(a, r) * p + self._box(b, r)
+
+    @staticmethod
+    def _edge_grad(t):
+        """Gradient magnitude on B1HW (forward differences, same size)."""
+        gx = F.pad(t[:, :, :, 1:] - t[:, :, :, :-1], (0, 1, 0, 0))
+        gy = F.pad(t[:, :, 1:, :] - t[:, :, :-1, :], (0, 0, 0, 1))
+        return (gx * gx + gy * gy).sqrt()
+
+    def _measure_blur(self, lp):
+        """Blur already in the picture, in pixels, per image (B,). Strongest edges are compared before and after an
+        extra blur of 1 px: a gaussian edge of width b loses sqrt(b^2 + 1) / b of its slope, so b = 1 / sqrt(r^2 - 1).
+        A native render reads about 0.35, a 2x to 4x upscale about 0.5 to 0.7."""
+        g0 = self._edge_grad(lp)[:, :, ::2, ::2]
+        g1 = self._edge_grad(self._gblur(lp, 1.0))[:, :, ::2, ::2]
+        out = []
+        for i in range(lp.shape[0]):
+            a = g0[i].reshape(-1)
+            k = max(16, a.numel() // 200)  # top 0.5 % of edges
+            top = torch.topk(a, k).indices
+            r = (a[top].mean() / g1[i].reshape(-1)[top].mean().clamp(min=1e-6)).clamp(min=1.02)
+            out.append(float(1.0 / torch.sqrt(r * r - 1.0)))
+        return out
 
     def _deconvolve(self, y, sigma, iters):
         """Richardson-Lucy with a gaussian blur model, on linear luminance."""
@@ -446,7 +468,7 @@ class LCClarity(PreviewImage):
         detail_mask = self._smoothstep(1.5 * sn, 5.0 * sn, lstd)
 
         skin = None
-        if skin_protect > 0 and (tx > 0 or cl > 0):
+        if skin_protect > 0 and (tx > 0 or cl > 0 or sh > 0):
             try:
                 from .lc_skin_beauty import _auto_skin_mask
                 arr = x.detach().cpu().numpy()
@@ -457,11 +479,27 @@ class LCClarity(PreviewImage):
 
         new = lp
         # 1. Capture sharpening: deconvolution undoes the blur instead of adding outlines
+        # The deconvolution size follows the blur measured in the picture, with the old size guess as a ceiling:
+        # an upscaled 4K picture is not 4x blurrier than 1K, and undoing blur that is not there digs pores into pits.
         if sh > 0:
-            sigma = max(0.6, (0.5 + 1.5 * rad) * scale)
-            iters = 4 + int(round(26 * sh))
-            est = self._to_srgb(self._deconvolve(y_lin, sigma, iters))
-            new = new + (est - lp) * detail_mask * min(1.0, 0.5 + sh)
+            parts = []
+            for i, blur in enumerate(self._measure_blur(lp)):
+                guess = max(0.6, (0.5 + 1.5 * rad) * scale)
+                sigma = max(0.6, min(guess, (0.6 + 1.3 * blur) * (0.65 + rad)))
+                iters = 4 + int(round(26 * sh))
+                est = self._to_srgb(self._deconvolve(y_lin[i:i + 1], sigma, iters))
+                d = (est - lp[i:i + 1]) * detail_mask[i:i + 1] * min(1.0, 0.5 + sh)
+                # ceiling: the strongest edges may gain at most 60 % slope at sharpen 1 (less at lower settings)
+                pick = self._edge_grad(lp[i:i + 1])[:, :, ::2, ::2].reshape(-1)
+                top = torch.topk(pick, max(16, pick.numel() // 200)).indices
+                g_after = self._edge_grad(lp[i:i + 1] + d)[:, :, ::2, ::2].reshape(-1)[top].mean()
+                gain = float(g_after / pick[top].mean().clamp(min=1e-6))
+                cap = 1.0 + 0.6 * sh
+                if gain > cap:
+                    d = d * ((cap - 1.0) / (gain - 1.0))
+                parts.append(d)
+            d = torch.cat(parts, 0)
+            new = new + d * skin_keep
 
         # 2. Texture: mid band, noise-thresholded
         if tx > 0:
@@ -470,6 +508,13 @@ class LCClarity(PreviewImage):
             band = self._gblur(new, s1) - self._gblur(new, s2)
             band = band * self._smoothstep(1.0 * sn, 3.0 * sn, band.abs())
             new = new + band * (2.2 * tx) * skin_keep
+
+        # Pore guard: on skin, sharpening and texture may darken a spot by about 3 levels at most (deep pits read
+        # as craters), brightening is left alone
+        if skin is not None:
+            d = new - lp
+            dn = d.clamp(max=0.0)
+            new = lp + d.clamp(min=0.0) + torch.lerp(dn, dn.clamp(min=-0.012), (float(skin_protect) * skin).clamp(0, 1))
 
         # Halo control: nothing may overshoot its neighbourhood by more than a set amount
         hr = max(1, int(round(1.0 * scale)))

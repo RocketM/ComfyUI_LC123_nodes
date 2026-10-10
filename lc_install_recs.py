@@ -117,7 +117,8 @@ def install_recs(prof: dict) -> dict:
             notes.append(f"Command: {pip} sageattention")
         if rtx50:
             notes.append("RTX 50: Sage 3 (FP4, Blackwell only) is an optional extra from the official project.")
-        notes.append("Then the LC Model Optimizer turns it on per model, or start ComfyUI with --use-sage-attention.")
+        notes.append("Then the LC Model Optimizer turns it on per model. Don't add --use-sage-attention to your .bat: it forces Sage on "
+                     "every model, and some models give black images with it.")
         why = ("Installed but it failed the test (wrong build for this card or PyTorch): reinstall a matching one." if failed else
                "Faster attention, the biggest single speed-up for image and video models" + (f" (standard attention here: {sdpa} ms per call; Sage is usually 3 to 5x faster)." if sdpa else "."))
         items.append({"name": "SageAttention", "status": "failed" if failed else "missing", "link": SAGE_WIN if win else SAGE, "why": why, "notes": notes})

@@ -727,6 +727,16 @@ def _registered():
         return {"pytorch"}
 
 
+def _sage_flag():
+    """True when ComfyUI was started with --use-sage-attention (Sage forced on for every model)."""
+    try:
+        from comfy.cli_args import args
+
+        return bool(getattr(args, "use_sage_attention", False))
+    except Exception:
+        return False
+
+
 def plan_speedups(profile_id, goal, manual=None):
     """What to apply and why. manual: {attention, fp16_accumulation, step_cache, torch_compile} or None (Auto).
     Returns [{key, label, state: on/off/na, value, why}]."""
@@ -854,6 +864,9 @@ def plan(profile_id, goal, picks, manual=None):
         out["hints"].append(("💡⚠️", "No report yet: run the System & Model Optimization Report so the speed-ups suit this machine."))
     else:
         out["hints"].append(("💡⚠️", "No report yet: using Comfy's default files. Run the System & Model Optimization Report for picks that suit this machine."))
+    if _sage_flag():
+        out["hints"].append(("⚠️", "--use-sage-attention is in your .bat: it forces Sage on every model, and some models give black "
+                                   "images with it. Remove it, this node turns Sage on per model."))
     if custom:
         out["hints"].append(("ℹ️", "Custom: recommended files, downloads, estimates and file checks are unsupported. Pick your own files; the speed-ups still apply."))
     paths = {}
