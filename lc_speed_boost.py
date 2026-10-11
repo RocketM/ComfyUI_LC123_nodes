@@ -101,6 +101,18 @@ def _kind(model, sigmas):
     return "flow" if float(sigmas.max()) <= 1.001 else None
 
 
+def _auto_off(model):
+    """Why auto Speed Boost should not run on this model, or None. Qwen-Image 2.1's VAE packs 16 x 16 pixels into one
+    latent cell (8 x 8 elsewhere), so half size is very coarse: photos come out fine, but line art, anime, text, logos
+    and flat art got doubled lines and blocky color (tested 2026-10). A grow_at_step set by hand still runs."""
+    p = _patcher(model)
+    name = type(getattr(p, "model", None)).__name__ if p is not None else ""
+    if name == "QwenImage21":
+        return ("Qwen-Image 2.1 draws line art, text, anime and flat color badly at half size (its latent is very "
+                "coarse). Photos are fine: set grow_at_step by hand (about 6 of 25 steps) to use it there")
+    return None
+
+
 def _flow_t(s, kind):
     """A noise level on the 0..1 flow scale (SDXL's sigma s is the same mix as flow t = s / (1 + s))."""
     return s if kind == "flow" else s / (1.0 + s)
@@ -173,6 +185,8 @@ def _sampler(model, x, sigmas, extra_args=None, callback=None, disable=None, *, 
         pass
     elif kind is None:
         why = "this model type isn't supported (flow models and SDXL-family models are)"
+    elif lc_auto and _auto_off(model):
+        why = _auto_off(model)
     elif _flow_t(float(sigmas[0]), kind) < MIN_START:
         why = f"the run starts at noise {_flow_t(float(sigmas[0]), kind):.2f}, too little to start small (upscale / image to image pass)"
     j = None if why else plan(sigmas, lc_auto, lc_step, kind)
@@ -195,7 +209,20 @@ def _sampler(model, x, sigmas, extra_args=None, callback=None, disable=None, *, 
     n = len(sigmas) - 1
     print(f"[LC Speed Boost] {j} of {n} steps at half size (latent {w}x{h} of {W}x{H}), grew at noise {t:.3f} "
           f"(carries on at {t2:.3f}), {n - j} at full size.")
+    _reset_size_cache(model)
     return run(X, rest, j)
+
+
+def _reset_size_cache(model):
+    """Qwen-Image 2.1 caches its text K/V per image size. Two sizes in one run make two cache slots, and ComfyUI's
+    slot lookup then crashes (it compares slots holding tensors). Clearing it at the switch keeps one slot: the cache
+    still speeds up both the half size and the full size steps."""
+    try:
+        dm = model.inner_model.model_patcher.model.diffusion_model
+    except AttributeError:
+        return
+    if getattr(dm, "prefix_cache_enabled", False) and hasattr(dm, "reset_prefix_cache"):
+        dm.reset_prefix_cache(True)
 
 
 def _wrap(sampler, auto, step):
@@ -232,7 +259,8 @@ class LCSpeedBoost:
                    "Speeds up passes that start from noise (denoise 0.9 and up). Upscale and image to image passes run as "
                    "normal: their layout comes from your image.\n"
                    "Works on Krea 2, Z-Image, Flux.2 Klein, Qwen-Image, Wan, and SDXL / Pony / Illustrious (about 1.4x "
-                   "there). It switches itself off on inpaint masks (the console says why).\n"
+                   "there). It switches itself off on inpaint masks (the console says why). On Qwen-Image 2.1 auto stays "
+                   "off: line art, text and flat color break at its half size. Set grow_at_step by hand for photos.\n"
                    "Based on SPEED (Xiao, Chao, Yariv and Wetzstein, 2026).")
 
     def go(self, sampler, auto, grow_at_step):
@@ -299,7 +327,9 @@ class LCSpeedBoostKSampler:
                    "ClownShark (RES4LYF) samplers are in the sampler list when RES4LYF is installed. Wire a ClownSampler "
                    "into sampler to use its own settings.\n"
                    "Works on Krea 2, Z-Image, Flux.2 Klein, Qwen-Image, Wan, and SDXL / Pony / Illustrious (about 1.4x "
-                   "there). On image to image (denoise under 0.9) and inpaint masks it samples like a plain KSampler.\n"
+                   "there). On image to image (denoise under 0.9) and inpaint masks it samples like a plain KSampler. On "
+                   "Qwen-Image 2.1 auto stays off: line art, text and flat color break at its half size. Set grow_at_step "
+                   "by hand for photos.\n"
                    "Based on SPEED (Xiao, Chao, Yariv and Wetzstein, 2026).")
 
     def sample(self, model, positive, negative, latent_image, speed_boost=True, grow_at_step=4, seed=0, steps=20, cfg=8.0,

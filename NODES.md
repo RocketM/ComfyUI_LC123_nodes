@@ -1,6 +1,6 @@
 # LC123 node inventory
 
-**142 Python nodes** + **5 JS-only** · version 1.49.7
+**143 Python nodes** + **5 JS-only** · version 1.49.7
 
 Registered class IDs: 138 (137 in search, 1 deprecated but still loads in old workflows).
 
@@ -152,7 +152,7 @@ Registered class IDs: 138 (137 in search, 1 deprecated but still loads in old wo
 - `LCCivitaiStrip`: CivitAI 🚩🔪
 - `LCWidgetToString`: LC Widget To String
 
-## LC123/utils (32)
+## LC123/utils (33)
 
 - `LCAnyEmptyBool`: LC Any Empty Bool
 - `LCAnyEmptyFloat`: LC Any Empty Float
@@ -176,6 +176,7 @@ Registered class IDs: 138 (137 in search, 1 deprecated but still loads in old wo
 - `LCLabel`: LC Label 🏷️
 - `LCNodeSnapshot`: LC Node Snapshot 📋
 - `LCNotify`: LC Notify 🔊
+- `LCSamplerScheduler`: LC Sampler Scheduler ⚙️
 - `LCSeedJump`: LC Seed Jump 🌱
 - `LCShowAny`: LC Show Any 🔤
 - `LCShowText`: LC Show Text 🔤
