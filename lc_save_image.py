@@ -22,6 +22,7 @@ import folder_paths
 
 from .lc_pipe_io import PIPE_TYPE
 from .lc_civitai_hashes import collect_hashes, format_hash_fields, civitai_resources_payload
+from .lc_lora_metadata import collect_lora_metadata, image_ancestors, inactive_lora_files
 
 
 META_TYPE = "LC_SAVE_META"
@@ -533,6 +534,8 @@ class LCSaveImage:
             "hidden": {
                 "prompt": "PROMPT",
                 "extra_pnginfo": "EXTRA_PNGINFO",
+                "unique_id": "UNIQUE_ID",
+                "execution_list": "EXECUTION_LIST",
             },
         }
 
@@ -560,6 +563,8 @@ class LCSaveImage:
         filename_prefix="",
         prompt=None,
         extra_pnginfo=None,
+        unique_id=None,
+        execution_list=None,
     ):
         fmt = str(format or "png").lower().strip()
         if fmt in ("jpg", "jpeg"):
@@ -607,9 +612,18 @@ class LCSaveImage:
         # off nothing is hashed and no hash text is written anywhere.
         hash_bits = None
         buckets = None
+        # Only what feeds this image: a LoRA or model on another branch, switched off or at strength 0 is not listed.
+        scope, loras = None, {"loras": []}
+        if (hash_resources or embed_civitai) and isinstance(prompt, dict) and unique_id is not None:
+            try:
+                scope = image_ancestors(prompt, unique_id, execution_list)
+                loras = collect_lora_metadata(prompt, unique_id, execution_list)
+            except Exception as e:
+                print(f"[LC123] image scope skip: {e}")
+                scope, loras = None, {"loras": []}
         if hash_resources:
             try:
-                buckets = collect_hashes(prompt, extra_pnginfo)
+                buckets = collect_hashes(prompt, extra_pnginfo, scope=scope, inactive_loras=inactive_lora_files(loras))
                 hash_bits = format_hash_fields(buckets)
             except Exception as e:
                 print(f"[LC123] resource hash skip: {e}")
@@ -644,6 +658,13 @@ class LCSaveImage:
                             info.add_text(k, json.dumps(v) if not isinstance(v, str) else v)
                 if params:
                     info.add_text("parameters", params)
+                used_loras = [{"name": r["name"], "file": r["filename"], "strength_model": r["strength_model"],
+                               "strength_clip": r["strength_clip"]}
+                              for r in loras["loras"] if r["active"] and r["upstream"] is not False]
+                if embed_civitai and used_loras:
+                    # strengths for people and tools; a plain chunk, not a Civitai resources block (that one makes
+                    # CivitAI label the image as made on its site)
+                    info.add_text("lora_metadata", json.dumps({"loras": used_loras}, ensure_ascii=False))
                 air = _txt(meta.get("civitai_air"))
                 resources = civitai_resources_payload(air)
                 if resources:

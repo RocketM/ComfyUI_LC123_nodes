@@ -648,7 +648,7 @@ Full directions: [`LC_Prompt_Builder_Note.md`](LC_Prompt_Builder_Note.md)
 | **LC Easy Folder 📂** | A combined prefix for Save Image, or wire it into LC Save Image's `filename_prefix` |
 | **LC Advanced Folder 📂** | Filename and path split apart |
 | **LC Save Metadata 🏷️** | Optional **LC_PIPE in**. Fills prompts, seed, steps, CFG, sampler, scheduler, size and denoise. Widgets win when set (seed `-1`, steps/cfg `0` = use the pipe). **civitai_air** takes an AIR tag or a CivitAI URL |
-| **LC Save Image 💾** | `filename` + `path` under the output folder. PNG gets the workflow, `parameters`, `civitaiResources` and AutoV2 hashes. JPEG/WebP only get a short comment (a format limit, not a bug). Muted, bypassed and switched-off LoRAs are skipped |
+| **LC Save Image 💾** | `filename` + `path` under the output folder. PNG gets the workflow, `parameters`, `civitaiResources` and AutoV2 hashes. JPEG/WebP only get a short comment (a format limit, not a bug). Only resources that feed the saved image are listed: LoRAs that are muted, bypassed, switched off, at strength 0 or on another branch are skipped. A `lora_metadata` chunk records each LoRA's model and CLIP strength |
 | **📝 LC Save Text** | Writes text to a file, cleaning illegal path characters |
 | **LC Join Strings 🔗** | Joins N strings. Empty slots skip the delimiter. `\n` allowed |
 | **LC Show Text 🔤** | Text on the node |
@@ -689,7 +689,7 @@ Details: [`LC123_Save_Image_Note.md`](LC123_Save_Image_Note.md)
 | **LC Any Empty Bool / Int / Float** | Autogrow `any_*`. True / `empty` if any plugged source is empty, muted or bypassed. Only plugged sockets count |
 | **LC Int Split** | `total` splits into `a` + `b`. `split_point` is a fraction (0 to 1), not a count |
 | **LC Seed Jump 🌱** | One seed + a jump = six stepped seeds |
-| **🌱LC Seed** | Type a number for a fixed seed, or **Randomize Each Time** / **New Fixed Random**. A **seed history** remembers the last 10 seeds this node actually ran with. Capped at 2^53-1, the browser's safe integer limit |
+| **🌱LC Seed** | Type a number for a fixed seed, or **Randomize Each Time** / **New Fixed Random**. A **seed history** remembers the last 10 seeds this node actually ran with. On Randomize, saved images carry the seed actually used, not the randomize setting. Capped at 2^53-1, the browser's safe integer limit |
 | **LC Slider** | A plain slider that looks the same in classic and Nodes 2.0. Double-click the value to type. min / max / step / decimals behind the faint gear |
 | **LC 🚦** | A light for a boolean. One input, no widgets: lit in one color for true, another for false. The faint ⚙ sets each color, or none. Follows a boolean widget upstream live, otherwise shows the last run. Dark when it or its source is muted or bypassed |
 | **LC Timer ⏱️** | Times every run and scores the newest one against the 5 before it: faster in green, slower in red, plus how it compares to their average. Stopped and fully cached runs are left out. The history saves with the workflow; right-click to clear it |

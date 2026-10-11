@@ -47,6 +47,11 @@ class LCSeed:
                                "purpose -- see the module docstring.",
                 }),
             },
+            "hidden": {
+                "prompt": "PROMPT",
+                "extra_pnginfo": "EXTRA_PNGINFO",
+                "unique_id": "UNIQUE_ID",
+            },
         }
 
     RETURN_TYPES = ("INT",)
@@ -59,13 +64,28 @@ class LCSeed:
     )
 
     @classmethod
-    def IS_CHANGED(cls, base_seed):
+    def IS_CHANGED(cls, base_seed, prompt=None, extra_pnginfo=None, unique_id=None):
         if int(base_seed) == RANDOMIZE:
             return time.time()
         return int(base_seed)
 
-    def emit(self, base_seed):
+    def emit(self, base_seed, prompt=None, extra_pnginfo=None, unique_id=None):
         used = _resolve_seed(base_seed)
+        # Write the seed actually used into this queue's copy of the graph (not the live widget), so saved
+        # images carry the real number instead of the randomize setting. From the RocketM fork (MIT).
+        if unique_id is not None:
+            node_id = str(unique_id)
+            if prompt is not None and node_id in prompt:
+                prompt[node_id]["inputs"]["base_seed"] = used
+            if extra_pnginfo is not None:
+                for node in (extra_pnginfo.get("workflow") or {}).get("nodes", []):
+                    if str(node.get("id")) != node_id or node.get("type") != "LCSeed":
+                        continue
+                    if node.get("widgets_values"):
+                        node["widgets_values"][0] = used
+                    if "widgets_values_named" in node:
+                        node["widgets_values_named"]["base_seed"] = used
+                    break
         return {
             "ui": {"seed": [used]},
             "result": (used,),

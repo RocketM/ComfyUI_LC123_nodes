@@ -302,8 +302,11 @@ def _collect_from_prompt(prompt, skip_ids=None) -> list[tuple[str, str | None]]:
     return found
 
 
-def collect_hashes(prompt=None, extra_pnginfo=None) -> dict:
+def collect_hashes(prompt=None, extra_pnginfo=None, scope=None, inactive_loras=()) -> dict:
     """
+    scope: node ids the saved image depends on (LC Save Image); None = the whole graph.
+    inactive_loras: LoRA file names seen switched off, at strength 0 or off the image's branch: left out.
+
     Return {
       'model': [(name, autov2), ...],
       'lora': [...],
@@ -340,6 +343,8 @@ def collect_hashes(prompt=None, extra_pnginfo=None) -> dict:
             if n.get("mode") in (2, 4):
                 skip_ids.add(str(n.get("id", "")))
 
+    if scope is not None and isinstance(prompt, dict):
+        prompt = {k: v for k, v in prompt.items() if str(k) in scope}
     candidates = _collect_from_prompt(prompt, skip_ids)
     if isinstance(wf, dict) and isinstance(wf.get("nodes"), list):
         # only workflow nodes that actually run (their id is in the prompt);
@@ -362,10 +367,17 @@ def collect_hashes(prompt=None, extra_pnginfo=None) -> dict:
             }
         candidates.extend(_collect_from_prompt(fake_prompt, skip_ids))
 
+    skip_lora = set()
+    for name in inactive_loras or ():
+        p, k = _resolve(name, "loras")
+        if p:
+            skip_lora.add(os.path.normcase(os.path.abspath(p)))
     seen_path = set()
     for name, hint in candidates:
         path, kind = _resolve(name, hint)
         if not path or path in seen_path:
+            continue
+        if kind == "lora" and os.path.normcase(os.path.abspath(path)) in skip_lora:
             continue
         seen_path.add(path)
         digest = autov2(path)
