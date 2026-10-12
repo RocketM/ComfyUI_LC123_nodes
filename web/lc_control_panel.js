@@ -8,6 +8,7 @@ import { lcApplyLaunchColor } from "./lc_color.js";
 const TYPE = "LCControlPanel";
 const MAX_ROWS = 16;
 const ADD_H = 22;
+const MIN_W = 200; // narrower and the rows cannot fit: the face would spill past the node
 const DEFAULT_ROW = { name: "value", value: 1, min: 0, max: 100, step: 1, decimals: 0, auto: true };
 
 const num = (v, fb) => (Number.isFinite(Number(v)) ? Number(v) : fb);
@@ -90,17 +91,17 @@ function ensureStyle() {
   const st = document.createElement("style");
   st.id = "lc-cp-style";
   st.textContent = `
-.lc-cp{display:flex;flex-direction:column;width:100%;box-sizing:border-box;padding:0 22px 0 6px;color:#ddd;font:12px system-ui,sans-serif;user-select:none}
+.lc-cp{display:flex;flex-direction:column;width:100%;min-width:0;box-sizing:border-box;padding:0 22px 0 6px;color:#ddd;font:12px system-ui,sans-serif;user-select:none}
 .lc-cp-row{display:flex;align-items:center;gap:6px;min-width:0}
-.lc-cp-name{flex:0 0 auto;width:var(--lc-cp-name,78px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#bbb}
-.lc-cp-row input[type=range]{--lc-p:0%;flex:1 1 auto;min-width:30px;height:14px;margin:0;background:transparent;cursor:pointer;-webkit-appearance:none;appearance:none}
+.lc-cp-name{flex:0 1 auto;width:var(--lc-cp-name,78px);min-width:28px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#bbb}
+.lc-cp-row input[type=range]{--lc-p:0%;flex:1 1 auto;min-width:24px;height:14px;margin:0;background:transparent;cursor:pointer;-webkit-appearance:none;appearance:none}
 .lc-cp-row input[type=range]:focus{outline:none}
 .lc-cp-row input[type=range]::-webkit-slider-runnable-track{height:3px;border-radius:2px;background:linear-gradient(to right,#cfcfcf var(--lc-p),#555 var(--lc-p))}
 .lc-cp-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:12px;height:12px;margin-top:-4.5px;border-radius:50%;background:#fff;border:1px solid #00000066}
 .lc-cp-row input[type=range]::-moz-range-track{height:3px;border-radius:2px;background:#555}
 .lc-cp-row input[type=range]::-moz-range-progress{height:3px;border-radius:2px;background:#cfcfcf}
 .lc-cp-row input[type=range]::-moz-range-thumb{width:10px;height:10px;border-radius:50%;background:#fff;border:1px solid #00000066}
-.lc-cp-val{flex:0 0 auto;min-width:32px;max-width:70px;text-align:right;font-variant-numeric:tabular-nums;cursor:text;padding:0 2px;border-radius:3px}
+.lc-cp-val{flex:0 0 auto;min-width:24px;max-width:70px;text-align:right;font-variant-numeric:tabular-nums;cursor:text;padding:0 2px;border-radius:3px}
 .lc-cp-val:hover{background:#ffffff14}
 .lc-cp input.lc-cp-edit{flex:0 0 auto;width:58px;font:inherit;text-align:right;color:#fff;background:#111;border:1px solid #666;border-radius:3px;padding:0 3px}
 .lc-cp-gear{flex:0 0 auto;opacity:.3;cursor:pointer;font-size:12px;line-height:1;padding:2px}
@@ -373,14 +374,20 @@ app.registerExtension({
   async beforeRegisterNodeDef(nodeType, nodeData) {
     if (nodeData?.name !== TYPE) return;
 
-    // keep the height to the rows (except while the user is dragging a resize handle)
+    // keep the height to the rows (except while the user is dragging a resize handle), and the width to MIN_W or more
     const rawSetSize = nodeType.prototype.setSize;
     let mouseDown = false;
     window.addEventListener("pointerdown", () => (mouseDown = true), true);
     window.addEventListener("pointerup", () => (mouseDown = false), true);
     nodeType.prototype.setSize = function (size) {
       if (!mouseDown && this._lcCpHeight && Array.isArray(size) && Math.abs(size[1] - this._lcCpHeight) > 1) size = [size[0], this._lcCpHeight];
+      if (Array.isArray(size) && size[0] < MIN_W) size = [MIN_W, size[1]];
       return rawSetSize.call(this, size);
+    };
+    const onResize = nodeType.prototype.onResize;
+    nodeType.prototype.onResize = function (size) {
+      if (size && size[0] < MIN_W) size[0] = MIN_W; // drag-resize writes size directly
+      return onResize?.apply(this, arguments);
     };
 
     // Connection FX: each output is an INT at 0 decimals and a FLOAT otherwise

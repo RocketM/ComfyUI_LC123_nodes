@@ -14,6 +14,7 @@ const COLORS = {
     LCAspectRatioPipeOut: { color: "#324b4b", bgcolor: "#324b4b" },
     LCSplitSigmaScheduler: { color: "#324b4b", bgcolor: "#324b4b" },
     LCBasicScheduler: { color: "#324b4b", bgcolor: "#324b4b" },
+    LCSamplerScheduler: { color: "#324b4b", bgcolor: "#324b4b" },
     LCSplitSigmasAdvanced: { color: "#324b4b", bgcolor: "#324b4b" },
     LCChangeStepCount: { color: "#1c6d6d", bgcolor: "#1c6d6d" },
     LCSigmaResample: { color: "#1c6d6d", bgcolor: "#1c6d6d" },

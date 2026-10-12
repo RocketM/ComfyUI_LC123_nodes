@@ -51,10 +51,13 @@ def _resolve(value, prompt, seen=None):
 def _cached_values(link, consumer, execution_list):
     if execution_list is None or not isinstance(link, list) or len(link) != 2:
         return None
-    entry = execution_list.get_cache(str(link[0]), str(consumer))
-    if entry is None:
-        entry = execution_list.output_cache.get_local(str(link[0]))
-    if entry is None or entry.outputs is None or not isinstance(link[1], int) or not 0 <= link[1] < len(entry.outputs):
+    try:
+        entry = execution_list.get_cache(str(link[0]), str(consumer))
+        if entry is None:
+            entry = execution_list.output_cache.get_local(str(link[0]))
+    except Exception:
+        return None
+    if entry is None or getattr(entry, "outputs", None) is None or not isinstance(link[1], int) or not 0 <= link[1] < len(entry.outputs):
         return None
     return entry.outputs[link[1]]
 
@@ -78,7 +81,7 @@ def _image_ancestors(prompt, save_node_id, execution_list=None, unresolved=None)
         links = list(inputs.values())
         if kind in ('BooleanSwitchNode', 'LCBooleanSwitch'):
             state = _resolve(inputs.get('state', inputs.get('boolean')), prompt)
-            states = _cached_values(inputs.get('state'), nid, execution_list)
+            states = _cached_values(inputs.get('state', inputs.get('boolean')), nid, execution_list)
             if states is not None and all(isinstance(v, bool) for v in states):
                 links = [inputs.get('on_true' if v else 'on_false') for v in set(states)]
             elif isinstance(state, bool):

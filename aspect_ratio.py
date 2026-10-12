@@ -265,7 +265,7 @@ def _resize_mask(
 
 
 def _empty_latent(width: int, height: int, batch_size: int):
-    return {"samples": torch.zeros([batch_size, 4, height // 8, width // 8])}
+    return {"samples": torch.zeros([batch_size, 4, height // 8, width // 8]), "downscale_ratio_spacial": 8}
 
 
 def _mask_size(mask: torch.Tensor) -> Tuple[int, int]:

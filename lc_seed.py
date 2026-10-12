@@ -77,7 +77,7 @@ class LCSeed:
             if prompt is not None and node_id in prompt:
                 prompt[node_id]["inputs"]["base_seed"] = used
             if extra_pnginfo is not None:
-                for node in extra_pnginfo.get("workflow", {}).get("nodes", []):
+                for node in (extra_pnginfo.get("workflow") or {}).get("nodes", []):
                     if str(node.get("id")) != node_id or node.get("type") != "LCSeed":
                         continue
                     if node.get("widgets_values"):
