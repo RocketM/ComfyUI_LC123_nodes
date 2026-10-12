@@ -8,7 +8,7 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 - **CivitAI:** [lonecatone23](https://civitai.com/user/lonecatone23)
 - **Instagram:** [synth.studio.models](https://www.instagram.com/synth.studio.models/)
 - **Support:** [Buy me a ☕](https://ko-fi.com/lonecatone)
-- **Version:** 1.49.22 · **145 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
+- **Version:** 1.49.23 · **145 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
 
 > Small tools that remove friction: less wire mess, fewer clicks, clearer workflows.
 
@@ -417,7 +417,7 @@ One **UPSCALE_MODEL** + an optional **MASK**. It crops to the matte, runs the mo
 - ⚠️ Don't load a 4x model in `detail 1x`. You pay for 4x the time and throw the extra pixels in the trash.
 - 💡 Daily setup: `1xSkinContrast-High-SuperUltraCompact` · `detail 1x` · blend `0.75` · Ultra `face+body` · `mask_source: input` · tile `256` / overlap `16`.
 
-Example: [`workflows/LC Post Processing Nodes V7.0.json`](workflows/LC%20Post%20Processing%20Nodes%20V7.0.json)
+Example: [`workflows/LC123 Examples - Image Tools & Post Processing.json`](workflows/LC123%20Examples%20-%20Image%20Tools%20%26%20Post%20Processing.json)
 
 **LC Sharpen Pro 🔪**
 
@@ -734,21 +734,21 @@ Details: [`LC123_Save_Image_Note.md`](LC123_Save_Image_Note.md)
 
 | File | Description |
 |------|-------------|
-| [`workflows/LC Node examples.json`](workflows/LC%20Node%20examples.json) | A tour of the utility, image, prompt and sigma curve nodes |
+| [`workflows/LC123 Examples - Logic & Switches.json`](workflows/LC123%20Examples%20-%20Logic%20%26%20Switches.json) | Bypassers, booleans, switches, number tools and flow control, each with a short note |
+| [`workflows/LC123 Examples - Utility, Text & Saving.json`](workflows/LC123%20Examples%20-%20Utility%2C%20Text%20%26%20Saving.json) | Show & inspect, text tools, seeds, labels and notes, folders and saving |
+| [`workflows/LC123 Examples - Models, Sampling & Sigmas.json`](workflows/LC123%20Examples%20-%20Models%2C%20Sampling%20%26%20Sigmas.json) | Model Optimizer, LoRAs, conditioning, Sampler Configure, sigmas, Speed Boost and Detail Daemon |
+| [`workflows/LC123 Examples - Image Tools & Post Processing.json`](workflows/LC123%20Examples%20-%20Image%20Tools%20%26%20Post%20Processing.json) | Size and crop, batch and compare, color, film and lens, skin, light and depth, photo looks |
+| [`workflows/LC123 Examples - Pipes & Prompt Builders.json`](workflows/LC123%20Examples%20-%20Pipes%20%26%20Prompt%20Builders.json) | The LC pipes, the prompt builder and the regional canvases |
 | [`workflows/LC Skin Beauty.json`](workflows/LC%20Skin%20Beauty.json) | Skin Beauty with an optional mask |
 | [`workflows/LC Skin Beauty basic (no deps).json`](workflows/LC%20Skin%20Beauty%20basic%20(no%20deps).json) | Skin Beauty on its own |
 | [`workflows/LC Dual sigma workflow example.json`](workflows/LC%20Dual%20sigma%20workflow%20example.json) | Split sigma |
 | [`workflows/LC Dual Sigma Advanced workflow example.json`](workflows/LC%20Dual%20Sigma%20Advanced%20workflow%20example.json) | Advanced split sigmas |
 | [`workflows/LC Better Sigmas V2.0.json`](workflows/LC%20Better%20Sigmas%20V2.0.json) | LC Sigmas + LC Detail Daemon against a plain euler / simple baseline, with I2I and LC Vision prompt assist |
-| [`workflows/LC Speed Boost Test.json`](workflows/LC%20Speed%20Boost%20Test.json) | LC Speed Boost on a simple two-pass Krea 2 setup (LC Detail Daemon on the low pass), and the LC Speed Boost 🚀 KSampler as a one-node drop-in (a group bypasser picks which one runs), with LC Timer ⏱️ to score each run |
 | [`workflows/Anima Regional Conditioning WF.json`](workflows/Anima%20Regional%20Conditioning%20WF.json) | Anima regional |
 | [`workflows/Anima Inline Regional Canvas workflow.json`](workflows/Anima%20Inline%20Regional%20Canvas%20workflow.json) | Anima inline canvas |
-| [`workflows/Anima Inline Regional Canvas example.json`](workflows/Anima%20Inline%20Regional%20Canvas%20example.json) | Anima inline canvas, example |
 | [`workflows/Krea2 Inline Regional Canvas Example.json`](workflows/Krea2%20Inline%20Regional%20Canvas%20Example.json) | Krea2 inline canvas |
-| [`workflows/LC Post Processing Nodes V7.0.json`](workflows/LC%20Post%20Processing%20Nodes%20V7.0.json) | The full Image FX suite |
 | [`workflows/LC Lighting Control (BETA).json`](workflows/LC%20Lighting%20Control%20%28BETA%29.json) | The original Lighting Control (V1) with overlays |
 | [`workflows/Lonecat's Photo style Node.json`](workflows/Lonecat%27s%20Photo%20style%20Node.json) | Photo style |
-| [`workflows/Photo style test.json`](workflows/Photo%20style%20test.json) | Photo style test sheet |
 | [`workflows/Photo style test edit.json`](workflows/Photo%20style%20test%20edit.json) | Photo style test sheet, edit version |
 
 Workflow > Open, or just drag it onto the canvas.

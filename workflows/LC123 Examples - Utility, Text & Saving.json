@@ -1,0 +1,2643 @@
+{
+ "id": "91ce2dbe-c850-46e9-a622-b22c18b6a052",
+ "revision": 0,
+ "last_node_id": 26,
+ "last_link_id": 0,
+ "nodes": [
+  {
+   "id": 1,
+   "type": "LCNote",
+   "pos": [
+    24,
+    466
+   ],
+   "size": [
+    400,
+    478
+   ],
+   "flags": {},
+   "order": 0,
+   "mode": 0,
+   "inputs": [],
+   "outputs": [],
+   "title": "🔍 Show & Inspect",
+   "properties": {
+    "lc_note": {
+     "source": "en",
+     "texts": {
+      "en": {
+       "text": "See what's on a wire, read another node's settings, or what a model file says about itself.\n\n**LC Show Any 🔤**\n- Shows any value on the node and passes it through with its type unchanged.\n\n**LC Show Text 🔤**\n- Shows a string on the node and passes it on.\n\n**LC Node Snapshot 📋**\n- Reads another node's widgets and outputs the selected value, all lines, or JSON.\n\n**LC Widget To String**\n- Reads a widget on another node as a string.\n\n**LC Model Info ℹ️**\n- Wire any MODEL in: it follows the wire upstream (LoRA loaders, merges, LC Model Optimizer) and reads each file's header only. Shows the workflow a save node baked in (base models, LoRAs with strengths, merges), Kohya training info and trigger tags, card fields, GGUF type. Live on the node, no queue needed. The model passes through.\n"
+      }
+     },
+     "titles": {
+      "en": "🔍 Show & Inspect"
+     }
+    }
+   },
+   "widgets_values": [
+    "English ✏️",
+    "See what's on a wire, read another node's settings, or what a model file says about itself.\n\n**LC Show Any 🔤**\n- Shows any value on the node and passes it through with its type unchanged.\n\n**LC Show Text 🔤**\n- Shows a string on the node and passes it on.\n\n**LC Node Snapshot 📋**\n- Reads another node's widgets and outputs the selected value, all lines, or JSON.\n\n**LC Widget To String**\n- Reads a widget on another node as a string.\n\n**LC Model Info ℹ️**\n- Wire any MODEL in: it follows the wire upstream (LoRA loaders, merges, LC Model Optimizer) and reads each file's header only. Shows the workflow a save node baked in (base models, LoRAs with strengths, merges), Kohya training info and trigger tags, card fields, GGUF type. Live on the node, no queue needed. The model passes through.\n"
+   ],
+   "widgets_values_named": {
+    "language": "English ✏️",
+    "text": "See what's on a wire, read another node's settings, or what a model file says about itself.\n\n**LC Show Any 🔤**\n- Shows any value on the node and passes it through with its type unchanged.\n\n**LC Show Text 🔤**\n- Shows a string on the node and passes it on.\n\n**LC Node Snapshot 📋**\n- Reads another node's widgets and outputs the selected value, all lines, or JSON.\n\n**LC Widget To String**\n- Reads a widget on another node as a string.\n\n**LC Model Info ℹ️**\n- Wire any MODEL in: it follows the wire upstream (LoRA loaders, merges, LC Model Optimizer) and reads each file's header only. Shows the workflow a save node baked in (base models, LoRAs with strengths, merges), Kohya training info and trigger tags, card fields, GGUF type. Live on the node, no queue needed. The model passes through.\n"
+   },
+   "color": "#2E3A46",
+   "bgcolor": "#2E3A46"
+  },
+  {
+   "id": 2,
+   "type": "LCShowAny",
+   "pos": [
+    454,
+    496
+   ],
+   "size": [
+    151.134375,
+    26
+   ],
+   "flags": {},
+   "order": 1,
+   "mode": 0,
+   "inputs": [
+    {
+     "localized_name": "any",
+     "name": "any",
+     "type": "*",
+     "link": null
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "any",
+     "name": "any",
+     "type": "*",
+     "links": null
+    }
+   ],
+   "properties": {
+    "cnr_id": "ComfyUI_LC123_nodes",
+    "ver": "6ec5393e7026c7c95fd6497edf11f8b95c416f67",
+    "ue_properties": {
+     "widget_ue_connectable": {},
+     "input_ue_unconnectable": {}
+    },
+    "Node name for S&R": "LCShowAny"
+   },
+   "color": "#28281E",
+   "bgcolor": "#28281E"
+  },
+  {
+   "id": 3,
+   "type": "LCShowText",
+   "pos": [
+    644,
+    496
+   ],
+   "size": [
+    153.827734375,
+    26
+   ],
+   "flags": {},
+   "order": 2,
+   "mode": 0,
+   "inputs": [
+    {
+     "localized_name": "text",
+     "name": "text",
+     "type": "STRING",
+     "link": null
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "text",
+     "name": "text",
+     "type": "STRING",
+     "links": null
+    }
+   ],
+   "properties": {
+    "cnr_id": "ComfyUI_LC123_nodes",
+    "ver": "6ec5393e7026c7c95fd6497edf11f8b95c416f67",
+    "ue_properties": {
+     "widget_ue_connectable": {},
+     "input_ue_unconnectable": {}
+    },
+    "Node name for S&R": "LCShowText"
+   },
+   "color": "#28281E",
+   "bgcolor": "#28281E"
+  },
+  {
+   "id": 4,
+   "type": "LCNodeSnapshot",
+   "pos": [
+    834,
+    496
+   ],
+   "size": [
+    270,
+    122
+   ],
+   "flags": {},
+   "order": 3,
+   "mode": 0,
+   "inputs": [
+    {
+     "localized_name": "source",
+     "name": "source",
+     "shape": 7,
+     "type": "*",
+     "link": null
+    },
+    {
+     "localized_name": "widget_name",
+     "name": "widget_name",
+     "type": "STRING",
+     "widget": {
+      "name": "widget_name"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "target",
+     "name": "target",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "target"
+     },
+     "link": null
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "selected",
+     "name": "selected",
+     "type": "STRING",
+     "links": null
+    },
+    {
+     "localized_name": "lines",
+     "name": "lines",
+     "type": "STRING",
+     "links": null
+    },
+    {
+     "localized_name": "json",
+     "name": "json",
+     "type": "STRING",
+     "links": null
+    }
+   ],
+   "properties": {
+    "cnr_id": "ComfyUI_LC123_nodes",
+    "ver": "6ec5393e7026c7c95fd6497edf11f8b95c416f67",
+    "ue_properties": {
+     "widget_ue_connectable": {},
+     "input_ue_unconnectable": {}
+    },
+    "Node name for S&R": "LCNodeSnapshot"
+   },
+   "widgets_values": [
+    "",
+    ""
+   ],
+   "widgets_values_named": {
+    "widget_name": "",
+    "target": ""
+   },
+   "color": "#28281E",
+   "bgcolor": "#28281E"
+  },
+  {
+   "id": 5,
+   "type": "LCWidgetToString",
+   "pos": [
+    1134,
+    496
+   ],
+   "size": [
+    294.341796875,
+    154
+   ],
+   "flags": {},
+   "order": 4,
+   "mode": 0,
+   "inputs": [
+    {
+     "localized_name": "any_input",
+     "name": "any_input",
+     "shape": 7,
+     "type": "*",
+     "link": null
+    },
+    {
+     "localized_name": "id",
+     "name": "id",
+     "type": "INT",
+     "widget": {
+      "name": "id"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "widget_name",
+     "name": "widget_name",
+     "type": "STRING",
+     "widget": {
+      "name": "widget_name"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "return_all",
+     "name": "return_all",
+     "type": "BOOLEAN",
+     "widget": {
+      "name": "return_all"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "node_title",
+     "name": "node_title",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "node_title"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "allowed_float_decimals",
+     "name": "allowed_float_decimals",
+     "shape": 7,
+     "type": "INT",
+     "widget": {
+      "name": "allowed_float_decimals"
+     },
+     "link": null
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "STRING",
+     "name": "STRING",
+     "type": "STRING",
+     "links": null
+    }
+   ],
+   "properties": {
+    "cnr_id": "ComfyUI_LC123_nodes",
+    "ver": "6ec5393e7026c7c95fd6497edf11f8b95c416f67",
+    "ue_properties": {
+     "widget_ue_connectable": {},
+     "input_ue_unconnectable": {}
+    },
+    "Node name for S&R": "LCWidgetToString"
+   },
+   "widgets_values": [
+    0,
+    "",
+    false,
+    "",
+    2
+   ],
+   "widgets_values_named": {
+    "id": 0,
+    "widget_name": "",
+    "return_all": false,
+    "node_title": "",
+    "allowed_float_decimals": 2
+   },
+   "color": "#324B4B",
+   "bgcolor": "#324B4B"
+  },
+  {
+   "id": 6,
+   "type": "LCModelInfo",
+   "pos": [
+    1458.341796875,
+    496
+   ],
+   "size": [
+    420,
+    300
+   ],
+   "flags": {},
+   "order": 5,
+   "mode": 0,
+   "inputs": [
+    {
+     "localized_name": "model",
+     "name": "model",
+     "type": "MODEL",
+     "link": null
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "model",
+     "name": "model",
+     "type": "MODEL",
+     "links": null
+    },
+    {
+     "localized_name": "info",
+     "name": "info",
+     "type": "STRING",
+     "links": null
+    },
+    {
+     "localized_name": "loras",
+     "name": "loras",
+     "type": "STRING",
+     "links": null
+    },
+    {
+     "localized_name": "metadata",
+     "name": "metadata",
+     "type": "STRING",
+     "links": null
+    }
+   ],
+   "properties": {
+    "cnr_id": "ComfyUI_LC123_nodes",
+    "ver": "6ec5393e7026c7c95fd6497edf11f8b95c416f67",
+    "ue_properties": {
+     "widget_ue_connectable": {},
+     "input_ue_unconnectable": {}
+    },
+    "Node name for S&R": "LCModelInfo",
+    "lc_display_text": "Wire a MODEL output into this node."
+   },
+   "widgets_values": [],
+   "widgets_values_named": {},
+   "color": "#28281E",
+   "bgcolor": "#28281E"
+  },
+  {
+   "id": 7,
+   "type": "LCNote",
+   "pos": [
+    2012.341796875,
+    466
+   ],
+   "size": [
+    400,
+    486
+   ],
+   "flags": {},
+   "order": 6,
+   "mode": 0,
+   "inputs": [],
+   "outputs": [],
+   "title": "✂️ Text Tools",
+   "properties": {
+    "lc_note": {
+     "source": "en",
+     "texts": {
+      "en": {
+       "text": "Join, replace, remove and clean prompt text.\n\n**LC Join Strings 🔗**\n- Joins multiple strings with a delimiter and skips the empty ones.\n\n**LC Text Replace ✂️**\n- Runs up to twenty find and replace pairs (optionally regex) on a text.\n\n**LC Text Remove 🔪**\n- Removes up to twenty substrings from a text, in order.\n\n**LC ✂️ Duplicate Tags 🏷️**\n- Removes repeated tags so none gets double weight (long_hair = (long hair:1.2)). Optional second prompt to merge two and clean them together.\n\n**CivitAI 🚩🔪**\n- Strips flagged terms from a prompt using a compliance list, as an aid only (you are still responsible for CivitAI's terms). Off until you switch it on.\n\n**📝 LC Save Text**\n- Writes a text string to a file in the output folder.\n"
+      }
+     },
+     "titles": {
+      "en": "✂️ Text Tools"
+     }
+    }
+   },
+   "widgets_values": [
+    "English ✏️",
+    "Join, replace, remove and clean prompt text.\n\n**LC Join Strings 🔗**\n- Joins multiple strings with a delimiter and skips the empty ones.\n\n**LC Text Replace ✂️**\n- Runs up to twenty find and replace pairs (optionally regex) on a text.\n\n**LC Text Remove 🔪**\n- Removes up to twenty substrings from a text, in order.\n\n**LC ✂️ Duplicate Tags 🏷️**\n- Removes repeated tags so none gets double weight (long_hair = (long hair:1.2)). Optional second prompt to merge two and clean them together.\n\n**CivitAI 🚩🔪**\n- Strips flagged terms from a prompt using a compliance list, as an aid only (you are still responsible for CivitAI's terms). Off until you switch it on.\n\n**📝 LC Save Text**\n- Writes a text string to a file in the output folder.\n"
+   ],
+   "widgets_values_named": {
+    "language": "English ✏️",
+    "text": "Join, replace, remove and clean prompt text.\n\n**LC Join Strings 🔗**\n- Joins multiple strings with a delimiter and skips the empty ones.\n\n**LC Text Replace ✂️**\n- Runs up to twenty find and replace pairs (optionally regex) on a text.\n\n**LC Text Remove 🔪**\n- Removes up to twenty substrings from a text, in order.\n\n**LC ✂️ Duplicate Tags 🏷️**\n- Removes repeated tags so none gets double weight (long_hair = (long hair:1.2)). Optional second prompt to merge two and clean them together.\n\n**CivitAI 🚩🔪**\n- Strips flagged terms from a prompt using a compliance list, as an aid only (you are still responsible for CivitAI's terms). Off until you switch it on.\n\n**📝 LC Save Text**\n- Writes a text string to a file in the output folder.\n"
+   },
+   "color": "#2E3A46",
+   "bgcolor": "#2E3A46"
+  },
+  {
+   "id": 8,
+   "type": "LCJoinStrings",
+   "pos": [
+    2442.341796875,
+    496
+   ],
+   "size": [
+    330,
+    130
+   ],
+   "flags": {},
+   "order": 7,
+   "mode": 0,
+   "inputs": [
+    {
+     "localized_name": "string_1",
+     "name": "string_1",
+     "shape": 7,
+     "type": "STRING",
+     "link": null
+    },
+    {
+     "localized_name": "string_2",
+     "name": "string_2",
+     "shape": 7,
+     "type": "STRING",
+     "link": null
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "string",
+     "name": "string",
+     "type": "STRING",
+     "links": null
+    }
+   ],
+   "properties": {
+    "cnr_id": "ComfyUI_LC123_nodes",
+    "ver": "6ec5393e7026c7c95fd6497edf11f8b95c416f67",
+    "ue_properties": {
+     "widget_ue_connectable": {},
+     "input_ue_unconnectable": {}
+    },
+    "Node name for S&R": "LCJoinStrings"
+   },
+   "widgets_values": [
+    2,
+    " "
+   ],
+   "widgets_values_named": {
+    "inputcount": 2,
+    "delimiter": " "
+   },
+   "color": "#28281E",
+   "bgcolor": "#28281E"
+  },
+  {
+   "id": 9,
+   "type": "LCTextReplace",
+   "pos": [
+    2802.341796875,
+    496
+   ],
+   "size": [
+    360,
+    184
+   ],
+   "flags": {},
+   "order": 8,
+   "mode": 0,
+   "inputs": [
+    {
+     "localized_name": "text",
+     "name": "text",
+     "type": "STRING",
+     "link": null
+    },
+    {
+     "localized_name": "entrycount",
+     "name": "entrycount",
+     "type": "INT",
+     "widget": {
+      "name": "entrycount"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "use_regex",
+     "name": "use_regex",
+     "type": "BOOLEAN",
+     "widget": {
+      "name": "use_regex"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "count",
+     "name": "count",
+     "type": "INT",
+     "widget": {
+      "name": "count"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "find_1",
+     "name": "find_1",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "find_1"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "replace_1",
+     "name": "replace_1",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "replace_1"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "find_2",
+     "name": "find_2",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "find_2"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "replace_2",
+     "name": "replace_2",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "replace_2"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "find_3",
+     "name": "find_3",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "find_3"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "replace_3",
+     "name": "replace_3",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "replace_3"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "find_4",
+     "name": "find_4",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "find_4"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "replace_4",
+     "name": "replace_4",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "replace_4"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "find_5",
+     "name": "find_5",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "find_5"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "replace_5",
+     "name": "replace_5",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "replace_5"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "find_6",
+     "name": "find_6",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "find_6"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "replace_6",
+     "name": "replace_6",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "replace_6"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "find_7",
+     "name": "find_7",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "find_7"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "replace_7",
+     "name": "replace_7",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "replace_7"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "find_8",
+     "name": "find_8",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "find_8"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "replace_8",
+     "name": "replace_8",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "replace_8"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "find_9",
+     "name": "find_9",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "find_9"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "replace_9",
+     "name": "replace_9",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "replace_9"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "find_10",
+     "name": "find_10",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "find_10"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "replace_10",
+     "name": "replace_10",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "replace_10"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "find_11",
+     "name": "find_11",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "find_11"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "replace_11",
+     "name": "replace_11",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "replace_11"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "find_12",
+     "name": "find_12",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "find_12"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "replace_12",
+     "name": "replace_12",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "replace_12"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "find_13",
+     "name": "find_13",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "find_13"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "replace_13",
+     "name": "replace_13",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "replace_13"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "find_14",
+     "name": "find_14",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "find_14"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "replace_14",
+     "name": "replace_14",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "replace_14"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "find_15",
+     "name": "find_15",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "find_15"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "replace_15",
+     "name": "replace_15",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "replace_15"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "find_16",
+     "name": "find_16",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "find_16"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "replace_16",
+     "name": "replace_16",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "replace_16"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "find_17",
+     "name": "find_17",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "find_17"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "replace_17",
+     "name": "replace_17",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "replace_17"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "find_18",
+     "name": "find_18",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "find_18"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "replace_18",
+     "name": "replace_18",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "replace_18"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "find_19",
+     "name": "find_19",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "find_19"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "replace_19",
+     "name": "replace_19",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "replace_19"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "find_20",
+     "name": "find_20",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "find_20"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "replace_20",
+     "name": "replace_20",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "replace_20"
+     },
+     "link": null
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "text",
+     "name": "text",
+     "type": "STRING",
+     "links": null
+    }
+   ],
+   "properties": {
+    "cnr_id": "ComfyUI_LC123_nodes",
+    "ver": "6ec5393e7026c7c95fd6497edf11f8b95c416f67",
+    "ue_properties": {
+     "widget_ue_connectable": {},
+     "input_ue_unconnectable": {}
+    },
+    "Node name for S&R": "LCTextReplace"
+   },
+   "widgets_values": [
+    1,
+    false,
+    0,
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+   ],
+   "widgets_values_named": {
+    "entrycount": 1,
+    "use_regex": false,
+    "count": 0,
+    "find_1": "",
+    "replace_1": "",
+    "find_2": "",
+    "replace_2": "",
+    "find_3": "",
+    "replace_3": "",
+    "find_4": "",
+    "replace_4": "",
+    "find_5": "",
+    "replace_5": "",
+    "find_6": "",
+    "replace_6": "",
+    "find_7": "",
+    "replace_7": "",
+    "find_8": "",
+    "replace_8": "",
+    "find_9": "",
+    "replace_9": "",
+    "find_10": "",
+    "replace_10": "",
+    "find_11": "",
+    "replace_11": "",
+    "find_12": "",
+    "replace_12": "",
+    "find_13": "",
+    "replace_13": "",
+    "find_14": "",
+    "replace_14": "",
+    "find_15": "",
+    "replace_15": "",
+    "find_16": "",
+    "replace_16": "",
+    "find_17": "",
+    "replace_17": "",
+    "find_18": "",
+    "replace_18": "",
+    "find_19": "",
+    "replace_19": "",
+    "find_20": "",
+    "replace_20": ""
+   },
+   "color": "#28281E",
+   "bgcolor": "#28281E"
+  },
+  {
+   "id": 10,
+   "type": "LCTextRemove",
+   "pos": [
+    3192.341796875,
+    496
+   ],
+   "size": [
+    360,
+    180
+   ],
+   "flags": {},
+   "order": 9,
+   "mode": 0,
+   "inputs": [
+    {
+     "localized_name": "text",
+     "name": "text",
+     "type": "STRING",
+     "link": null
+    },
+    {
+     "localized_name": "entrycount",
+     "name": "entrycount",
+     "type": "INT",
+     "widget": {
+      "name": "entrycount"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "use_regex",
+     "name": "use_regex",
+     "type": "BOOLEAN",
+     "widget": {
+      "name": "use_regex"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "count",
+     "name": "count",
+     "type": "INT",
+     "widget": {
+      "name": "count"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "find_1",
+     "name": "find_1",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "find_1"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "find_2",
+     "name": "find_2",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "find_2"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "find_3",
+     "name": "find_3",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "find_3"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "find_4",
+     "name": "find_4",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "find_4"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "find_5",
+     "name": "find_5",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "find_5"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "find_6",
+     "name": "find_6",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "find_6"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "find_7",
+     "name": "find_7",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "find_7"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "find_8",
+     "name": "find_8",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "find_8"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "find_9",
+     "name": "find_9",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "find_9"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "find_10",
+     "name": "find_10",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "find_10"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "find_11",
+     "name": "find_11",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "find_11"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "find_12",
+     "name": "find_12",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "find_12"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "find_13",
+     "name": "find_13",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "find_13"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "find_14",
+     "name": "find_14",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "find_14"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "find_15",
+     "name": "find_15",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "find_15"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "find_16",
+     "name": "find_16",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "find_16"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "find_17",
+     "name": "find_17",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "find_17"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "find_18",
+     "name": "find_18",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "find_18"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "find_19",
+     "name": "find_19",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "find_19"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "find_20",
+     "name": "find_20",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "find_20"
+     },
+     "link": null
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "text",
+     "name": "text",
+     "type": "STRING",
+     "links": null
+    }
+   ],
+   "properties": {
+    "cnr_id": "ComfyUI_LC123_nodes",
+    "ver": "6ec5393e7026c7c95fd6497edf11f8b95c416f67",
+    "ue_properties": {
+     "widget_ue_connectable": {},
+     "input_ue_unconnectable": {}
+    },
+    "Node name for S&R": "LCTextRemove"
+   },
+   "widgets_values": [
+    1,
+    false,
+    0,
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+   ],
+   "widgets_values_named": {
+    "entrycount": 1,
+    "use_regex": false,
+    "count": 0,
+    "find_1": "",
+    "find_2": "",
+    "find_3": "",
+    "find_4": "",
+    "find_5": "",
+    "find_6": "",
+    "find_7": "",
+    "find_8": "",
+    "find_9": "",
+    "find_10": "",
+    "find_11": "",
+    "find_12": "",
+    "find_13": "",
+    "find_14": "",
+    "find_15": "",
+    "find_16": "",
+    "find_17": "",
+    "find_18": "",
+    "find_19": "",
+    "find_20": ""
+   },
+   "color": "#28281E",
+   "bgcolor": "#28281E"
+  },
+  {
+   "id": 11,
+   "type": "LCDuplicateTags",
+   "pos": [
+    3582.341796875,
+    496
+   ],
+   "size": [
+    270,
+    78
+   ],
+   "flags": {},
+   "order": 10,
+   "mode": 0,
+   "inputs": [
+    {
+     "localized_name": "text",
+     "name": "text",
+     "shape": 7,
+     "type": "STRING",
+     "link": null
+    },
+    {
+     "localized_name": "text_2",
+     "name": "text_2",
+     "shape": 7,
+     "type": "STRING",
+     "link": null
+    },
+    {
+     "localized_name": "keep",
+     "name": "keep",
+     "type": "COMBO",
+     "widget": {
+      "name": "keep"
+     },
+     "link": null
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "text",
+     "name": "text",
+     "type": "STRING",
+     "links": null
+    },
+    {
+     "localized_name": "removed",
+     "name": "removed",
+     "type": "STRING",
+     "links": null
+    }
+   ],
+   "properties": {
+    "cnr_id": "ComfyUI_LC123_nodes",
+    "ver": "6ec5393e7026c7c95fd6497edf11f8b95c416f67",
+    "ue_properties": {
+     "widget_ue_connectable": {},
+     "input_ue_unconnectable": {}
+    },
+    "Node name for S&R": "LCDuplicateTags"
+   },
+   "widgets_values": [
+    "first"
+   ],
+   "widgets_values_named": {
+    "keep": "first"
+   },
+   "color": "#28281E",
+   "bgcolor": "#28281E"
+  },
+  {
+   "id": 12,
+   "type": "LCCivitaiStrip",
+   "pos": [
+    2442.341796875,
+    740
+   ],
+   "size": [
+    290,
+    100
+   ],
+   "flags": {},
+   "order": 11,
+   "mode": 0,
+   "inputs": [
+    {
+     "localized_name": "text",
+     "name": "text",
+     "type": "STRING",
+     "link": null
+    },
+    {
+     "localized_name": "list_file",
+     "name": "list_file",
+     "type": "COMBO",
+     "widget": {
+      "name": "list_file"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "enabled",
+     "name": "enabled",
+     "shape": 7,
+     "type": "BOOLEAN",
+     "widget": {
+      "name": "enabled"
+     },
+     "link": null
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "text",
+     "name": "text",
+     "type": "STRING",
+     "links": null
+    }
+   ],
+   "properties": {
+    "cnr_id": "ComfyUI_LC123_nodes",
+    "ver": "6ec5393e7026c7c95fd6497edf11f8b95c416f67",
+    "ue_properties": {
+     "widget_ue_connectable": {},
+     "input_ue_unconnectable": {}
+    },
+    "Node name for S&R": "LCCivitaiStrip"
+   },
+   "widgets_values": [
+    "civitai_compliance_remove.txt",
+    false
+   ],
+   "widgets_values_named": {
+    "list_file": "civitai_compliance_remove.txt",
+    "enabled": false
+   },
+   "color": "#643232",
+   "bgcolor": "#643232"
+  },
+  {
+   "id": 13,
+   "type": "LC123SaveText",
+   "pos": [
+    2762.341796875,
+    740
+   ],
+   "size": [
+    270,
+    82
+   ],
+   "flags": {},
+   "order": 12,
+   "mode": 0,
+   "inputs": [
+    {
+     "localized_name": "text",
+     "name": "text",
+     "type": "STRING",
+     "link": null
+    },
+    {
+     "localized_name": "filename_prefix",
+     "name": "filename_prefix",
+     "type": "STRING",
+     "widget": {
+      "name": "filename_prefix"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "format",
+     "name": "format",
+     "type": "COMBO",
+     "widget": {
+      "name": "format"
+     },
+     "link": null
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "text",
+     "name": "text",
+     "type": "STRING",
+     "links": null
+    }
+   ],
+   "properties": {
+    "cnr_id": "ComfyUI_LC123_nodes",
+    "ver": "6ec5393e7026c7c95fd6497edf11f8b95c416f67",
+    "ue_properties": {
+     "widget_ue_connectable": {},
+     "input_ue_unconnectable": {}
+    },
+    "Node name for S&R": "LC123SaveText"
+   },
+   "widgets_values": [
+    "ComfyUI",
+    "txt"
+   ],
+   "widgets_values_named": {
+    "filename_prefix": "ComfyUI",
+    "format": "txt"
+   },
+   "color": "#28281E",
+   "bgcolor": "#28281E"
+  },
+  {
+   "id": 14,
+   "type": "LCNote",
+   "pos": [
+    3986.341796875,
+    466
+   ],
+   "size": [
+    400,
+    214
+   ],
+   "flags": {},
+   "order": 13,
+   "mode": 0,
+   "inputs": [],
+   "outputs": [],
+   "title": "🌱 Seeds",
+   "properties": {
+    "lc_note": {
+     "source": "en",
+     "texts": {
+      "en": {
+       "text": "Seeds that remember what they actually ran with.\n\n**🌱LC Seed**\n- A utility seed with a mode that also works when you queue only this node.\n\n**LC Seed Jump 🌱**\n- Takes a seed and a jump value and outputs the seed plus five successive jumps.\n"
+      }
+     },
+     "titles": {
+      "en": "🌱 Seeds"
+     }
+    }
+   },
+   "widgets_values": [
+    "English ✏️",
+    "Seeds that remember what they actually ran with.\n\n**🌱LC Seed**\n- A utility seed with a mode that also works when you queue only this node.\n\n**LC Seed Jump 🌱**\n- Takes a seed and a jump value and outputs the seed plus five successive jumps.\n"
+   ],
+   "widgets_values_named": {
+    "language": "English ✏️",
+    "text": "Seeds that remember what they actually ran with.\n\n**🌱LC Seed**\n- A utility seed with a mode that also works when you queue only this node.\n\n**LC Seed Jump 🌱**\n- Takes a seed and a jump value and outputs the seed plus five successive jumps.\n"
+   },
+   "color": "#2E3A46",
+   "bgcolor": "#2E3A46"
+  },
+  {
+   "id": 15,
+   "type": "LCSeed",
+   "pos": [
+    4416.341796875,
+    496
+   ],
+   "size": [
+    270,
+    130
+   ],
+   "flags": {},
+   "order": 14,
+   "mode": 0,
+   "inputs": [
+    {
+     "localized_name": "base_seed",
+     "name": "base_seed",
+     "type": "INT",
+     "widget": {
+      "name": "base_seed"
+     },
+     "link": null
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "seed",
+     "name": "seed",
+     "type": "INT",
+     "links": null
+    }
+   ],
+   "properties": {
+    "cnr_id": "ComfyUI_LC123_nodes",
+    "ver": "6ec5393e7026c7c95fd6497edf11f8b95c416f67",
+    "ue_properties": {
+     "widget_ue_connectable": {},
+     "input_ue_unconnectable": {}
+    },
+    "Node name for S&R": "LCSeed",
+    "lc_seed_history": []
+   },
+   "widgets_values": [
+    0,
+    "",
+    "",
+    "— last used seeds —"
+   ],
+   "widgets_values_named": {
+    "base_seed": 0,
+    "🎲 Randomize Each Time": "",
+    "🎲 New Fixed Random": "",
+    "seed history": "— last used seeds —"
+   },
+   "color": "#822305",
+   "bgcolor": "#822305"
+  },
+  {
+   "id": 16,
+   "type": "LCSeedJump",
+   "pos": [
+    4716.341796875,
+    496
+   ],
+   "size": [
+    270,
+    158
+   ],
+   "flags": {},
+   "order": 15,
+   "mode": 0,
+   "inputs": [
+    {
+     "localized_name": "seed",
+     "name": "seed",
+     "type": "INT",
+     "link": null
+    },
+    {
+     "localized_name": "jump",
+     "name": "jump",
+     "type": "INT",
+     "widget": {
+      "name": "jump"
+     },
+     "link": null
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "seed_1",
+     "name": "seed_1",
+     "type": "INT",
+     "links": null
+    },
+    {
+     "localized_name": "seed_2",
+     "name": "seed_2",
+     "type": "INT",
+     "links": null
+    },
+    {
+     "localized_name": "seed_3",
+     "name": "seed_3",
+     "type": "INT",
+     "links": null
+    },
+    {
+     "localized_name": "seed_4",
+     "name": "seed_4",
+     "type": "INT",
+     "links": null
+    },
+    {
+     "localized_name": "seed_5",
+     "name": "seed_5",
+     "type": "INT",
+     "links": null
+    },
+    {
+     "localized_name": "seed_6",
+     "name": "seed_6",
+     "type": "INT",
+     "links": null
+    }
+   ],
+   "properties": {
+    "cnr_id": "ComfyUI_LC123_nodes",
+    "ver": "6ec5393e7026c7c95fd6497edf11f8b95c416f67",
+    "ue_properties": {
+     "widget_ue_connectable": {},
+     "input_ue_unconnectable": {}
+    },
+    "Node name for S&R": "LCSeedJump"
+   },
+   "widgets_values": [
+    1
+   ],
+   "widgets_values_named": {
+    "jump": 1
+   },
+   "color": "#28281E",
+   "bgcolor": "#28281E"
+  },
+  {
+   "id": 17,
+   "type": "LCNote",
+   "pos": [
+    24,
+    1102
+   ],
+   "size": [
+    400,
+    322
+   ],
+   "flags": {},
+   "order": 16,
+   "mode": 0,
+   "inputs": [],
+   "outputs": [],
+   "title": "🏷️ Labels & Notes",
+   "properties": {
+    "lc_note": {
+     "source": "en",
+     "texts": {
+      "en": {
+       "text": "Annotate a workflow. LC Note translates on click (needs LC Vision).\n\n**LC Label 🏷️**\n- A floating text label for annotating a workflow, with fonts, color, outline and shadow (no sockets).\n\n**LC Image Label**\n- A floating image sticker with drag-and-drop upload for annotating a workflow (no sockets).\n\n**LC Note 📝**\n- A markdown note that translates into ComfyUI's 14 languages on click through LC Vision, and shows @[card](link) lines as link cards.\n"
+      }
+     },
+     "titles": {
+      "en": "🏷️ Labels & Notes"
+     }
+    }
+   },
+   "widgets_values": [
+    "English ✏️",
+    "Annotate a workflow. LC Note translates on click (needs LC Vision).\n\n**LC Label 🏷️**\n- A floating text label for annotating a workflow, with fonts, color, outline and shadow (no sockets).\n\n**LC Image Label**\n- A floating image sticker with drag-and-drop upload for annotating a workflow (no sockets).\n\n**LC Note 📝**\n- A markdown note that translates into ComfyUI's 14 languages on click through LC Vision, and shows @[card](link) lines as link cards.\n"
+   ],
+   "widgets_values_named": {
+    "language": "English ✏️",
+    "text": "Annotate a workflow. LC Note translates on click (needs LC Vision).\n\n**LC Label 🏷️**\n- A floating text label for annotating a workflow, with fonts, color, outline and shadow (no sockets).\n\n**LC Image Label**\n- A floating image sticker with drag-and-drop upload for annotating a workflow (no sockets).\n\n**LC Note 📝**\n- A markdown note that translates into ComfyUI's 14 languages on click through LC Vision, and shows @[card](link) lines as link cards.\n"
+   },
+   "color": "#2E3A46",
+   "bgcolor": "#2E3A46"
+  },
+  {
+   "id": 18,
+   "type": "LCLabel",
+   "pos": [
+    454,
+    1132
+   ],
+   "size": [
+    133,
+    63
+   ],
+   "flags": {},
+   "order": 17,
+   "mode": 0,
+   "inputs": [],
+   "outputs": [],
+   "properties": {
+    "text": "Label",
+    "font": "Arial",
+    "size": 48,
+    "bold": true,
+    "italic": false,
+    "color": "#ffffff",
+    "align": "center",
+    "outline": false,
+    "outlineColor": "#000000",
+    "outlineWidth": 4,
+    "shadow": false,
+    "shadowBlur": 10,
+    "bg": false,
+    "bgColor": "#324B4B",
+    "radius": 12,
+    "padding": 8,
+    "angle": 0,
+    "width": 0,
+    "cnr_id": "ComfyUI_LC123_nodes",
+    "ver": "6ec5393e7026c7c95fd6497edf11f8b95c416f67",
+    "ue_properties": {
+     "widget_ue_connectable": {},
+     "input_ue_unconnectable": {}
+    },
+    "Node name for S&R": "LCLabel",
+    "_w": 133,
+    "_h": 63
+   },
+   "color": "#fff0",
+   "bgcolor": "#fff0"
+  },
+  {
+   "id": 19,
+   "type": "LCImageLabel",
+   "pos": [
+    644,
+    1132
+   ],
+   "size": [
+    112,
+    112
+   ],
+   "flags": {},
+   "order": 18,
+   "mode": 0,
+   "inputs": [],
+   "outputs": [],
+   "properties": {
+    "size": 125,
+    "imgW": 0,
+    "imgH": 0,
+    "angle": 0,
+    "padding": 5,
+    "borderWidth": 1,
+    "borderColor": "#ffffff",
+    "borderRadius": 0,
+    "backgroundColor": "transparent",
+    "bgTransparent": true,
+    "syncImageRadius": true,
+    "imageRadius": 0,
+    "embeddedData": "",
+    "_w": 112,
+    "_h": 112
+   },
+   "widgets_values": [
+    ""
+   ],
+   "widgets_values_named": {
+    "_image_path": ""
+   },
+   "color": "#fff0",
+   "bgcolor": "#fff0"
+  },
+  {
+   "id": 20,
+   "type": "LCNote",
+   "pos": [
+    834,
+    1132
+   ],
+   "size": [
+    210,
+    76
+   ],
+   "flags": {},
+   "order": 19,
+   "mode": 0,
+   "inputs": [],
+   "outputs": [],
+   "properties": {
+    "lc_note": {
+     "source": "en",
+     "texts": {
+      "en": {
+       "text": ""
+      }
+     },
+     "titles": {}
+    }
+   },
+   "widgets_values": [
+    "English ✏️",
+    ""
+   ],
+   "widgets_values_named": {
+    "language": "English ✏️",
+    "text": ""
+   },
+   "color": "#2E3A46",
+   "bgcolor": "#2E3A46"
+  },
+  {
+   "id": 21,
+   "type": "LCNote",
+   "pos": [
+    1178,
+    1102
+   ],
+   "size": [
+    400,
+    350
+   ],
+   "flags": {},
+   "order": 20,
+   "mode": 0,
+   "inputs": [],
+   "outputs": [],
+   "title": "💾 Saving",
+   "properties": {
+    "lc_note": {
+     "source": "en",
+     "texts": {
+      "en": {
+       "text": "Folders, file names and saving with CivitAI-ready metadata.\n\n**LC Easy Folder 📂**\n- Builds a filename_prefix for the native Save Image node and creates the folders.\n\n**LC Advanced Folder 📂**\n- Builds separate filename and path outputs for Image Saver style nodes, with optional prefix-in-path and timestamp.\n\n**LC Save Metadata 🏷️**\n- Builds the metadata (models, AIR or URL, settings) that LC Save Image writes.\n\n**LC Save Image 💾**\n- Saves images with workflow metadata, and CivitAI parameters when paired with LC Save Metadata.\n"
+      }
+     },
+     "titles": {
+      "en": "💾 Saving"
+     }
+    }
+   },
+   "widgets_values": [
+    "English ✏️",
+    "Folders, file names and saving with CivitAI-ready metadata.\n\n**LC Easy Folder 📂**\n- Builds a filename_prefix for the native Save Image node and creates the folders.\n\n**LC Advanced Folder 📂**\n- Builds separate filename and path outputs for Image Saver style nodes, with optional prefix-in-path and timestamp.\n\n**LC Save Metadata 🏷️**\n- Builds the metadata (models, AIR or URL, settings) that LC Save Image writes.\n\n**LC Save Image 💾**\n- Saves images with workflow metadata, and CivitAI parameters when paired with LC Save Metadata.\n"
+   ],
+   "widgets_values_named": {
+    "language": "English ✏️",
+    "text": "Folders, file names and saving with CivitAI-ready metadata.\n\n**LC Easy Folder 📂**\n- Builds a filename_prefix for the native Save Image node and creates the folders.\n\n**LC Advanced Folder 📂**\n- Builds separate filename and path outputs for Image Saver style nodes, with optional prefix-in-path and timestamp.\n\n**LC Save Metadata 🏷️**\n- Builds the metadata (models, AIR or URL, settings) that LC Save Image writes.\n\n**LC Save Image 💾**\n- Saves images with workflow metadata, and CivitAI parameters when paired with LC Save Metadata.\n"
+   },
+   "color": "#2E3A46",
+   "bgcolor": "#2E3A46"
+  },
+  {
+   "id": 22,
+   "type": "LCEasyFolder",
+   "pos": [
+    1608,
+    1132
+   ],
+   "size": [
+    300,
+    160
+   ],
+   "flags": {},
+   "order": 21,
+   "mode": 0,
+   "inputs": [
+    {
+     "localized_name": "folder",
+     "name": "folder",
+     "type": "STRING",
+     "widget": {
+      "name": "folder"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "prefix",
+     "name": "prefix",
+     "type": "STRING",
+     "widget": {
+      "name": "prefix"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "suffix",
+     "name": "suffix",
+     "type": "STRING",
+     "widget": {
+      "name": "suffix"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "timestamp",
+     "name": "timestamp",
+     "type": "COMBO",
+     "widget": {
+      "name": "timestamp"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "path_separator",
+     "name": "path_separator",
+     "type": "COMBO",
+     "widget": {
+      "name": "path_separator"
+     },
+     "link": null
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "filename_prefix",
+     "name": "filename_prefix",
+     "type": "STRING",
+     "links": null
+    }
+   ],
+   "properties": {
+    "cnr_id": "ComfyUI_LC123_nodes",
+    "ver": "6ec5393e7026c7c95fd6497edf11f8b95c416f67",
+    "ue_properties": {
+     "widget_ue_connectable": {},
+     "input_ue_unconnectable": {}
+    },
+    "Node name for S&R": "LCEasyFolder"
+   },
+   "widgets_values": [
+    "Drafts",
+    "Test",
+    "",
+    "%Y-%m-%d",
+    "auto"
+   ],
+   "widgets_values_named": {
+    "folder": "Drafts",
+    "prefix": "Test",
+    "suffix": "",
+    "timestamp": "%Y-%m-%d",
+    "path_separator": "auto"
+   },
+   "color": "#324B4B",
+   "bgcolor": "#324B4B"
+  },
+  {
+   "id": 23,
+   "type": "LCAdvancedFolder",
+   "pos": [
+    1938,
+    1132
+   ],
+   "size": [
+    300,
+    200
+   ],
+   "flags": {},
+   "order": 22,
+   "mode": 0,
+   "inputs": [
+    {
+     "localized_name": "folder",
+     "name": "folder",
+     "type": "STRING",
+     "widget": {
+      "name": "folder"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "prefix",
+     "name": "prefix",
+     "type": "STRING",
+     "widget": {
+      "name": "prefix"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "suffix",
+     "name": "suffix",
+     "type": "STRING",
+     "widget": {
+      "name": "suffix"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "timestamp",
+     "name": "timestamp",
+     "type": "COMBO",
+     "widget": {
+      "name": "timestamp"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "path_separator",
+     "name": "path_separator",
+     "type": "COMBO",
+     "widget": {
+      "name": "path_separator"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "include_prefix_in_path",
+     "name": "include_prefix_in_path",
+     "type": "BOOLEAN",
+     "widget": {
+      "name": "include_prefix_in_path"
+     },
+     "link": null
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "filename",
+     "name": "filename",
+     "type": "STRING",
+     "links": null
+    },
+    {
+     "localized_name": "path",
+     "name": "path",
+     "type": "STRING",
+     "links": null
+    }
+   ],
+   "properties": {
+    "cnr_id": "ComfyUI_LC123_nodes",
+    "ver": "6ec5393e7026c7c95fd6497edf11f8b95c416f67",
+    "ue_properties": {
+     "widget_ue_connectable": {},
+     "input_ue_unconnectable": {}
+    },
+    "Node name for S&R": "LCAdvancedFolder"
+   },
+   "widgets_values": [
+    "MetaData",
+    "Test",
+    "",
+    "%Y-%m-%d",
+    "auto",
+    true
+   ],
+   "widgets_values_named": {
+    "folder": "MetaData",
+    "prefix": "Test",
+    "suffix": "",
+    "timestamp": "%Y-%m-%d",
+    "path_separator": "auto",
+    "include_prefix_in_path": true
+   },
+   "color": "#324B4B",
+   "bgcolor": "#324B4B"
+  },
+  {
+   "id": 24,
+   "type": "LCSaveImageMetadata",
+   "pos": [
+    2268,
+    1132
+   ],
+   "size": [
+    400,
+    426
+   ],
+   "flags": {},
+   "order": 23,
+   "mode": 0,
+   "inputs": [
+    {
+     "localized_name": "pipe",
+     "name": "pipe",
+     "shape": 7,
+     "type": "LC_PIPE",
+     "link": null
+    },
+    {
+     "localized_name": "positive",
+     "name": "positive",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "positive"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "negative",
+     "name": "negative",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "negative"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "seed_value",
+     "name": "seed_value",
+     "shape": 7,
+     "type": "INT",
+     "widget": {
+      "name": "seed_value"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "steps",
+     "name": "steps",
+     "shape": 7,
+     "type": "INT",
+     "widget": {
+      "name": "steps"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "cfg",
+     "name": "cfg",
+     "shape": 7,
+     "type": "FLOAT",
+     "widget": {
+      "name": "cfg"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "sampler",
+     "name": "sampler",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "sampler"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "scheduler",
+     "name": "scheduler",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "scheduler"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "models",
+     "name": "models",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "models"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "civitai_air",
+     "name": "civitai_air",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "civitai_air"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "width",
+     "name": "width",
+     "shape": 7,
+     "type": "INT",
+     "widget": {
+      "name": "width"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "height",
+     "name": "height",
+     "shape": 7,
+     "type": "INT",
+     "widget": {
+      "name": "height"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "denoise",
+     "name": "denoise",
+     "shape": 7,
+     "type": "FLOAT",
+     "widget": {
+      "name": "denoise"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "extra_params",
+     "name": "extra_params",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "extra_params"
+     },
+     "link": null
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "metadata",
+     "name": "metadata",
+     "type": "LC_SAVE_META",
+     "links": null
+    },
+    {
+     "localized_name": "parameters",
+     "name": "parameters",
+     "type": "STRING",
+     "links": null
+    }
+   ],
+   "properties": {
+    "cnr_id": "ComfyUI_LC123_nodes",
+    "ver": "6ec5393e7026c7c95fd6497edf11f8b95c416f67",
+    "ue_properties": {
+     "widget_ue_connectable": {},
+     "input_ue_unconnectable": {}
+    },
+    "Node name for S&R": "LCSaveImageMetadata"
+   },
+   "widgets_values": [
+    "",
+    "",
+    -1,
+    0,
+    0,
+    "",
+    "",
+    "",
+    "",
+    0,
+    0,
+    0,
+    ""
+   ],
+   "widgets_values_named": {
+    "positive": "",
+    "negative": "",
+    "seed_value": -1,
+    "steps": 0,
+    "cfg": 0,
+    "sampler": "",
+    "scheduler": "",
+    "models": "",
+    "civitai_air": "",
+    "width": 0,
+    "height": 0,
+    "denoise": 0,
+    "extra_params": ""
+   },
+   "color": "#28281E",
+   "bgcolor": "#28281E"
+  },
+  {
+   "id": 25,
+   "type": "LCSaveImage",
+   "pos": [
+    2698,
+    1132
+   ],
+   "size": [
+    280,
+    246
+   ],
+   "flags": {},
+   "order": 24,
+   "mode": 0,
+   "inputs": [
+    {
+     "localized_name": "images",
+     "name": "images",
+     "type": "IMAGE",
+     "link": null
+    },
+    {
+     "localized_name": "metadata",
+     "name": "metadata",
+     "shape": 7,
+     "type": "LC_SAVE_META",
+     "link": null
+    },
+    {
+     "localized_name": "filename",
+     "name": "filename",
+     "type": "STRING",
+     "widget": {
+      "name": "filename"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "path",
+     "name": "path",
+     "type": "STRING",
+     "widget": {
+      "name": "path"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "format",
+     "name": "format",
+     "type": "COMBO",
+     "widget": {
+      "name": "format"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "quality",
+     "name": "quality",
+     "type": "INT",
+     "widget": {
+      "name": "quality"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "embed_workflow",
+     "name": "embed_workflow",
+     "type": "BOOLEAN",
+     "widget": {
+      "name": "embed_workflow"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "embed_civitai",
+     "name": "embed_civitai",
+     "type": "BOOLEAN",
+     "widget": {
+      "name": "embed_civitai"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "hash_resources",
+     "name": "hash_resources",
+     "type": "BOOLEAN",
+     "widget": {
+      "name": "hash_resources"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "filename_prefix",
+     "name": "filename_prefix",
+     "shape": 7,
+     "type": "STRING",
+     "widget": {
+      "name": "filename_prefix"
+     },
+     "link": null
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "images",
+     "name": "images",
+     "type": "IMAGE",
+     "links": null
+    },
+    {
+     "localized_name": "saved_as",
+     "name": "saved_as",
+     "type": "STRING",
+     "links": null
+    }
+   ],
+   "properties": {
+    "cnr_id": "ComfyUI_LC123_nodes",
+    "ver": "6ec5393e7026c7c95fd6497edf11f8b95c416f67",
+    "ue_properties": {
+     "widget_ue_connectable": {},
+     "input_ue_unconnectable": {}
+    },
+    "Node name for S&R": "LCSaveImage"
+   },
+   "widgets_values": [
+    "LC123",
+    "",
+    "png",
+    95,
+    true,
+    true,
+    true,
+    ""
+   ],
+   "widgets_values_named": {
+    "filename": "LC123",
+    "path": "",
+    "format": "png",
+    "quality": 95,
+    "embed_workflow": true,
+    "embed_civitai": true,
+    "hash_resources": true,
+    "filename_prefix": ""
+   },
+   "color": "#28281E",
+   "bgcolor": "#28281E"
+  },
+  {
+   "id": 26,
+   "type": "LCNote",
+   "pos": [
+    0,
+    0
+   ],
+   "size": [
+    900,
+    362
+   ],
+   "flags": {},
+   "order": 25,
+   "mode": 0,
+   "inputs": [],
+   "outputs": [],
+   "title": "About this workflow 👋",
+   "properties": {
+    "lc_note": {
+     "source": "en",
+     "texts": {
+      "en": {
+       "text": "# LC123 Examples - Utility, Text & Saving\n\nLook inside a workflow, clean up text, manage seeds, label things and save the result.\n\n- These are examples of every node in each section, with a short note on what it does. They are not wired: drop the ones you need into your own workflow.\n- 💡 Hover any input for its tooltip. Full details in the [README](https://github.com/lonecatone23/ComfyUI_LC123_nodes).\n\n**In this workflow:**\n- 🔍 Show & Inspect\n- ✂️ Text Tools\n- 🌱 Seeds\n- 🏷️ Labels & Notes\n- 💾 Saving\n"
+      }
+     },
+     "titles": {
+      "en": "About this workflow 👋"
+     }
+    }
+   },
+   "widgets_values": [
+    "English ✏️",
+    "# LC123 Examples - Utility, Text & Saving\n\nLook inside a workflow, clean up text, manage seeds, label things and save the result.\n\n- These are examples of every node in each section, with a short note on what it does. They are not wired: drop the ones you need into your own workflow.\n- 💡 Hover any input for its tooltip. Full details in the [README](https://github.com/lonecatone23/ComfyUI_LC123_nodes).\n\n**In this workflow:**\n- 🔍 Show & Inspect\n- ✂️ Text Tools\n- 🌱 Seeds\n- 🏷️ Labels & Notes\n- 💾 Saving\n"
+   ],
+   "widgets_values_named": {
+    "language": "English ✏️",
+    "text": "# LC123 Examples - Utility, Text & Saving\n\nLook inside a workflow, clean up text, manage seeds, label things and save the result.\n\n- These are examples of every node in each section, with a short note on what it does. They are not wired: drop the ones you need into your own workflow.\n- 💡 Hover any input for its tooltip. Full details in the [README](https://github.com/lonecatone23/ComfyUI_LC123_nodes).\n\n**In this workflow:**\n- 🔍 Show & Inspect\n- ✂️ Text Tools\n- 🌱 Seeds\n- 🏷️ Labels & Notes\n- 💾 Saving\n"
+   },
+   "color": "#2E3A46",
+   "bgcolor": "#2E3A46"
+  }
+ ],
+ "links": [],
+ "groups": [
+  {
+   "id": 1,
+   "title": "🔍 Show & Inspect",
+   "bounding": [
+    0,
+    420,
+    1908.341796875,
+    548
+   ],
+   "color": "#3f789e",
+   "flags": {}
+  },
+  {
+   "id": 2,
+   "title": "✂️ Text Tools",
+   "bounding": [
+    1990,
+    420,
+    1894,
+    556
+   ],
+   "color": "#3f789e",
+   "flags": {}
+  },
+  {
+   "id": 3,
+   "title": "🌱 Seeds",
+   "bounding": [
+    3960,
+    420,
+    1054,
+    284
+   ],
+   "color": "#3f789e",
+   "flags": {}
+  },
+  {
+   "id": 4,
+   "title": "🏷️ Labels & Notes",
+   "bounding": [
+    0,
+    1060,
+    1074,
+    392
+   ],
+   "color": "#3f789e",
+   "flags": {}
+  },
+  {
+   "id": 5,
+   "title": "💾 Saving",
+   "bounding": [
+    1150,
+    1060,
+    1854,
+    526
+   ],
+   "color": "#3f789e",
+   "flags": {}
+  }
+ ],
+ "config": {},
+ "extra": {
+  "ue_links": [],
+  "ds": {
+   "scale": 0.35,
+   "offset": [
+    200,
+    200
+   ]
+  }
+ },
+ "version": 0.4
+}
