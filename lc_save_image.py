@@ -110,6 +110,39 @@ def _join_path(*parts: str) -> str:
     return "/".join(chunks)
 
 
+# Civitai's A1111 parser preserves sampler strings; the site's select expects
+# display names. Match media-metadata's samplerMap and normalized-only aliases.
+_CIVITAI_SAMPLERS = {
+    "euler_ancestral": "Euler a", "euler": "Euler", "lms": "LMS",
+    "heun": "Heun", "dpm_2": "DPM2", "dpm_2_ancestral": "DPM2 a",
+    "dpmpp_2s_ancestral": "DPM++ 2S a", "dpmpp_2m": "DPM++ 2M",
+    "dpmpp_sde": "DPM++ SDE", "dpmpp_sde_gpu": "DPM++ SDE",
+    "dpmpp_2m_sde": "DPM++ 2M SDE", "dpmpp_2m_sde_gpu": "DPM++ 2M SDE",
+    "dpmpp_3m_sde": "DPM++ 3M SDE", "dpmpp_3m_sde_gpu": "DPM++ 3M SDE",
+    "dpm_fast": "DPM fast", "dpm_adaptive": "DPM adaptive",
+    "lms_karras": "LMS Karras", "dpm_2_karras": "DPM2 Karras",
+    "dpm_2_ancestral_karras": "DPM2 a Karras",
+    "dpmpp_2s_ancestral_karras": "DPM++ 2S a Karras",
+    "dpmpp_2m_karras": "DPM++ 2M Karras",
+    "dpmpp_sde_karras": "DPM++ SDE Karras",
+    "dpmpp_2m_sde_karras": "DPM++ 2M SDE Karras",
+    "ddim": "DDIM", "plms": "PLMS", "uni_pc": "UniPC",
+    "uni_pc_bh2": "UniPC", "lcm": "LCM",
+}
+_CIVITAI_SAMPLER_NAMES = {name.casefold(): name for name in _CIVITAI_SAMPLERS.values()}
+
+
+def _civitai_sampler_name(value: str) -> str:
+    key = value.casefold()
+    return _CIVITAI_SAMPLERS.get(key, _CIVITAI_SAMPLER_NAMES.get(key, value))
+
+
+def _quote_parameter(value: str) -> str:
+    # Same policy as media-metadata's quoteInfotextValue. JSON resource/hash
+    # blocks have their own encoding and must not pass through this helper.
+    return json.dumps(value, ensure_ascii=False) if re.search(r'[,\n:\"]', value) else value
+
+
 def _build_parameters(
     meta: dict,
     width: int,
@@ -120,7 +153,7 @@ def _build_parameters(
     positive = _txt(meta.get("positive"))
     negative = _txt(meta.get("negative"))
     steps = meta.get("steps")
-    sampler = _txt(meta.get("sampler"))
+    sampler = _civitai_sampler_name(_txt(meta.get("sampler")))
     scheduler = _txt(meta.get("scheduler"))
     cfg = meta.get("cfg")
     seed = meta.get("seed")
@@ -141,9 +174,9 @@ def _build_parameters(
         except (TypeError, ValueError):
             bits.append(f"Steps: {steps}")
     if sampler:
-        bits.append(f"Sampler: {sampler}")
+        bits.append(f"Sampler: {_quote_parameter(sampler)}")
     if scheduler:
-        bits.append(f"Schedule type: {scheduler}")
+        bits.append(f"Schedule type: {_quote_parameter(scheduler)}")
     if cfg not in (None, "", 0, 0.0, "0"):
         try:
             bits.append(f"CFG scale: {float(cfg):g}")
@@ -156,7 +189,7 @@ def _build_parameters(
             bits.append(f"Seed: {seed}")
     bits.append(f"Size: {int(width)}x{int(height)}")
     if models:
-        bits.append(f"Model: {models}")
+        bits.append(f"Model: {_quote_parameter(models)}")
     if denoise not in (None, "", 0, 0.0, "0"):
         try:
             bits.append(f"Denoising strength: {float(denoise):g}")

@@ -34,6 +34,24 @@ def switch_graph(kind):
 
 
 class MetadataContractTests(unittest.TestCase):
+    def test_sampler_display_names_preserve_scheduler_and_source_metadata(self):
+        for native, display in [('euler', 'Euler'), ('EULER', 'Euler'),
+                                ('euler_ancestral', 'Euler a'),
+                                ('dpmpp_2m_sde_gpu', 'DPM++ 2M SDE'),
+                                ('dpmpp_3m_sde', 'DPM++ 3M SDE'),
+                                ('DPM++ 2M', 'DPM++ 2M'), ('er_sde', 'er_sde')]:
+            with self.subTest(sampler=native):
+                meta = {'sampler': native, 'scheduler': 'beta', 'steps': 12}
+                params = save._build_parameters(meta, 1024, 1536)
+                self.assertIn(f'Sampler: {display}, Schedule type: beta', params)
+                self.assertEqual(meta['sampler'], native)
+
+    def test_parameter_text_values_are_json_quoted(self):
+        name = 'JANIMA, "custom"\nvariant'
+        params = save._build_parameters({'steps': 12, 'models': name}, 1024, 1536)
+        self.assertIn('Model: ' + json.dumps(name, ensure_ascii=False), params)
+        self.assertEqual(len(params.splitlines()), 1)
+
     def test_optimizer_metadata_respects_saved_image_scope(self):
         prompt = graph([])
         prompt['0'] = {'class_type': 'LCOptimizerImage', 'inputs': {'base_model': 'Anima'}}
