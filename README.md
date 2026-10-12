@@ -8,7 +8,7 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 - **CivitAI:** [lonecatone23](https://civitai.com/user/lonecatone23)
 - **Instagram:** [synth.studio.models](https://www.instagram.com/synth.studio.models/)
 - **Support:** [Buy me a ☕](https://ko-fi.com/lonecatone)
-- **Version:** 1.49.21 · **144 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
+- **Version:** 1.49.22 · **145 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
 
 > Small tools that remove friction: less wire mess, fewer clicks, clearer workflows.
 
@@ -695,6 +695,7 @@ Details: [`LC123_Save_Image_Note.md`](LC123_Save_Image_Note.md)
 | **LC Timer ⏱️** | Times every run and scores the newest one against the 5 before it: faster in green, slower in red, plus how it compares to their average. Stopped and fully cached runs are left out. The history saves with the workflow; right-click to clear it |
 | **LC Control Panel 🎛️** | Up to 16 LC Sliders on one node, each on its own output. The ⚙ at the end of a row sets its name, min, max, step and decimals (0 = INT, otherwise FLOAT), or deletes it. **+ Add slider** adds a row. Plug a new row into a number input and it copies that input's name, range and value. Double-click a value to type one |
 | **LC Sampler Scheduler ⚙️** | Pick the **sampler** and **scheduler** once and wire them to every KSampler, so they all change together. Uses ComfyUI's own lists, so samplers other packs add show up too. Based on Sampler Scheduler Settings from [JPS Nodes](https://github.com/JPS-GER/ComfyUI_JPS-Nodes) |
+| **LC Model Info ℹ️** | Wire any MODEL output in: it follows the wire upstream (LoRA loaders, merges, patches, LC Model Optimizer) and reads each file's header only, never the weights. Shows the workflow a save node baked into the file (base models, LoRAs with strengths, merges), Kohya training info and top tags on LoRAs, card fields, GGUF type and size. Live on the node as soon as it's wired, no queue needed. The model passes through; outputs **info**, **loras** (one per line) and **metadata** (all header fields as JSON) |
 | **LC Node Snapshot 📋** | Reads another node's widgets: value / dump / JSON. With **source** wired it shows the values the node actually ran with, so a seed or slider plugged into a widget shows its real value. |
 | **LC Notify 🔊** | Plays a sound from `assets/sounds/` when the run reaches it. always / on empty queue / never |
 | **LC Bypasser** / **LC Mute** / **Groups Bypasser** / **Bypasser Panel** | Remote **bypass** (pass-through) or **mute** (never runs). Panel's `hub` accepts any of the three |
