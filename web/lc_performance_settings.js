@@ -124,7 +124,7 @@ app.registerExtension({
       defaultValue: false,
       tooltip:
         "Disable hover wipe on LC image FX previews. Does not affect Image Compare, Image Split, or Dynamic Overlay.",
-      category: ["LC123 Settings ⚙️", "Performance", "Remove wipe"],
+      category: ["LC Settings ⚙️", "Performance", "Remove wipe"],
       onChange: dirty,
     },
     {
@@ -134,7 +134,7 @@ app.registerExtension({
       defaultValue: false,
       tooltip:
         "Draw FX on-node previews at half the image box size. Output sockets stay full resolution.",
-      category: ["LC123 Settings ⚙️", "Performance", "Half-resolution previews"],
+      category: ["LC Settings ⚙️", "Performance", "Half-resolution previews"],
       onChange: dirty,
     },
     {
@@ -143,7 +143,7 @@ app.registerExtension({
       type: "boolean",
       defaultValue: false,
       tooltip: "Downscale on-node FX preview textures to Max edge (below).",
-      category: ["LC123 Settings ⚙️", "Performance", "Clamp longest side"],
+      category: ["LC Settings ⚙️", "Performance", "Clamp longest side"],
       onChange: dirty,
     },
     {
@@ -158,7 +158,7 @@ app.registerExtension({
         showButtons: true,
       },
       tooltip: "Used when Clamp longest side is on.",
-      category: ["LC123 Settings ⚙️", "Performance", "Max edge (px)"],
+      category: ["LC Settings ⚙️", "Performance", "Max edge (px)"],
       onChange: dirty,
     },
     {
@@ -167,7 +167,7 @@ app.registerExtension({
       type: "boolean",
       defaultValue: true,
       tooltip: "Skip drawing on-node images for collapsed FX nodes.",
-      category: ["LC123 Settings ⚙️", "Performance", "No preview when collapsed"],
+      category: ["LC Settings ⚙️", "Performance", "No preview when collapsed"],
       onChange: dirty,
     },
     {
@@ -177,7 +177,7 @@ app.registerExtension({
       defaultValue: false,
       tooltip:
         "Hide all LC image FX on-node previews. Compare / Split / Overlay unchanged.",
-      category: ["LC123 Settings ⚙️", "Performance", "Hide FX on-node previews"],
+      category: ["LC Settings ⚙️", "Performance", "Hide FX on-node previews"],
       onChange: dirty,
     },
     {
@@ -187,7 +187,7 @@ app.registerExtension({
       defaultValue: true,
       tooltip:
         "Show your last 8 custom colors in the right-click Colors menu (adds a Custom picker if Custom Scripts isn't installed).",
-      category: ["LC123 Settings ⚙️", "Performance", "Recent colors"],
+      category: ["LC Settings ⚙️", "Performance", "Recent colors"],
     },
     {
       id: ID.skinFull,
@@ -196,7 +196,7 @@ app.registerExtension({
       defaultValue: true,
       tooltip:
         "LC Skin Beauty keeps full-quality on-node preview (no half-res / no clamp). Wipe still follows Remove wipe.",
-      category: ["LC123 Settings ⚙️", "Performance", "Skin Beauty full preview override"],
+      category: ["LC Settings ⚙️", "Performance", "Skin Beauty full preview override"],
       onChange: dirty,
     },
     {
@@ -206,7 +206,7 @@ app.registerExtension({
       defaultValue: true,
       tooltip:
         "Show the ℹ info button on each row of LC LoRA Loader. Reads trigger words from the LoRA file's own metadata, no network call. Turn off to declutter the rows.",
-      category: ["LC123 Settings ⚙️", "Performance", "LoRA loader info button"],
+      category: ["LC Settings ⚙️", "Performance", "LoRA loader info button"],
       onChange: dirty,
     },
     {
@@ -217,7 +217,7 @@ app.registerExtension({
       attrs: { min: 0, max: 300, step: 5 },
       tooltip:
         "On-node image previews switch off when you zoom out far enough that they are drawn smaller than this on screen, the same way node text does. Smaller previews switch off first. 0 = always draw.",
-      category: ["LC123 Settings ⚙️", "Performance", "Preview distance (px)"],
+      category: ["LC Settings ⚙️", "Performance", "Preview distance (px)"],
       onChange: () => {
         minPreviewPx = null;
         dirty();

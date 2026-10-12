@@ -24,6 +24,8 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
+from .lc_temporal import segments, smooth
+
 try:  # ComfyUI
     import comfy.model_management as _mm
 except Exception:  # pragma: no cover - stand-alone tests
@@ -53,24 +55,36 @@ def _decode_normals(n: torch.Tensor) -> torch.Tensor:
     return v / v.norm(dim=1, keepdim=True).clamp_min(1e-6)
 
 
-def _depth_01(d: torch.Tensor) -> torch.Tensor:
-    """B1HW depth -> 0 = near, 1 = far, normalised to the 2..98 percentile range (auto-flip like V1)."""
-    out = []
+def _depth_01(d: torch.Tensor, seg=None) -> torch.Tensor:
+    """B1HW depth -> 0 = near, 1 = far, normalised to the 2..98 percentile range (auto-flip like V1).
+    seg: a video clip's segments. Its range and its flip are shared over nearby frames, so the light does not breathe
+    or flip when something moves through the frame."""
+    ranges, flips, xs = [], [], []
     for i in range(d.shape[0]):
         x = d[i, 0]
         flat = x.flatten()
         if flat.numel() > 4_000_000:  # quantile() has an input size limit
             flat = flat[:: max(1, flat.numel() // 4_000_000)]
-        lo, hi = torch.quantile(flat, 0.02), torch.quantile(flat, 0.98)
-        x = ((x - lo) / (hi - lo).clamp_min(1e-4)).clamp(0, 1)
+        ranges.append([float(torch.quantile(flat, 0.02)), float(torch.quantile(flat, 0.98))])
+        xs.append(x)
+    rng = torch.tensor(ranges, dtype=torch.float64)
+    if seg is not None:
+        rng = smooth(rng, seg)
+    for i, x in enumerate(xs):
+        lo, hi = float(rng[i, 0]), float(rng[i, 1])
+        x = ((x - lo) / max(hi - lo, 1e-4)).clamp(0, 1)
+        xs[i] = x
         h, w = x.shape
+        flip = 0.0
         if h >= 16 and w >= 16:
             c = x[h // 2 - max(h // 6, 2): h // 2 + max(h // 6, 2), w // 2 - max(w // 6, 2): w // 2 + max(w // 6, 2)].mean()
             b = max(h // 12, 1)
             border = torch.cat([x[:b].flatten(), x[-b:].flatten(), x[:, :b].flatten(), x[:, -b:].flatten()]).mean()
-            if c > border + 0.04:
-                x = 1.0 - x
-        out.append(x)
+            flip = float(c - border)
+        flips.append(flip)
+    if seg is not None:
+        flips = smooth(flips, seg)
+    out = [1.0 - x if f > 0.04 else x for x, f in zip(xs, flips)]
     return torch.stack(out, 0).unsqueeze(1)
 
 
@@ -358,7 +372,7 @@ class LCLightingControlV2:
         if dmap.shape[0] != b:
             dmap = dmap[:1].expand(b, -1, -1, -1)
         normals = _decode_normals(_resize_bchw(nmap, h, w))
-        depth = _depth_01(_resize_bchw(dmap, h, w))
+        depth = _depth_01(_resize_bchw(dmap, h, w), segments(img))  # a video clip shares its depth range
 
         # subject mask
         m_t = None

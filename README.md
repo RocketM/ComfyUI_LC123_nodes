@@ -8,7 +8,7 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 - **CivitAI:** [lonecatone23](https://civitai.com/user/lonecatone23)
 - **Instagram:** [synth.studio.models](https://www.instagram.com/synth.studio.models/)
 - **Support:** [Buy me a ☕](https://ko-fi.com/lonecatone)
-- **Version:** 1.49.17 · **144 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
+- **Version:** 1.49.21 · **144 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
 
 > Small tools that remove friction: less wire mess, fewer clicks, clearer workflows.
 
@@ -58,7 +58,7 @@ Tools for the canvas itself, not nodes. Nothing here touches your generations.
     - **Shift** while dragging hands the drag to ComfyUI's own grid snap (no line snap). With **Always snap to grid** on, a line snap still wins on the axis it caught.
 - **The Align on/off is saved in the workflow.** Save it with Align on and it opens with Align on. Every workflow tab keeps its own, so switching tabs never mixes them up.
     - *note:* switching it counts as a change to the workflow, so you get the unsaved dot.
-- Don't want it at all? **Settings > LC123 Settings ⚙️ > Align > Align tool** turns off the button and everything with it.
+- Don't want it at all? **Settings > LC Settings ⚙️ > Align > Align tool** turns off the button and everything with it.
 
 **Connection FX 🔌** (off by default)
 - While you drag a wire, every socket it can plug into glows in its own socket color.
@@ -76,7 +76,7 @@ Tools for the canvas itself, not nodes. Nothing here touches your generations.
 - **Show last run** flips to the previous report. Each new run shows what got faster and which fixes are done.
 - **Download CSV** saves the report as a .csv file for Excel or Sheets. Made in your browser, and safe to open (no cell can run as a formula).
 - Only node packs used in the open workflow are analyzed. Nothing is changed. (Keep the mouse still while it runs.)
-- Open it from **Settings > LC123 Settings ⚙️ > Optimization**, or right-click the empty canvas.
+- Open it from **Settings > LC Settings ⚙️ > Optimization**, or right-click the empty canvas.
 - 💡 On a big workflow, the usual winner is links: **Link Render Mode** set to Linear instead of Spline.
 
 **System & Model Optimization Report 🖥️**
@@ -94,14 +94,14 @@ Tools for the canvas itself, not nodes. Nothing here touches your generations.
     - Models covered: MiniMax H3 (FL2VA and Ref2VA), Krea 2 (Turbo and Raw), LTX 2.5, LTX 2.3, Anima, Z-Image Turbo, Qwen-Image 2.1, Flux.2 Klein 9B (Distilled and Base), Ideogram 4, SDXL, Illustrious XL, Pony Diffusion V6 XL.
     - Measured on an RTX 5090 and an 8 GB RTX 5060 Laptop. Image models land within about 15 %; video models are rougher and it says so.
 - **Show last run**, **Copy report** and **Download CSV** work like the Comfy Optimization Report. It will not run while ComfyUI is generating.
-- Nothing is changed. Open it from **Settings > LC123 Settings ⚙️ > Optimization**, or right-click the empty canvas.
+- Nothing is changed. Open it from **Settings > LC Settings ⚙️ > Optimization**, or right-click the empty canvas.
 - The **[LC Model Optimizer](#optimizer)** nodes use this report to load the right files and speed-ups for you.
 
 **Node Pack Usage Report 🧹**
 - Which of your installed node packs do your workflows actually use? This tells you.
 - ⚠️ It **scans your ComfyUI workflows folder** and reads every saved workflow (subgraphs included). Read-only: nothing is changed or uninstalled.
 - Lists the packs no workflow uses (with their size on disk), the ones only one or two workflows use, the tools worth keeping anyway, and nodes your workflows need that no installed pack provides.
-- **Show last run**, **Copy report** and **Download CSV** work like the other reports. Open it from **Settings > LC123 Settings ⚙️ > Optimization**, or right-click the empty canvas.
+- **Show last run**, **Copy report** and **Download CSV** work like the other reports. Open it from **Settings > LC Settings ⚙️ > Optimization**, or right-click the empty canvas.
 
 **Pin (all) / Unpin (all) 📌**
 - Right-click any node, group or the empty canvas.
@@ -118,12 +118,12 @@ Tools for the canvas itself, not nodes. Nothing here touches your generations.
 ---
 
 <a id="settings"></a>
-## ⚙️ LC123 Settings
+## ⚙️ LC Settings
 
 <details>
 <summary><b>Click to open</b></summary>
 
-Open **Settings** (the gear) and pick **LC123 Settings ⚙️**. These are **UI only**: smoother canvas, lighter previews. They never touch VRAM, generation or the image that comes out of a socket. (A lighter preview never means a lighter image.)
+Open **Settings** (the gear) and pick **LC Settings ⚙️**. These are **UI only**: smoother canvas, lighter previews. They never touch VRAM, generation or the image that comes out of a socket. (A lighter preview never means a lighter image.)
 
 ![LC123 Performance settings](assets/readme/lc123_performance_settings.png)
 
@@ -197,9 +197,9 @@ Full directions: [`LC123_Performance_Settings_Note.md`](LC123_Performance_Settin
 A markdown note that speaks your reader's language. Write it once, translate it, and the translations ship inside the workflow.
 
 - The dropdown at the top lists ComfyUI's 14 languages, each in its own script: ✏️ original · ✅ translated · ⚠️ the original changed since it was translated · ❌ not translated.
-- **The language every LC Note opens in** is set in Settings > LC123 Settings ⚙️ > Notes > **Note language**. *Same as ComfyUI* follows your ComfyUI language. A note without that translation shows its original.
+- **The language every LC Note opens in** is set in Settings > LC Settings ⚙️ > Notes > **Note language**. *Same as ComfyUI* follows your ComfyUI language. A note without that translation shows its original.
 
-![Note language, Translate all notes and Link cards in Settings > LC123 Settings > Notes](assets/readme/lc_note_language_setting.webp)
+![Note language, Translate all notes and Link cards in Settings > LC Settings > Notes](assets/readme/lc_note_language_setting.webp)
 
 - Pick a ❌ (or ⚠️) language and click **Translate now**. Nothing ever translates on its own, so edit as much as you like before you ship it.
 - ⚠️ keeps showing the older translation until you re-translate, so readers never get an empty note.
@@ -209,10 +209,10 @@ A markdown note that speaks your reader's language. Write it once, translate it,
 - **✏️ follows your ComfyUI language.** A Spanish ComfyUI starts a new note as Español ✏️. Right-click the note to change which language is the original.
 - The **◀ ▶ arrows** only flip between languages the note actually has. To translate a new one, open the list.
 - عربي, فارسی and עברית display right to left. You can edit any translation by hand.
-- **Translate all notes** (Settings > LC123 Settings ⚙️ > Notes) translates every LC Note in the open workflow, subgraphs too, into your Note language in one go. Notes already in that language or with an up-to-date translation are skipped; ⚠️ ones are redone. Only LC Notes are touched. Needs LC Vision. ⚠️ Save the workflow afterwards.
+- **Translate all notes** (Settings > LC Settings ⚙️ > Notes) translates every LC Note in the open workflow, subgraphs too, into your Note language in one go. Notes already in that language or with an up-to-date translation are skipped; ⚠️ ones are redone. Only LC Notes are touched. Needs LC Vision. ⚠️ Save the workflow afterwards.
 - **Link cards.** Put a link on a line of its own as `@[card](https://…)` and it shows as a card: the page's picture, site, title and description. `@[card: Download here](https://…)` adds your own caption. Click the card to open the page. Normal links stay normal links.
     - Works for GitHub, CivitAI, YouTube (videos, Shorts and channels), Instagram and most sites that share a preview.
-    - ComfyUI reads each card's page once to get its title and picture, and the picture loads from that site. Only public web addresses, never your own machine or network. Turn cards off in Settings > LC123 Settings ⚙️ > Notes > **Link cards**.
+    - ComfyUI reads each card's page once to get its title and picture, and the picture loads from that site. Only public web addresses, never your own machine or network. Turn cards off in Settings > LC Settings ⚙️ > Notes > **Link cards**.
 - **Nodes 2.0:** a note keeps the size you give it. Long text scrolls inside (the mouse wheel scrolls it, Ctrl+wheel zooms) instead of stretching the node.
 
 **LC Label 🏷️**
@@ -506,7 +506,7 @@ Hover any of these to wipe against the original. Heavy graph? See **Performance*
 | **LC Lens Profile** | Lens-style FX. (**LC Lens FX (deprecated)** is hidden from search but still runs in old workflows) |
 | **LC Lift Gamma Gain** | Color-wheel style lift / gamma / gain |
 | **LC Image RGB** | Per-channel RGB control |
-| **LC Film Grain** | Grain. A little goes a long way |
+| **LC Film Grain** | Grain. A little goes a long way. **response**: **classic** (mostly midtones, the old look), **film** (strongest in the shadows and midtones, gone in the highlights, like a negative) or **sensor** (phone / digital camera noise: grows with the light, colour speckle, blue noisiest) |
 | **LC Film Stock (B&W)** / **(Color)** | Stock film looks, real blacks on B&W. Bright colours roll off and keep their hue instead of clipping |
 | **LC Vibrance** | Smart saturation that won't blow out skin. Works on colour strength only, so hues never shift |
 | **LC Natural Look 🍃** | Takes the AI look out without making it dull: only the loudest colours are pulled back, orange / plastic skin is calmed (**skin** sets how much), highlights roll off instead of clipping, the glossy large-scale glow is reduced and fine texture lifted, then the original black point, contrast and brightness are given back with a whisper of grain. **strength** 0.3 - 0.6 for most renders. Before/after wipe on the node |
@@ -799,6 +799,7 @@ Workflow > Open, or just drag it onto the canvas.
 - **Batch Image:** autogrows. Muted / empty slots are skipped, and the node height follows the slots in use.
 - **Bypass Relay:** wire A/B/C into the Relay's left side (`any_1` grows), Relay's OPT into a Bypasser or Mute. Hub off = all of them off together.
 - **Image / Mask Pass:** `enable` off mutes only that one tap.
+- **Video:** feed the clip in as one batch. Auto White Balance, Color Match, Natural Look, Skin Beauty, Sharpen Pro, Depth FX and both Lighting Controls notice it's a clip and steady their readings across frames, so nothing pumps or shimmers. Separate images and hard cuts are left alone (no switch needed).
 
 </details>
 

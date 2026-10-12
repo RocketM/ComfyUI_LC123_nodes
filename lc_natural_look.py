@@ -12,6 +12,7 @@ import torch.nn.functional as F
 from nodes import PreviewImage
 
 from .lc_image_tools import _preview
+from .lc_temporal import segments, smooth
 
 
 def _luma(x):
@@ -89,13 +90,14 @@ def natural_look(img, strength, skin_amount, seed):
 
     # 5) give the punch back: black point, contrast and brightness of the original
     l = _luma(x)
-    lift = (_q(l, 0.01) - _q(l0, 0.01)).clamp(min=0)
+    seg = segments(x0)  # a video clip shares these corrections over nearby frames, so it does not pump
+    lift = smooth((_q(l, 0.01) - _q(l0, 0.01)).clamp(min=0), seg)
     x = x - lift * (1 - l)
     l = _luma(x)
     m0, m1 = l0.mean((1, 2, 3), keepdim=True), l.mean((1, 2, 3), keepdim=True)
     s0, s1 = l0.std((1, 2, 3), keepdim=True), l.std((1, 2, 3), keepdim=True)
-    gain = (s0 / s1.clamp(min=1e-4)).clamp(1.0, 1.2)
-    x = x + (l - m1) * (gain - 1) + (m0 - m1) * 0.75
+    gain = smooth((s0 / s1.clamp(min=1e-4)).clamp(1.0, 1.2), seg)
+    x = x + (l - m1) * (gain - 1) + smooth(m0 - m1, seg) * 0.75
 
     # 6) a whisper of grain so flat areas do not look airbrushed
     gen = torch.Generator().manual_seed(int(seed))

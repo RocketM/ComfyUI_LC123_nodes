@@ -1,6 +1,6 @@
-# LC123 Settings ⚙️
+# LC Settings ⚙️
 
-**Where are they?** Open **Settings** (the gear), then **LC123 Settings ⚙️**. There are five sections: **Align**, **Connections**, **Notes**, **Optimization** and **Performance**.
+**Where are they?** Open **Settings** (the gear), then **LC Settings ⚙️**. There are five sections: **Align**, **Connections**, **Notes**, **Optimization** and **Performance**, plus **Vision** when **LC Vision** is installed.
 
 - 💡 Missing a setting? Restart ComfyUI, then press **Ctrl+F5** so the browser loads the new files.
 
@@ -51,7 +51,31 @@
 
 ---
 
+### 🔬 Vision
+
+- Only there when **LC Vision** is installed.
+
+**Vision Assistant**
+- Default: **On**
+- The sidebar helper: checkup, chat, guided tours and snapshots. Off removes the tab.
+
+**Vision Assistant chat model**
+- Default: **Auto** (leave it here). It picks the biggest model that fits your card and only loads it while you chat.
+- It unloads a minute after the last answer, or the moment you hit Run.
+- **Off** = no chat model at all. The checkup, snapshots and saved tours still work, with no VRAM.
+
+**Default n_ctx for new LC Vision Loaders**
+- Default: **8192**, the best pick for most people. Smaller saves memory. Saved workflows keep their own value.
+
+**Vision models**
+- What's on your drive, and a **Download** button for the models made for LC Vision.
+
+---
+
 ### 📝 Notes
+
+**Requires LC Vision for translation**
+- Shows whether **LC Vision** is installed. Translating notes needs it.
 
 **Note language**
 - LC notes will open in the default language set for Comfy if they have already been translated to that

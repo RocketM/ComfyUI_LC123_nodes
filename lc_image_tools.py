@@ -9,6 +9,8 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from .lc_guided import guided as _guided, luma as _guided_luma
+from .lc_temporal import segments, smooth, smooth_masks
+from .lc_grain import sensor_noise
 from nodes import PreviewImage
 
 from .lc_image_helpers import (
@@ -204,9 +206,8 @@ class LCAutoWhiteBalance(PreviewImage):
         if strength <= 0:
             return _preview(self, image, image)
         arrays = tensor_to_np(image)
-        out = []
+        linears, ests = [], []
         for img in arrays:
-            original = img.copy()
             linear = srgb_to_linear(img)
             # Tested 2026-09-30: skipping clipped / near-black pixels (as ChromaGrade does) made the estimate worse on
             # warm and cool casts, with and without a blown highlight, so every pixel is still measured.
@@ -224,11 +225,16 @@ class LCAutoWhiteBalance(PreviewImage):
                     gy, gx = np.gradient(ch.astype(np.float64))
                     mag = np.sqrt(gx * gx + gy * gy)
                     e[c] = float(np.mean(np.abs(mag) ** minkowski_p) ** (1.0 / minkowski_p))
-            e = np.clip(e, 1e-6, None)
+            linears.append(linear)
+            ests.append(np.clip(e, 1e-6, None))
+        # a video clip gets one steady cast estimate over nearby frames (no colour pumping); separate images are untouched
+        ests = smooth(np.stack(ests), segments(arrays))
+        out = []
+        for img, linear, e in zip(arrays, linears, ests):
             gains = (np.mean(e) / e).astype(np.float32)
             corrected = np.clip(linear * gains[None, None, :], 0, 1)
             result = linear_to_srgb(corrected)
-            out.append(blend(original, result, strength))
+            out.append(blend(img, result, strength))
         result = np_to_tensor(out)
         return _preview(self, result, image)
 
@@ -462,6 +468,8 @@ class LCClarity(PreviewImage):
         # Noise floor per image, from the finest band (robust MAD). Anything below it is left alone.
         fine = (lp - self._gblur(lp, 0.8))[:, :, ::2, ::2].abs().reshape(b, -1)
         sn = (fine.median(dim=1).values / 0.6745).clamp(min=0.0015).view(b, 1, 1, 1)
+        seg = segments(image)  # a video clip shares its noise, blur and skin readings over nearby frames: no flicker
+        sn = smooth(sn, seg)
         s_loc = 1.5 * scale
         m1 = self._gblur(lp, s_loc)
         lstd = (self._gblur(lp * lp, s_loc) - m1 * m1).clamp(min=0).sqrt()
@@ -472,7 +480,8 @@ class LCClarity(PreviewImage):
             try:
                 from .lc_skin_beauty import _auto_skin_mask
                 arr = x.detach().cpu().numpy()
-                skin = torch.from_numpy(np.stack([_auto_skin_mask(a, 0.55, 0.45) for a in arr])).to(dev).unsqueeze(1)
+                skin = torch.from_numpy(np.stack([_auto_skin_mask(a, 0.55, 0.45) for a in arr]))
+                skin = smooth_masks(skin, image, seg).to(dev).unsqueeze(1)
             except Exception:
                 skin = None
         skin_keep = 1.0 if skin is None else (1.0 - float(skin_protect) * 0.85 * skin)
@@ -483,7 +492,7 @@ class LCClarity(PreviewImage):
         # an upscaled 4K picture is not 4x blurrier than 1K, and undoing blur that is not there digs pores into pits.
         if sh > 0:
             parts = []
-            for i, blur in enumerate(self._measure_blur(lp)):
+            for i, blur in enumerate(smooth(self._measure_blur(lp), seg)):
                 guess = max(0.6, (0.5 + 1.5 * rad) * scale)
                 sigma = max(0.6, min(guess, (0.6 + 1.3 * blur) * (0.65 + rad)))
                 iters = 4 + int(round(26 * sh))
@@ -714,6 +723,9 @@ class LCImageRGB(PreviewImage):
 # ---------------------------------------------------------------------------
 # LC Film Grain (resolution-aware stochastic grain)
 # ---------------------------------------------------------------------------
+GRAIN_RESPONSES = ["classic", "film", "sensor"]
+
+
 class LCFilmGrain(PreviewImage):
     @classmethod
     def INPUT_TYPES(cls):
@@ -741,6 +753,13 @@ class LCFilmGrain(PreviewImage):
                     "default": 0.8, "min": 0.4, "max": 2.0, "step": 0.1,
                 }),
                 "look": _look_input(),
+                # after look on purpose: saved workflows keep their values (new widgets go last)
+                "response": (GRAIN_RESPONSES, {
+                    "default": GRAIN_RESPONSES[0],
+                    "tooltip": "Where the grain shows. classic: mostly the midtones (the old behavior). film: strongest in "
+                               "the shadows and midtones, fading out in the highlights, like a negative. sensor: phone / "
+                               "digital camera noise, it grows with the light (shot noise) but reads strongest in the "
+                               "shadows, and blue is the noisiest channel."}),
             },
         }
 
@@ -750,10 +769,13 @@ class LCFilmGrain(PreviewImage):
     CATEGORY = "LC123/image"
     OUTPUT_NODE = True
     DESCRIPTION = (
-        "Film grain overlay with amount, contrast, scale, and mono vs color grain. On-node preview with before/after wipe."
+        "Film grain overlay with amount, contrast, scale, and mono vs color grain. response: classic (midtones), film "
+        "(shadows and midtones) or sensor (phone / digital camera noise). On-node preview with before/after wipe."
     )
 
-    def run(self, image, grain_size, strength, radius_variation, color_grain, seed, softness=0.8, look="Custom"):
+    def run(self, image, grain_size, strength, radius_variation, color_grain, seed, softness=0.8, look="Custom",
+            response=None):
+        response = response or GRAIN_RESPONSES[0]
         if strength <= 0:
             return _preview(self, image, image)
         device = image.device
@@ -796,9 +818,19 @@ class LCFilmGrain(PreviewImage):
         mono = noise_m.permute(0, 2, 3, 1).expand(-1, -1, -1, 3)
         chroma = noise_c.permute(0, 2, 3, 1)
         grain = mono * (1.0 - color_grain) + chroma * color_grain
-        # luminance-weighted amount (more visible in midtones)
         lum = image[..., 0:1] * 0.2126 + image[..., 1:2] * 0.7152 + image[..., 2:3] * 0.0722
-        weight = (4.0 * lum * (1.0 - lum)).clamp(0.15, 1.0)
+        if response == "sensor":
+            # shot noise: in linear light its size grows with the square root of the light, plus a small read-noise
+            # floor; after white balance blue (and a little red) are the noisiest channels
+            srgb = sensor_noise(image[..., :3], grain, float(strength) * 0.24)
+            out = torch.cat([srgb, image[..., 3:]], -1) if c > 3 else srgb
+            return _preview(self, out, image)
+        if response == "film":
+            # a negative's grain: strongest in the shadows and midtones, gone by the brightest highlights
+            weight = ((1.0 - lum).clamp(min=0) ** 1.5 * 0.93 + 1.2 * lum * (1.0 - lum)).clamp(0.1, 1.0)
+        else:
+            # classic: luminance-weighted amount (more visible in midtones)
+            weight = (4.0 * lum * (1.0 - lum)).clamp(0.15, 1.0)
         out = (image + grain * strength * 0.18 * weight).clamp(0, 1)
         return _preview(self, out, image)
 
@@ -1374,22 +1406,26 @@ class LCColorMatch(PreviewImage):
             sigma = flat.std(axis=0) + 1e-5
             return mu, sigma
 
+        # a video clip shares its own colour statistics over nearby frames, so the match does not pump
+        seg = segments(arrays)
         if method == "mean_std":
             ref_lin = srgb_to_linear(ref_np)
             mu_r, sig_r = stats(ref_lin)
-            for img in arrays:
+            lins = [srgb_to_linear(img) for img in arrays]
+            st = [stats(lin) for lin in lins]
+            mus, sigs = smooth(np.stack([m for m, _ in st]), seg), smooth(np.stack([v for _, v in st]), seg)
+            for img, lin, mu_s, sig_s in zip(arrays, lins, mus, sigs):
                 original = img.copy()
-                lin = srgb_to_linear(img)
-                mu_s, sig_s = stats(lin)
                 matched = (lin - mu_s) * (sig_r / sig_s) + mu_r
                 matched = linear_to_srgb(np.clip(matched, 0, 1).astype(np.float32))
                 matched = apply_skin_protect(original, matched, skin_protect)
                 out.append(blend(original, matched, strength))
         else:
             mu_r, sig_r = stats(ref_np)
-            for img in arrays:
+            st = [stats(img) for img in arrays]
+            mus, sigs = smooth(np.stack([m for m, _ in st]), seg), smooth(np.stack([v for _, v in st]), seg)
+            for img, mu_s, sig_s in zip(arrays, mus, sigs):
                 original = img.copy()
-                mu_s, sig_s = stats(img)
                 matched = (img.astype(np.float64) - mu_s) * (sig_r / sig_s) + mu_r
                 matched = np.clip(matched, 0, 1).astype(np.float32)
                 matched = apply_skin_protect(original, matched, skin_protect)

@@ -191,9 +191,22 @@ def _normalize_mask(mask, h: int, w: int):
     return torch.clamp(m, 0, 1)
 
 
+def skin_mask_torch(rgb, mask_in, mask_sensitivity, mask_feather):
+    """Where the look applies: the automatic skin mask, limited to mask_in when one is wired."""
+    h, w = rgb.shape[:2]
+    auto = _auto_skin_mask(rgb, float(min(max(mask_sensitivity, 0), 1)), float(min(max(mask_feather, 0), 1)))
+    if mask_in is None:
+        return auto
+    ext = _normalize_mask(mask_in, h, w)
+    if float(ext.max()) < 0.05:
+        return auto
+    return torch.clamp(auto * ext, 0, 1)
+
+
 def process_frame_torch(rgb, mask_in, strength, coolness, brightness, rosy, evenness, shadow_lift, smooth,
-                        texture_preserve, saturation, highlight_protect, mask_sensitivity, mask_feather):
-    """rgb: HxWx3 float tensor on the target device; mask_in: HxW (or HxWxC) tensor or None."""
+                        texture_preserve, saturation, highlight_protect, mask_sensitivity, mask_feather, skin=None):
+    """rgb: HxWx3 float tensor on the target device; mask_in: HxW (or HxWxC) tensor or None.
+    skin: a ready skin mask (HxW) to use instead of measuring one (a video clip passes its steadied masks)."""
     s = float(min(max(strength, 0), 2))
     coolness = float(coolness) * s
     brightness = float(brightness) * s
@@ -205,15 +218,8 @@ def process_frame_torch(rgb, mask_in, strength, coolness, brightness, rosy, even
     mask_sensitivity = float(min(max(mask_sensitivity, 0), 1))
     mask_feather = float(min(max(mask_feather, 0), 1))
 
-    h, w = rgb.shape[:2]
-    auto = _auto_skin_mask(rgb, mask_sensitivity, mask_feather)
-    if mask_in is not None:
-        ext = _normalize_mask(mask_in, h, w)
-        skin = torch.clamp(auto * ext, 0, 1)
-        if float(ext.max()) < 0.05:
-            skin = auto
-    else:
-        skin = auto
+    if skin is None:
+        skin = skin_mask_torch(rgb, mask_in, mask_sensitivity, mask_feather)
 
     out = _apply_skin(rgb, skin, coolness, brightness, rosy, evenness, shadow_lift, smooth, texture_preserve,
                       saturation, highlight_protect)

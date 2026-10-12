@@ -14,6 +14,7 @@ import numpy as np
 from nodes import PreviewImage
 
 from .lc_image_helpers import tensor_to_np, np_to_tensor, blend
+from .lc_temporal import is_clip, segments, smooth_masks
 
 
 # ---------------------------------------------------------------------------
@@ -370,6 +371,20 @@ def _apply_skin(
     return np.clip(rgb * (1.0 - m3) + out * m3, 0, 1).astype(np.float32)
 
 
+def skin_mask(rgb: np.ndarray, mask_in: np.ndarray | None, mask_sensitivity: float, mask_feather: float) -> np.ndarray:
+    """Where the look applies: the automatic skin mask, limited to mask_in when one is wired."""
+    h, w = rgb.shape[:2]
+    auto = _auto_skin_mask(rgb, float(np.clip(mask_sensitivity, 0, 1)), float(np.clip(mask_feather, 0, 1)))
+    if mask_in is None:
+        return auto
+    ext = _normalize_mask(mask_in, h, w)
+    # External (e.g. SAM person) limits where auto skin can apply: skin coloured pixels only inside the segment.
+    # If external is nearly empty, fall back to auto.
+    if float(ext.max()) < 0.05:
+        return auto
+    return np.clip(auto * np.clip(ext, 0, 1), 0, 1)
+
+
 def process_frame(
     rgb: np.ndarray,
     mask_in: np.ndarray | None,
@@ -386,6 +401,7 @@ def process_frame(
     highlight_protect: float,
     mask_sensitivity: float,
     mask_feather: float,
+    skin: np.ndarray | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     # Preset loads widgets in JS; processing uses current slider values.
     s = float(np.clip(strength, 0, 2))
@@ -401,19 +417,8 @@ def process_frame(
     mask_sensitivity = float(np.clip(mask_sensitivity, 0, 1))
     mask_feather = float(np.clip(mask_feather, 0, 1))
 
-    h, w = rgb.shape[:2]
-    auto = _auto_skin_mask(rgb, mask_sensitivity, mask_feather)
-    if mask_in is not None:
-        ext = _normalize_mask(mask_in, h, w)
-        # External (e.g. SAM person) limits where auto skin can apply.
-        # Multiply = skin-colored pixels only inside the segment (kills background / off-body).
-        # Soft floor keeps a little auto near edges if segment is hard-cut.
-        skin = np.clip(auto * np.clip(ext, 0, 1), 0, 1)
-        # If external is nearly empty, fall back to auto
-        if float(ext.max()) < 0.05:
-            skin = auto
-    else:
-        skin = auto
+    if skin is None:  # a video clip passes its steadied masks in
+        skin = skin_mask(rgb, mask_in, mask_sensitivity, mask_feather)
 
     out = _apply_skin(
         rgb,
@@ -458,7 +463,7 @@ def _pick_device(choice: str, pixels: int):
 
 
 def _process_on(dev, rgb, mask_in, strength, coolness, brightness, rosy, evenness, shadow_lift, smooth,
-                texture_preserve, saturation, highlight_protect, mask_sensitivity, mask_feather):
+                texture_preserve, saturation, highlight_protect, mask_sensitivity, mask_feather, skin=None):
     import torch
 
     from .lc_skin_beauty_gpu import process_frame_torch
@@ -466,8 +471,10 @@ def _process_on(dev, rgb, mask_in, strength, coolness, brightness, rosy, evennes
     with torch.inference_mode():
         x = torch.from_numpy(rgb).to(dev)
         m = torch.from_numpy(np.asarray(mask_in, dtype=np.float32)).to(dev) if mask_in is not None else None
+        sk = torch.from_numpy(skin).to(dev) if skin is not None else None
         out, skin = process_frame_torch(x, m, strength, coolness, brightness, rosy, evenness, shadow_lift, smooth,
-                                        texture_preserve, saturation, highlight_protect, mask_sensitivity, mask_feather)
+                                        texture_preserve, saturation, highlight_protect, mask_sensitivity, mask_feather,
+                                        skin=sk)
         return out.float().cpu().numpy(), skin.float().cpu().numpy()
 
 
@@ -678,16 +685,29 @@ class LCSkinBeauty(PreviewImage):
         out_imgs = []
         out_masks = []
         dev = _pick_device(device, frames[0].shape[0] * frames[0].shape[1] if len(frames) else 0)
+
+        def _mi(i):
+            return None if mask_frames is None else mask_frames[min(i, len(mask_frames) - 1)]
+
+        # a video clip: measure every frame's skin mask first and steady it over nearby frames, so its edges do not
+        # shimmer. Separate images and single images skip this and come out exactly as before.
+        steady = None
+        seg = segments(frames)
+        if is_clip(seg):
+            import torch
+
+            masks = [skin_mask(np.clip(fr[..., :3], 0, 1).astype(np.float32), _mi(i), mask_sensitivity, mask_feather)
+                     for i, fr in enumerate(frames)]
+            steady = smooth_masks(torch.from_numpy(np.stack(masks)), image, seg).numpy()
         for i, fr in enumerate(frames):
             rgb = np.clip(fr[..., :3], 0, 1).astype(np.float32)
-            mi = None
-            if mask_frames is not None:
-                mi = mask_frames[min(i, len(mask_frames) - 1)]
+            mi = _mi(i)
+            sk = None if steady is None else steady[i]
             if dev is not None:
                 try:
                     processed, skin = _process_on(dev, rgb, mi, strength, coolness, brightness, rosy, evenness, shadow_lift,
                                                   smooth, texture_preserve, saturation, highlight_protect,
-                                                  mask_sensitivity, mask_feather)
+                                                  mask_sensitivity, mask_feather, skin=sk)
                     if fr.shape[-1] == 4:
                         processed = np.concatenate([processed, fr[..., 3:4]], axis=-1)
                     out_imgs.append(processed)
@@ -712,6 +732,7 @@ class LCSkinBeauty(PreviewImage):
                 highlight_protect,
                 mask_sensitivity,
                 mask_feather,
+                skin=sk,
             )
             if fr.shape[-1] == 4:
                 processed = np.concatenate(

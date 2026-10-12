@@ -164,7 +164,7 @@ app.registerExtension({
       id: "LC123.Optimization.PackUsage",
       name: "Node Pack Usage Report",
       sortOrder: 5, // under the System & Model Optimization Report
-      category: ["LC123 Settings ⚙️", "Optimization", "Node Pack Usage Report"],
+      category: ["LC Settings ⚙️", "Optimization", "Node Pack Usage Report"],
       defaultValue: "",
       tooltip:
         "Scans your ComfyUI workflows folder and reads every saved workflow (subgraphs included) to see which installed node packs they actually use. Lists the packs no workflow uses, the ones only one or two use, and nodes your workflows need that no installed pack provides. Read-only: nothing is changed or uninstalled.",

@@ -250,7 +250,7 @@ app.registerExtension({
       defaultValue: false,
       tooltip:
         "While you drag a wire, every socket it can connect to glows in its socket color. Rings pulse out and brighten as you get close.",
-      category: ["LC123 Settings ⚙️", "Connections", "Connection FX"],
+      category: ["LC Settings ⚙️", "Connections", "Connection FX"],
       sortOrder: 100,
       onChange: (v) => {
         cfg.on = v === true;
@@ -264,7 +264,7 @@ app.registerExtension({
       defaultValue: 160,
       attrs: { min: 40, max: 400, step: 10 },
       tooltip: "How close (in screen pixels) the cursor has to be before a socket starts to ring.",
-      category: ["LC123 Settings ⚙️", "Connections", "Connection FX reach (px)"],
+      category: ["LC Settings ⚙️", "Connections", "Connection FX reach (px)"],
       sortOrder: 90,
       onChange: (v) => (cfg.radius = Number(v) || 160),
     },
@@ -275,7 +275,7 @@ app.registerExtension({
       defaultValue: 60,
       attrs: { min: 0, max: 100, step: 5 },
       tooltip: "How much brighter every valid socket glows when you are zoomed out. 0 = same as at 100% zoom.",
-      category: ["LC123 Settings ⚙️", "Connections", "Connection FX zoomed-out glow (%)"],
+      category: ["LC Settings ⚙️", "Connections", "Connection FX zoomed-out glow (%)"],
       sortOrder: 80,
       onChange: (v) => (cfg.zoomGlow = Number.isFinite(Number(v)) ? Number(v) : 60),
     },
