@@ -121,6 +121,13 @@ function lcVision(v, h, lines) {
     lines.push(`${tier}: ${name}, context ${t.ctx}, ~${t.need_gb} GB VRAM${t.cpu ? " (partly on the CPU)" : ""}${t.on_disk ? " (you have it)" : ""}`);
   }
   h.push(`</table>`);
+  if (v.chat) {
+    const c = v.chat;
+    const text = c.lite || c.cpu ? c.note
+      : `Vision Assistant chat: Qwen3-VL-${c.size} ${c.quant} at ${c.ctx} context, ~${c.need_gb} GB, only while you chat (it unloads a minute after the last answer, or when you queue).${c.tours ? " It can build guided tours." : " Building guided tours needs a 20 GB+ card; saved tours still play."} Auto picks this.`;
+    h.push(`<div style="font-size:12px;margin:6px 0 2px"><b>💬 ${esc(text)}</b></div>`);
+    lines.push(text);
+  }
   const notes = [v.note, "Set the Loader's n_ctx to the context shown: LC Vision's default (32768) reserves about 4.5 GB on its own.", v.assumes].filter(Boolean);
   for (const n of notes) h.push(`<div style="color:#9aa3ad;font-size:12px;margin:2px 0">${esc(n)}</div>`);
   lines.push(...notes);
@@ -498,7 +505,7 @@ app.registerExtension({
       id: "LC123.Optimization.SystemCheck",
       name: "System & Model Optimization Report",
       sortOrder: 10, // under the Comfy Optimization Report
-      category: ["LC123 Settings ⚙️", "Optimization", "System & Model Optimization Report"],
+      category: ["LC Settings ⚙️", "Optimization", "System & Model Optimization Report"],
       defaultValue: "",
       tooltip:
         "Tests this machine (graphics card, memory, drive, and which speed-ups really work here: small live GPU tests, about 10 seconds), then tells you which model files suit it: what to look for, what to avoid, and exact picks with download links for the tested base models. Missing Sage, Triton or Comfy Kitchen? It links to builds that match your card. Nothing is changed or installed.",

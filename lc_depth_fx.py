@@ -17,6 +17,7 @@ import torch.nn.functional as F
 from nodes import PreviewImage
 
 from .lc_image_tools import _preview, _look_input, _lin, _srgb, _luma, LCClarity
+from .lc_temporal import segments, smooth
 
 _gblur_full = LCClarity._gblur
 WORK_EDGE = 2048  # long edge the effects are worked out at; bigger pictures are mixed back at full size
@@ -108,8 +109,9 @@ def _match_depth_batch(depth, b):
     return torch.cat([depth, depth[-1:].expand(b - n, -1, -1, -1)], dim=0)
 
 
-def _prep_depth(depth, h, w, direction):
-    """-> distance map B1HW, 0 = nearest, 1 = farthest."""
+def _prep_depth(depth, h, w, direction, seg=None):
+    """-> distance map B1HW, 0 = nearest, 1 = farthest. seg: a video clip's segments, so its depth range is shared
+    over nearby frames (no breathing when something walks into the frame)."""
     d = depth[..., :3].mean(-1, keepdim=True).permute(0, 3, 1, 2).float()
     if d.shape[2] != h or d.shape[3] != w:
         d = F.interpolate(d, size=(h, w), mode="bilinear", align_corners=False)
@@ -117,6 +119,8 @@ def _prep_depth(depth, h, w, direction):
     flat = d.reshape(b, -1)[:, :: max(1, (h * w) // 250000)]
     lo = flat.quantile(0.01, dim=1).view(b, 1, 1, 1)
     hi = flat.quantile(0.99, dim=1).view(b, 1, 1, 1)
+    if seg is not None:
+        lo, hi = smooth(lo, seg), smooth(hi, seg)
     d = ((d - lo) / (hi - lo).clamp(min=1e-4)).clamp(0, 1)
     if direction == "Bright = near":
         near = d
@@ -247,7 +251,8 @@ class LCDepthFX(PreviewImage):
         b, _, h, w = x.shape
         base = min(h, w)
         lin = _lin(x)
-        dist = _prep_depth(_match_depth_batch(depth_map, b).to(dev), h, w, depth_direction)
+        seg = segments(image)  # a video clip: focus, depth range and haze are shared over nearby frames
+        dist = _prep_depth(_match_depth_batch(depth_map, b).to(dev), h, w, depth_direction, seg)
 
         # focus: the nearer part of the frame's middle (the subject), or the manual depth
         if focus_mask is not None:
@@ -260,7 +265,7 @@ class LCDepthFX(PreviewImage):
             for i in range(b):
                 sel = dist[i][m[i] > 0.5]
                 fds.append(sel.median() if sel.numel() > 16 else dist[i].median())
-            fd = torch.stack(fds).view(b, 1, 1, 1)
+            fd = smooth(torch.stack(fds).view(b, 1, 1, 1), seg)
         elif auto_focus:
             # the subject is the nearer part of the middle of the frame; focus on its TOP (where the head is),
             # so a body turned toward the camera, a curtain or a railing does not steal focus from the face
@@ -277,7 +282,7 @@ class LCDepthFX(PreviewImage):
                     continue
                 y_cut = ys[:: max(1, ys.numel() // 200000)].float().quantile(0.25)
                 fds.append(win[win <= cut][ys <= y_cut].median())  # the top of the subject = the head
-            fd = torch.stack(fds).view(b, 1, 1, 1)
+            fd = smooth(torch.stack(fds).view(b, 1, 1, 1), seg)
         else:
             fd = torch.full((b, 1, 1, 1), float(focus_depth), device=dev)
         rng = float(focus_range)
@@ -305,23 +310,34 @@ class LCDepthFX(PreviewImage):
                     continue
                 cols = cols[:: max(1, cols.shape[0] // 250000)]
                 A.append(cols.median(0).values * 0.7 + cols.mean(0) * 0.3)
-            A = torch.stack(A).view(b, 3, 1, 1)
+            A = smooth(torch.stack(A).view(b, 3, 1, 1), seg)
             warm = torch.tensor([0.15, 0.0, -0.15], device=dev).view(1, 3, 1, 1) * float(haze_warmth)
             A = (A * (1 + warm)).clamp(0, 1)
             beyond = _smooth(fd + rng, fd + rng + 0.25, dist)  # the subject in focus never gets hazed
             # haze builds up across the background itself: from its near edge to its far end. A depth map often
             # puts everything past a window or railing at the same "as far as it gets"; that flat wall gets a
             # light, even touch instead of a full veil.
-            local, scale = [], []
+            # the background's own range per frame (shared over nearby frames of a clip), then the haze ramp
+            rng_bg = []
             for i in range(b):
                 bgv = dist[i][beyond[i] > 0.5]
                 if bgv.numel() < 64:
+                    rng_bg.append([float("nan"), float("nan")])
+                    continue
+                smp = bgv[:: max(1, bgv.numel() // 250000)]
+                rng_bg.append([float(smp.quantile(0.05)), float(smp.quantile(0.98))])
+            rng_t = torch.tensor(rng_bg, dtype=torch.float64)
+            empty = torch.isnan(rng_t[:, 0])
+            if not empty.any():
+                rng_t = smooth(rng_t, seg)
+            local, scale = [], []
+            for i in range(b):
+                if bool(empty[i]):
                     local.append(torch.zeros_like(dist[i]))
                     scale.append(0.0)
                     continue
-                smp = bgv[:: max(1, bgv.numel() // 250000)]
-                lo, hi = smp.quantile(0.05), smp.quantile(0.98)
-                spread = float(hi - lo)
+                lo, hi = float(rng_t[i, 0]), float(rng_t[i, 1])
+                spread = hi - lo
                 if spread < 0.02:
                     local.append(torch.ones_like(dist[i]))
                 else:

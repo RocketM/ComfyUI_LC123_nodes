@@ -1,5 +1,5 @@
 """
-Node Pack Usage Report (LC123 Settings > Optimization): which installed custom node packs your saved workflows actually
+Node Pack Usage Report (LC Settings > Optimization): which installed custom node packs your saved workflows actually
 use. Reads every workflow in your ComfyUI workflows folder (subgraphs included, UTF-8) and matches each node to the pack
 that registered it. Read-only: nothing is moved, changed or uninstalled.
 """

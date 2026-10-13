@@ -300,6 +300,22 @@ app.registerExtension({
   name: "LC123.Note",
   settings: [
     {
+      // first line under the Notes heading (sortOrder 40 keeps the section below LC Settings > Vision, which sits at 50)
+      id: "LC123.Notes.RequiresVision",
+      sortOrder: 40,
+      name: "Requires LC Vision for translation",
+      category: ["LC Settings ⚙️", "Notes", "Requires LC Vision for translation"],
+      defaultValue: "",
+      tooltip: "Note language and Translate all notes use an LC Vision model to translate. Notes and link cards work without it.",
+      type: () => {
+        const el = document.createElement("span");
+        el.style.cssText = "font-size:12px;opacity:.85";
+        if (LiteGraph.registered_node_types?.LCVisionLoader) el.textContent = "✓ LC Vision is installed";
+        else el.innerHTML = 'Not installed: <a href="https://github.com/lonecatone23/ComfyUI_LC_Vision_nodes" target="_blank" rel="noopener">get LC Vision</a> (Manager: search LC Vision)';
+        return el;
+      },
+    },
+    {
       id: SETTING,
       sortOrder: 30, // Notes section order: Note language, Translate all notes, Link cards
       name: "Note language",
@@ -307,7 +323,7 @@ app.registerExtension({
       defaultValue: "auto",
       options: [{ text: "Same as ComfyUI", value: "auto" }, ...LANGS.map((l) => ({ text: l[1], value: l[0] }))],
       tooltip: "Language LC Notes open in. A note without that translation shows its original text.",
-      category: ["LC123 Settings ⚙️", "Notes", "Note language"],
+      category: ["LC Settings ⚙️", "Notes", "Note language"],
       onChange: () => {
         // only switch notes that actually have the new language; leave the rest alone
         const want = readerLang();
@@ -324,13 +340,13 @@ app.registerExtension({
         "A line with just @[card](https://…) in an LC Note shows the page as a card: picture, site, title and description. " +
         "@[card: your caption](https://…) adds your own caption. Plain links stay plain. ComfyUI reads each card's page " +
         "once to get its title and picture, and the picture loads from that site. Off = cards show as plain links.",
-      category: ["LC123 Settings ⚙️", "Notes", "Link cards"],
+      category: ["LC Settings ⚙️", "Notes", "Link cards"],
     },
     {
       id: "LC123.Notes.TranslateAll",
       sortOrder: 20,
       name: "Translate all notes",
-      category: ["LC123 Settings ⚙️", "Notes", "Translate all notes"],
+      category: ["LC Settings ⚙️", "Notes", "Translate all notes"],
       defaultValue: "",
       tooltip:
         "Translates every LC Note in the open workflow (subgraphs too) into the Note language above, one after " +

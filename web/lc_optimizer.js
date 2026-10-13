@@ -732,7 +732,7 @@ app.registerExtension({
       id: "LC123.Optimization.Report",
       sortOrder: 20, // above the System & Model Optimization Report
       name: "Comfy Optimization Report",
-      category: ["LC123 Settings ⚙️", "Optimization", "Comfy Optimization Report"],
+      category: ["LC Settings ⚙️", "Optimization", "Comfy Optimization Report"],
       defaultValue: "",
       tooltip:
         "Pans the canvas by itself for a few seconds, times what every installed pack draws and runs, scans their files, and lists what slows the canvas down, biggest first. Nothing is changed.",

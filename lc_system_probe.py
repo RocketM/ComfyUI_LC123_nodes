@@ -691,8 +691,23 @@ def lc_vision_suggestion(prof):
     for t in tiers.values():
         if t:
             t["on_disk"] = (t["size"], t["quant"]) in have
-    return {"vram_gb": g["vram_gb"], "tiers": {k: v for k, v in tiers.items() if v}, "note": note,
+    return {"vram_gb": g["vram_gb"], "tiers": {k: v for k, v in tiers.items() if v}, "note": note, "chat": lc_vision_chat(g["vram_gb"]),
             "assumes": "LC Vision has the GPU to itself while it runs. If an image or video model stays loaded next to it, step down one row."}
+
+
+def lc_vision_chat(vram_gb):
+    """The Vision Assistant chat's pick for this card: the same rule as its Auto setting (at most 45 % of the card,
+    11 GB tops, loaded only while you chat). Text only, so no mmproj. Measured on an RTX 5090, 2026-10-12."""
+    # flash attention + 8-bit cache: file + 0.08 GB per 1k tokens + 0.7 GB (measured on a 5090 and an 8 GB 5060 Laptop)
+    budget = min(vram_gb * 0.5, 11.0)
+    ctxs = (16384, 8192, 4096) if vram_gb >= 20 else (8192, 4096)
+    for ctx in ctxs:
+        for size, quant in (("8B", "Q8_0"), ("8B", "Q5_K_M"), ("4B", "Q8_0"), ("4B", "Q4_K_M")):
+            need = LCV_MODELS[size]["q"][quant] + 0.08 * ctx / 1024 + 0.7
+            if need <= budget:
+                return {"size": size, "quant": quant, "ctx": ctx, "need_gb": round(need, 1), "tours": ctx >= 16384}
+    return {"cpu": True, "size": "4B", "quant": "Q4_K_M", "ctx": 4096,
+            "note": "Vision Assistant chat: on the CPU (this card is too small to hold a chat model next to the image model). Under 1 GB of VRAM, 10 to 30 seconds an answer."}
 
 
 def h3_native():

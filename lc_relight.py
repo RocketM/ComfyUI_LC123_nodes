@@ -22,6 +22,8 @@ from __future__ import annotations
 import numpy as np
 import torch
 
+from .lc_temporal import is_clip, segments, smooth
+
 
 def _to_bhwc(t: torch.Tensor) -> torch.Tensor:
     if t.ndim == 3:
@@ -92,36 +94,37 @@ def _decode_normals(normal_img: np.ndarray) -> np.ndarray:
     return n / lens
 
 
-def _depth_hw(depth_img: np.ndarray) -> np.ndarray:
-    """Return depth HW with 0 = near, 1 = far."""
-    if depth_img.ndim == 3:
-        d = depth_img.mean(axis=-1)
-    else:
-        d = depth_img
-    d = d.astype(np.float32)
-    dmin, dmax = float(d.min()), float(d.max())
-    if dmax - dmin > 1e-6:
-        d = (d - dmin) / (dmax - dmin)
-    else:
-        d = np.zeros_like(d)
+def _depth_raw(depth_img: np.ndarray) -> np.ndarray:
+    d = depth_img.mean(axis=-1) if depth_img.ndim == 3 else depth_img
+    return d.astype(np.float32)
 
+
+def _depth_norm(d: np.ndarray, dmin: float, dmax: float) -> np.ndarray:
+    if dmax - dmin > 1e-6:
+        return np.clip((d - dmin) / (dmax - dmin), 0.0, 1.0)
+    return np.zeros_like(d)
+
+
+def _flip_score(d: np.ndarray) -> float:
+    """Centre minus border depth: above 0.04 the map is bright = near and gets flipped."""
     h, w = d.shape
-    if h >= 16 and w >= 16:
-        cy, cx = h // 2, w // 2
-        rh, rw = max(h // 6, 2), max(w // 6, 2)
-        center = float(d[cy - rh : cy + rh, cx - rw : cx + rw].mean())
-        b = max(h // 12, 1)
-        border_vals = np.concatenate(
-            [
-                d[:b, :].ravel(),
-                d[-b:, :].ravel(),
-                d[:, :b].ravel(),
-                d[:, -b:].ravel(),
-            ]
-        )
-        border = float(border_vals.mean())
-        if center > border + 0.04:
-            d = 1.0 - d
+    if h < 16 or w < 16:
+        return 0.0
+    cy, cx = h // 2, w // 2
+    rh, rw = max(h // 6, 2), max(w // 6, 2)
+    center = float(d[cy - rh : cy + rh, cx - rw : cx + rw].mean())
+    b = max(h // 12, 1)
+    border_vals = np.concatenate([d[:b, :].ravel(), d[-b:, :].ravel(), d[:, :b].ravel(), d[:, -b:].ravel()])
+    return center - float(border_vals.mean())
+
+
+def _depth_hw(depth_img: np.ndarray, rng=None, flip=None) -> np.ndarray:
+    """Return depth HW with 0 = near, 1 = far. rng / flip: a video clip's steadied range and flip score."""
+    d = _depth_raw(depth_img)
+    dmin, dmax = (float(d.min()), float(d.max())) if rng is None else rng
+    d = _depth_norm(d, dmin, dmax)
+    if (_flip_score(d) if flip is None else flip) > 0.04:
+        d = 1.0 - d
     return d
 
 
@@ -462,6 +465,16 @@ class LCRelight:
         # the mask is the same for every frame, resize it once
         mb = _mask_np(mask, h, w) if (mask is not None and mask_enabled) else None
 
+        # a video clip: the depth range and the near / far flip are shared over nearby frames, so the light does not
+        # breathe or flip when something moves through the frame. Separate images are measured one by one as before.
+        seg = segments(img)
+        rngs, flips = [None] * b, [None] * b
+        if is_clip(seg):
+            raws = [_depth_raw(_resize_map(depths_in[min(i, depths_in.shape[0] - 1)], h, w)) for i in range(b)]
+            r = smooth(np.array([[float(d.min()), float(d.max())] for d in raws], dtype=np.float64), seg)
+            rngs = [(float(r[i, 0]), float(r[i, 1])) for i in range(b)]
+            flips = smooth([_flip_score(_depth_norm(d, *rngs[i])) for i, d in enumerate(raws)], seg)
+
         out_frames = []
         debug = []
         for i in range(b):
@@ -469,7 +482,7 @@ class LCRelight:
             n_img = _resize_map(norms_in[min(i, norms_in.shape[0] - 1)], h, w)
             d_img = _resize_map(depths_in[min(i, depths_in.shape[0] - 1)], h, w)
             normals = _decode_normals(n_img)
-            depth = _depth_hw(d_img)
+            depth = _depth_hw(d_img, rngs[i], flips[i])
 
             dbg = np.ones((h, w), dtype=np.float32)
             if mask is not None and mask_enabled:

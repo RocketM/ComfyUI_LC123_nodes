@@ -443,14 +443,20 @@ def _process_frame(
         mask = np.clip(1.0 - vig * 0.9 * (1.0 - fall), 0.3, 1.0)
         rgb = rgb * mask[..., None]
 
-    # --- Grain (0 = off), mono ---
+    # --- Grain (0 = off): phone sensor noise, the same model as LC Film Grain's "sensor" response. Phones clean up
+    # most of the colour speckle, so it is mostly brightness noise with a little colour.
     gr = float(np.clip(grain, 0, 1))
     if gr > 1e-5:
+        import torch
+
+        from .lc_grain import sensor_noise
+
         rng = np.random.default_rng((int(seed) + h * 17 + w * 31) & 0xFFFFFFFF)
-        mono = rng.normal(0.0, 1.0, (h, w)).astype(np.float32)
-        y = 0.2126 * rgb[..., 0] + 0.7152 * rgb[..., 1] + 0.0722 * rgb[..., 2]
-        wgt = np.clip((y - 0.03) / 0.2, 0.2, 1.0) * (0.45 + 0.55 * (1.0 - np.clip(y, 0, 1)))
-        rgb = np.clip(rgb + mono[..., None] * gr * 0.07 * wgt[..., None], 0, 1)
+        mono = rng.normal(0.0, 1.0, (h, w, 1)).astype(np.float32)
+        chroma = rng.normal(0.0, 1.0, (h, w, 3)).astype(np.float32)
+        noise = (0.8 * mono + 0.2 * chroma) / 0.8246
+        rgb = sensor_noise(torch.from_numpy(np.ascontiguousarray(rgb, dtype=np.float32)), torch.from_numpy(noise),
+                           gr * 0.105).numpy()
 
     # Neutralize deep blacks
     y = 0.2126 * rgb[..., 0] + 0.7152 * rgb[..., 1] + 0.0722 * rgb[..., 2]
@@ -643,7 +649,7 @@ class LCPhoneLook(PreviewImage):
                         "min": 0.0,
                         "max": 1.0,
                         "step": 0.01,
-                        "tooltip": "0 = off. Neutral mono grain (stronger in shadows).",
+                        "tooltip": "0 = off. Phone camera noise (the same as LC Film Grain's sensor response): strongest in the shadows, mostly brightness with a little colour speckle.",
                     },
                 ),
             }

@@ -954,7 +954,7 @@ app.registerExtension({
       sortOrder: 100,
       tooltip:
         "Turns the whole Align tool on or off, including its logo button in the top toolbar. While on, the logo button (light gray = on, dark gray = off) switches Align on for the open workflow, and that is saved with the workflow.",
-      category: ["LC123 Settings ⚙️", "Align", "Align tool"],
+      category: ["LC Settings ⚙️", "Align", "Align tool"],
       onChange: (v) => {
         cfg.tool = v !== false;
         if (cfg.tool) install();
@@ -971,7 +971,7 @@ app.registerExtension({
       sortOrder: 90,
       tooltip:
         "Rulers on the top and left edge while Align is on. Left click = Node line, right click = Group line, click a marker again to remove it, drag a marker to move it.",
-      category: ["LC123 Settings ⚙️", "Align", "Rulers"],
+      category: ["LC Settings ⚙️", "Align", "Rulers"],
       onChange: (v) => {
         cfg.rulers = v !== false;
         applyOn();
@@ -985,7 +985,7 @@ app.registerExtension({
       sortOrder: 80,
       attrs: { min: 10, max: 600, step: 10 },
       tooltip: "Ruler lines stay invisible until the cursor or something you drag is this close (screen pixels). They fade in as you get closer.",
-      category: ["LC123 Settings ⚙️", "Align", "Line reveal distance (px)"],
+      category: ["LC Settings ⚙️", "Align", "Line reveal distance (px)"],
       onChange: (v) => {
         cfg.revealPx = Number(v) || 120;
         canvas()?.setDirty?.(true, false);
@@ -999,7 +999,7 @@ app.registerExtension({
       sortOrder: 70,
       tooltip:
         "Also snap to the edges and centers of other nodes and groups (no line is shown for these). Off = snap to your ruler lines only. Snap distance is ComfyUI's Snap to grid size (Lite Graph > Canvas).",
-      category: ["LC123 Settings ⚙️", "Align", "Also snap to other nodes and groups"],
+      category: ["LC Settings ⚙️", "Align", "Also snap to other nodes and groups"],
       onChange: (v) => (cfg.snapItems = v === true),
     },
   ],

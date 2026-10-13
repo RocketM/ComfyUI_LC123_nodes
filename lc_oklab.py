@@ -18,6 +18,7 @@ from .vendor.chromagrade.colorspace import linear_to_srgb, srgb_to_oklab
 from .vendor.chromagrade.gamut import gamut_map_to_linear
 from .vendor.chromagrade.protect import apply_neutral_guard, apply_skin_protection
 from .vendor.chromagrade.stats import mkl_transform, weighted_mean_cov
+from .lc_temporal import segments, smooth
 from .vendor.chromagrade.transport import IDTChain
 
 MAX_POINTS = 65536
@@ -57,15 +58,24 @@ def match(image_bhwc: torch.Tensor, reference_bhwc: torch.Tensor, distribution: 
     if not pair:
         per = max(1, MAX_POINTS // ref_lab.shape[0])
         pooled = torch.cat([_sample(ref_lab[i], per) for i in range(ref_lab.shape[0])], 0)
-    out = []
+    labs = [srgb_to_oklab(img[i]) for i in range(img.shape[0])]
+    fits = []
     for i in range(img.shape[0]):
-        lab = srgb_to_oklab(img[i])
+        src = _sample(labs[i])
         dst = _sample(ref_lab[i]) if pair else pooled
-        src = _sample(lab)
         mu_s, cov_s, _ = weighted_mean_cov(src)
         mu_d, cov_d, _ = weighted_mean_cov(dst)
         a, b = mkl_transform(mu_s, cov_s, mu_d, cov_d)
-        a, b = a.to(torch.float32), b.to(torch.float32)
+        fits.append(torch.cat([a.to(torch.float32), b.to(torch.float32).view(3, 1)], 1))
+    # a video clip shares its colour transform over nearby frames, so the match does not pump; separate images keep
+    # their own
+    fits = smooth(torch.stack(fits), segments(img))
+    out = []
+    for i in range(img.shape[0]):
+        lab = labs[i]
+        src = _sample(lab)
+        dst = _sample(ref_lab[i]) if pair else pooled
+        a, b = fits[i][:, :3], fits[i][:, 3]
         flat = lab.reshape(-1, 3)
         mapped = flat @ a.T + b
         if distribution:

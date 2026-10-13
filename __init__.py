@@ -69,6 +69,7 @@ _load("lc_text_remove")
 _load("lc_compare")
 _load("lc_seed_jump")
 _load("lc_node_snapshot")
+_load("lc_model_info")
 _load("lc_notify")
 _load("lc_civitai_strip")
 

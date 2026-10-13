@@ -174,6 +174,7 @@ Registered class IDs: 138 (137 in search, 1 deprecated but still loads in old wo
 - `LCIsBypassedOrMuted`: LC Is Bypassed / Muted
 - `LCJoinStrings`: LC Join Strings 🔗
 - `LCLabel`: LC Label 🏷️
+- `LCModelInfo`: LC Model Info ℹ️
 - `LCNodeSnapshot`: LC Node Snapshot 📋
 - `LCNotify`: LC Notify 🔊
 - `LCSamplerScheduler`: LC Sampler Scheduler ⚙️
