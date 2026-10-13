@@ -351,7 +351,7 @@ Relight an image after the fact. Feed it a **normal map** + **depth map** (and o
 - **advanced** toggle for the fine controls.
 - Outputs: **image** · **shadow_mask** (white = lit) · **light_layer**.
 
-**LC Lighting Control 🔦** (the original)
+**LC Lighting Control 🔦** (the original, deprecated: use V2)
 
 ![LC Lighting Control example](assets/readme/LC%20Lighting%20Control%20example.png)
 
@@ -744,7 +744,6 @@ Details: [`LC123_Save_Image_Note.md`](LC123_Save_Image_Note.md)
 | [`workflows/LC Dual sigma workflow example.json`](workflows/LC%20Dual%20sigma%20workflow%20example.json) | Split sigma |
 | [`workflows/LC Dual Sigma Advanced workflow example.json`](workflows/LC%20Dual%20Sigma%20Advanced%20workflow%20example.json) | Advanced split sigmas |
 | [`workflows/LC Better Sigmas V2.0.json`](workflows/LC%20Better%20Sigmas%20V2.0.json) | LC Sigmas + LC Detail Daemon against a plain euler / simple baseline, with I2I and LC Vision prompt assist |
-| [`workflows/Anima Regional Conditioning WF.json`](workflows/Anima%20Regional%20Conditioning%20WF.json) | Anima regional |
 | [`workflows/Anima Inline Regional Canvas workflow.json`](workflows/Anima%20Inline%20Regional%20Canvas%20workflow.json) | Anima inline canvas |
 | [`workflows/Krea2 Inline Regional Canvas Example.json`](workflows/Krea2%20Inline%20Regional%20Canvas%20Example.json) | Krea2 inline canvas |
 | [`workflows/LC Lighting Control (BETA).json`](workflows/LC%20Lighting%20Control%20%28BETA%29.json) | The original Lighting Control (V1) with overlays |

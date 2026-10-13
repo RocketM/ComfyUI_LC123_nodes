@@ -431,6 +431,7 @@ class LCRelight:
     RETURN_NAMES = ("image", "debug_mask")
     FUNCTION = "relight"
     CATEGORY = "LC123/image"
+    DESCRIPTION = "Deprecated: use LC Lighting Control V2 🔦. Still works in saved workflows."
 
     def relight(
         self,
@@ -520,4 +521,4 @@ class LCRelight:
 
 
 NODE_CLASS_MAPPINGS = {"LCRelight": LCRelight}
-NODE_DISPLAY_NAME_MAPPINGS = {"LCRelight": "LC Lighting Control 🔦"}
+NODE_DISPLAY_NAME_MAPPINGS = {"LCRelight": "LC Lighting Control 🔦 (deprecated)"}
