@@ -330,8 +330,47 @@ function setup(node) {
   node._lcOptRefresh();
 }
 
+// ---------------------------------------------------------------- download safeguard
+// A run with a file the machine doesn't have used to start a multi-GB download with no warning. Now Run asks first;
+// once it has started, ComfyUI's cancel button stops it (the engine checks it between chunks and deletes the part).
+function pendingDownloads() {
+  const out = [];
+  for (const n of app.graph?._nodes || []) {
+    if (!TYPES[n.comfyClass] || n.mode === 2 || n.mode === 4) continue; // muted or bypassed: it won't run
+    for (const f of n._lcOptPlan?.files || []) if (f.state === "download") out.push({ file: baseName(f.label), gb: f.gb });
+  }
+  return out;
+}
+
+async function confirmDownloads(list) {
+  const total = list.reduce((t, x) => t + (Number(x.gb) || 0), 0);
+  const msg = `This run downloads ${list.length === 1 ? "a file" : `${list.length} files`} you don't have yet (${total.toFixed(1)} GB) from Hugging Face:\n\n`
+    + list.map((x) => `• ${x.file} (${x.gb ?? "?"} GB)`).join("\n")
+    + "\n\nOnce it starts, cancel the run to stop it (the partial file is deleted). To skip the download, pick a file you already have in the LC Model Optimizer node.";
+  const dlg = app.extensionManager?.dialog;
+  if (dlg?.confirm) return (await dlg.confirm({ title: "Download and run?", message: msg })) === true;
+  return window.confirm(msg);
+}
+
+function guardQueue() {
+  if (app._lcOptGuard) return;
+  app._lcOptGuard = true;
+  const orig = app.queuePrompt;
+  app.queuePrompt = async function (...args) {
+    const list = pendingDownloads();
+    if (list.length && !(await confirmDownloads(list))) {
+      try {
+        app.extensionManager.toast.add({ severity: "info", summary: "LC Model Optimizer", detail: "Run cancelled. Nothing was downloaded.", life: 3500 });
+      } catch (_) {}
+      return false;
+    }
+    return orig.apply(this, args);
+  };
+}
+
 app.registerExtension({
   name: "LC123.OptimizerNode",
+  setup() { guardQueue(); },
   nodeCreated(node) { if (TYPES[node.comfyClass]) setup(node); },
   loadedGraphNode(node) {
     if (!TYPES[node.comfyClass]) return;
