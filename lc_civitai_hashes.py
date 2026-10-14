@@ -157,6 +157,19 @@ def _resolve(name: str, prefer: str | None = None) -> tuple[str | None, str | No
                 path = None
             if path and os.path.isfile(path):
                 return path, _KIND_BY_FOLDER.get(folder, "model")
+    # a bare name with no folder or extension (LoRA Manager, <lora:name> tags): match the file name without extension
+    if not _FILE_EXT.search(name):
+        stem = os.path.basename(name).lower()
+        for folder in folders:
+            try:
+                files = folder_paths.get_filename_list(folder)
+            except Exception:
+                continue
+            for f in files:
+                if os.path.splitext(os.path.basename(f.replace("\\", "/")))[0].lower() == stem:
+                    path = folder_paths.get_full_path(folder, f)
+                    if path and os.path.isfile(path):
+                        return path, _KIND_BY_FOLDER.get(folder, "model")
     return None, None
 
 
@@ -186,10 +199,9 @@ def _lora_enabled(entry) -> bool:
     strength present is zero (model 0 + clip 1 still applies the LoRA)."""
     if not isinstance(entry, dict):
         return True
-    if "on" in entry and not entry.get("on"):
-        return False
-    if "enabled" in entry and not entry.get("enabled"):
-        return False
+    for key in ("on", "enabled", "active"):  # active: LoRA Manager rows
+        if key in entry and not entry.get(key):
+            return False
     present = [k for k in ("strength", "strength_model", "strength_clip") if k in entry]
     if not present:
         return True
@@ -261,6 +273,9 @@ def _collect_from_prompt(prompt, skip_ids=None) -> list[tuple[str, str | None]]:
                 take_value(item, hint)
             return
         if isinstance(val, dict):
+            if isinstance(val.get("__value__"), list):  # LoRA Manager keeps its rows as {"__value__": [...]}
+                take_value(val["__value__"], hint)
+                return
             if not _lora_enabled(val):
                 return
             lname = val.get("lora") or val.get("lora_name") or val.get("name")

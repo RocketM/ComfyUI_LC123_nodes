@@ -15,6 +15,10 @@ list one model too many than lose the real one), and nothing is written to a Civ
 import json
 import math
 import os
+import re
+
+# <lora:name:strength> or <lora:name:model:clip>, as LoRA Text Loader style nodes take it
+_LORA_TAG = re.compile(r"<lora:([^:>]+)(?::\s*([-\d.]+))?(?::\s*([-\d.]+))?\s*>", re.I)
 
 
 def _number(value):
@@ -136,11 +140,17 @@ def collect_lora_metadata(prompt, save_node_id=None, execution_list=None):
         kind = node.get("class_type", "")
         inputs = node.get("inputs", {})
         slots = []
-        if kind == "LCLoraLoader":
+        if kind in ("LCLoraLoader", "LCLoraLoaderStack"):
+            stack = kind == "LCLoraLoaderStack"  # outputs a LORA_STACK: whatever applies it uses the row strength
             for index, row in enumerate(parse_lc_lora_rows(resolve(inputs.get("lora_rows", "[]"), nid))):
-                model = row["strength"] if inputs.get("model") is not None else 0.0
-                clip = row["strength"] if inputs.get("clip") is not None else 0.0
+                model = row["strength"] if stack or inputs.get("model") is not None else 0.0
+                clip = row["strength"] if stack or inputs.get("clip") is not None else 0.0
                 slots.append((f"lora_rows[{index}]", row.get("lora"), bool(row.get("on")), model, clip))
+        elif kind.startswith("LCOptimizer"):
+            # the Model Optimizer applies its own LoRA pick at 0.5 (model only)
+            pick = resolve(inputs.get("lora"), nid)
+            if isinstance(pick, str) and re.search(r"\.(safetensors|sft|gguf|ckpt|pt|bin|pth)$", pick, re.I):
+                slots.append(("lora", pick, True, 0.5, 0.0))
         else:
             # core / rgthree style: lora_name + strength(s) on the node, or per-row dicts (Power Lora Loader)
             for slot, values in [("lora", inputs)] + [(k, v) for k, v in inputs.items() if isinstance(v, dict)]:
@@ -159,6 +169,33 @@ def collect_lora_metadata(prompt, save_node_id=None, execution_list=None):
                 clip = _number(resolve(clip_value, nid))
                 enabled = all(bool(resolve(values.get(k, True), nid)) for k in ("on", "enabled"))
                 slots.append((slot, name, enabled, model, clip))
+            # a list of LoRA rows in one input: LoRA Manager's Lora Loader / Stacker ({"__value__": [...]} or a
+            # plain list of {name, strength, clipStrength, active}), and other packs that store rows the same way
+            listed = False
+            for key, value in inputs.items():
+                rows = value.get("__value__") if isinstance(value, dict) else value
+                if not (isinstance(rows, list) and rows and all(isinstance(r, dict) for r in rows)):
+                    continue
+                for index, row in enumerate(rows):
+                    name = row.get("name") or row.get("lora") or row.get("lora_name")
+                    if not isinstance(name, str) or not name:
+                        continue
+                    listed = True
+                    model = _number(row.get("strength", row.get("strength_model", row.get("modelStrength", 1.0))))
+                    clip = _number(row.get("clipStrength", row.get("strength_clip", row.get("clip_strength", model))))
+                    on = all(bool(row.get(k, True)) for k in ("active", "on", "enabled"))
+                    slots.append((f"{key}[{index}]", name, on, model, clip))
+            # <lora:name:strength> text on a LoRA node (LoRA Text Loader); skipped when the node also has a row list,
+            # where the text is only the display of those rows
+            if not listed and "lora" in kind.lower():
+                for key, value in inputs.items():
+                    text = resolve(value, nid)
+                    if not isinstance(text, str) or "<lora:" not in text.lower():
+                        continue
+                    for index, m in enumerate(_LORA_TAG.finditer(text)):
+                        model = _number(m.group(2)) if m.group(2) else 1.0
+                        clip = _number(m.group(3)) if m.group(3) else model
+                        slots.append((f"{key}<{index}>", m.group(1).strip(), True, model, clip))
         for slot, name, enabled, model, clip in slots:
             if not isinstance(name, str) or not name or name.lower() == "none":
                 continue
