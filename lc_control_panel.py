@@ -1,6 +1,6 @@
 """
-LC Control Panel: up to 16 LC Slider rows on one node, each with its own output. Every row has its own name, min, max,
-step and decimals (0 = INT, otherwise FLOAT), set from the gear at the end of the row. The rows live in one hidden
+LC Control Panel: up to 16 rows on one node, each with its own output. A row is a slider (its own name, min, max,
+step and decimals: 0 = INT, otherwise FLOAT) or an on/off switch (BOOLEAN), set from the gear at the end of the row. The rows live in one hidden
 STRING widget (JSON), so moving a slider changes the node's inputs and the next run picks it up.
 """
 
@@ -30,6 +30,8 @@ def row_value(row):
     """One row -> the value it outputs: snapped to its step, inside min / max, INT at 0 decimals."""
     if not isinstance(row, dict):
         return 0
+    if row.get("kind") == "boolean":
+        return bool(row.get("value"))
     lo, hi = _num(row.get("min"), 0.0), _num(row.get("max"), 100.0)
     if lo > hi:
         lo, hi = hi, lo
@@ -51,9 +53,9 @@ class LCControlPanel:
     RETURN_NAMES = tuple(f"value_{i + 1}" for i in range(MAX_ROWS))
     FUNCTION = "main"
     CATEGORY = "LC123/utils"
-    DESCRIPTION = ("One panel of sliders, each with its own output. The gear at the end of a row sets its name, min, max, "
-                   "step and decimals (0 = INT, otherwise FLOAT). Plug a new row into a number input and it copies that "
-                   "input's name, range and value. Double-click a value to type one.")
+    DESCRIPTION = ("One panel of sliders and switches, each with its own output. The gear at the end of a row sets its type "
+                   "(number or boolean), name, min, max, step and decimals (0 = INT, otherwise FLOAT). Plug a new row into a "
+                   "number or boolean input and it copies that input's name, range and value. Double-click a number to type one.")
 
     def main(self, rows="[]"):
         try:
