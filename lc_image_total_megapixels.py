@@ -8,9 +8,9 @@ and the resulting megapixels.
 
 import math
 
-import comfy.utils
+from . import lc_rtx
 
-UPSCALE_METHODS = ["nearest-exact", "bilinear", "area", "bicubic", "lanczos"]
+UPSCALE_METHODS = ["nearest-exact", "bilinear", "area", "bicubic", "lanczos", lc_rtx.RTX_METHOD]
 
 
 class LCImageToTotalMegapixels:
@@ -19,7 +19,7 @@ class LCImageToTotalMegapixels:
         return {
             "required": {
                 "image": ("IMAGE", {"tooltip": "Image to scale."}),
-                "upscale_method": (UPSCALE_METHODS, {"default": "lanczos", "tooltip": "Resampling method."}),
+                "upscale_method": (UPSCALE_METHODS, {"default": "lanczos", "tooltip": "Resampling method. nvidia_rtx_vsr = RTX Video Super Resolution (RTX cards, needs nvidia-vfx): sharper enlargements; shrinking uses lanczos."}),
                 "megapixels": ("FLOAT", {
                     "default": 1.0, "min": 0.01, "max": 16.0, "step": 0.01,
                     "tooltip": "Target size in megapixels (1.0 = 1,000,000 pixels, the same count LC Get Image uses). The aspect ratio is kept.",
@@ -48,7 +48,7 @@ class LCImageToTotalMegapixels:
         width = max(step, round(samples.shape[3] * scale_by / step) * step)
         height = max(step, round(samples.shape[2] * scale_by / step) * step)
 
-        out = comfy.utils.common_upscale(samples, int(width), int(height), upscale_method, "disabled")
+        out = lc_rtx.resize(samples, int(width), int(height), upscale_method, "disabled")
         out = out.movedim(1, -1)
 
         resolution = int(max(width, height))

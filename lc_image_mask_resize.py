@@ -145,7 +145,7 @@ class LCImageMaskResize:
                     UPSCALE_METHODS,
                     {
                         "default": "lanczos",
-                        "tooltip": "Resampling filter. Lanczos is a good default for photos. Masks use nearest.",
+                        "tooltip": "Resampling filter. Lanczos is a good default for photos. Masks use nearest. nvidia_rtx_vsr = RTX Video Super Resolution (RTX cards): sharper enlargements; shrinking uses lanczos.",
                     },
                 ),
                 "proportion": (
