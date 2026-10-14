@@ -11,6 +11,8 @@ from typing import Optional, Tuple
 import torch
 import comfy.utils
 
+from . import lc_rtx
+
 MAX_RESOLUTION = 16384
 
 # CR Aspect Ratio Social Media presets (Suzie1 / Comfyroll)
@@ -85,13 +87,8 @@ def _parse_pad_color(pad_color: str):
 
 
 def _common_upscale(samples, width, height, method, crop="disabled"):
-    """Wrap comfy.utils.common_upscale; samples are BCHW."""
-    if method == "nvidia_rtx_vsr":
-        try:
-            return comfy.utils.common_upscale(samples, width, height, method, crop)
-        except Exception:
-            method = "lanczos"
-    return comfy.utils.common_upscale(samples, width, height, method, crop)
+    """comfy.utils.common_upscale plus nvidia_rtx_vsr (RTX Video Super Resolution); samples are BCHW."""
+    return lc_rtx.resize(samples, width, height, method, crop)
 
 
 def _resize_image(
@@ -323,7 +320,7 @@ class AspectRatioSimplifier:
                     {"default": 1024, "min": 16, "max": MAX_RESOLUTION, "step": 8, "tooltip": "Target height for custom size."},
                 ),
                 "swap_dimensions": (["Off", "On"], {"tooltip": "Swap width and height after size is chosen."}),
-                "upscale_method": (UPSCALE_METHODS, {"default": "lanczos", "tooltip": "Resampling filter. Lanczos is a good default for photos."}),
+                "upscale_method": (UPSCALE_METHODS, {"default": "lanczos", "tooltip": "Resampling filter. Lanczos is a good default for photos. nvidia_rtx_vsr = RTX Video Super Resolution (RTX cards, needs nvidia-vfx): sharper, cleaner enlargements; shrinking uses lanczos."}),
                 "proportion": (PROPORTIONS, {"default": "crop", "tooltip": "stretch=force size; resize=fit inside; crop=fill+crop; pad=fit+letterbox; total_pixels=match pixel budget."}),
                 "crop_location": (CROP_LOCATIONS, {"default": "center", "tooltip": "Crop anchor when proportion is crop."}),
                 "pad_color": (

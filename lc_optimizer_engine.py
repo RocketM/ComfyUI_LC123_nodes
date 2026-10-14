@@ -436,6 +436,52 @@ def _repo_path(repo, filename):
     raise FileNotFoundError(f"[LC Optimizer] {filename} is not in https://huggingface.co/{repo}")
 
 
+def _stream(repo, path_in_repo, dest, label):
+    """Download one file in chunks to dest, checking ComfyUI's cancel button between chunks: cancelling stops the
+    download and deletes the partial file. Uses the Hugging Face login when there is one (gated repos)."""
+    import urllib.request
+
+    import comfy.model_management as mm
+
+    headers = {}
+    try:
+        from huggingface_hub.utils import build_hf_headers
+
+        headers = build_hf_headers()
+    except Exception:
+        pass
+    url = f"https://huggingface.co/{repo}/resolve/main/{path_in_repo}"
+    part = dest + ".part"
+    req = urllib.request.Request(url, headers=headers)
+    try:
+        with urllib.request.urlopen(req, timeout=60) as r, open(part, "wb") as out:
+            total = int(r.headers.get("Content-Length") or 0)
+            done, shown = 0, -1
+            while True:
+                mm.throw_exception_if_processing_interrupted()
+                chunk = r.read(8 << 20)
+                if not chunk:
+                    break
+                out.write(chunk)
+                done += len(chunk)
+                pct = int(done * 100 / total) if total else -1
+                if pct >= 0 and pct // 10 != shown:
+                    shown = pct // 10
+                    print(f"[LC Optimizer] {label}: {pct}% of {total / 1024 ** 3:.1f} GB (cancel the run to stop)")
+        os.replace(part, dest)
+    except BaseException as e:
+        try:
+            os.remove(part)
+        except OSError:
+            pass
+        if isinstance(e, mm.InterruptProcessingException):
+            print(f"[LC Optimizer] {label}: download stopped, nothing kept.")
+        elif "401" in str(e) or "403" in str(e):
+            raise RuntimeError(f"[LC Optimizer] {repo} is gated: accept its license on https://huggingface.co/{repo} and log in "
+                               "with `huggingface-cli login`, or pick another file.") from e
+        raise
+
+
 def download(variant):
     """Download a profile file into the root of its ComfyUI model folder. Returns (folder, name)."""
     folder = FOLDER_BY_LOADER.get(variant["loader"], "diffusion_models")
@@ -449,31 +495,7 @@ def download(variant):
         repo = variant["repo"]
         path_in_repo = _repo_path(repo, variant["file"])
         print(f"[LC Optimizer] Downloading {variant['file']} ({variant.get('gb', '?')} GB) from {repo} ...")
-        try:
-            from huggingface_hub import hf_hub_download
-
-            got = hf_hub_download(repo_id=repo, filename=path_in_repo, local_dir=target)
-            if os.path.abspath(got) != os.path.abspath(dest):
-                os.replace(got, dest)
-                sub = os.path.join(target, path_in_repo.split("/")[0])
-                if "/" in path_in_repo and os.path.isdir(sub):
-                    try:
-                        for dp, dn, fn in os.walk(sub, topdown=False):
-                            if not fn and not dn:
-                                os.rmdir(dp)
-                    except OSError:
-                        pass
-        except ImportError:
-            import urllib.request
-
-            part = dest + ".part"
-            urllib.request.urlretrieve(f"https://huggingface.co/{repo}/resolve/main/{path_in_repo}", part)
-            os.replace(part, dest)
-        except Exception as e:
-            if "401" in str(e) or "403" in str(e) or "gated" in str(e).lower():
-                raise RuntimeError(f"[LC Optimizer] {repo} is gated: accept its license on https://huggingface.co/{repo} and log in "
-                                   "with `huggingface-cli login`, or pick another file.") from e
-            raise
+        _stream(repo, path_in_repo, dest, variant["file"])
     print(f"[LC Optimizer] Finished downloading {variant['file']}.")
     folder_paths.filename_list_cache.clear() if hasattr(folder_paths, "filename_list_cache") else None
     return folder, os.path.relpath(dest, target)
@@ -530,25 +552,7 @@ def download_shipped(entry, value, folder="diffusion_models"):
     with _DL_LOCK:
         print(f"[LC Optimizer] The workflow uses {entry['family']} ({os.path.basename(dest)}, {entry['gb']} GB): downloading from "
               f"https://huggingface.co/{entry['repo']} ...")
-        tmp = os.path.join(os.path.dirname(dest), ".lc_download")
-        try:
-            from huggingface_hub import hf_hub_download
-
-            got = hf_hub_download(repo_id=entry["repo"], filename=entry["path"], local_dir=tmp)
-        except ImportError:
-            import urllib.request
-
-            got = os.path.join(tmp, os.path.basename(entry["path"]))
-            os.makedirs(tmp, exist_ok=True)
-            urllib.request.urlretrieve(f"https://huggingface.co/{entry['repo']}/resolve/main/{entry['path']}", got + ".part")
-            os.replace(got + ".part", got)
-        os.replace(got, dest)
-        try:
-            import shutil
-
-            shutil.rmtree(tmp, ignore_errors=True)
-        except Exception:
-            pass
+        _stream(entry["repo"], entry["path"], dest, os.path.basename(dest))
     print(f"[LC Optimizer] Finished downloading {os.path.basename(dest)}.")
     return folder, value
 

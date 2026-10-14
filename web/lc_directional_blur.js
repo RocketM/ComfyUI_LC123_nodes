@@ -12,6 +12,8 @@ const HIDE = new Set(["angle", "distance"]);
 const PAD_SIZE = 268;
 const PAD_MAX_DRAG = 130; // px of drag == this many px of blur; type a bigger distance for more
 const FACE_H = PAD_SIZE + 30; // pad + the angle/distance readout row above it
+const PREVIEW_H = Math.round(PAD_SIZE * (5 / 4)); // the shared wipe preview: 268 wide, 4:5 -> 335 tall
+const PREVIEW_PAD = 16;
 
 function findWidget(node, name) {
   return (node.widgets || []).find((w) => w && w.name === name);
@@ -272,6 +274,20 @@ function attachFace(node) {
     console.warn("LC Directional Blur face widget failed", e);
   }
 
+  // The shared preview sizes a new node before this pad exists, so a freshly placed node launched with
+  // the wipe preview hanging off the bottom. Grow it once to fit pad + preview (a loaded workflow keeps
+  // its saved size: onConfigure clears the flag).
+  if (node._lcDbFresh) {
+    node._lcDbFresh = false;
+    requestAnimationFrame(() => {
+      try {
+        const need = node.computeSize()[1] + PREVIEW_PAD + PREVIEW_H + PREVIEW_PAD;
+        node.setSize([Math.max(node.size[0], 300), Math.max(node.size[1], need)]);
+        node.setDirtyCanvas?.(true, true);
+      } catch (_) {}
+    });
+  }
+
   applyFace(node);
 }
 
@@ -289,6 +305,7 @@ app.registerExtension({
     const onNodeCreated = nodeType.prototype.onNodeCreated;
     nodeType.prototype.onNodeCreated = function () {
       onNodeCreated?.apply(this, arguments);
+      this._lcDbFresh = !this._lcDbFaceAttached;
       requestAnimationFrame(() => boot(this));
       setTimeout(() => boot(this), 0);
       setTimeout(() => boot(this), 150);
@@ -296,6 +313,7 @@ app.registerExtension({
 
       const onConfigure = this.onConfigure;
       this.onConfigure = function (info) {
+        this._lcDbFresh = false;
         onConfigure?.apply(this, arguments);
         requestAnimationFrame(() => boot(this));
       };
