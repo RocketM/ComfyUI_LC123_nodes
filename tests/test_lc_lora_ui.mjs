@@ -49,7 +49,7 @@ await page.route("**/*", async (route) => {
       constructor() {this.id=1;this.widgets=[{name:'lora_rows',value:'[]',options:{}}];this.properties={};this.size=[430,100];this.pos=[200,150];}
       addDOMWidget(name,type,el,options) {document.querySelector('#node').replaceChildren(el);this.dom={name,type,el,options};return this.dom;}
       computeSize(){return [430,(this.dom?.options.getMinHeight()||80)+40];}
-      setSize(value){this.size=value;}
+      setSize(value){this.size=value;document.querySelector('#node').style.height=Math.max(0,value[1]-40)+'px';}
       setDirtyCanvas(){}
     }
     const ext=window.extensions.find(ext=>ext.name==='LC123.GroupLoraLoader');
@@ -60,7 +60,7 @@ await page.route("**/*", async (route) => {
     await ext.beforeRegisterNodeDef(OriginalNode,{name:'LCLoraLoader'});
     if(OriginalNode.prototype.onNodeCreated) throw new Error('Group extension modified original loader');
     window.node=new Node();app.graph._nodes=[window.node];window.node.onNodeCreated();
-    window.restore=()=>{const saved={properties:structuredClone(window.node.properties),value:window.node.widgets[0].value};window.node.onRemoved();window.node=new Node();window.node.properties=saved.properties;window.node.widgets[0].value=saved.value;window.node.onNodeCreated();window.node.onConfigure();app.graph._nodes=[window.node];};
+    window.restore=()=>{const saved={properties:structuredClone(window.node.properties),value:window.node.widgets[0].value,size:[...window.node.size]};window.node.onRemoved();window.node=new Node();window.node.properties=saved.properties;window.node.widgets[0].value=saved.value;window.node.onNodeCreated();window.node.setSize(saved.size);window.node.onConfigure();app.graph._nodes=[window.node];};
   </script></body></html>` });
   if (url.pathname === "/scripts/app.js") return route.fulfill({ contentType: "text/javascript", body: `window.extensions=[];export const app={registerExtension(ext){window.extensions.push(ext)},graph:{_nodes:[]},canvas:{setDirty(){}},extensionManager:{workflow:{activeWorkflow:{changeTracker:{checkState(){}}}}}};window.app=app;` });
   if (url.pathname === "/scripts/api.js") return route.fulfill({ contentType: "text/javascript", body: `export const api={fetchApi:(url,opts)=>fetch(url,opts),apiURL:url=>url};` });
@@ -318,6 +318,7 @@ try {
     window.node.widgets[0].value = JSON.stringify(Array.from({length:200}, (_,i) => ({id:`perf-${i}`,group:'',lora:'Characters/Mira.safetensors',on:true,strength:1})));
     window.node.onConfigure();
     const host = document.querySelector('.lc-group-lora-host');
+    host.scrollTop = 0;
     const rows = [...host.querySelectorAll('.lc-group-lora-row')];
     const destination = rows[1], rect = destination.getBoundingClientRect();
     rows[0].querySelector('[data-drag-kind]').dispatchEvent(new PointerEvent('pointerdown', {bubbles:true,button:0,clientX:rect.left+30,clientY:rect.top-20}));
@@ -357,8 +358,121 @@ try {
   assert.equal(dragPerf.ghostText, null);
   assert.deepEqual(dragPerf.order, ['perf-1','perf-0','perf-2']);
   assert.equal(dragPerf.linesAfter, 0);
+  const layout = await page.evaluate(() => {
+    const node = window.node, host = node.__lcFace.rowsHost;
+    const height = node.size[1];
+    node.setSize([node.size[0], 320]);
+    node.onConfigure();
+    const result = {height, resized: node.size[1], scrollable: host.scrollHeight > host.clientHeight,
+      minimum: node.dom.options.getMinHeight(), footer: node.__lcFace.addBtn.getBoundingClientRect().toJSON(),
+      viewport: host.getBoundingClientRect().toJSON()};
+    host.scrollTop = 800;
+    return result;
+  });
+  assert.equal(layout.height, 400, '200 rows must not grow the node');
+  assert.equal(layout.resized, 320, 'Manual height survives rerender');
+  assert.equal(layout.scrollable, true);
+  assert.ok(layout.minimum < 320);
+  assert.ok(layout.footer.top >= layout.viewport.bottom, 'Footer stays outside the scroll viewport');
+  await page.getByRole('combobox', {name:'Show Strengths'}).selectOption('Single Strength');
+  assert.equal(await page.locator('.lc-group-lora-host').evaluate(el=>el.scrollTop), 800, 'Changing mode preserves scroll');
+  await page.evaluate(()=>window.restore());
+  assert.equal(await page.evaluate(()=>window.node.size[1]), 320, 'Workflow restore preserves manual height');
+  const hostBox = await page.locator('.lc-group-lora-host').boundingBox();
+  await page.mouse.move(hostBox.x + hostBox.width/2, hostBox.y + hostBox.height/2);
+  const pageScroll = await page.evaluate(()=>window.scrollY);
+  await page.mouse.wheel(0, 160);
+  await page.waitForTimeout(100);
+  assert.ok(await page.locator('.lc-group-lora-host').evaluate(el=>el.scrollTop) > 0, 'Wheel scrolls list');
+  assert.equal(await page.evaluate(()=>window.scrollY), pageScroll, 'Wheel does not scroll surrounding page');
+  await page.locator('.lc-group-lora-host').evaluate(el=>{el.scrollTop=0});
+  const firstGrip = await page.locator('.lc-group-lora-row [data-drag-kind]').first().boundingBox();
+  await page.mouse.move(firstGrip.x+3, firstGrip.y+3);
+  await page.mouse.down();
+  await page.mouse.move(hostBox.x+20, hostBox.y+hostBox.height-3, {steps:5});
+  await page.waitForFunction(()=>window.node.__lcFace.rowsHost.scrollTop > 100);
+  const down = await page.locator('.lc-group-lora-host').evaluate(el=>el.scrollTop);
+  await page.mouse.move(hostBox.x+20, hostBox.y+3);
+  await page.waitForFunction(previous=>window.node.__lcFace.rowsHost.scrollTop < previous-30, down);
+  await page.keyboard.press('Escape');
+  await page.mouse.up();
+  const stopped = await page.locator('.lc-group-lora-host').evaluate(el=>el.scrollTop);
+  await page.waitForTimeout(80);
+  assert.equal(await page.locator('.lc-group-lora-host').evaluate(el=>el.scrollTop), stopped, 'Escape stops scrolling');
+  assert.equal(await page.locator('.lc-group-lora-insert-line').count(), 0);
+  await page.locator('.lc-group-lora-host').evaluate(el=>{el.scrollTop=0});
+  const grip = await page.locator('.lc-group-lora-row [data-drag-kind]').first().boundingBox();
+  const movingId = await page.locator('.lc-group-lora-row').first().getAttribute('data-row-id');
+  await page.mouse.move(grip.x+3, grip.y+3);
+  await page.mouse.down();
+  await page.mouse.move(hostBox.x+20, hostBox.y+hostBox.height-3, {steps:5});
+  await page.waitForFunction(()=>window.node.__lcFace.rowsHost.scrollTop > 130);
+  await page.mouse.up();
+  const dropped = await page.evaluate(id=>{
+    const rows=JSON.parse(window.node.widgets[0].value);
+    return {index:rows.findIndex(row=>row.id===id),count:rows.length,height:window.node.size[1]};
+  }, movingId);
+  assert.ok(dropped.index > 5, 'Drop uses the destination after auto-scroll');
+  assert.equal(dropped.count, 200);
+  assert.equal(dropped.height, 320);
+  // Scrolling under a stationary drag must repaint the marker, including after
+  // an immediate drop before the browser delivers the next scroll event.
+  const scrollDrag = await page.evaluate(async () => {
+    const host=window.node.__lcFace.rowsHost;
+    host.scrollTop=0;
+    const rows=[...host.querySelectorAll('.lc-group-lora-row')];
+    const source=rows[0], handle=source.querySelector('[data-drag-kind]');
+    const r=handle.getBoundingClientRect(), b=host.getBoundingClientRect();
+    const x=b.left+20, y=b.top+80;
+    handle.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,cancelable:true,button:0,clientX:r.left+2,clientY:r.top+2}));
+    document.dispatchEvent(new PointerEvent('pointermove',{bubbles:true,cancelable:true,clientX:x,clientY:y}));
+    await new Promise(resolve=>requestAnimationFrame(resolve));
+    const line=document.querySelector('.lc-group-lora-insert-line');
+    const old=line.style.transform;
+    host.scrollTop=43;
+    host.dispatchEvent(new Event('scroll', {bubbles:false}));
+    await new Promise(resolve=>requestAnimationFrame(resolve));
+    const updated=line.style.transform;
+    const marker=line.getBoundingClientRect();
+    host.scrollTop=143; // do not wait for a scroll event
+    const hit=document.elementFromPoint(x,y).closest('.lc-group-lora-row');
+    const hitRect=hit.getBoundingClientRect();
+    const before=y < hitRect.top+hitRect.height/2;
+    const initial=JSON.parse(window.node.widgets[0].value).map(row=>row.id);
+    const sourceId=source.dataset.rowId;
+    const rest=initial.filter(id=>id!==sourceId);
+    const expected=rest.indexOf(hit.dataset.rowId)+(before?0:1);
+    document.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,cancelable:true,clientX:x,clientY:y}));
+    return {old,updated,marker:marker.toJSON(),viewport:b.toJSON(),expected,
+      actual:JSON.parse(window.node.widgets[0].value).findIndex(row=>row.id===sourceId)};
+  });
+  assert.notEqual(scrollDrag.updated, scrollDrag.old, 'Scrolling repaints a stationary drag marker');
+  assert.ok(scrollDrag.marker.top >= scrollDrag.viewport.top && scrollDrag.marker.bottom <= scrollDrag.viewport.bottom, 'Marker stays inside viewport');
+  assert.equal(scrollDrag.actual, scrollDrag.expected, 'Immediate drop uses fresh scroll geometry');
+  const clippedGroup = await page.evaluate(async () => {
+    const node=window.node;
+    const rows=JSON.parse(node.widgets[0].value).map((row,i)=>({...row,group:i<2?'review-a':'review-b'}));
+    node.properties.lc_lora_groups=[{id:'review-a',name:'First'},{id:'review-b',name:'Long group'}];
+    node.widgets[0].value=JSON.stringify(rows);node.onConfigure();
+    const host=node.__lcFace.rowsHost;host.scrollTop=0;
+    const source=host.querySelector('[data-group-id="review-a"] [data-drag-kind="group"]');
+    const target=host.querySelector('[data-group-id="review-b"] .lc-group-lora-row');
+    const a=source.getBoundingClientRect(), b=target.getBoundingClientRect();
+    source.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,cancelable:true,button:0,clientX:a.left+2,clientY:a.top+2}));
+    document.dispatchEvent(new PointerEvent('pointermove',{bubbles:true,cancelable:true,clientX:b.left+20,clientY:b.top+2}));
+    await new Promise(resolve=>requestAnimationFrame(resolve));
+    const marker=document.querySelector('.lc-group-lora-insert-line');
+    const rect=marker.getBoundingClientRect(), viewport=host.getBoundingClientRect();
+    const result={visible:!marker.hidden,inside:rect.top>=viewport.top && rect.bottom<=viewport.bottom,height:node.size[1]};
+    document.dispatchEvent(new KeyboardEvent('keydown',{bubbles:true,key:'Escape'}));
+    return result;
+  });
+  assert.equal(clippedGroup.visible,true);
+  assert.equal(clippedGroup.inside,true,'Long-group marker is clipped to the list viewport');
+  assert.equal(clippedGroup.height,320,'Expanded groups do not grow node height');
+  if (process.env.LC_UI_SCREENSHOT_DIR) await page.screenshot({path:path.join(process.env.LC_UI_SCREENSHOT_DIR, 'scrolling-list.png')});
   assert.deepEqual(errors, [], "Browser runtime errors");
-  console.log("PASS: library, inline groups, independent weights, restore, pointer drag/drop and 200-row drag stability (no repeated layout reads or indicator writes).");
+  console.log("PASS: library, groups, independent weights, 200-row drag stability, fixed height, resize/restore, scroll retention, wheel isolation and edge auto-scroll/drop.");
 } catch (error) {
   console.error('Browser errors:', errors);
   console.error('Page text:', (await page.locator('body').innerText()).slice(0, 2000));

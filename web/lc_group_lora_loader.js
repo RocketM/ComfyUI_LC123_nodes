@@ -7,6 +7,8 @@ import { migrateGroupLoaders, normalizeRows, orderRows, moveRow, groupState, tog
 
 const NODES = new Set(["LCGroupLoraLoader", "LCGroupLoraLoaderStack"]);
 const MIN_W = 330;
+const INITIAL_HEIGHT = 400;
+const MIN_FACE_HEIGHT = 160;
 const STRENGTH_MODE = "Show Strengths";
 const SINGLE = "Single Strength";
 const SEPARATE = "Separate Model & Clip";
@@ -178,7 +180,7 @@ function setRows(node, rows, { rerender = true } = {}) {
   const w = widget(node, "lora_rows");
   if (w) w.value = JSON.stringify(orderRows(normalizeRows(rows, getGroups(node)), getGroups(node)));
   if (rerender) renderRows(node);
-  growToFit(node);
+  fitViewport(node);
   changed(node);
 }
 
@@ -192,23 +194,14 @@ function hideRowsWidget(node) {
   if (w.options) w.options.hidden = true;
 }
 
-function desiredHeight(node) {
-  const groups = getGroups(node);
-  const rows = getRows(node);
-  let height = 80 + (groups.length && rows.some((row) => !row.group) ? 9 : 0);
-  for (const group of [{ id: "", collapsed: false }, ...groups]) {
-    const count = rows.filter((row) => row.group === group.id).length;
-    height += group.id ? 35 + (group.collapsed ? 0 : Math.max(count * 32, 29)) : Math.max(count * 32, 12);
-  }
-  return height;
-}
-
-function growToFit(node) {
+// Content never determines the node's minimum height: the DOM widget takes the
+// available space and its middle list scrolls. Saved/manual node sizes win.
+function fitViewport(node) {
   if (!node.__lcFace) return;
-  node.__lcFace.wrap.style.height = desiredHeight(node) + "px";
   const min = node.computeSize();
   const width = Math.max(node.size[0], separateStrengths(node) ? 440 : MIN_W);
-  if (node.size[1] < min[1] - 0.5 || width > node.size[0]) node.setSize([width, Math.max(node.size[1], min[1])]);
+  const height = Math.max(node.size[1], min[1]);
+  if (width !== node.size[0] || height !== node.size[1]) node.setSize([width, height]);
   node.setDirtyCanvas?.(true, true);
 }
 
@@ -251,7 +244,7 @@ function editGroup(node, group = null) {
     changed(node);
   }
   node.__lcEditingGroup = group.id;
-  renderRows(node); growToFit(node);
+  renderRows(node); fitViewport(node);
   const input = node.__lcFace.rowsHost.querySelector(".lc-group-lora-group-edit");
   input?.focus(); input?.select();
 }
@@ -295,6 +288,8 @@ function ensureFace(node) {
   addGroup.classList.add("lc-group-lora-add-group");
   header.append(toggleAll, headerLabel, addGroup, mode);
   const rowsHost = document.createElement("div"); rowsHost.className = "lc-group-lora-host";
+  // Let the browser scroll the list, but keep ComfyUI from zooming the canvas.
+  rowsHost.addEventListener("wheel", (event) => event.stopPropagation(), { passive: true });
   const footer = document.createElement("div"); footer.className = "lc-group-lora-footer";
   const addBtn = document.createElement("button");
   addBtn.type = "button"; addBtn.className = "lc-group-lora-add"; addBtn.textContent = "➕ Add LoRA";
@@ -305,7 +300,7 @@ function ensureFace(node) {
   // Keep node drag / graph shortcuts away from the embedded controls.
   for (const type of ["pointerdown", "dblclick", "keydown"]) wrap.addEventListener(type, (event) => event.stopPropagation());
   const dom = node.addDOMWidget("lc_group_lora_face", "LC_LORA_FACE", wrap, {
-    getMinHeight: () => desiredHeight(node), serialize: false,
+    getMinHeight: () => MIN_FACE_HEIGHT, serialize: false,
   });
   dom.serializeValue = () => undefined;
   node.__lcFace = { wrap, headerLabel, toggleAll, rowsHost, addBtn, mode };
@@ -377,7 +372,7 @@ function makeGroup(node, group) {
   const collapse = iconButton("chevron", group.collapsed ? "Expand group" : "Collapse group", () => {
     if (!group.id) return;
     group.collapsed = !group.collapsed;
-    renderRows(node); growToFit(node); changed(node);
+    renderRows(node); fitViewport(node); changed(node);
   });
   collapse.classList.toggle("is-open", !group.collapsed); collapse.setAttribute("aria-expanded", String(!group.collapsed));
   if (!group.id) collapse.disabled = true;
@@ -404,7 +399,7 @@ function makeGroup(node, group) {
       if (finished) return; finished = true;
       if (save) group.name = input.value.trim() || "new group";
       node.__lcEditingGroup = null;
-      renderRows(node); growToFit(node); changed(node);
+      renderRows(node); fitViewport(node); changed(node);
     };
     input.addEventListener("keydown", (event) => {
       event.stopPropagation();
@@ -454,6 +449,7 @@ function renderRows(node) {
   const face = ensureFace(node), groups = getGroups(node), rows = getRows(node);
   syncNodeColors(node);
   face.drag.cancel();
+  const scrollTop = face.rowsHost.scrollTop;
   face.rowsHost.replaceChildren();
   for (const group of [...groups, { id: "", name: "Ungrouped", collapsed: false }]) face.rowsHost.append(makeGroup(node, group));
   face.mode.value = separateStrengths(node) ? SEPARATE : SINGLE;
@@ -461,7 +457,7 @@ function renderRows(node) {
   face.headerLabel.textContent = `${active}/${rows.length} active`;
   face.toggleAll.indeterminate = active > 0 && active < rows.length;
   face.toggleAll.checked = rows.length > 0 && active === rows.length;
-  face.wrap.style.height = desiredHeight(node) + "px";
+  face.rowsHost.scrollTop = scrollTop;
 }
 
 app.registerExtension({
@@ -488,13 +484,13 @@ app.registerExtension({
       this.properties[STRENGTH_MODE] ||= SINGLE;
       lcApplyLaunchColor(this, "#332922", "#593930");
       hideRowsWidget(this); ensureFace(this); renderRows(this);
-      if (!this.size || this.size[0] < MIN_W) this.setSize([MIN_W, this.computeSize()[1]]);
+      this.setSize([Math.max(this.size?.[0] || 0, MIN_W), Math.max(INITIAL_HEIGHT, this.computeSize()[1])]);
       return result;
     };
     const configure = nodeType.prototype.onConfigure;
     nodeType.prototype.onConfigure = function () {
       const result = configure?.apply(this, arguments);
-      hideRowsWidget(this); ensureFace(this); renderRows(this); growToFit(this);
+      hideRowsWidget(this); ensureFace(this); renderRows(this); fitViewport(this);
       return result;
     };
     const removed = nodeType.prototype.onRemoved;
