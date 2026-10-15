@@ -160,6 +160,19 @@ def _resolve(name: str, prefer: str | None = None) -> tuple[str | None, str | No
                 path = None
             if path and os.path.isfile(path):
                 return path, _KIND_BY_FOLDER.get(folder, "model")
+    # a bare name with no folder or extension (LoRA Manager, <lora:name> tags): match the file name without extension
+    if not _FILE_EXT.search(name):
+        stem = os.path.basename(name).lower()
+        for folder in folders:
+            try:
+                files = folder_paths.get_filename_list(folder)
+            except Exception:
+                continue
+            for f in files:
+                if os.path.splitext(os.path.basename(f.replace("\\", "/")))[0].lower() == stem:
+                    path = folder_paths.get_full_path(folder, f)
+                    if path and os.path.isfile(path):
+                        return path, _KIND_BY_FOLDER.get(folder, "model")
     return None, None
 
 
@@ -191,12 +204,14 @@ def _lora_enabled(entry) -> bool:
         return True
     if "on" in entry and not entry.get("on"):
         return False
+    if "active" in entry and not entry.get("active"):
+        return False
     if "enabled" in entry and not entry.get("enabled"):
         return False
     if 'strength' in entry:
-        weights = [entry['strength'], entry.get('strengthTwo') if entry.get('strengthTwo') is not None else entry['strength']]
+        weights = [entry['strength'], entry.get('strengthTwo') if entry.get('strengthTwo') is not None else entry.get('clipStrength', entry.get('strength_clip', entry.get('clip_strength', entry['strength'])))]
     else:
-        weights = [entry[k] for k in ('strength_model', 'strength_clip') if k in entry]
+        weights = [entry[k] for k in ('strength_model', 'strength_clip', 'clipStrength', 'modelStrength', 'clip_strength') if k in entry]
     try:
         if weights and all(float(v) == 0.0 for v in weights):
             return False
@@ -263,6 +278,9 @@ def _collect_from_prompt(prompt, skip_ids=None) -> list[tuple[str, str | None]]:
                 take_value(item, hint)
             return
         if isinstance(val, dict):
+            if isinstance(val.get("__value__"), list):  # LoRA Manager keeps its rows as {"__value__": [...]}
+                take_value(val["__value__"], hint)
+                return
             if not _lora_enabled(val):
                 return
             lname = val.get("lora") or val.get("lora_name") or val.get("name")

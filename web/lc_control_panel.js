@@ -26,7 +26,11 @@ const vueOn = () => {
 let vuePitch = 20;
 const rowH = () => (vueOn() ? vuePitch : window.LiteGraph?.NODE_SLOT_HEIGHT || 20);
 
+const isBool = (r) => r?.kind === "boolean";
+const truthy = (v) => v === true || v === "true" || (typeof v === "number" && v > 0) || (typeof v === "string" && Number(v) > 0);
+
 function snap(r, v) {
+  if (isBool(r)) return truthy(v);
   let lo = num(r.min, 0), hi = num(r.max, 100);
   if (lo > hi) [lo, hi] = [hi, lo];
   const st = num(r.step, 1) > 0 ? num(r.step, 1) : 1;
@@ -35,7 +39,7 @@ function snap(r, v) {
   const d = clampDec(r.decimals);
   return d === 0 ? Math.round(x) : Math.round(x * 10 ** d) / 10 ** d;
 }
-const fmt = (r) => (clampDec(r.decimals) === 0 ? String(Math.round(num(r.value, 0))) : num(r.value, 0).toFixed(clampDec(r.decimals)));
+const fmt = (r) => isBool(r) ? (r.value ? "on" : "off") : (clampDec(r.decimals) === 0 ? String(Math.round(num(r.value, 0))) : num(r.value, 0).toFixed(clampDec(r.decimals)));
 
 function rows(node) {
   node.properties = node.properties || {};
@@ -57,7 +61,8 @@ function rows(node) {
 function sync(node) {
   const rs = rows(node);
   const w = (node.widgets || []).find((x) => x.name === "rows");
-  const json = JSON.stringify(rs.map(({ name, value, min, max, step, decimals }) => ({ name, value, min, max, step, decimals })));
+  const json = JSON.stringify(rs.map(({ name, value, min, max, step, decimals, kind }) =>
+    (kind === "boolean" ? { name, value: !!value, kind } : { name, value, min, max, step, decimals })));
   if (w && w.value !== json) w.value = json;
   node.outputs = node.outputs || [];
   while (node.outputs.length > rs.length) node.removeOutput(node.outputs.length - 1);
@@ -104,6 +109,10 @@ function ensureStyle() {
 .lc-cp-val{flex:0 0 auto;min-width:24px;max-width:70px;text-align:right;font-variant-numeric:tabular-nums;cursor:text;padding:0 2px;border-radius:3px}
 .lc-cp-val:hover{background:#ffffff14}
 .lc-cp input.lc-cp-edit{flex:0 0 auto;width:58px;font:inherit;text-align:right;color:#fff;background:#111;border:1px solid #666;border-radius:3px;padding:0 3px}
+.lc-cp-tog{flex:0 0 auto;width:26px;height:14px;border-radius:7px;background:#555;position:relative;cursor:pointer;margin-right:auto}
+.lc-cp-tog::after{content:"";position:absolute;top:2px;left:2px;width:10px;height:10px;border-radius:50%;background:#ddd;transition:left .12s}
+.lc-cp-tog.on{background:#4a9a6a}
+.lc-cp-tog.on::after{left:14px}
 .lc-cp-gear{flex:0 0 auto;opacity:.3;cursor:pointer;font-size:12px;line-height:1;padding:2px}
 .lc-cp-row:hover .lc-cp-gear{opacity:.85}
 .lc-cp-add{display:flex;align-items:center;justify-content:center;margin-top:2px;border:1px dashed #ffffff30;border-radius:4px;color:#9aa;cursor:pointer;font-size:11px}
@@ -123,7 +132,16 @@ function openRowSettings(node, i) {
   ov.style.cssText = "position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;font-family:system-ui,sans-serif;";
   const p = document.createElement("div");
   p.style.cssText = "background:#1e1e1e;color:#eee;border:1px solid #444;border-radius:10px;padding:16px 18px;min-width:270px;box-shadow:0 12px 40px rgba(0,0,0,0.5);";
-  p.innerHTML = `<div style="font-size:15px;font-weight:600;margin-bottom:10px">Slider ${i + 1} settings</div>`;
+  p.innerHTML = `<div style="font-size:15px;font-weight:600;margin-bottom:10px">Row ${i + 1} settings</div>`;
+  const typeRow = document.createElement("label");
+  typeRow.style.cssText = "display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 0;font-size:13px;";
+  const typeSel = document.createElement("select");
+  typeSel.style.cssText = "width:136px;padding:4px 6px;border-radius:6px;border:1px solid #555;background:#111;color:#eee;";
+  typeSel.innerHTML = `<option value="number">Number (slider)</option><option value="boolean">Boolean (on / off)</option>`;
+  typeSel.value = isBool(r) ? "boolean" : "number";
+  typeRow.append(Object.assign(document.createElement("span"), { textContent: "Type" }), typeSel);
+  p.appendChild(typeRow);
+  const numRows = [];
   const fields = [
     ["name", "Name", "text"],
     ["min", "Min", "number"],
@@ -143,7 +161,11 @@ function openRowSettings(node, i) {
     row.append(Object.assign(document.createElement("span"), { textContent: label }), inp);
     p.appendChild(row);
     ins[k] = inp;
+    if (k !== "name") numRows.push(row);
   }
+  const showType = () => numRows.forEach((row) => (row.style.display = typeSel.value === "boolean" ? "none" : "flex"));
+  typeSel.addEventListener("change", showType);
+  showType();
   const bar = document.createElement("div");
   bar.style.cssText = "display:flex;gap:8px;margin-top:12px;align-items:center;";
   const btn = (text, css) => Object.assign(document.createElement("button"), { type: "button", textContent: text, style: `padding:6px 14px;border-radius:6px;cursor:pointer;${css}` });
@@ -172,6 +194,18 @@ function openRowSettings(node, i) {
     refresh(node);
   };
   ok.onclick = () => {
+    if (typeSel.value === "boolean") {
+      const was = r.value;
+      Object.assign(r, { name: ins.name.value.trim() || r.name, kind: "boolean", auto: false });
+      r.value = truthy(was);
+      close();
+      refresh(node);
+      return;
+    }
+    if (isBool(r)) {
+      delete r.kind;
+      r.value = r.value ? 1 : 0;
+    }
     let min = num(ins.min.value, r.min), max = num(ins.max.value, r.max);
     if (min > max) [min, max] = [max, min];
     const step = num(ins.step.value, r.step) > 0 ? num(ins.step.value, r.step) : 1;
@@ -198,6 +232,15 @@ function paintRow(node, i) {
   const ui = node._lcCp?.rows[i];
   const r = rows(node)[i];
   if (!ui || !r) return;
+  ui.range.style.display = isBool(r) ? "none" : "";
+  ui.tog.style.display = isBool(r) ? "" : "none";
+  if (isBool(r)) {
+    ui.tog.classList.toggle("on", !!r.value);
+    ui.val.textContent = fmt(r);
+    ui.name.textContent = r.name;
+    ui.name.title = `${r.name}: BOOLEAN`;
+    return;
+  }
   let lo = num(r.min, 0), hi = num(r.max, 100);
   if (lo > hi) [lo, hi] = [hi, lo];
   ui.range.min = String(lo);
@@ -213,6 +256,7 @@ function paintRow(node, i) {
 function startEdit(node, i) {
   const ui = node._lcCp?.rows[i];
   if (!ui || ui.editing) return;
+  if (isBool(rows(node)[i])) return setValue(node, i, !rows(node)[i].value); // double-click a switch flips it
   ui.editing = true;
   const inp = Object.assign(document.createElement("input"), { type: "number", className: "lc-cp-edit", step: "any", value: ui.val.textContent });
   ui.val.replaceWith(inp);
@@ -244,20 +288,26 @@ function buildRows(node) {
     const name = Object.assign(document.createElement("div"), { className: "lc-cp-name" });
     const range = Object.assign(document.createElement("input"), { type: "range" });
     range.addEventListener("input", () => setValue(node, i, range.value));
+    const tog = Object.assign(document.createElement("div"), { className: "lc-cp-tog", title: "Click to turn on or off" });
+    tog.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setValue(node, i, !rows(node)[i].value);
+    });
     const val = Object.assign(document.createElement("div"), { className: "lc-cp-val", title: "Double-click to type a value" });
     val.addEventListener("dblclick", (e) => {
       e.stopPropagation();
       startEdit(node, i);
     });
-    const gear = Object.assign(document.createElement("div"), { className: "lc-cp-gear", textContent: "⚙", title: "Name, min, max, step, decimals (0 = INT)" });
+    const gear = Object.assign(document.createElement("div"), { className: "lc-cp-gear", textContent: "⚙", title: "Type (number or boolean), name, min, max, step, decimals (0 = INT)" });
     gear.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
       openRowSettings(node, i);
     });
-    row.append(name, range, val, gear);
+    row.append(name, range, tog, val, gear);
     f.list.appendChild(row);
-    return { row, name, range, val, editing: false };
+    return { row, name, range, tog, val, editing: false };
   });
   rs.forEach((_, i) => paintRow(node, i));
   f.add.style.height = ADD_H - 2 + "px";
@@ -352,6 +402,10 @@ function adopt(node, slot, link) {
   const wname = input.widget?.name || input.name;
   const w = (target.widgets || []).find((x) => x.name === wname);
   const t = String(input.type || "").toUpperCase();
+  if (w && t === "BOOLEAN") {
+    Object.assign(r, { name: input.label || input.localized_name || input.name, kind: "boolean", value: !!w.value, auto: false });
+    return refresh(node);
+  }
   if (!w || (t !== "INT" && t !== "FLOAT")) return;
   const o = w.options || {};
   const v = num(w.value, r.value);
@@ -394,7 +448,7 @@ app.registerExtension({
     nodeType.prototype.lcFxType = function (isInput, index) {
       if (isInput) return null;
       const r = rows(this)[index];
-      return r ? (clampDec(r.decimals) > 0 ? "FLOAT" : "INT") : null;
+      return r ? (isBool(r) ? "BOOLEAN" : clampDec(r.decimals) > 0 ? "FLOAT" : "INT") : null;
     };
 
     const onNodeCreated = nodeType.prototype.onNodeCreated;
@@ -428,6 +482,13 @@ app.registerExtension({
         callback: () => {
           const rs = rows(this);
           if (rs.length < MAX_ROWS) rs.push({ ...DEFAULT_ROW, name: `value ${rs.length + 1}` });
+          refresh(this);
+        },
+      }, {
+        content: "🎛️ Add switch (boolean)",
+        callback: () => {
+          const rs = rows(this);
+          if (rs.length < MAX_ROWS) rs.push({ name: `switch ${rs.length + 1}`, value: true, kind: "boolean", auto: false });
           refresh(this);
         },
       });

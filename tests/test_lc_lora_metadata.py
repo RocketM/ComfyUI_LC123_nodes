@@ -38,6 +38,33 @@ def graph(rows, model=True, clip=True):
 
 
 class LCLoraMetadataTests(unittest.TestCase):
+    def test_upstream_lora_manager_rows_and_text(self):
+        for value in ([{'name': 'character', 'strength': 0, 'clipStrength': 0.8, 'active': True}],
+                      {'__value__': [{'name': 'character', 'strength': 0, 'clipStrength': 0.8, 'active': True}]}):
+            prompt = graph([])
+            prompt['1'] = {'class_type': 'Lora Loader (LoraManager)', 'inputs': {'loras': value, 'text': '<lora:character:0:0.8>'}}
+            rows = metadata.collect_lora_metadata(prompt, '3')['loras']
+            self.assertEqual(len(rows), 1)
+            self.assertEqual((rows[0]['strength_model'], rows[0]['strength_clip']), (0, 0.8))
+            self.assertEqual(rows[0]['scope'], 'image_upstream')
+        prompt['1']['inputs'] = {'text': '<lora:character:0.7:0.2>'}
+        row = metadata.collect_lora_metadata(prompt, '3')['loras'][0]
+        self.assertEqual((row['strength_model'], row['strength_clip']), (0.7, 0.2))
+        self.assertTrue(hashes._lora_enabled({'strength': 0, 'clipStrength': 0.8}))
+        self.assertFalse(hashes._lora_enabled({'active': False, 'strength': 1}))
+
+    def test_stack_and_optimizer_merge_keep_weights_and_scope(self):
+        for kind, expected in [('LCLoraLoaderStack', (0, 0)), ('LCGroupLoraLoaderStack', (0, 0.8))]:
+            prompt = graph([{'lora': 'character.safetensors', 'on': True, 'strength': 0, 'strengthTwo': 0.8}], model=False, clip=False)
+            prompt['1']['class_type'] = kind
+            row = metadata.collect_lora_metadata(prompt, '3')['loras'][0]
+            self.assertEqual((row['strength_model'], row['strength_clip']), expected)
+        prompt['1'] = {'class_type': 'LCOptimizer', 'inputs': {'lora': 'turbo.safetensors'}}
+        prompt['9'] = {'class_type': 'LCOptimizer', 'inputs': {'lora': 'unused.safetensors'}}
+        rows = metadata.collect_lora_metadata(prompt, '3')['loras']
+        self.assertEqual((rows[0]['strength_model'], rows[0]['strength_clip']), (0.5, 0))
+        self.assertEqual([r['scope'] for r in rows], ['image_upstream', 'configured_only'])
+
     def test_original_size_and_missing_size_fallback(self):
         for sw, sh, expected in [(1024, 1536, '1024x1536'), (0, 0, '24x16'), (24, 0, '24x16')]:
             with self.subTest(source=(sw, sh)), tempfile.TemporaryDirectory() as tmp:
