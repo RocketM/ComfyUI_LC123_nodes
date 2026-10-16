@@ -770,7 +770,8 @@ class LCFilmGrain(PreviewImage):
     OUTPUT_NODE = True
     DESCRIPTION = (
         "Film grain overlay with amount, contrast, scale, and mono vs color grain. response: classic (midtones), film "
-        "(shadows and midtones) or sensor (phone / digital camera noise). On-node preview with before/after wipe."
+        "(shadows and midtones) or sensor (phone / digital camera noise). On-node preview with before/after wipe. For a video, "
+        "use LC Film Grain (Video)."
     )
 
     def run(self, image, grain_size, strength, radius_variation, color_grain, seed, softness=0.8, look="Custom",
@@ -778,23 +779,44 @@ class LCFilmGrain(PreviewImage):
         response = response or GRAIN_RESPONSES[0]
         if strength <= 0:
             return _preview(self, image, image)
+        b = image.shape[0]
+        # a few frames at a time, so a batch never needs all its noise in memory at once; each frame gets its own
+        # seed, so a chunked run matches a single-image run frame for frame
+        out = torch.empty_like(image) if b > 1 else None
+        for i in range(0, b, 4):
+            chunk = image[i:i + 4]
+            seeds = [int(seed) + i + j for j in range(chunk.shape[0])]
+            res = self._grain(chunk, seeds, grain_size, strength, radius_variation, color_grain, softness, response)
+            if out is None:
+                out = res
+            else:
+                out[i:i + chunk.shape[0]] = res
+        return _preview(self, out, image)
+
+    @staticmethod
+    def _grain(image, seeds, grain_size, strength, radius_variation, color_grain, softness, response):
         device = image.device
         dtype = image.dtype
         b, h, w, c = image.shape
-        # scale grain relative to 1024 reference
+        # scale grain relative to 1024 reference, so it looks the same at any resolution
         ref = 1024.0
         scale = min(h, w) / ref
         sigma = max(0.3, float(grain_size) * scale * float(softness))
-        gen = torch.Generator(device=device)
-        gen.manual_seed(int(seed) % 0x7FFFFFFFFFFFFFFF)
 
-        # multi-scale noise
-        noise_m = torch.randn(b, 1, h, w, generator=gen, device=device, dtype=dtype)
-        noise_c = torch.randn(b, 3, h, w, generator=gen, device=device, dtype=dtype)
-        if radius_variation > 0:
-            n2 = torch.randn(b, 1, h, w, generator=gen, device=device, dtype=dtype)
-            noise_m = noise_m + n2 * radius_variation
-            noise_c = noise_c + torch.randn(b, 3, h, w, generator=gen, device=device, dtype=dtype) * radius_variation
+        # multi-scale noise, drawn per frame from that frame's seed
+        nm, nc = [], []
+        for s in seeds:
+            gen = torch.Generator(device=device)
+            gen.manual_seed(s % 0x7FFFFFFFFFFFFFFF)
+            m = torch.randn(1, 1, h, w, generator=gen, device=device, dtype=dtype)
+            cc = torch.randn(1, 3, h, w, generator=gen, device=device, dtype=dtype)
+            if radius_variation > 0:
+                m = m + torch.randn(1, 1, h, w, generator=gen, device=device, dtype=dtype) * radius_variation
+                cc = cc + torch.randn(1, 3, h, w, generator=gen, device=device, dtype=dtype) * radius_variation
+            nm.append(m)
+            nc.append(cc)
+        noise_m = torch.cat(nm)
+        noise_c = torch.cat(nc)
 
         # blur noise (soft grain)
         r = max(1, int(sigma * 2))
@@ -823,16 +845,77 @@ class LCFilmGrain(PreviewImage):
             # shot noise: in linear light its size grows with the square root of the light, plus a small read-noise
             # floor; after white balance blue (and a little red) are the noisiest channels
             srgb = sensor_noise(image[..., :3], grain, float(strength) * 0.24)
-            out = torch.cat([srgb, image[..., 3:]], -1) if c > 3 else srgb
-            return _preview(self, out, image)
+            return torch.cat([srgb, image[..., 3:]], -1) if c > 3 else srgb
         if response == "film":
             # a negative's grain: strongest in the shadows and midtones, gone by the brightest highlights
             weight = ((1.0 - lum).clamp(min=0) ** 1.5 * 0.93 + 1.2 * lum * (1.0 - lum)).clamp(0.1, 1.0)
         else:
             # classic: luminance-weighted amount (more visible in midtones)
             weight = (4.0 * lum * (1.0 - lum)).clamp(0.15, 1.0)
-        out = (image + grain * strength * 0.18 * weight).clamp(0, 1)
-        return _preview(self, out, image)
+        return (image + grain * strength * 0.18 * weight).clamp(0, 1)
+
+
+# ---------------------------------------------------------------------------
+# LC Film Grain (Video)
+# ---------------------------------------------------------------------------
+class LCFilmGrainVideo:
+    """The same grain as LC Film Grain, built for a whole clip: runs on the GPU a few frames at a time, with a progress
+    bar, and no preview images. The grain is sized to the resolution, so it survives video compression (pixel-sized
+    noise is smeared away by h264 / h265 and only bloats the file)."""
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "images": ("IMAGE", {"tooltip": "The clip's frames."}),
+                "strength": ("FLOAT", {"default": 0.25, "min": 0.0, "max": 1.0, "step": 0.01,
+                                       "tooltip": "0.15 = barely there, 0.25 = light film texture, 0.4 = clearly grainy."}),
+                "grain_size": ("FLOAT", {"default": 1.2, "min": 0.7, "max": 4.0, "step": 0.05,
+                                         "tooltip": "Grain size at 1024 px; scales with the resolution."}),
+                "color_grain": ("FLOAT", {"default": 0.15, "min": 0.0, "max": 1.0, "step": 0.05,
+                                          "tooltip": "0 = mono grain, 1 = colour speckle."}),
+                "response": (GRAIN_RESPONSES, {"default": "film",
+                                               "tooltip": "film: shadows and midtones, gone in the highlights. classic: "
+                                                          "mostly midtones. sensor: phone / digital camera noise."}),
+                "grain_motion": (["changing", "fixed"], {"default": "changing",
+                                                         "tooltip": "changing: new grain every frame, like real film. "
+                                                                    "fixed: the same grain on every frame (reads as a "
+                                                                    "dirty screen on motion)."}),
+                "seed": ("INT", {"default": 8675309, "min": 0, "max": 0xFFFFFFFF}),
+            },
+            "optional": {
+                "frame_offset": ("INT", {"default": 0, "min": 0, "max": 1000000,
+                                         "tooltip": "For a video made in parts: the first frame number of this part, so "
+                                                    "the grain carries on instead of repeating."}),
+            },
+        }
+
+    RETURN_TYPES = ("IMAGE",)
+    RETURN_NAMES = ("images",)
+    FUNCTION = "run"
+    CATEGORY = "LC123/image"
+    DESCRIPTION = ("Film grain for video: GPU, a few frames at a time, with a progress bar. Grain sized to the "
+                   "resolution, so it survives compression.")
+
+    def run(self, images, strength, grain_size, color_grain, response, grain_motion, seed, frame_offset=0):
+        if strength <= 0:
+            return (images,)
+        import comfy.model_management as mm
+        import comfy.utils
+        dev = mm.get_torch_device()
+        n = images.shape[0]
+        out = torch.empty_like(images)
+        pbar = comfy.utils.ProgressBar(n)
+        step = 8
+        for i in range(0, n, step):
+            mm.throw_exception_if_processing_interrupted()
+            chunk = images[i:i + step].to(dev, torch.float32)
+            seeds = [int(seed) if grain_motion == "fixed" else int(seed) + int(frame_offset) + i + j
+                     for j in range(chunk.shape[0])]
+            res = LCFilmGrain._grain(chunk, seeds, grain_size, strength, 0.0, color_grain, 0.8, response)
+            out[i:i + chunk.shape[0]] = res.to(images.device, images.dtype)
+            pbar.update(chunk.shape[0])
+        return (out,)
 
 
 
@@ -1981,6 +2064,7 @@ NODE_CLASS_MAPPINGS = {
     "LCLiftGammaGain": LCLiftGammaGain,
     "LCImageRGB": LCImageRGB,
     "LCFilmGrain": LCFilmGrain,
+    "LCFilmGrainVideo": LCFilmGrainVideo,
     "LCVibrance": LCVibrance,
     "LCVignette": LCVignette,
     "LCBloom": LCBloom,
@@ -2002,6 +2086,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "LCLiftGammaGain": "LC Lift Gamma Gain",
     "LCImageRGB": "LC Image RGB",
     "LCFilmGrain": "LC Film Grain",
+    "LCFilmGrainVideo": "LC Film Grain (Video) 🎞️",
     "LCVibrance": "LC Vibrance",
     "LCVignette": "LC Vignette",
     "LCBloom": "LC Bloom",

@@ -41,9 +41,13 @@ function snap(r, v) {
 }
 const fmt = (r) => isBool(r) ? (r.value ? "on" : "off") : (clampDec(r.decimals) === 0 ? String(Math.round(num(r.value, 0))) : num(r.value, 0).toFixed(clampDec(r.decimals)));
 
+// Always the SAME array: the canvas calls this on every redraw (connection colors), and handing out a fresh copy each
+// time left the gear dialog editing a stale list, so Delete moved the links but the row came back (rows and links out
+// of line, wrong types downstream).
 function rows(node) {
   node.properties = node.properties || {};
   let rs = node.properties.lc_rows;
+  if (Array.isArray(rs) && rs.length && rs.length <= MAX_ROWS) return rs;
   if (!Array.isArray(rs)) {
     try {
       const w = (node.widgets || []).find((x) => x.name === "rows");
@@ -57,12 +61,32 @@ function rows(node) {
   return node.properties.lc_rows;
 }
 
-// the hidden widget is what execution reads; keep it (and the output sockets) in step with the rows
+const getLink = (graph, id) => (graph?.links?.get ? graph.links.get(id) : graph?.links?.[id]);
+
+// the type of the input(s) a row is plugged into: INT, FLOAT or BOOLEAN; MIXED when its links disagree; null when unplugged
+function targetType(node, i) {
+  const types = new Set();
+  for (const id of node.outputs?.[i]?.links || []) {
+    const l = getLink(node.graph, id);
+    const t = node.graph?.getNodeById?.(l?.target_id)?.inputs?.[l?.target_slot]?.type;
+    const u = String(t || "").toUpperCase();
+    if (u === "INT" || u === "FLOAT" || u === "BOOLEAN") types.add(u);
+  }
+  return types.size === 1 ? [...types][0] : types.size > 1 ? "MIXED" : null;
+}
+
+// the hidden widget is what execution reads; keep it (and the output sockets) in step with the rows.
+// "cast" is the type the plugged-in input asks for: the run hands it exactly that, so a row set to 1 decimal (or
+// switched to on / off) can never send a float into an INT input and crash the node downstream
 function sync(node) {
   const rs = rows(node);
   const w = (node.widgets || []).find((x) => x.name === "rows");
-  const json = JSON.stringify(rs.map(({ name, value, min, max, step, decimals, kind }) =>
-    (kind === "boolean" ? { name, value: !!value, kind } : { name, value, min, max, step, decimals })));
+  const json = JSON.stringify(rs.map(({ name, value, min, max, step, decimals, kind }, i) => {
+    const out = kind === "boolean" ? { name, value: !!value, kind } : { name, value, min, max, step, decimals };
+    const t = targetType(node, i);
+    if (t && t !== "MIXED") out.cast = t;
+    return out;
+  }));
   if (w && w.value !== json) w.value = json;
   node.outputs = node.outputs || [];
   while (node.outputs.length > rs.length) node.removeOutput(node.outputs.length - 1);
@@ -96,7 +120,7 @@ function ensureStyle() {
   const st = document.createElement("style");
   st.id = "lc-cp-style";
   st.textContent = `
-.lc-cp{display:flex;flex-direction:column;width:100%;min-width:0;box-sizing:border-box;padding:0 22px 0 6px;color:#ddd;font:12px system-ui,sans-serif;user-select:none}
+.lc-cp{display:flex;flex-direction:column;width:100%;min-width:0;box-sizing:border-box;padding:0 30px 0 6px;color:#ddd;font:12px system-ui,sans-serif;user-select:none}
 .lc-cp-row{display:flex;align-items:center;gap:6px;min-width:0}
 .lc-cp-name{flex:0 1 auto;width:var(--lc-cp-name,78px);min-width:28px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#bbb}
 .lc-cp-row input[type=range]{--lc-p:0%;flex:1 1 auto;min-width:24px;height:14px;margin:0;background:transparent;cursor:pointer;-webkit-appearance:none;appearance:none}
@@ -133,12 +157,25 @@ function openRowSettings(node, i) {
   const p = document.createElement("div");
   p.style.cssText = "background:#1e1e1e;color:#eee;border:1px solid #444;border-radius:10px;padding:16px 18px;min-width:270px;box-shadow:0 12px 40px rgba(0,0,0,0.5);";
   p.innerHTML = `<div style="font-size:15px;font-weight:600;margin-bottom:10px">Row ${i + 1} settings</div>`;
+  const plugged = targetType(node, i);
+  if (plugged) {
+    const note = document.createElement("div");
+    note.style.cssText = "font-size:12px;color:#c9b27a;margin:-4px 0 8px;max-width:270px;line-height:1.35;";
+    note.textContent = plugged === "MIXED"
+      ? "Plugged into inputs of different types. Each one gets the type it asks for."
+      : `Plugged into ${plugged === "INT" ? "an INT" : plugged === "FLOAT" ? "a FLOAT" : "a BOOLEAN"} input, so the type is fixed${plugged === "INT" ? " and decimals stay 0" : ""}. Unplug it to change that.`;
+    p.appendChild(note);
+  }
   const typeRow = document.createElement("label");
   typeRow.style.cssText = "display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 0;font-size:13px;";
   const typeSel = document.createElement("select");
   typeSel.style.cssText = "width:136px;padding:4px 6px;border-radius:6px;border:1px solid #555;background:#111;color:#eee;";
   typeSel.innerHTML = `<option value="number">Number (slider)</option><option value="boolean">Boolean (on / off)</option>`;
   typeSel.value = isBool(r) ? "boolean" : "number";
+  if (plugged && plugged !== "MIXED") {
+    typeSel.value = plugged === "BOOLEAN" ? "boolean" : "number";
+    typeSel.disabled = true;
+  }
   typeRow.append(Object.assign(document.createElement("span"), { textContent: "Type" }), typeSel);
   p.appendChild(typeRow);
   const numRows = [];
@@ -162,6 +199,10 @@ function openRowSettings(node, i) {
     p.appendChild(row);
     ins[k] = inp;
     if (k !== "name") numRows.push(row);
+  }
+  if (plugged === "INT") {
+    ins.decimals.value = "0";
+    ins.decimals.disabled = true;
   }
   const showType = () => numRows.forEach((row) => (row.style.display = typeSel.value === "boolean" ? "none" : "flex"));
   typeSel.addEventListener("change", showType);
@@ -188,12 +229,28 @@ function openRowSettings(node, i) {
   ov.addEventListener("pointerdown", (e) => e.target === ov && close());
   cancel.onclick = close;
   del.onclick = () => {
-    rs.splice(i, 1);
-    node.removeOutput(i); // links on the rows below shift up with their sockets
+    // move the links by hand instead of trusting removeOutput to shift them: frontend versions differ, and a link
+    // left on the old slot number points at the wrong row (wrong value, wrong type)
+    const g = node.graph;
+    const moved = [];
+    for (let j = i; j < node.outputs.length; j++) {
+      for (const id of [...(node.outputs[j].links || [])]) {
+        const l = getLink(g, id);
+        if (l && j > i) moved.push([j - 1, l.target_id, l.target_slot]);
+      }
+      node.disconnectOutput(j);
+    }
+    rows(node).splice(i, 1); // the live list, not the one captured when the dialog opened
+    sync(node); // drops the last socket
+    for (const [slot, tid, tslot] of moved) {
+      const t = g?.getNodeById?.(tid);
+      if (t) node.connect(slot, t, tslot);
+    }
     close();
     refresh(node);
   };
   ok.onclick = () => {
+    if (plugged === "INT") ins.decimals.value = "0";
     if (typeSel.value === "boolean") {
       const was = r.value;
       Object.assign(r, { name: ins.name.value.trim() || r.name, kind: "boolean", auto: false });
@@ -471,6 +528,7 @@ app.registerExtension({
     nodeType.prototype.onConnectionsChange = function (type, slot, connected, link) {
       const r = onConn?.apply(this, arguments);
       if (type === window.LiteGraph?.OUTPUT && connected && link) setTimeout(() => adopt(this, slot, link), 0);
+      if (type === window.LiteGraph?.OUTPUT && this._lcCp) setTimeout(() => sync(this), 0); // record the new input type
       return r;
     };
 

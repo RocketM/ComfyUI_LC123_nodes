@@ -157,6 +157,7 @@ Open **Settings** (the gear) and pick **LC Settings ⚙️**. These are **UI onl
 | Setting | Default | What it does |
 |--------|---------|--------|
 | **Fast cancel** | on | Cancel stops a run in a fraction of a second instead of finishing the step first. Every model block checks the Cancel button: on a 6 s Krea 2 step it stops in 0.2 s instead of 2.6 s, with no speed cost. Works for every sampler (KSampler, USDU, video), nothing to wire |
+| **Free text encoder before sampling** | on | When sampling starts, any big text encoder (1 GB or more) still in VRAM moves to RAM, so the diffusion model gets the whole card. Biggest win on H3 and Krea 2. A new prompt reloads it from RAM in a second or two |
 | **Comfy Optimization Report** | button | See [Canvas tools](#canvas-tools) |
 | **System & Model Optimization Report** | button | See [Canvas tools](#canvas-tools) |
 | **Node Pack Usage Report** | button | See [Canvas tools](#canvas-tools) |
@@ -514,6 +515,7 @@ Hover any of these to wipe against the original. Heavy graph? See **Performance*
 | **LC Lift Gamma Gain** | Color-wheel style lift / gamma / gain |
 | **LC Image RGB** | Per-channel RGB control |
 | **LC Film Grain** | Grain. A little goes a long way. **response**: **classic** (mostly midtones, the old look), **film** (strongest in the shadows and midtones, gone in the highlights, like a negative) or **sensor** (phone / digital camera noise: grows with the light, colour speckle, blue noisiest) |
+| **LC Film Grain (Video) 🎞️** | The same grain for a whole clip: GPU, a few frames at a time, with a progress bar (about 1 s for 124 frames of 1080p). The grain is sized to the video, so it survives the h264 / h265 save (pixel-sized grain is smeared away and only bloats the file). **grain_motion** changing (new grain every frame, like film) or fixed. **frame_offset** carries the grain on across a video made in parts. 💡 0.25 is a light film texture |
 | **LC Film Stock (B&W)** / **(Color)** | Stock film looks, real blacks on B&W. Bright colours roll off and keep their hue instead of clipping |
 | **LC Vibrance** | Smart saturation that won't blow out skin. Works on colour strength only, so hues never shift |
 | **LC Natural Look 🍃** | Takes the AI look out without making it dull: only the loudest colours are pulled back, orange / plastic skin is calmed (**skin** sets how much), highlights roll off instead of clipping, the glossy large-scale glow is reduced and fine texture lifted, then the original black point, contrast and brightness are given back with a whisper of grain. **strength** 0.3 - 0.6 for most renders. Before/after wipe on the node |

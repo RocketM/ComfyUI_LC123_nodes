@@ -36,6 +36,7 @@ Registered class IDs: 138 (137 in search, 1 deprecated but still loads in old wo
 - `LCDirectionalBlur`: LC Directional Blur
 - `LCDynamicOverlay`: LC Dynamic Overlay
 - `LCFilmGrain`: LC Film Grain
+- `LCFilmGrainVideo`: LC Film Grain (Video) 🎞️
 - `LCFilmStockBW`: LC Film Stock (B&W)
 - `LCFilmStockColor`: LC Film Stock (Color)
 - `LCGetImage`: LC Get Image 📐

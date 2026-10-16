@@ -44,6 +44,22 @@ def row_value(row):
     return int(round(v)) if d == 0 else round(v, d)
 
 
+def cast(row, v):
+    """Hand the input the type it asks for (the frontend records it in "cast" when the row is plugged in): a row set
+    to 1 decimal plugged into steps must still send an int, or the node downstream crashes."""
+    want = row.get("cast") if isinstance(row, dict) else None
+    try:
+        if want == "INT":
+            return int(round(float(v)))
+        if want == "FLOAT":
+            return float(v)
+        if want == "BOOLEAN":
+            return bool(v) if isinstance(v, bool) else float(v) > 0
+    except (TypeError, ValueError, OverflowError):
+        pass
+    return v
+
+
 class LCControlPanel:
     @classmethod
     def INPUT_TYPES(cls):
@@ -64,7 +80,7 @@ class LCControlPanel:
             data = []
         if not isinstance(data, list):
             data = []
-        return tuple(row_value(data[i]) if i < len(data) else 0 for i in range(MAX_ROWS))
+        return tuple(cast(data[i], row_value(data[i])) if i < len(data) else 0 for i in range(MAX_ROWS))
 
 
 NODE_CLASS_MAPPINGS = {"LCControlPanel": LCControlPanel}
