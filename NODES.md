@@ -15,7 +15,7 @@ Registered class IDs: 138 (137 in search, 1 deprecated but still loads in old wo
 ## LC123/conditioning (5)
 
 - `LCNegative`: LC Negative
-- `LCPositive`: LC Positive
+- `LCPositive`: Prompt
 - `LCPromptToConditioningZero`: LC Prompt to Conditioning + Zero
 - `LCReferenceLatent`: LC Reference Latent
 - `LCPromptToConditioning`: Prompt to Conditioning
@@ -52,6 +52,7 @@ Registered class IDs: 138 (137 in search, 1 deprecated but still loads in old wo
 - `LCImageSplit`: LC Image Split 🖼️
 - `LCImageToTotalMegapixels`: LC Image to Total Megapixels 📐
 - `LCImageMaskResize`: LC Image-Mask Resize 📐
+- `LCRTXSuperResolution`: LC RTX Super Resolution ⚡
 - `LCLastImageHolder`: LC Last Image Holder
 - `LCLensFX`: LC Lens FX (deprecated) *(hidden from search)*
 - `LCLensProfile`: LC Lens Profile

@@ -729,6 +729,16 @@ app.registerExtension({
   name: "LC123.Optimizer",
   settings: [
     {
+      id: "LC123.Optimization.FastCancel",
+      sortOrder: 30, // first under Optimization
+      name: "Fast cancel",
+      category: ["LC Settings ⚙️", "Optimization", "Fast cancel"],
+      type: "boolean",
+      defaultValue: true,
+      tooltip:
+        "Cancel stops a run within a fraction of a step instead of waiting for the whole step to finish (heavy models, USDU, video). Every model block checks the Cancel button. Works with every sampler, nothing to wire.",
+    },
+    {
       id: "LC123.Optimization.Report",
       sortOrder: 20, // above the System & Model Optimization Report
       name: "Comfy Optimization Report",

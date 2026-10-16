@@ -280,7 +280,13 @@ try:
         kind = q.get("kind", "image")
         base = E.LEGACY_BASE.get(q.get("base"), q.get("base"))
         pid = next((p for p, n in E.base_names(kind) if n == base), None)
-        return web.json_response(E.choices(pid, q.get("role", "model"), q.get("goal", "Optimal")) if pid else {"error": "unknown base model"})
+        if not pid:
+            return web.json_response({"error": "unknown base model"})
+        import asyncio
+
+        # reads model file headers to find finetunes of this base model: off the event loop
+        res = await asyncio.get_running_loop().run_in_executor(None, E.choices, pid, q.get("role", "model"), q.get("goal", "Optimal"))
+        return web.json_response(res)
 
     @PromptServer.instance.routes.post("/lc123/optimizer_node/plan")
     async def _lc_opt_plan(request):

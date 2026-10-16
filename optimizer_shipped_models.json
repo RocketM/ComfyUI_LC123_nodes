@@ -1,5 +1,5 @@
 {
-  "note": "Lonecat's own models. A workflow that saved one of these names gets it downloaded from Hugging Face on the first run. \"featured\" ones are also offered at the top of the picker's downloads for their base model.",
+  "note": "Lonecat's own models. A workflow that saved one of these names gets it downloaded from Hugging Face on the first run. \"featured\" ones are also offered at the top of the picker's downloads for their base model. \"version\" groups the quants of one release; the newest featured release per family is a one-click pick for its base model.",
   "models": [
     {
       "family": "Krealism",
@@ -13,7 +13,8 @@
       "names": [
         "Krealism_V1.0-fp8.safetensors",
         "krealism_v10TurboFP8.safetensors"
-      ]
+      ],
+      "version": "V1.0"
     },
     {
       "family": "Krealism",
@@ -27,7 +28,8 @@
       "names": [
         "Krealism_V1.0-nvfp4.safetensors",
         "krealism_v10TurboNvfp4.safetensors"
-      ]
+      ],
+      "version": "V1.0"
     },
     {
       "family": "Krealism",
@@ -42,7 +44,8 @@
         "Krealism_V1.0.safetensors",
         "Krealism_V1.0_bf16.safetensors",
         "krealism_v10TurboBf16.safetensors"
-      ]
+      ],
+      "version": "V1.0"
     },
     {
       "family": "Krealism",
@@ -56,7 +59,8 @@
       "names": [
         "Krealism_V1.0_int8_convrot.safetensors",
         "krealism_v10TurboInt8Convrot.safetensors"
-      ]
+      ],
+      "version": "V1.0"
     },
     {
       "family": "Krealism",
@@ -71,7 +75,8 @@
         "Krealism_V3.1_bf16.safetensors",
         "krealism_v31TurboBf16.safetensors"
       ],
-      "featured": true
+      "featured": true,
+      "version": "V3.1"
     },
     {
       "family": "Krealism",
@@ -86,7 +91,8 @@
         "Krealism_V3.1_fp8.safetensors",
         "krealism_v31TurboFP8.safetensors"
       ],
-      "featured": true
+      "featured": true,
+      "version": "V3.1"
     },
     {
       "family": "Krealism",
@@ -101,7 +107,8 @@
         "Krealism_V3.1_int8_convrot.safetensors",
         "krealism_v31TurboInt8Convrot.safetensors"
       ],
-      "featured": true
+      "featured": true,
+      "version": "V3.1"
     },
     {
       "family": "Krealism",
@@ -115,7 +122,8 @@
       "names": [
         "Krealism_V3.1_mxfp8.safetensors"
       ],
-      "featured": true
+      "featured": true,
+      "version": "V3.1"
     },
     {
       "family": "Krealism",
@@ -130,7 +138,8 @@
         "Krealism_V3.1_nvfp4.safetensors",
         "krealism_v31TurboNvfp4.safetensors"
       ],
-      "featured": true
+      "featured": true,
+      "version": "V3.1"
     },
     {
       "family": "Krealism",
@@ -144,7 +153,8 @@
       "names": [
         "Krealism_V3.1_w4a8.safetensors"
       ],
-      "featured": true
+      "featured": true,
+      "version": "V3.1"
     },
     {
       "family": "Krealism",
@@ -158,7 +168,8 @@
       "names": [
         "krealism_v10Turbo-q8_0.gguf",
         "krealism_v10TurboQ80Gguf.gguf"
-      ]
+      ],
+      "version": "V1.0"
     },
     {
       "family": "Animosity",
@@ -171,7 +182,9 @@
       "format": "bf16",
       "names": [
         "animosity_animaV20Base.safetensors"
-      ]
+      ],
+      "version": "Anima V2.0",
+      "featured": true
     },
     {
       "family": "Animosity",
@@ -186,7 +199,9 @@
         "Animosity_Illustrious_v1.1.safetensors",
         "animosity_illustriousV11.safetensors"
       ],
-      "folder": "checkpoints"
+      "folder": "checkpoints",
+      "version": "Illustrious V1.1",
+      "featured": true
     },
     {
       "family": "Animosity",
@@ -200,7 +215,9 @@
       "names": [
         "Animosity_Krea2_V1.0.safetensors",
         "animosity_krea2Ver10Turbo.safetensors"
-      ]
+      ],
+      "version": "Krea 2 V1.0",
+      "featured": true
     },
     {
       "family": "Animosity",
@@ -214,7 +231,9 @@
       "names": [
         "Animosity_Krea2_V1.0_int8_convrot.safetensors",
         "animosity_krea2V10Int8Convrot.safetensors"
-      ]
+      ],
+      "version": "Krea 2 V1.0",
+      "featured": true
     },
     {
       "family": "Animosity",
@@ -228,7 +247,9 @@
       "names": [
         "Animosity_krea2_V1.0-q8_0.gguf",
         "animosity_krea2Turbov10Q80Gguf.gguf"
-      ]
+      ],
+      "version": "Krea 2 V1.0",
+      "featured": true
     },
     {
       "family": "Animosity",
@@ -242,7 +263,9 @@
       "names": [
         "animosity_krea2Ver10FP8.safetensors",
         "Krea-Animosity_V1.0-fp8.safetensors"
-      ]
+      ],
+      "version": "Krea 2 V1.0",
+      "featured": true
     }
   ]
 }

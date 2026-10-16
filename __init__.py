@@ -45,6 +45,8 @@ def _load(module_name: str) -> None:
 
 # Core
 _load("aspect_ratio")
+_load("lc_pack_versions")
+_load("lc_fast_cancel")
 _load("slider")
 _load("anima_regional_canvas")
 _load("krea2_regional_canvas")
@@ -99,6 +101,7 @@ _load("lc_lora_stack")
 _load("lc_image_crop")
 _load("lc_image_grid")
 _load("lc_image_tools")
+_load("lc_rtx_super_res")
 _load("lc_skin_beauty")
 _load("lc_skin_upscale")
 _load("lc_skin_texture")

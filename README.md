@@ -8,7 +8,7 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 - **CivitAI:** [lonecatone23](https://civitai.com/user/lonecatone23)
 - **Instagram:** [synth.studio.models](https://www.instagram.com/synth.studio.models/)
 - **Support:** [Buy me a ☕](https://ko-fi.com/lonecatone)
-- **Version:** 1.49.23 · **145 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
+- **Version:** 1.49.29 · **148 Python nodes** · **5 JS-only** (LC Bypasser, LC Mute, Groups Bypasser, Panel, LC Note)
 
 > Small tools that remove friction: less wire mess, fewer clicks, clearer workflows.
 
@@ -156,6 +156,7 @@ Open **Settings** (the gear) and pick **LC Settings ⚙️**. These are **UI onl
 
 | Setting | Default | What it does |
 |--------|---------|--------|
+| **Fast cancel** | on | Cancel stops a run in a fraction of a second instead of finishing the step first. Every model block checks the Cancel button: on a 6 s Krea 2 step it stops in 0.2 s instead of 2.6 s, with no speed cost. Works for every sampler (KSampler, USDU, video), nothing to wire |
 | **Comfy Optimization Report** | button | See [Canvas tools](#canvas-tools) |
 | **System & Model Optimization Report** | button | See [Canvas tools](#canvas-tools) |
 | **Node Pack Usage Report** | button | See [Canvas tools](#canvas-tools) |
@@ -213,6 +214,9 @@ A markdown note that speaks your reader's language. Write it once, translate it,
 - **Link cards.** Put a link on a line of its own as `@[card](https://…)` and it shows as a card: the page's picture, site, title and description. `@[card: Download here](https://…)` adds your own caption. Click the card to open the page. Normal links stay normal links.
     - Works for GitHub, CivitAI, YouTube (videos, Shorts and channels), Instagram and most sites that share a preview.
     - ComfyUI reads each card's page once to get its title and picture, and the picture loads from that site. Only public web addresses, never your own machine or network. Turn cards off in Settings > LC Settings ⚙️ > Notes > **Link cards**.
+- **Download buttons.** A line with just `@[download: file.safetensors · 2 GB | loras](https://…)` shows as a button with the size, and **📂 Place in: ComfyUI/models/loras** under it. Leave out `| folder` for a button alone. Pixaroma notes swapped in by the Vision Assistant use these.
+- **✍️ Write this note** (right-click, needs LC Vision): LC Vision writes a first draft from the workflow's groups, nodes and model files (with their real folders). Read it through before you share it.
+- **🔤 Fix spelling** (right-click, needs LC Vision): fixes typos only. Wording, links, code, names and numbers stay as they are. **↩️ Undo the LC Vision change** puts the note back.
 - **Nodes 2.0:** a note keeps the size you give it. Long text scrolls inside (the mouse wheel scrolls it, Ctrl+wheel zooms) instead of stretching the node.
 
 **LC Label 🏷️**
@@ -268,9 +272,12 @@ The **System & Model Optimization Report** tells you what suits your machine. Th
 - **Every file defaults to ★ Recommended:** the file the report picked for this machine. No report yet? Comfy's own default files, and a 💡⚠️ banner on the node telling you to run the report first.
 - **File pickers work like the LC LoRA Loader:** click to browse your folders, with a search box. On top:
     - **★ Recommended** (and the actual file name it will use)
+    - **★ Krealism V3.1** / **★ Animosity**: Lonecat's newest release for that base model, in the quant that suits YOUR machine and goal (e.g. Fast = nvfp4, Quality = bf16). On disk first, else it downloads on the first run.
+    - **★ The workflow author's pick:** a model, text encoder or VAE the author named in the Vision Assistant tour. Left blank = the defaults.
     - **From checkpoint** / **None**
     - **⬇ Download:** recommended files you don't have yet. They download on the first run, then the picker switches to the real file name.
-    - **On disk for this model:** your files that match the base model, including every version of **Krealism** and **Animosity** made for it.
+    - **On disk for this model:** every file on disk made for the base model: Krealism and Animosity by name, any other finetune by reading its header. Your recommended files are pinned on top, the rest expand family › version › quant.
+        - *note:* SDXL, Illustrious and Pony are the same model type to ComfyUI, so they share one list.
     - On **Krea 2 (Turbo)**, the **Krealism V3.1** files you don't have yet sit at the top of **⬇ Download**.
     - Then all your folders, so **custom models** work too.
 - **All-in-one checkpoints:** the text encoder and VAE come from the checkpoint (you can still pick your own).
@@ -546,6 +553,7 @@ Hover any of these to wipe against the original. Heavy graph? See **Performance*
 | **LC Get Image 📐** | Megapixels, width, height, batch, aspect, longer side |
 | **LC Dimension Resize 📐** | One value in, add / sub / mul / div both sides, rounded outputs |
 | **LC Image-Mask Resize 📐** | Image + mask only. **match_aspect_ratio**, **upscale_by** none / multiplier / megapixels. The real **WxH** is drawn on the node after a run |
+| **LC RTX Super Resolution ⚡** | NVIDIA RTX Video Super Resolution on pictures or video frames. **mode**: upscale (up to 4x), upscale (clean source) for lossless or high-bitrate sources, denoise, deblur (same size). **quality** LOW to ULTRA, **scale** or **megapixels**, **strength** blends back toward a plain resize. Optional mask is resized along. About half a second per 2x. Needs an RTX card and `nvidia-vfx` |
 | **LC Image to Total Megapixels 📐** | Scales to a total megapixel count, plus **resolution** and **megapixels** outputs. 1 MP = 1,000,000 pixels, the same count LC Get Image uses (the native node counts 1024 x 1024) |
 | **LC Batch Image 🖼️** | Autogrow IMAGE slots into one batch. Muted or empty sockets are skipped. Mixed sizes follow the first live image |
 | **LC Image Stitch Multi 🖼️🪡** | Stitch images side by side or stacked from autogrow slots. **direction** right / down / left / up, **match_size** scales every image to the first one's height (side by side) or width (stacked) so the edges line up, **align** places smaller images when sizes differ, **gap** + **gap_color** add space between them. Muted or empty slots are skipped; batches stitch frame by frame. Outputs **image**, **width**, **height** |
@@ -626,7 +634,7 @@ Full directions: [`LC_Prompt_Builder_Note.md`](LC_Prompt_Builder_Note.md)
 | **LC MiniMax H3 Pipe V2** | Everything above plus `prompt`, `total_steps`, `cfg`, `sampler_name`, `scheduler`. Feed a V1 pipe in to upgrade it |
 | **LC Image Ref Pipe In** / **Out** | Up to 16 reference images on one wire. Sockets grow as you fill them, same as Text Encode Qwen Image 2.1 |
 | **Prompt to Conditioning** / **+ Zero** | A string into conditioning |
-| **LC Positive / LC Negative** | Pre-colored prompt boxes |
+| **Prompt / LC Negative** | Pre-colored prompt boxes. **Prompt** (was LC Positive) is a plain prompt box for any text |
 
 - 💡 **H3 prompt tags are 1-based:** `<Picture 1>` = `ref_image_0`. Native MiniMax **Ref2V** needs `ref_video` to be at least **5 frames**.
 - 💡 Aspect Ratio Simplifier's pipe into the H3 **pipe** socket only copies the size. Length and fps still need their own wires.
@@ -692,7 +700,7 @@ Details: [`LC123_Save_Image_Note.md`](LC123_Save_Image_Note.md)
 | **🌱LC Seed** | Type a number for a fixed seed, or **Randomize Each Time** / **New Fixed Random**. A **seed history** remembers the last 10 seeds this node actually ran with. On Randomize, saved images carry the seed actually used, not the randomize setting. Capped at 2^53-1, the browser's safe integer limit |
 | **LC Slider** | A plain slider that looks the same in classic and Nodes 2.0. Double-click the value to type. min / max / step / decimals behind the faint gear |
 | **LC 🚦** | A light for a boolean. One input, no widgets: lit in one color for true, another for false. The faint ⚙ sets each color, or none. Follows a boolean widget upstream live, otherwise shows the last run. Dark when it or its source is muted or bypassed |
-| **LC Timer ⏱️** | Times every run and scores the newest one against the 5 before it: faster in green, slower in red, plus how it compares to their average. Stopped and fully cached runs are left out. The history saves with the workflow; right-click to clear it |
+| **LC Timer ⏱️** | Times every run and scores the newest one against the 5 before it: faster in green, slower in red, plus how it compares to their average. The last 10 runs are listed, newest first. Stopped and fully cached runs are left out of the score. The history saves with the workflow; right-click to clear it |
 | **LC Control Panel 🎛️** | Up to 16 LC Sliders on one node, each on its own output. The ⚙ at the end of a row sets its name, min, max, step and decimals (0 = INT, otherwise FLOAT), or deletes it. **+ Add slider** adds a row. Plug a new row into a number input and it copies that input's name, range and value. Double-click a value to type one |
 | **LC Sampler Scheduler ⚙️** | Pick the **sampler** and **scheduler** once and wire them to every KSampler, so they all change together. Uses ComfyUI's own lists, so samplers other packs add show up too. Based on Sampler Scheduler Settings from [JPS Nodes](https://github.com/JPS-GER/ComfyUI_JPS-Nodes) |
 | **LC Model Info ℹ️** | Wire any MODEL output in: it follows the wire upstream (LoRA loaders, merges, patches, LC Model Optimizer) and reads each file's header only, never the weights. Shows the workflow a save node baked into the file (base models, LoRAs with strengths, merges), Kohya training info and top tags on LoRAs, card fields, GGUF type and size. Live on the node as soon as it's wired, no queue needed. The model passes through; outputs **info**, **loras** (one per line) and **metadata** (all header fields as JSON) |

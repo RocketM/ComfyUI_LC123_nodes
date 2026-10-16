@@ -42,21 +42,37 @@ def available() -> bool:
     return nv is not None and comfy.model_management.get_torch_device().type == "cuda"
 
 
-def rtx_resize(samples: torch.Tensor, width: int, height: int, quality: str = "ULTRA") -> torch.Tensor:
-    """BCHW float 0..1 (3 or 4 channels) -> BCHW at width x height. Alpha / extra channels are resized bilinear."""
+def rtx_resize(samples: torch.Tensor, width: int, height: int, quality: str = "ULTRA", strict: bool = False) -> torch.Tensor:
+    """BCHW float 0..1 (3 or 4 channels) -> BCHW at width x height. Alpha / extra channels are resized bilinear.
+    strict: raise instead of falling back to lanczos (a node that promises RTX must not quietly do something else)."""
     b, c, h, w = samples.shape
+    if strict and (width < w or height < h):
+        raise ValueError("[LC RTX] RTX Video Super Resolution only enlarges (or keeps the size).")
     if width < w or height < h:
         _warn("down", "RTX upscale only enlarges; smaller targets use lanczos.")
         return comfy.utils.common_upscale(samples, width, height, "lanczos", "disabled")
     nv, levels = _nvvfx()
     device = comfy.model_management.get_torch_device()
     if nv is None or device.type != "cuda" or c < 3:
+        if strict:
+            raise RuntimeError("[LC RTX] RTX Video Super Resolution isn't available here (needs nvidia-vfx on an RTX card).")
         return comfy.utils.common_upscale(samples, width, height, "lanczos", "disabled")
     # RTX VSR wants sizes in steps of 8: run it at the nearest multiple of 8, then snap to the exact size
     ow, oh = max(8, round(width / 8) * 8), max(8, round(height / 8) * 8)
+    same = quality.startswith(("DENOISE", "DEBLUR"))
+    if same:
+        # same-size modes: output must equal input, and a width off the 8-grid comes back row-skewed,
+        # so pad the edges out to the grid, run, then crop back
+        ow, oh = -(-w // 8) * 8, -(-h // 8) * 8
     index = device.index if device.index is not None else torch.cuda.current_device()
     rgb = samples[:, :3].to(device=device, dtype=torch.float32).clamp(0, 1)
+    if same and (ow, oh) != (w, h):
+        rgb = torch.nn.functional.pad(rgb, (0, ow - w, 0, oh - h), mode="replicate")
     out = torch.empty((b, 3, oh, ow), device=device, dtype=torch.float32)
+    if quality not in levels.__members__:
+        if strict:
+            raise ValueError(f"[LC RTX] This nvidia-vfx version has no {quality} mode. Update nvidia-vfx.")
+        quality = "ULTRA"
     try:
         level = levels[quality]
         try:
@@ -69,9 +85,13 @@ def rtx_resize(samples: torch.Tensor, width: int, height: int, quality: str = "U
             for k in range(b):
                 out[k] = torch.from_dlpack(effect.run(rgb[k].contiguous()).image).clone()
     except Exception as e:
+        if strict:
+            raise RuntimeError(f"[LC RTX] RTX Video Super Resolution failed: {e}") from e
         _warn("run", f"RTX upscale failed ({e}). Using lanczos.")
         return comfy.utils.common_upscale(samples, width, height, "lanczos", "disabled")
-    if (ow, oh) != (width, height):
+    if same:
+        out = out[:, :, :h, :w]
+    elif (ow, oh) != (width, height):
         out = comfy.utils.common_upscale(out, width, height, "bicubic", "disabled")
     out = out.clamp(0, 1).to(samples.device, samples.dtype)
     if c > 3:

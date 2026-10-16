@@ -11,7 +11,16 @@ import { lcApplyLaunchColor } from "./lc_color.js";
 const TYPES = { LCOptimizer: "image", LCOptimizerPipe: "image", LCOptimizerVideo: "video", LCOptimizerVideoPipe: "video" };
 const COLOR = "#2E4A3B";
 const DEFAULT_W = 330;
-const REC = "★ Recommended", DL = "⬇ Download: ", CKPT = "From checkpoint", NONE = "None";
+const REC = "★ Recommended", DL = "⬇ Download: ", CKPT = "From checkpoint", NONE = "None", AUTHOR = "★ Author: ";
+const isPick = (v) => typeof v === "string" && v.startsWith("★ ") && v !== REC;
+// files the workflow's author named in the Vision Assistant tour (LC Model Optimizer model/clip/vae ⚙️); blank = defaults
+function authorPick(role) {
+  const o = (app.rootGraph || app.graph)?.extra?.vision_assistant?.tour?.optimizer?.[role];
+  const url = String(o?.url || "").trim(), file = String(o?.file || "").trim();
+  if (!url && !file) return null;
+  const name = file || baseName(url.split("?")[0]);
+  return { value: `${AUTHOR}${name} | ${url}`, file: name, url, hf: /^https?:\/\/huggingface\.co\//i.test(url) };
+}
 const FILE_WIDGETS = [
   ["model_file", "model", "Model file"], ["text_encoder", "clip", "Text encoder"], ["vae", "vae", "VAE"],
   ["audio_vae", "audio_vae", "Audio VAE"], ["latent_upscaler", "upscaler", "Latent upscaler"], ["lora", "lora", "Distilled LoRA"],
@@ -107,6 +116,7 @@ async function showPicker(node, widget, role, anchor) {
   const known = new Set(data.known || []);
   const extras = role === "model" ? [] : [CKPT, NONE];
   let path = [];
+  const open = new Set(); // expanded families / versions in On disk
 
   const render = () => {
     listEl.innerHTML = "";
@@ -114,8 +124,8 @@ async function showPicker(node, widget, role, anchor) {
     back.style.display = path.length ? "" : "none";
     if (term) {
       crumb.textContent = "Search";
-      const all = [...(data.downloads || []).map((d) => d.value), ...(data.local || [])].filter((v) => v.toLowerCase().includes(term));
-      for (const v of all.slice(0, 200)) row(`<span>${v.startsWith(DL) ? "⬇️" : "📄"}</span><span style="word-break:break-all">${esc(v.startsWith(DL) ? baseName(v.slice(DL.length)) : v)}</span>`, () => pick(v), { current: v === widget.value });
+      const all = [...(data.picks || []).map((p) => p.value), ...(data.downloads || []).map((d) => d.value), ...(data.local || [])].filter((v) => v.toLowerCase().includes(term));
+      for (const v of all.slice(0, 200)) row(`<span>${isPick(v) ? "★" : v.startsWith(DL) ? "⬇️" : "📄"}</span><span style="word-break:break-all">${esc(isPick(v) ? v.slice(2) : v.startsWith(DL) ? baseName(v.slice(DL.length)) : v)}</span>`, () => pick(v), { current: v === widget.value });
       if (!all.length) listEl.innerHTML = `<div style="padding:10px;color:#8a95a5">No match.</div>`;
       return;
     }
@@ -129,7 +139,32 @@ async function showPicker(node, widget, role, anchor) {
     }
     if (path[0] === "__known") {
       crumb.textContent = `On disk for ${base}`;
-      for (const f of data.known || []) row(`<span>✅</span><span style="word-break:break-all">${esc(f)}</span>`, () => pick(f), { current: f === widget.value });
+      // ★ pinned: the recommended files you already have
+      const local = data.local || [];
+      const byBase = (file) => local.find((n) => baseName(n).toLowerCase() === String(file).toLowerCase());
+      const pins = [];
+      if (data.recommended?.on_disk) pins.push(["Recommended", byBase(data.recommended.file)]);
+      for (const p of data.picks || []) if (p.on_disk) pins.push([p.label, byBase(p.file)]);
+      for (const [label, f] of pins) if (f) row(`<span>★</span><span style="flex:1;word-break:break-all">${esc(baseName(f))}</span><span style="color:#8a95a5;white-space:nowrap">${esc(label)}</span>`, () => pick(f), { current: f === widget.value });
+      const groups = data.groups || [];
+      if (!groups.length && !pins.length) listEl.innerHTML = `<div style="padding:10px;color:#8a95a5">Nothing on disk for ${esc(base)} yet.</div>`;
+      const fileRow = (f, indent) => row(`<span style="margin-left:${indent}px">${f === widget.value ? "●" : "✅"}</span><span style="word-break:break-all">${esc(baseName(f))}</span>`, () => pick(f), { current: f === widget.value });
+      const toggle = (key, label, count, indent) => {
+        const isOpen = open.has(key);
+        row(`<span style="margin-left:${indent}px;width:10px;color:#8a95a5">${isOpen ? "▾" : "▸"}</span><span style="flex:1">${esc(label)}</span><span style="color:#8a95a5">${count}</span>`, () => { isOpen ? open.delete(key) : open.add(key); render(); });
+        return isOpen;
+      };
+      for (const g of groups) {
+        const files = g.versions.flatMap((v) => v.files);
+        if (files.length === 1) { fileRow(files[0], 0); continue; } // a lone file needs no folder
+        if (!toggle(g.family, g.family, files.length, 0)) continue;
+        const flat = g.versions.length === 1; // one version: straight to the quants
+        for (const v of g.versions) {
+          if (flat) { for (const f of v.files) fileRow(f, 18); continue; }
+          if (!toggle(`${g.family}|${v.version}`, v.version || "other", v.files.length, 18)) continue;
+          for (const f of v.files) fileRow(f, 36);
+        }
+      }
       return;
     }
     let level = tree;
@@ -139,9 +174,13 @@ async function showPicker(node, widget, role, anchor) {
       const rec = data.recommended;
       const ckptPart = role !== "model" && node._lcOptPlan?.checkpoint;
       row(`<span>★</span><span style="flex:1"><b>Recommended</b><br><span style="color:#8a95a5">${rec ? esc(rec.file) + (rec.on_disk ? " · on disk" : ` · downloads ${rec.gb ?? "?"} GB`) + (rec.source === "default" ? " · Comfy default" : "") : (ckptPart ? "blank: the checkpoint's own" : data.unsupported ? "unsupported for Custom: pick a file" : "nothing for this part")}</span></span>`, () => pick(REC), { current: widget.value === REC });
+      for (const p of data.picks || []) row(`<span>★</span><span style="flex:1"><b>${esc(p.label)}</b><br><span style="color:#8a95a5">${esc(p.file)}${p.on_disk ? " · on disk" : ` · downloads ${p.gb ?? "?"} GB`}</span></span>`, () => pick(p.value), { current: widget.value === p.value });
+      const au = authorPick(role);
+      if (au) row(`<span>★</span><span style="flex:1"><b>${esc(au.file)}</b><br><span style="color:#8a95a5">picked by this workflow's author${au.hf ? "" : " · get it from the author's link"}</span></span>`, () => pick(au.value), { current: widget.value === au.value });
       for (const x of extras) row(`<span>${x === CKPT ? "📦" : "∅"}</span><span>${x}</span>`, () => pick(x), { current: widget.value === x });
       if ((data.downloads || []).length) row(`<span>📁</span><span style="flex:1">⬇ Download</span><span style="color:#8a95a5">${data.downloads.length}</span>`, () => { path = ["__dl"]; render(); });
-      if (known.size) row(`<span>📁</span><span style="flex:1">On disk for ${esc(base)}</span><span style="color:#8a95a5">${known.size}</span>`, () => { path = ["__known"]; render(); });
+      const onDisk = (data.groups || []).reduce((k, g) => k + g.versions.reduce((j, v) => j + v.files.length, 0), 0) || known.size;
+      if (onDisk) row(`<span>📁</span><span style="flex:1">On disk for ${esc(base)}</span><span style="color:#8a95a5">${onDisk}</span>`, () => { path = ["__known"]; render(); });
     }
     for (const [name, sub] of [...level.folders.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
       const count = (function c(n) { let k = n.files.length; for (const s of n.folders.values()) k += c(s); return k; })(sub);
@@ -162,6 +201,7 @@ function display(v, planFile) {
   if (v === REC && planFile?.state === "unsupported") return "unsupported: pick a file";
   if (v === REC && planFile?.state === "ckpt") return ""; // blank: the checkpoint's own text encoder / VAE
   if (v === REC) return `★ ${planFile?.label ? baseName(planFile.label) : "Recommended"}`;
+  if (isPick(v)) return `★ ${planFile?.label ? baseName(planFile.label) : v.startsWith(AUTHOR) ? v.slice(AUTHOR.length).split(" | ")[0] : v.slice(2)}`;
   if (typeof v === "string" && v.startsWith(DL)) return `⬇ ${baseName(planFile?.label || v.slice(DL.length))}`;
   if (v === CKPT) return "📦 From checkpoint";
   return baseName(v ?? "");
