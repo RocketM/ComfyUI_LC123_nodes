@@ -65,10 +65,24 @@ def rtx_resize(samples: torch.Tensor, width: int, height: int, quality: str = "U
         # so pad the edges out to the grid, run, then crop back
         ow, oh = -(-w // 8) * 8, -(-h // 8) * 8
     index = device.index if device.index is not None else torch.cuda.current_device()
-    rgb = samples[:, :3].to(device=device, dtype=torch.float32).clamp(0, 1)
-    if same and (ow, oh) != (w, h):
-        rgb = torch.nn.functional.pad(rgb, (0, ow - w, 0, oh - h), mode="replicate")
-    out = torch.empty((b, 3, oh, ow), device=device, dtype=torch.float32)
+    # one frame at a time on the GPU, results collected in RAM: a long clip at 2x is tens of GB, which spilled into
+    # shared memory and looked like a freeze
+    out = torch.empty((b, 3, height, width), device=samples.device if b == 1 else "cpu", dtype=samples.dtype)
+
+    def frame(k):
+        x = samples[k, :3].to(device=device, dtype=torch.float32).clamp(0, 1)
+        if same and (ow, oh) != (w, h):
+            x = torch.nn.functional.pad(x[None], (0, ow - w, 0, oh - h), mode="replicate")[0]
+        return x.contiguous()
+
+    def finish(y):
+        y = y[None]
+        if same:
+            y = y[:, :, :h, :w]
+        elif (ow, oh) != (width, height):
+            y = comfy.utils.common_upscale(y, width, height, "bicubic", "disabled")
+        return y[0].clamp(0, 1).to(out.device, out.dtype)
+
     if quality not in levels.__members__:
         if strict:
             raise ValueError(f"[LC RTX] This nvidia-vfx version has no {quality} mode. Update nvidia-vfx.")
@@ -82,18 +96,20 @@ def rtx_resize(samples: torch.Tensor, width: int, height: int, quality: str = "U
         with torch.cuda.device(device), ctx as effect:
             effect.output_width, effect.output_height = ow, oh
             effect.load()
+            pbar = comfy.utils.ProgressBar(b) if b > 1 else None
             for k in range(b):
-                out[k] = torch.from_dlpack(effect.run(rgb[k].contiguous()).image).clone()
+                comfy.model_management.throw_exception_if_processing_interrupted()  # Cancel works between frames
+                out[k] = finish(torch.from_dlpack(effect.run(frame(k)).image).clone())
+                if pbar is not None:
+                    pbar.update(1)
+    except comfy.model_management.InterruptProcessingException:
+        raise
     except Exception as e:
         if strict:
             raise RuntimeError(f"[LC RTX] RTX Video Super Resolution failed: {e}") from e
         _warn("run", f"RTX upscale failed ({e}). Using lanczos.")
         return comfy.utils.common_upscale(samples, width, height, "lanczos", "disabled")
-    if same:
-        out = out[:, :, :h, :w]
-    elif (ow, oh) != (width, height):
-        out = comfy.utils.common_upscale(out, width, height, "bicubic", "disabled")
-    out = out.clamp(0, 1).to(samples.device, samples.dtype)
+    out = out.to(samples.device)
     if c > 3:
         extra = torch.nn.functional.interpolate(samples[:, 3:].float(), size=(height, width), mode="bilinear",
                                                 align_corners=False).to(samples.dtype)
