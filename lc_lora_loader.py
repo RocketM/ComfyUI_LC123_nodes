@@ -25,6 +25,13 @@ import comfy.utils
 
 NODE_NAME = "LCLoraLoader"
 
+def _moved_lora(name: str):
+    """The LoRA a saved row means after its file moved to another subfolder: the only one with the same file name."""
+    want = os.path.basename(name.replace("\\", "/")).lower()
+    hits = [f for f in folder_paths.get_filename_list("loras") if os.path.basename(f.replace("\\", "/")).lower() == want]
+    return hits[0] if len(hits) == 1 else None
+
+
 def _cached_lora(prev: dict, used: dict, path: str):
     """Load a LoRA file, reusing the copy kept from the last run (like core LoraLoader's
     self.loaded_lora) so a strength change does not reload it from disk. Keyed by path + mtime,
@@ -84,6 +91,11 @@ class LCLoraLoader:
             if not name or name in ("None", "NONE") or strength == 0.0:
                 continue
             path = folder_paths.get_full_path("loras", name)
+            if not path:
+                moved = _moved_lora(name)
+                if moved:
+                    print(f"[LC LoRA Loader] {name} moved: using {moved} (pick it again to save the new place)")
+                    path = folder_paths.get_full_path("loras", moved)
             if not path:
                 # a saved row can outlive the file it points at (renamed/deleted lora); skip it rather than
                 # failing the whole graph, same as the referenced LoRA-file-missing case in the stock loader
