@@ -154,7 +154,8 @@
           "loader": "UnetLoaderGGUF",
           "pruned": true,
           "community": true,
-          "unconfirmed": "built for stable-diffusion.cpp; ComfyUI loading not confirmed"
+          "prefer_up_to_vram_gb": 8.5,
+          "note": "Fast pick for 8 GB GPUs: 1.6x faster on an RTX 5060 Laptop, but visibly softer"
         },
         {
           "file": "minimax_h3_fl2va_pruned-Q2_K.gguf",

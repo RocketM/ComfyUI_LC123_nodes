@@ -1,8 +1,14 @@
 # LC123 node inventory
 
-**143 Python nodes** + **5 JS-only** · version 1.49.7
+**153 Python nodes** + **5 JS-only** · version 1.51.0
 
-Registered class IDs: 138 (137 in search, 1 deprecated but still loads in old workflows).
+Registered class IDs: 153 (152 in search, 1 deprecated but still loads in old workflows).
+
+## LC123/Flux 3 (3)
+
+- `LCBoundingBoxes`: LC Bounding Boxes 🔲
+- `LCFlux3LayoutPrompt`: LC Flux 3 Layout Prompt 🗺️
+- `LCFlux3ReferenceLatent`: LC Flux 3 Reference Latent 🖼️
 
 ## LC123/Regional Canvas/Anima (1)
 
@@ -184,6 +190,7 @@ Registered class IDs: 138 (137 in search, 1 deprecated but still loads in old wo
 - `LCShowAny`: LC Show Any 🔤
 - `LCShowText`: LC Show Text 🔤
 - `LCSlider`: LC Slider
+- `LCSizePad`: LC Size Pad 📐
 - `LCLight`: LC 🚦
 - `LCControlPanel`: LC Control Panel 🎛️
 - `LCTimer`: LC Timer ⏱️

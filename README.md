@@ -27,11 +27,12 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 8. [Image FX](#image-fx)
 9. [Image and size](#image-size)
 10. [Prompt Builder](#prompt-builder)
-11. [Sampling, sigmas, latents and pipes](#sampling)
-12. [Saving, metadata and text](#saving)
-13. [Switches, logic and control](#switches)
-14. [Regional canvas](#regional)
-15. [Example workflows](#workflows), [Assets](#assets), [Quick tips](#tips), [Install](#install)
+11. [Flux 3 (boxes and references)](#flux3)
+12. [Sampling, sigmas, latents and pipes](#sampling)
+13. [Saving, metadata and text](#saving)
+14. [Switches, logic and control](#switches)
+15. [Regional canvas](#regional)
+16. [Example workflows](#workflows), [Assets](#assets), [Quick tips](#tips), [Install](#install)
 
 ---
 
@@ -91,7 +92,7 @@ Tools for the canvas itself, not nodes. Nothing here touches your generations.
 - **When picking a model (includes custom models):** what file type to get on YOUR machine for Quality, Optimal and Fast, a size guide, and what to avoid. Works for finetunes and merges too.
 - **Model recommendations:** pick a model and a goal, get the exact files: download link, size, how close it is to bf16, time per step on your machine, and whether it fits. ✅ = you already have it.
     - **All base models at a glance** lists every model at once.
-    - Models covered: MiniMax H3 (FL2VA and Ref2VA), Krea 2 (Turbo and Raw), LTX 2.5, LTX 2.3, Anima, Z-Image Turbo, Qwen-Image 2.1, Flux.2 Klein 9B (Distilled and Base), Ideogram 4, SDXL, Illustrious XL, Pony Diffusion V6 XL.
+    - Models covered: MiniMax H3 (FL2VA and Ref2VA), Krea 2 (Turbo and Raw), LTX 2.5, LTX 2.3, Anima, Z-Image Turbo, Qwen-Image 2.1, Flux.2 Klein 9B (Distilled and Base), Flux 3 Klein (Distilled and Base), Ideogram 4, SDXL, Illustrious XL, Pony Diffusion V6 XL.
     - Measured on an RTX 5090 and an 8 GB RTX 5060 Laptop. Image models land within about 15 %; video models are rougher and it says so.
 - **Show last run**, **Copy report** and **Download CSV** work like the Comfy Optimization Report. It will not run while ComfyUI is generating.
 - Nothing is changed. Open it from **Settings > LC Settings ⚙️ > Optimization**, or right-click the empty canvas.
@@ -261,7 +262,7 @@ The **System & Model Optimization Report** tells you what suits your machine. Th
 
 **LC Model Optimizer ⚡ / LC Model Optimizer (pipe) ⚡** (image models)
 - Outputs: `model`, `clip`, `vae`, `summary`. The pipe version adds an `LC_PIPE` in front (model 2 = Ideogram 4's second model).
-- Krea 2 (Turbo and Raw), Qwen-Image 2.1, Z-Image Turbo, Flux.2 Klein 9B (Distilled and Base), Ideogram 4, Anima, SDXL, Illustrious XL, Pony Diffusion V6 XL (the SDXL family loads as one checkpoint: text encoders and VAE come from it).
+- Krea 2 (Turbo and Raw), Qwen-Image 2.1, Z-Image Turbo, Flux.2 Klein 9B (Distilled and Base), Flux 3 Klein (Distilled and Base), Ideogram 4, Anima, SDXL, Illustrious XL, Pony Diffusion V6 XL (the SDXL family loads as one checkpoint: text encoders and VAE come from it).
 
 **LC Model Optimizer Video ⚡ / LC Model Optimizer Video (pipe) ⚡** (video models)
 - Outputs: `model`, `clip`, `vae`, `audio_vae`, `latent_upscaler`, `summary`. The pipe version adds an `LC_PIPE` in front (vae 2 = audio VAE).
@@ -607,6 +608,24 @@ Full directions: [`LC_Prompt_Builder_Note.md`](LC_Prompt_Builder_Note.md)
 
 ---
 
+<a id="flux3"></a>
+## 🖼️ Flux 3 (boxes and references)
+
+<details>
+<summary><b>Click to open</b></summary>
+
+| Node | What it does |
+|------|----------------|
+| **LC Bounding Boxes 🔲** | Draw boxes on a picture: drag on empty space for a box, drag a box to move it, a corner to resize it. Each box gets a **name** (hat, cup), what happens to it (**new**, **change**, **move** with a second dashed box, **remove**), a description and, for text, the exact words. Connect a Load Image and the picture shows right away. Outputs a preview plus the same **bboxes** and **elements** as ComfyUI's Create Bounding Boxes, so it plugs into anything that takes those. Works in the classic canvas and in Nodes 2.0 |
+| **LC Flux 3 Layout Prompt 🗺️** | Adds the boxes to a Flux 3 prompt as the element table the model was trained on (Black Forest Labs' own format): the layout table for a new picture, the edit table (from, source box, target box) for an edit. Write **<1>**, **<2>** in the prompt for box 1, box 2: they become the box ids (**<hat_1>**). Edits end with "everything else stays identical", and **info** lists any box the prompt doesn't name |
+| **LC Flux 3 Reference Latent 🖼️** | Flux 3 references in one node: up to 4 pictures (**<ref_image_0>** to **<ref_image_3>**) on the positive and the negative, the negative the model wants (zeroed for the distilled model, an empty prompt for Base) and the latent to sample, at picture 1's size or your own. No pictures = plain text to image |
+
+</details>
+
+[⬆ Back to top](#top)
+
+---
+
 <a id="sampling"></a>
 ## 🧪 Sampling, sigmas, latents and pipes
 
@@ -626,7 +645,7 @@ Full directions: [`LC_Prompt_Builder_Note.md`](LC_Prompt_Builder_Note.md)
 | **LC Sigma Resample** | Same sigma path, new **real** step count: `new_steps = round(old x multiplier) + adder`. Put it **after** a split, on the slice you want denser |
 | **LC Sigmas (BETA)** | One scheduler for one- and two-pass sampling. **sampler** (the line under the graph shows what tested best for your model; RES4LYF / ClownShark sampler names work too) + **sigma_curve_presets**: **base** (any scheduler, picked in **base_scheduler**), **beta** (your own alpha / beta), **flowmatch**, **hyperbolic** and **gaussian** (the same curves as the FlowMatch, RES4LYF Sigmas Hyperbolic / Gaussian nodes, without needing them), plus every curve you saved. Drag the points on the graph to bend the curve (**edit_mode** smooth or spike, **smooth_radius**); **reset curve** clears it, **save curve** adds it to the presets. **first_pass_resample** spreads the first pass over more steps along the same path. **step_swap**: the step where the second model (**model_2**) takes over, starting exactly where the first pass stopped. **denoise** for image to image, with **denoise_steps**: **full schedule** (the whole run) or **at step swap** (the first pass only, so the second pass refines on its own). **low_pass**: **continue noise schedule** (the leftover noise, one schedule over two samplers) or **renoise** (the first pass finishes, fresh noise goes back up to the swap level, and the second pass refines like a detailer). **sigma_shift**: use model default, by image size or custom. Outputs both sigmas, the noise for each pass and the sampler. Live graph on the node: drag it taller and the graph grows. Only the settings for the chosen preset are shown |
 | **LC Detail Daemon (BETA)** / **(model)** | Adds fine detail by telling the model there is a little less noise than there really is. The same **amount** scale and step window (**start / end / peak / exponent**) as the original Detail Daemon, so settings carry over, but never multiplied by CFG. **mode**: **look only** (default) = crisp detail without big reshuffles, **classic** = the original (more detail, small things like folds and background focus shift), **keep structure** = only the fine part of the change is kept, so the layout stays (about 45% slower). Defaults peak 0 and exponent 0.1: full strength across the window, strongest at its start. 💡 Krea 2 / Krealism: look only 1.0, start 0.15, end 0.85, peak 0, exponent 0 (the defaults). classic and keep structure hit harder, so start them lower. ✋ **Put it on the low pass sampler:** detail is made in the last steps, and on the high pass it moves the layout. The window follows the sampler it's plugged into; `sigmas` only draws the graph |
-| **LC Speed Boost (BETA) 🚀** | About **2x faster** first passes, same quality. Plug it into the **high pass sampler only**: it starts the picture at half size and grows it to full size partway through (LC Detail Daemon goes on the low pass). **auto** picks the grow step from the schedule; **grow_at_step** sets it yourself, counted like step_swap (0 = off). The layout follows the model's trained size, so a seed frames differently with it on. Works on Krea 2, Z-Image, Flux.2 Klein, Qwen-Image and Wan, and on SDXL / Pony / Illustrious (about 1.4x faster there, switching a little later). It switches itself off on upscale / image to image passes (denoise under 0.9) and inpaint masks, and the console says why. On **Qwen-Image 2.1** auto stays off: its half size is so coarse that line art, anime, text, logos and flat color come out with doubled lines and blocky color (photos are fine, so set **grow_at_step** by hand, about 6 of 25 steps, for photos). Based on [SPEED](https://github.com/howardhx/speed) (Xiao, Chao, Yariv and Wetzstein, 2026) and ComfyUI-SPEED-SwarmNeo (MIT) |
+| **LC Speed Boost (BETA) 🚀** | About **2x faster** first passes, same quality. Plug it into the **high pass sampler only**: it starts the picture at half size and grows it to full size partway through (LC Detail Daemon goes on the low pass). **auto** picks the grow step from the schedule; **grow_at_step** sets it yourself, counted like step_swap (0 = off). The layout follows the model's trained size, so a seed frames differently with it on. Works on Krea 2, Z-Image, Flux.2 Klein, Qwen-Image and Wan, and on SDXL / Pony / Illustrious (about 1.4x faster there, switching a little later). ⚠️ Not on **Flux 3** edits: it reframes the picture and roughens skin there. It switches itself off on upscale / image to image passes (denoise under 0.9) and inpaint masks, and the console says why. On **Qwen-Image 2.1** auto stays off: its half size is so coarse that line art, anime, text, logos and flat color come out with doubled lines and blocky color (photos are fine, so set **grow_at_step** by hand, about 6 of 25 steps, for photos). Based on [SPEED](https://github.com/howardhx/speed) (Xiao, Chao, Yariv and Wetzstein, 2026) and ComfyUI-SPEED-SwarmNeo (MIT) |
 | **LC Speed Boost 🚀 KSampler (BETA)** | A KSampler with LC Speed Boost built in, for everyone on a plain KSampler: drop it in where your KSampler was. About half the processing time, same VRAM, same detail. **speed_boost** (auto) and **grow_at_step** sit on top (grow_at_step 0 = a plain KSampler, pixel for pixel). **start_at_step**, **end_at_step** and **return_with_leftover_noise** work like KSampler (Advanced), so it can hand its leftover noise to a regular or ClownShark sampler to finish. ClownShark (RES4LYF) samplers are in the sampler list when RES4LYF is installed, or wire a ClownSampler into **sampler** to use its own settings. Works on SDXL / Pony / Illustrious too (about 1.4x faster). Samples like a plain KSampler on image to image (denoise under 0.9) and inpaint masks. On **Qwen-Image 2.1** auto stays off (see LC Speed Boost) |
 | **LC Reference Latent** | Up to 8 optional reference latents into conditioning. All empty = pass-through |
 | **LC Denoise 💉** | Latent injection: `noise_std = 1 - denoise`. Match the sampler's denoise |
@@ -701,6 +720,7 @@ Details: [`LC123_Save_Image_Note.md`](LC123_Save_Image_Note.md)
 | **LC Seed Jump 🌱** | One seed + a jump = six stepped seeds |
 | **🌱LC Seed** | Type a number for a fixed seed, or **Randomize Each Time** / **New Fixed Random**. A **seed history** remembers the last 10 seeds this node actually ran with. On Randomize, saved images carry the seed actually used, not the randomize setting. Capped at 2^53-1, the browser's safe integer limit |
 | **LC Slider** | A plain slider that looks the same in classic and Nodes 2.0. Double-click the value to type. min / max / step / decimals behind the faint gear |
+| **LC Size Pad 📐** | A 2D slider for width × height: the frame is pinned to the bottom-left; drag its top-right corner (or click anywhere on the pad). **model** (MiniMax H3, Krea 2, SDXL, LTX, Klein 9B, Wan 2.2, Custom) snaps to that model's step (H3 and LTX 32, SDXL 64, the rest 16) and stops the drag at its megapixel limit (*Max megapixels reached*). **aspect** locks the shape, **megapixels** resizes it, **⇄** flips portrait / landscape. Outputs width, height and an info line. 💡 Wan: 0.92 MP is 720p, 0.4 MP is 480p |
 | **LC 🚦** | A light for a boolean. One input, no widgets: lit in one color for true, another for false. The faint ⚙ sets each color, or none. Follows a boolean widget upstream live, otherwise shows the last run. Dark when it or its source is muted or bypassed |
 | **LC Timer ⏱️** | Times every run and scores the newest one against the 5 before it: faster in green, slower in red, plus how it compares to their average. The last 10 runs are listed, newest first. Stopped and fully cached runs are left out of the score. The history saves with the workflow; right-click to clear it |
 | **LC Control Panel 🎛️** | Up to 16 LC Sliders on one node, each on its own output. The ⚙ at the end of a row sets its name, min, max, step and decimals (0 = INT, otherwise FLOAT), or deletes it. **+ Add slider** adds a row. Plug a new row into a number input and it copies that input's name, range and value. Double-click a value to type one |
