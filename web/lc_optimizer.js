@@ -729,6 +729,26 @@ app.registerExtension({
   name: "LC123.Optimizer",
   settings: [
     {
+      id: "LC123.Optimization.FastCancel",
+      sortOrder: 30, // first under Optimization
+      name: "Fast cancel",
+      category: ["LC Settings ⚙️", "Optimization", "Fast cancel"],
+      type: "boolean",
+      defaultValue: true,
+      tooltip:
+        "Cancel stops a run within a fraction of a step instead of waiting for the whole step to finish (heavy models, USDU, video). Every model block checks the Cancel button. Works with every sampler, nothing to wire.",
+    },
+    {
+      id: "LC123.Optimization.FreeTextEncoder",
+      sortOrder: 29, // right under Fast cancel
+      name: "Free text encoder before sampling",
+      category: ["LC Settings ⚙️", "Optimization", "Free text encoder"],
+      type: "boolean",
+      defaultValue: true,
+      tooltip:
+        "When sampling starts, any big text encoder (1 GB or more) still in VRAM is moved to RAM, so the diffusion model gets the whole card. Biggest win on H3 and Krea 2. A new prompt reloads the encoder from RAM in a second or two.",
+    },
+    {
       id: "LC123.Optimization.Report",
       sortOrder: 20, // above the System & Model Optimization Report
       name: "Comfy Optimization Report",

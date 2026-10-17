@@ -51,7 +51,7 @@ DESC_IMAGE = (
     "still apply; recommendations, estimates and checks show as unsupported.\n"
     "⚠️ Don't put --use-sage-attention in your .bat. It forces Sage on every model, and some models give black images "
     "with it. Leave it out and let this node turn Sage on per model.\n"
-    "Current available models: Krea 2, Krea 2 (Raw), Qwen-Image 2.1, Z-Image Turbo, Flux.2 Klein 9B (Distilled and Base), Ideogram 4, Anima, "
+    "Current available models: Krea 2, Krea 2 (Raw), Qwen-Image 2.1, Z-Image Turbo, Flux.2 Klein 9B (Distilled and Base), Flux 3 Klein (Distilled and Base), Ideogram 4, Anima, "
     "SDXL, Illustrious, Pony, Custom."
 )
 DESC_VIDEO = (
@@ -280,7 +280,13 @@ try:
         kind = q.get("kind", "image")
         base = E.LEGACY_BASE.get(q.get("base"), q.get("base"))
         pid = next((p for p, n in E.base_names(kind) if n == base), None)
-        return web.json_response(E.choices(pid, q.get("role", "model"), q.get("goal", "Optimal")) if pid else {"error": "unknown base model"})
+        if not pid:
+            return web.json_response({"error": "unknown base model"})
+        import asyncio
+
+        # reads model file headers to find finetunes of this base model: off the event loop
+        res = await asyncio.get_running_loop().run_in_executor(None, E.choices, pid, q.get("role", "model"), q.get("goal", "Optimal"))
+        return web.json_response(res)
 
     @PromptServer.instance.routes.post("/lc123/optimizer_node/plan")
     async def _lc_opt_plan(request):

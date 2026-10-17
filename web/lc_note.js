@@ -244,6 +244,101 @@ async function translateNow(node, code) {
   }
 }
 
+// ---------------------------------------------------------------- LC Vision helpers: write the note, fix spelling
+const toast = (severity, detail, life = 5000) => app.extensionManager?.toast?.add?.({ severity, summary: "LC Note", detail, life });
+
+// which models folder a loader setting reads from (so the note never has to guess one)
+const MODEL_FILE = /\.(safetensors|sft|ckpt|pt|pth|bin|gguf)$/i;
+function folderOf(node, w) {
+  const n = `${node.comfyClass || node.type} ${w.name}`.toLowerCase();
+  if (/lora/.test(n)) return "loras";
+  if (/vae/.test(n)) return "vae";
+  if (/clip|text_encoder/.test(n)) return "text_encoders";
+  if (/ckpt|checkpoint/.test(n)) return "checkpoints";
+  if (/upscale/.test(n)) return "upscale_models";
+  if (/unet|model_file|diffusion|gguf/.test(n)) return "diffusion_models";
+  return "";
+}
+function modelLines() {
+  const g = app.rootGraph || app.graph;
+  const seen = new Set();
+  const out = [];
+  for (const node of g?._nodes || []) {
+    if (node.mode === 4 || node.mode === 2) continue;
+    for (const w of node.widgets || []) {
+      if (typeof w.value !== "string" || !MODEL_FILE.test(w.value)) continue;
+      const file = w.value.replace(/\\/g, "/").split("/").pop();
+      if (seen.has(file)) continue;
+      seen.add(file);
+      const f = folderOf(node, w);
+      out.push(`- ${file}${f ? ` goes in ComfyUI/models/${f}` : ""} (used by ${node.title || node.type})`);
+    }
+  }
+  return out.length ? `\n\nModel files and their folders:\n${out.join("\n")}` : "";
+}
+
+/** The workflow, part by part, from the Vision Assistant's own reader (LC Vision), plus each model file's folder. */
+async function workflowText() {
+  try {
+    const t = await import("../ComfyUI_LC_Vision_nodes/vision_assistant/va_tour.js");
+    const txt = t.partsText(t.parts());
+    if (txt && txt.trim()) return txt + modelLines();
+  } catch (_) {}
+  // fallback: node titles and their main settings
+  const g = app.rootGraph || app.graph;
+  return (g?._nodes || []).filter((n) => n.type !== TYPE && n.mode !== 4).map((n) => {
+    const vals = (n.widgets || []).filter((w) => w.type !== "button" && w.value !== undefined && String(w.value).length < 120)
+      .slice(0, 6).map((w) => `${w.name}: ${w.value}`).join(", ");
+    return `- ${n.title || n.type}${vals ? ` (${vals})` : ""}`;
+  }).join("\n") + modelLines();
+}
+
+function setSource(node, text) {
+  syncFromEditor(node);
+  const d = data(node);
+  node._lcPrev = { text: d.texts[d.source].text || "", title: d.titles[d.source] };
+  d.texts[d.source] = { ...d.texts[d.source], text };
+  show(node, d.source, true);
+  app.graph?.setDirtyCanvas?.(true, true);
+}
+
+async function visionTask(node, task) {
+  const t = await translatorStatus();
+  if (!t) return toast("warn", "This needs LC Vision installed with a model (nothing to wire).");
+  syncFromEditor(node);
+  const d = data(node);
+  const src = d.texts[d.source].text || "";
+  if (task === "spelling" && !src.trim()) return toast("info", "The note is empty: nothing to check.");
+  if (task === "write" && src.trim()) {
+    const ok = await app.extensionManager?.dialog?.confirm?.({ title: "Write this note?", message: "LC Vision writes a new draft from the workflow and replaces what's in this note. Undo is in the right-click menu." });
+    if (ok !== true) return;
+  }
+  toast("info", task === "write" ? "Writing the note from your workflow…" : "Checking the spelling…", 4000);
+  try {
+    const r = task === "write"
+      ? await api.fetchApi("/lc_vision/write_note", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ workflow: await workflowText() }) })
+      : await api.fetchApi("/lc_vision/translate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: src, target: "same", task: "spelling", title: d.titles[d.source] || "" }) });
+    const j = await r.json();
+    if (!r.ok || j.error) throw new Error(j.error || r.statusText);
+    if (task === "spelling" && j.text === src) return toast("success", "No spelling mistakes found.");
+    setSource(node, j.text);
+    if (task === "spelling" && j.title) d.titles[d.source] = j.title;
+    toast("success", task === "write" ? "Draft written. Check it, then edit away. Undo is in the right-click menu." : "Spelling fixed. Undo is in the right-click menu.");
+  } catch (e) {
+    toast("error", `${task === "write" ? "Writing" : "Spell check"} failed: ${e.message}`, 7000);
+  }
+}
+
+function undoVision(node) {
+  const p = node._lcPrev;
+  if (!p) return;
+  const d = data(node);
+  d.texts[d.source] = { ...d.texts[d.source], text: p.text };
+  if (p.title !== undefined) d.titles[d.source] = p.title;
+  node._lcPrev = null;
+  show(node, d.source, true);
+}
+
 function setupNode(node) {
   data(node);
   node._lcLang = node.addWidget("combo", "language", LANGS[0][1] + " " + ICON.source, (v) => {
@@ -443,6 +538,12 @@ app.registerExtension({
       getExtraMenuOptions(_canvas, options) {
         const d = data(this);
         options.unshift(
+          { content: "✍️ Write this note (LC Vision)", callback: () => visionTask(this, "write") },
+          { content: "🔤 Fix spelling (LC Vision)", callback: () => visionTask(this, "spelling") },
+          ...(this._lcPrev ? [{ content: "↩️ Undo the LC Vision change", callback: () => undoVision(this) }] : []),
+          null,
+        );
+        options.unshift(
           {
             content: "LC Note: original language",
             has_submenu: true,
@@ -601,6 +702,14 @@ const cardsOn = () => {
 };
 const CARD_H = 76;
 const CARD_RE = /^card(?:\s*:\s*(.*))?$/i;
+// @[download: file.safetensors · 2 GB | loras](https://…): a download button, with a "Place in" folder line when given
+const DL_RE = /^download\s*:\s*(.+)$/i;
+const dlParts = (caption) => {
+  const [label, folder] = caption.split("|").map((x) => (x || "").trim());
+  const dot = label.lastIndexOf(" · ");
+  return { name: dot > 0 ? label.slice(0, dot) : label, size: dot > 0 ? label.slice(dot + 3) : "", folder: folder ? (/^comfyui[\/]/i.test(folder) ? folder : `ComfyUI/models/${folder}`) : "" };
+};
+const lineH = (l) => (l.kind === "download" ? (dlParts(l.caption).folder ? 58 : 34) : CARD_H);
 const cardInfo = new Map(); // url -> card data, "loading", or a failed card
 
 function loadCard(url) {
@@ -634,11 +743,53 @@ function addCardCss() {
 .lc-link-card .lc-lc-cap{font-size:11px;color:#7dd3fc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lc-link-card.lc-has-cap .lc-lc-title{-webkit-line-clamp:1}
 .lc-card-layer{position:absolute;pointer-events:none;overflow:hidden;z-index:2}
-.lc-card-layer .lc-link-card{position:absolute;left:0;right:0}`;
+.lc-card-layer .lc-link-card{position:absolute;left:0;right:0}
+.lc-dl-card{display:flex;flex-direction:column;align-items:flex-start;gap:4px;margin:0;pointer-events:auto}
+.lc-card-layer .lc-dl-card{position:absolute;left:0;right:0}
+.lc-dl{display:inline-flex;align-items:center;gap:8px;max-width:100%;height:30px;box-sizing:border-box;padding:0 12px;border-radius:15px;background:#2b6cb0;color:#fff!important;
+  text-decoration:none!important;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;overflow:hidden}
+.lc-dl:hover{background:#3182ce}
+.lc-dl .lc-dl-n{overflow:hidden;text-overflow:ellipsis}
+.lc-dl .lc-dl-s{font-weight:400;opacity:.8}
+.lc-dl-folder{font-size:11px;opacity:.8;padding-left:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}`;
   document.head.appendChild(s);
 }
 
-function makeCard(url, caption) {
+function makeDownload(url, caption) {
+  const { name, size, folder } = dlParts(caption);
+  const wrap = document.createElement("div");
+  wrap.className = "lc-dl-card";
+  const a = document.createElement("a");
+  a.className = "lc-dl";
+  a.href = url;
+  a.target = "_blank";
+  a.rel = "noopener noreferrer";
+  a.title = url;
+  const ic = document.createElement("span");
+  ic.textContent = "⬇";
+  const n = document.createElement("span");
+  n.className = "lc-dl-n";
+  n.textContent = name;
+  a.append(ic, n);
+  if (size) {
+    const sz = document.createElement("span");
+    sz.className = "lc-dl-s";
+    sz.textContent = size;
+    a.appendChild(sz);
+  }
+  wrap.appendChild(a);
+  if (folder) {
+    const f = document.createElement("div");
+    f.className = "lc-dl-folder";
+    f.textContent = `📂 Place in: ${folder}`;
+    wrap.appendChild(f);
+  }
+  for (const ev of ["pointerdown", "mousedown", "dblclick"]) wrap.addEventListener(ev, (e) => e.stopPropagation());
+  return wrap;
+}
+
+function makeCard(url, caption, kind) {
+  if (kind === "download") return makeDownload(url, caption);
   const a = document.createElement("a");
   a.className = "lc-link-card";
   a.href = url;
@@ -708,12 +859,13 @@ function cardLines(root) {
     if (p.tagName !== "P") continue;
     const a = p.querySelector("a[href]");
     if (!a || p.children.length !== 1) continue;
-    const m = CARD_RE.exec(a.textContent.trim());
+    const dl = DL_RE.exec(a.textContent.trim());
+    const m = dl || CARD_RE.exec(a.textContent.trim());
     if (!m) continue;
     const before = p.textContent.slice(0, p.textContent.indexOf(a.textContent)).trim();
     if (before !== "@" || p.textContent.trim() !== "@" + a.textContent.trim()) continue;
     if (!/^https?:\/\//i.test(a.getAttribute("href"))) continue;
-    out.push({ p, url: a.getAttribute("href"), caption: (m[1] || "").trim() });
+    out.push({ p, url: a.getAttribute("href"), caption: (m[1] || "").trim(), kind: dl ? "download" : "card" });
   }
   return out;
 }
@@ -732,13 +884,13 @@ function vueCards(node) {
     });
     return;
   }
-  for (const { p, url, caption } of cardLines(box)) {
+  for (const { p, url, caption, kind } of cardLines(box)) {
     if (p.dataset.lcCard === url) continue;
     addCardCss();
     p._lcOrig = p.innerHTML;
     p.dataset.lcCard = url;
     p.textContent = "";
-    p.appendChild(makeCard(url, caption));
+    p.appendChild(makeCard(url, caption, kind));
   }
 }
 
@@ -774,15 +926,15 @@ function classicCards(node) {
     pm.addEventListener("scroll", () => placeClassic(el, pm), { passive: true });
   }
   const kids = [...pm.children];
-  const key = lines.map((l) => kids.indexOf(l.p) + "|" + l.url + "|" + l.caption).join(";");
+  const key = lines.map((l) => kids.indexOf(l.p) + "|" + l.kind + "|" + l.url + "|" + l.caption).join(";");
   if (key !== st.key) {
     st.key = key;
     const sel = `.comfy-markdown[data-lc-note="${String(node.id).replace(/"/g, "")}"] .ProseMirror`;
     st.style.textContent = lines
-      .map((l) => `${sel} > :nth-child(${kids.indexOf(l.p) + 1}){visibility:hidden;height:${CARD_H}px;margin:6px 0;overflow:hidden}`)
+      .map((l) => `${sel} > :nth-child(${kids.indexOf(l.p) + 1}){visibility:hidden;height:${lineH(l)}px;margin:6px 0;overflow:hidden}`)
       .join("\n");
     st.layer.textContent = "";
-    for (const l of lines) st.layer.appendChild(makeCard(l.url, l.caption)).dataset.child = String(kids.indexOf(l.p));
+    for (const l of lines) st.layer.appendChild(makeCard(l.url, l.caption, l.kind)).dataset.child = String(kids.indexOf(l.p));
   }
   placeClassic(el, pm);
 }

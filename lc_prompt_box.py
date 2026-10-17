@@ -1,5 +1,5 @@
 """
-LC Positive / LC Negative
+Prompt (LCPositive) / LC Negative
 -------------------------
 Simple multiline prompt boxes.
 Default node colors are applied by web/lc_prompt_box.js
@@ -22,7 +22,7 @@ class LCPositive:
     RETURN_NAMES = ("positive",)
     FUNCTION = "get"
     CATEGORY = "LC123/conditioning"
-    DESCRIPTION = "Positive prompt text box."
+    DESCRIPTION = "Prompt text box."
 
     def get(self, positive):
         return (positive,)
@@ -56,6 +56,6 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "LCPositive": "LC Positive",
+    "LCPositive": "Prompt",
     "LCNegative": "LC Negative",
 }

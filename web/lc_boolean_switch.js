@@ -86,6 +86,12 @@ function syncStateLabels(node) {
   }
 }
 
+// Nodes 2.0 never calls onDrawForeground, so the labels are synced on a light timer there instead
+setInterval(() => {
+  if (!window.LiteGraph?.vueNodesMode) return;
+  for (const n of app.canvas?.graph?._nodes || []) if (n.type === "LCBooleanSwitch") syncStateLabels(n);
+}, 500);
+
 app.registerExtension({
   name: "LC123.BooleanSwitch",
   async beforeRegisterNodeDef(nodeType, nodeData) {

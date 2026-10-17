@@ -11,6 +11,7 @@ class LCTimer:
     FUNCTION = "noop"
     CATEGORY = "LC123/utils"
     DESCRIPTION = ("Times every run and scores the last one against the 5 before it: faster in green, slower in red. "
+                   "The last 10 runs are listed on the node, newest first, and saved with the workflow. "
                    "Stopped runs and fully cached runs are left out. Right-click to clear the history.")
 
     def noop(self):

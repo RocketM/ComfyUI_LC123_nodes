@@ -1,4 +1,4 @@
-// LC Timer: times every run and scores the newest one against the 5 runs before it.
+// LC Timer: times every run, scores the newest one against the 5 runs before it and lists the last 10.
 // Runs are timed from ComfyUI's own events (start -> success). Stopped runs and fully cached ones (under half a second)
 // are left out of the scoring. The history saves with the workflow (node.properties.lc_runs).
 import { app } from "../../scripts/app.js";
@@ -7,6 +7,7 @@ import { lcApplyLaunchColor } from "./lc_color.js";
 
 const TYPE = "LCTimer";
 const KEEP = 6; // the current run + the 5 it is scored against
+const HISTORY = 10; // runs listed on the node: the current one + the 9 before it
 const SAME = 2; // within 2% counts as the same
 const MIN_RUN = 0.5; // seconds; anything quicker was all cache
 const nodes = new Set();
@@ -71,7 +72,7 @@ function render(node) {
   }
   ui.list.textContent = "";
   const lastOk = cur ? rs.lastIndexOf(cur) : -1;
-  const list = rs.filter((r, i) => i !== lastOk).slice(-(KEEP - 1)).reverse(); // newest first, without the current run
+  const list = rs.filter((r, i) => i !== lastOk).slice(-(HISTORY - 1)).reverse(); // newest first, without the current run
   if (!list.length && !runStart) ui.list.innerHTML = `<div class="lc-rt-empty">No earlier runs yet.</div>`;
   for (const r of list) {
     const row = document.createElement("div");
@@ -103,7 +104,7 @@ function endRun(ok) {
     for (const n of nodes) {
       const rs = runs(n);
       rs.push({ t: Math.round(t * 100) / 100, at: clock(), ok });
-      while (rs.length > KEEP * 2) rs.shift(); // stopped runs ride along, so keep a little extra
+      while (rs.length > HISTORY * 2) rs.shift(); // stopped runs ride along, so keep a little extra
       n.setDirtyCanvas?.(true, false);
     }
   }

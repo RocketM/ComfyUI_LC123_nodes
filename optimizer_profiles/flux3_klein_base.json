@@ -1,0 +1,136 @@
+{
+ "id": "flux3_klein_base",
+ "name": "Flux 3 Klein (Base)",
+ "kind": "image",
+ "params_b": 5.6,
+ "notes": [
+  "The undistilled model, built for fine-tuning and LoRA training: 50 steps at cfg 3.5, so about 6x the time of the distilled model.",
+  "Needs ComfyUI 0.41.0 or newer (text encoder type flux3). BFL's files are gated: accept the FLUX Kommunity License on Hugging Face first.",
+  "Always expand the prompt into a full scene caption (BFL's prompt upsampler or an LLM such as LC Vision Prompt Enhancer): a short prompt sent as typed gives generic output.",
+  "Text-to-image and editing with up to 10 reference images run through the same model."
+ ],
+ "components": {
+  "diffusion": {
+   "label": "Image model",
+   "role": "diffusion",
+   "variants": [
+    {
+     "file": "flux3_image_klein_base_bf16.safetensors",
+     "format": "bf16",
+     "gb": 11.08,
+     "bits": 16,
+     "repo": "black-forest-labs/flux-3-image-klein-comfy",
+     "loader": "UNETLoader",
+     "note": "gated"
+    },
+    {
+     "file": "flux3_image_klein_base_int8_convrot.safetensors",
+     "format": "int8_convrot",
+     "gb": 5.81,
+     "bits": 8,
+     "repo": "black-forest-labs/flux-3-image-klein-comfy",
+     "loader": "UNETLoader",
+     "default": true,
+     "note": "gated"
+    },
+    {
+     "file": "flux3_image_klein_base_nvfp4.safetensors",
+     "format": "nvfp4",
+     "gb": 5.26,
+     "bits": 4,
+     "repo": "black-forest-labs/flux-3-image-klein-comfy",
+     "loader": "UNETLoader",
+     "note": "gated"
+    },
+    {
+     "file": "flux-3-image-klein-base-Q8_0.gguf",
+     "format": "gguf_q8_0",
+     "gb": 6.07,
+     "bits": 8,
+     "repo": "unsloth/flux-3-image-klein-base-GGUF",
+     "loader": "UnetLoaderGGUF",
+     "community": true
+    },
+    {
+     "file": "flux-3-image-klein-base-Q6_K.gguf",
+     "format": "gguf_q6_k",
+     "gb": 4.78,
+     "bits": 6,
+     "repo": "unsloth/flux-3-image-klein-base-GGUF",
+     "loader": "UnetLoaderGGUF",
+     "community": true
+    },
+    {
+     "file": "flux-3-image-klein-base-Q5_K_M.gguf",
+     "format": "gguf_q5_k_m",
+     "gb": 4.2,
+     "bits": 5,
+     "repo": "unsloth/flux-3-image-klein-base-GGUF",
+     "loader": "UnetLoaderGGUF",
+     "community": true
+    },
+    {
+     "file": "flux-3-image-klein-base-Q4_K_M.gguf",
+     "format": "gguf_q4_k_m",
+     "gb": 3.65,
+     "bits": 4,
+     "repo": "unsloth/flux-3-image-klein-base-GGUF",
+     "loader": "UnetLoaderGGUF",
+     "community": true
+    },
+    {
+     "file": "flux-3-image-klein-base-Q3_K_M.gguf",
+     "format": "gguf_q3_k_m",
+     "gb": 2.99,
+     "bits": 3,
+     "repo": "unsloth/flux-3-image-klein-base-GGUF",
+     "loader": "UnetLoaderGGUF",
+     "community": true
+    }
+   ]
+  },
+  "text_encoder": {
+   "label": "Text encoder (Qwen3-VL-4B)",
+   "role": "text_encoder",
+   "clip_type": "flux3",
+   "variants": [
+    {
+     "file": "qwen3vl_4b_bf16.safetensors",
+     "format": "bf16",
+     "gb": 8.88,
+     "bits": 16,
+     "repo": "black-forest-labs/flux-3-image-klein-comfy",
+     "loader": "CLIPLoader",
+     "note": "gated"
+    },
+    {
+     "file": "qwen3vl_4b_int8_convrot.safetensors",
+     "format": "int8_convrot",
+     "gb": 4.86,
+     "bits": 8,
+     "repo": "black-forest-labs/flux-3-image-klein-comfy",
+     "loader": "CLIPLoader",
+     "default": true,
+     "note": "gated"
+    }
+   ]
+  },
+  "vae": {
+   "label": "VAE",
+   "role": "fixed",
+   "variants": [
+    {
+     "file": "flux2-vae.safetensors",
+     "format": "bf16",
+     "gb": 0.34,
+     "bits": 16,
+     "repo": "black-forest-labs/flux-3-image-klein-comfy",
+     "loader": "VAELoader",
+     "default": true,
+     "note": "gated"
+    }
+   ]
+  }
+ },
+ "source": "Hugging Face tree API sizes and the model card of black-forest-labs/flux-3-image-klein-comfy, 2026-10-16.; unsloth GGUF sizes. Not measured yet."
+}

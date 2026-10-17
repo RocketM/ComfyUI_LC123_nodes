@@ -30,13 +30,17 @@ class LCBooleanSwitch:
                     "BOOLEAN",
                     {
                         "default": False,
-                        "tooltip": "True → on_true, False → on_false.",
+                        "tooltip": (
+                            "True → on_true, False → on_false.\n"
+                            "💡 Rename the on_true or on_false socket (right-click it > Rename Slot) and this switch "
+                            "shows those names, e.g. Upscale / Skip. Not renamed: it shows the title of the node wired in."
+                        ),
                     },
                 ),
             },
             "optional": {
-                "on_true": (any_type, {"lazy": True, "tooltip": "Passed through when state is true."}),
-                "on_false": (any_type, {"lazy": True, "tooltip": "Passed through when state is false."}),
+                "on_true": (any_type, {"lazy": True, "tooltip": "Passed through when state is true. Rename this socket to rename the switch's true state."}),
+                "on_false": (any_type, {"lazy": True, "tooltip": "Passed through when state is false. Rename this socket to rename the switch's false state."}),
             },
         }
 
@@ -44,7 +48,10 @@ class LCBooleanSwitch:
     RETURN_NAMES = ("*",)
     FUNCTION = "switch"
     CATEGORY = "LC123/utils"
-    DESCRIPTION = "Boolean switch: state picks on_true or on_false (any type)."
+    DESCRIPTION = (
+        "Boolean switch: state picks on_true or on_false (any type). Only the picked branch runs. "
+        "Rename the on_true / on_false sockets and the switch's two states take those names."
+    )
 
     def check_lazy_status(self, state, **kwargs):
         # Lazy inputs: only the selected branch is evaluated. A connected but not yet

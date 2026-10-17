@@ -269,7 +269,7 @@ def calc(model, sysp):
 # landed at across 9 models (8-bit ~0.02, 6 ~0.03, 5 ~0.04, 4 ~0.07, 3 ~0.18, 2 ~0.35)
 BITS_TO_LPIPS = {32: 0.0, 16: 0.0, 8: 0.02, 6: 0.03, 5: 0.04, 4: 0.07, 3: 0.18, 2: 0.35}
 GOALS = {"Quality": None, "Optimal": 0.05, "Fast": 0.10}  # the most distance from bf16 each goal accepts (frame sheets: under ~0.05 looks the same)
-STEPS = {"minimax_h3": 8, "minimax_h3_fl2va": 8, "krea2": 8, "ltx25": 11, "anima": 30, "z_image_turbo": 8, "qwen_image_21": 25, "flux2_klein_9b": 20, "flux2_klein_9b_distilled": 4, "ideogram4": 20, "ltx23": 11,
+STEPS = {"minimax_h3": 8, "minimax_h3_fl2va": 8, "krea2": 8, "ltx25": 11, "anima": 30, "z_image_turbo": 8, "qwen_image_21": 25, "flux2_klein_9b": 20, "flux2_klein_9b_distilled": 4, "flux3_klein": 16, "flux3_klein_base": 50, "ideogram4": 20, "ltx23": 11,
          "krea2_raw": 52, "sdxl": 30, "illustrious": 28, "pony": 25}
 LOADER_NEEDS = {"UnetLoaderGGUF": "needs the ComfyUI-GGUF pack", "CLIPLoaderGGUF": "needs the ComfyUI-GGUF pack"}
 
@@ -369,6 +369,13 @@ def recommend(model, sysp, goal="Optimal", megapixels=None):
             else:
                 good = [r for r in pool if r["_q"] <= limit] or [min(pool, key=lambda r: (round(r["_q"], 3), not r["_q_measured"], r["gb"]))]
                 r = min(good, key=lambda r: (round(r.get("_t") or 1e9, 2), round(r["_q"], 3), not r["_q_measured"], r["gb"]))
+            # Fast on a small GPU: the file tested as the fast pick there (H3 pruned Q4 on an 8 GB laptop: 1.6x faster,
+            # visibly softer, so never the Optimal default)
+            vram = ((sysp.get("gpus") or [{}])[0].get("vram_gb") or 0)
+            if goal == "Fast" and vram:
+                small = [x for x in rows if vram <= (next(v for v in comps[key]["variants"] if v["file"] == x["file"]).get("prefer_up_to_vram_gb") or 0)]
+                if small:
+                    r = small[0]
         v = next(x for x in comps[key]["variants"] if x["file"] == r["file"])
         info = [v["note"]] if v.get("note") not in (None, "pair", "gated") else []
         warn = [w for w in (LOADER_NEEDS.get(r.get("loader", "")), "gated on Hugging Face: accept the license there first" if v.get("note") == "gated" else None,

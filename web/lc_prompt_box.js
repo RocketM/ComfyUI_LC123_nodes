@@ -1,5 +1,5 @@
 /**
- * LC Positive / Negative — default node colors
+ * Prompt (LCPositive) / LC Negative: default node colors
  * Positive: green  #326432
  * Negative: red    #643232
  */

@@ -43,6 +43,7 @@ ROLE_FOLDERS = {
 TE_EXPECTS = {
     "anima": ("Qwen3 0.6B", 28, 1024, False), "flux2_klein_9b": ("Qwen3 8B", 36, 4096, False),
     "flux2_klein_9b_distilled": ("Qwen3 8B", 36, 4096, False),
+    "flux3_klein": ("Qwen3-VL 4B", 36, 2560, True), "flux3_klein_base": ("Qwen3-VL 4B", 36, 2560, True),
     "ideogram4": ("Qwen3-VL 8B", 36, 4096, True), "krea2": ("Qwen3-VL 4B", 36, 2560, True),
     "ltx23": ("Gemma 3 12B", 48, 3840, True), "ltx25": ("Gemma 4 12B", 48, 3840, True),
     "minimax_h3": ("Qwen3-VL 32B (H3)", 50, 5120, True), "minimax_h3_fl2va": ("Qwen3-VL 32B (H3)", 50, 5120, True), "qwen_image_21": ("Qwen3-VL 8B", 36, 4096, True),
@@ -53,7 +54,7 @@ TE_NAMES = {(28, 1024, False): "Qwen3 0.6B", (36, 2560, False): "Qwen3 4B", (36,
             (48, 3840, True): "Gemma 12B", (32, 4096, True): "Qwen3.5 9B", (32, 4096, False): "Llama 3.1 8B",
             (26, 2304, False): "Gemma 2 2B", (30, 5120, True): "Mistral Small 3", (35, 1536, True): "Gemma 4 E2B",
             (42, 2560, True): "Gemma 4 E4B"}
-VAE_EXPECTS = {"anima": (16, 5), "krea2": (16, 5), "z_image_turbo": (16, 4), "flux2_klein_9b": (32, 4), "flux2_klein_9b_distilled": (32, 4), "ideogram4": (32, 4),
+VAE_EXPECTS = {"anima": (16, 5), "krea2": (16, 5), "z_image_turbo": (16, 4), "flux2_klein_9b": (32, 4), "flux2_klein_9b_distilled": (32, 4), "flux3_klein": (32, 4), "flux3_klein_base": (32, 4), "ideogram4": (32, 4),
                "qwen_image_21": (64, 5), "ltx25": (128, 2), "krea2_raw": (16, 5), "sdxl": (4, 4), "illustrious": (4, 4), "pony": (4, 4)}
 VAE_NAMES = {(16, 4): "16-channel 2D (Flux 1 / Z-Image)", (16, 5): "16-channel 3D (Wan / Qwen-Image)", (32, 4): "32-channel (Flux 2)",
              (64, 5): "64-channel (Qwen-Image 2.1)", (4, 4): "4-channel (SD / SDXL)", (128, 2): "128-channel (LTX)"}
@@ -302,6 +303,8 @@ def choices(profile_id, role, goal):
     if role == "model":  # every version of Lonecat's own models made for this base model
         known.update(n for _, n in local_files(role) if own_profile(n) == profile_id)
     out["known"] = sorted(known)
+    out["picks"] = pick_choices(profile_id, role, goal)
+    out["groups"] = on_disk_groups(profile_id, role)
     return out
 
 
@@ -557,11 +560,204 @@ def download_shipped(entry, value, folder="diffusion_models"):
     return folder, value
 
 
+# ---------------------------------------------------------------- one-click picks: Lonecat's releases, the author's files
+# "★ Krealism V3.1": the newest featured release of a family for this base model, in the quant that suits this machine
+# (the same format the report recommends for the base model). "★ Author: <file> | <link>": a file the workflow's
+# author named in the Vision Assistant tour; it downloads from a Hugging Face link, other links are shown to the reader.
+AUTHOR = "★ Author: "
+_FMT_CLASS = {"bf16": 16, "fp16": 16, "fp32": 16, "fp8_scaled": 8, "fp8_e4m3fn": 8, "int8_convrot": 8, "mxfp8": 8, "gguf_q8_0": 8,
+              "nvfp4": 4, "w4a8": 4, "mxfp4": 4}
+
+
+def _fmt_class(fmt):
+    fmt = str(fmt or "").lower()
+    if fmt in _FMT_CLASS:
+        return _FMT_CLASS[fmt]
+    m = re.search(r"q(\d)", fmt)
+    return int(m.group(1)) if m else 16
+
+
+def is_pick(value):
+    return isinstance(value, str) and value.startswith("★ ") and value != RECOMMENDED
+
+
+def releases(profile_id):
+    """[(label, [entries])] of the featured releases for this base model, one per family (newest featured version)."""
+    out = {}
+    for m in shipped_all():
+        if m.get("profile") == profile_id and m.get("featured"):
+            out.setdefault(m["family"], {}).setdefault(m.get("version", ""), []).append(m)
+    rel = []
+    for fam, versions in out.items():
+        ver = sorted(versions, key=lambda v: [int(x) for x in re.findall(r"\d+", v)] or [0])[-1]
+        rel.append((f"{fam} {ver}".strip(), versions[ver]))
+    return sorted(rel, key=lambda r: r[0])
+
+
+def release_pick(profile_id, label, goal):
+    """The file of a release that suits this machine: the report's format for the base model, on disk first.
+    Returns (entry, hit or None) or None."""
+    entries = next((es for lb, es in releases(profile_id) if lb == label), None)
+    if not entries:
+        return None
+    prof = profiles().get(profile_id)
+    rec = recommended(prof, "model", goal) if prof else None
+    fmt = (rec or {}).get("format")
+    want = _fmt_class(fmt)
+    hits = {m["file"]: find_on_disk(m["file"], ROLE_FOLDERS["model"]) for m in entries}
+    exact = [m for m in entries if m.get("format") == fmt]
+    same = [m for m in entries if _fmt_class(m.get("format")) == want]
+    for group in (exact, same):
+        for m in group:
+            if hits[m["file"]]:
+                return m, hits[m["file"]]
+    if exact:
+        return exact[0], None
+    if same:
+        return min(same, key=lambda m: m.get("gb") or 0), None
+    # no file of that size class: the closest smaller one, else the smallest
+    gb = (rec or {}).get("gb") or 0
+    smaller = [m for m in entries if (m.get("gb") or 0) <= gb]
+    m = max(smaller, key=lambda m: m.get("gb") or 0) if smaller else min(entries, key=lambda m: m.get("gb") or 0)
+    return m, hits[m["file"]]
+
+
+def parse_author(value):
+    """'★ Author: file | link' -> (file, link, (repo, path) for a Hugging Face file link or None)."""
+    body = value[len(AUTHOR):]
+    file, _, link = body.partition(" | ")
+    link = link.strip()
+    m = re.match(r"https?://huggingface\.co/([^/]+/[^/]+)/(?:resolve|blob)/[^/]+/(.+?)(?:\?.*)?$", link)
+    hf = (m.group(1), m.group(2)) if m else None
+    file = file.strip() or (os.path.basename(hf[1]) if hf else "")
+    return file, link, hf
+
+
+def author_target(role, value):
+    """(file, link, hf, hit) for an author pick."""
+    file, link, hf = parse_author(value)
+    hit = find_on_disk(os.path.basename(file), ROLE_FOLDERS[role]) if file else None
+    return file, link, hf, hit
+
+
+def download_author(role, value):
+    file, link, hf, hit = author_target(role, value)
+    if hit:
+        return hit
+    if not hf:
+        raise FileNotFoundError(f"[LC Optimizer] {file or 'The author file'} is not on disk and only downloads from a Hugging Face "
+                                f"link. Get it here: {link or '(no link given)'}")
+    folder = ROLE_FOLDERS[role][0]
+    target = folder_paths.get_folder_paths(folder)[0]
+    os.makedirs(target, exist_ok=True)
+    name = os.path.basename(hf[1])
+    with _DL_LOCK:
+        print(f"[LC Optimizer] The workflow's author picked {name}: downloading from https://huggingface.co/{hf[0]} ...")
+        _stream(hf[0], hf[1], os.path.join(target, name), name)
+    print(f"[LC Optimizer] Finished downloading {name}.")
+    return folder, name
+
+
+def pick_choices(profile_id, role, goal):
+    """The one-click picks under ★ Recommended for the model: each featured release in the quant for this machine."""
+    out = []
+    if role != "model" or is_custom(profile_id):
+        return out
+    for label, _ in releases(profile_id):
+        got = release_pick(profile_id, label, goal)
+        if got:
+            m, hit = got
+            out.append({"value": "★ " + label, "label": label, "file": m["file"], "format": m.get("format"), "gb": m.get("gb"),
+                        "on_disk": bool(hit)})
+    return out
+
+
+# ---------------------------------------------------------------- what's on disk for a base model, grouped
+_GROUP_TOKEN = re.compile(r"(?:^|[_\-\s.])(v\d+(?:[._]\d+)*)|(bf16|fp16|fp32|fp8|int8|nvfp4|mxfp8|mxfp4|w4a8|q\d(?:_k)?(?:_[msl0-9])*|gguf|"
+                          r"scaled|convrot|turbo|base)(?=$|[_\-\s.])", re.I)
+
+
+def _family_version(name, entry=None):
+    if entry:
+        return entry["family"], entry.get("version", "")
+    stem = os.path.splitext(os.path.basename(name.replace("\\", "/")))[0]
+    m = _GROUP_TOKEN.search(stem)
+    cut = m.start() if m else len(stem)
+    camel = re.search(r"(?<=[a-z])V\d", stem)  # finepornV5INT8, moodyKrea2MixV8
+    if camel and camel.start() < cut:
+        cut = camel.start()
+    fam = stem[:cut]
+    fam = re.sub(r"[_\-\s.]+$", "", fam) or stem
+    ver = ""
+    vm = re.search(r"(?:^|[_\-\s.])v(\d+(?:[._]\d+)*)", stem, re.I) or re.search(r"(?<=[a-z])V(\d+(?:\.\d+)?)", stem)
+    if vm:
+        digits = vm.group(1).replace("_", ".")
+        ver = "V" + (digits if "." in digits or len(digits) == 1 else f"{digits[0]}.{digits[1:]}")
+    return fam, ver
+
+
+_CLASS_CACHE = {}
+
+
+def _class_of(folder, name):
+    p = full_path(folder, name)
+    if not p or p.lower().endswith(".gguf"):
+        return None
+    try:
+        key = (p, os.path.getmtime(p))
+    except OSError:
+        return None
+    if key not in _CLASS_CACHE:
+        _CLASS_CACHE[key] = model_class(p)
+    return _CLASS_CACHE[key]
+
+
+def on_disk_groups(profile_id, role):
+    """Model files on disk made for this base model, grouped family -> version -> files: Lonecat's releases (by
+    name), the profile's own files and any other file whose header ComfyUI detects as this model."""
+    prof = profiles().get(profile_id)
+    if not prof or role != "model":
+        return []
+    want = MODEL_CLASSES.get(profile_id)
+    official = {v["file"].lower() for v in variants(prof, role)}
+    tree = {}
+    for folder, name in local_files(role):
+        base = os.path.basename(name.replace("\\", "/"))
+        entry = shipped(base)
+        own = own_profile(base)
+        if base.lower() in official:
+            fam, ver = prof["name"] + " (official)", ""
+        elif own == profile_id or (entry and entry.get("profile") == profile_id):
+            fam, ver = _family_version(base, entry)
+        elif own or (entry and entry.get("profile")):
+            continue  # one of Lonecat's models for another base model
+        elif want and (folder == "diffusion_models" or checkpoint_only(profile_id)) and _class_of(folder, name) == want:
+            fam, ver = _family_version(base)
+        else:
+            continue
+        tree.setdefault(fam, {}).setdefault(ver, []).append(name)
+    return [{"family": f, "versions": [{"version": v, "files": sorted(fs, key=lambda n: os.path.basename(n).lower())}
+                                       for v, fs in sorted(vs.items(), key=lambda x: x[0], reverse=True)]}
+            for f, vs in sorted(tree.items(), key=lambda x: x[0].lower())]
+
+
 # ---------------------------------------------------------------- resolve a widget value to a file
 def resolve(profile_id, role, value, goal):
     """Widget value -> (folder, name, variant or None). Downloads when needed. None for 'None' / From checkpoint."""
     if value in (NONE, FROM_CKPT, "", None):
         return None
+    if is_pick(value):
+        if value.startswith(AUTHOR):
+            folder, name = download_author(role, value)
+            return folder, name, None
+        got = release_pick(profile_id, value[2:], goal) if role == "model" else None
+        if not got:
+            raise FileNotFoundError(f"[LC Optimizer] {value[2:]} is not a release for this base model. Pick another file.")
+        entry, hit = got
+        if hit:
+            return hit[0], hit[1], None
+        folder, name = download_shipped(entry, f"{entry['family']}/{entry['file']}", entry.get("folder", "diffusion_models"))
+        return folder, name, None
     prof = profiles().get(profile_id)
     vs = variants(prof, role) if prof else []
     if value == RECOMMENDED:
@@ -623,7 +819,15 @@ def loaded_files(inputs):
         if role not in roles or not isinstance(value, str) or value in (NONE, FROM_CKPT, ""):
             continue
         try:
-            if value == RECOMMENDED or value.startswith(DOWNLOAD):
+            if is_pick(value):
+                if value.startswith(AUTHOR):
+                    hit = author_target(role, value)[3]
+                else:
+                    got = release_pick(pid, value[2:], goal) if role == "model" else None
+                    hit = got[1] if got else None
+                if hit:
+                    out.append((hit[1], hit[0]))
+            elif value == RECOMMENDED or value.startswith(DOWNLOAD):
                 if value == RECOMMENDED:
                     v = recommended(prof, role, goal) if prof else None
                     fname = v["file"] if v else None
@@ -889,7 +1093,28 @@ def plan(profile_id, goal, picks, manual=None):
                 out["files"].append({"role": role, "label": "from the checkpoint", "state": "ckpt"})
             continue
         try:
-            if value == RECOMMENDED or value.startswith(DOWNLOAD):
+            if is_pick(value):
+                if value.startswith(AUTHOR):
+                    file, link, hf, hit = author_target(role, value)
+                    row.update(label=os.path.basename(file) or "the author's file", state="disk" if hit else ("download" if hf else "missing"))
+                    if not hit:
+                        out["hints"].append(("ℹ️", f"The workflow's author picked {os.path.basename(file) or 'this file'}: "
+                                                   + (f"it downloads from huggingface.co/{hf[0]} on the first run." if hf else f"get it at {link or '(no link given)'}.")))
+                else:
+                    got = release_pick(profile_id, value[2:], goal) if role == "model" else None
+                    if not got:
+                        row.update(label=value[2:], state="missing")
+                        out["hints"].append(("⚠️", f"{value[2:]} is not a release for {out['base']}. Pick another file."))
+                        out["files"].append(row)
+                        continue
+                    entry, hit = got
+                    row.update(label=entry["file"], gb=entry.get("gb"), state="disk" if hit else "download")
+                    if not hit:
+                        out["hints"].append(("ℹ️", f"{entry['family']} downloads from huggingface.co/{entry['repo']} on the first run."))
+                if hit:
+                    paths[role] = full_path(*hit)
+                    ckpt = ckpt or (role == "model" and hit[0] == "checkpoints")
+            elif value == RECOMMENDED or value.startswith(DOWNLOAD):
                 if value == RECOMMENDED:
                     v = recommended(prof, role, goal) if prof else None
                 else:
