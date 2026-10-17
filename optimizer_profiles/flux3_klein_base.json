@@ -132,5 +132,248 @@
    ]
   }
  },
- "source": "Hugging Face tree API sizes and the model card of black-forest-labs/flux-3-image-klein-comfy, 2026-10-16.; unsloth GGUF sizes. Not measured yet."
+ "source": "Hugging Face tree API sizes and the model card of black-forest-labs/flux-3-image-klein-comfy, 2026-10-16.; unsloth GGUF sizes. Not measured yet. | measured 2026-10-17 (Goliath 5090)",
+ "benchmarks": {
+  "workflow": "BFL flux3 klein t2i graph as API, 20 steps, euler/simple, cfg 3.5, TE qwen3vl_4b int8_convrot, 2026-10-17",
+  "references": [
+   {
+    "machine": {
+     "gpu": "NVIDIA GeForce RTX 5090",
+     "attention_sdpa_ms": 2.42,
+     "fp8_tflops": 399.8,
+     "note": "power limit 80% (460 W) during this bench"
+    },
+    "runs": [
+     {
+      "file": "flux3_image_klein_base_bf16.safetensors",
+      "megapixels": 1.0,
+      "step_s": 0.45,
+      "peak_vram_mib": 12366
+     },
+     {
+      "file": "flux3_image_klein_base_bf16.safetensors",
+      "megapixels": 2.0,
+      "step_s": 1.0,
+      "peak_vram_mib": 17082
+     },
+     {
+      "file": "flux3_image_klein_base_int8_convrot.safetensors",
+      "megapixels": 1.0,
+      "step_s": 0.19,
+      "peak_vram_mib": 8219
+     },
+     {
+      "file": "flux3_image_klein_base_int8_convrot.safetensors",
+      "megapixels": 2.0,
+      "step_s": 0.39,
+      "peak_vram_mib": 9097
+     },
+     {
+      "file": "flux3_image_klein_base_nvfp4.safetensors",
+      "megapixels": 1.0,
+      "step_s": 0.24,
+      "peak_vram_mib": 8216
+     },
+     {
+      "file": "flux3_image_klein_base_nvfp4.safetensors",
+      "megapixels": 2.0,
+      "step_s": 0.56,
+      "peak_vram_mib": 12600
+     },
+     {
+      "file": "flux-3-image-klein-base-Q8_0.gguf",
+      "megapixels": 1.0,
+      "step_s": 0.49,
+      "peak_vram_mib": 9834
+     },
+     {
+      "file": "flux-3-image-klein-base-Q8_0.gguf",
+      "megapixels": 2.0,
+      "step_s": 1.03,
+      "peak_vram_mib": 14021
+     },
+     {
+      "file": "flux-3-image-klein-base-Q6_K.gguf",
+      "megapixels": 1.0,
+      "step_s": 0.56,
+      "peak_vram_mib": 8984
+     },
+     {
+      "file": "flux-3-image-klein-base-Q6_K.gguf",
+      "megapixels": 2.0,
+      "step_s": 1.11,
+      "peak_vram_mib": 9341
+     },
+     {
+      "file": "flux-3-image-klein-base-Q5_K_M.gguf",
+      "megapixels": 1.0,
+      "step_s": 0.56,
+      "peak_vram_mib": 8199
+     },
+     {
+      "file": "flux-3-image-klein-base-Q5_K_M.gguf",
+      "megapixels": 2.0,
+      "step_s": 1.09,
+      "peak_vram_mib": 12043
+     },
+     {
+      "file": "flux-3-image-klein-base-Q4_K_M.gguf",
+      "megapixels": 1.0,
+      "step_s": 0.55,
+      "peak_vram_mib": 7775
+     },
+     {
+      "file": "flux-3-image-klein-base-Q4_K_M.gguf",
+      "megapixels": 2.0,
+      "step_s": 1.06,
+      "peak_vram_mib": 8681
+     },
+     {
+      "file": "flux-3-image-klein-base-Q3_K_M.gguf",
+      "megapixels": 1.0,
+      "step_s": 0.57,
+      "peak_vram_mib": 7178
+     },
+     {
+      "file": "flux-3-image-klein-base-Q3_K_M.gguf",
+      "megapixels": 2.0,
+      "step_s": 1.12,
+      "peak_vram_mib": 8101
+     }
+    ]
+   }
+  ]
+ },
+ "quality": {
+  "method": "single step from the same bf16 latent (steps 12, 25, 37 of 50), 3 prompts, LPIPS vs bf16; 0 = identical",
+  "reference": "flux3_image_klein_base_bf16.safetensors",
+  "files": {
+   "flux3_image_klein_base_int8_convrot.safetensors": {
+    "lpips_avg": 0.0095,
+    "k12": {
+     "lpips": 0.0121,
+     "ssim": 0.9783,
+     "psnr": 34.82
+    },
+    "k25": {
+     "lpips": 0.0115,
+     "ssim": 0.9771,
+     "psnr": 35.12
+    },
+    "k37": {
+     "lpips": 0.0048,
+     "ssim": 0.9863,
+     "psnr": 37.21
+    }
+   },
+   "flux3_image_klein_base_nvfp4.safetensors": {
+    "lpips_avg": 0.0433,
+    "k12": {
+     "lpips": 0.0604,
+     "ssim": 0.9269,
+     "psnr": 26.92
+    },
+    "k25": {
+     "lpips": 0.0498,
+     "ssim": 0.9244,
+     "psnr": 28.08
+    },
+    "k37": {
+     "lpips": 0.0197,
+     "ssim": 0.9584,
+     "psnr": 30.84
+    }
+   },
+   "flux-3-image-klein-base-Q8_0.gguf": {
+    "lpips_avg": 0.0021,
+    "k12": {
+     "lpips": 0.0029,
+     "ssim": 0.9896,
+     "psnr": 42.76
+    },
+    "k25": {
+     "lpips": 0.0024,
+     "ssim": 0.9913,
+     "psnr": 42.58
+    },
+    "k37": {
+     "lpips": 0.0009,
+     "ssim": 0.9951,
+     "psnr": 44.9
+    }
+   },
+   "flux-3-image-klein-base-Q6_K.gguf": {
+    "lpips_avg": 0.0035,
+    "k12": {
+     "lpips": 0.0052,
+     "ssim": 0.9859,
+     "psnr": 38.99
+    },
+    "k25": {
+     "lpips": 0.0039,
+     "ssim": 0.9885,
+     "psnr": 39.96
+    },
+    "k37": {
+     "lpips": 0.0013,
+     "ssim": 0.9942,
+     "psnr": 43.19
+    }
+   },
+   "flux-3-image-klein-base-Q5_K_M.gguf": {
+    "lpips_avg": 0.0062,
+    "k12": {
+     "lpips": 0.0109,
+     "ssim": 0.9805,
+     "psnr": 35.64
+    },
+    "k25": {
+     "lpips": 0.006,
+     "ssim": 0.9851,
+     "psnr": 37.98
+    },
+    "k37": {
+     "lpips": 0.0018,
+     "ssim": 0.9929,
+     "psnr": 41.55
+    }
+   },
+   "flux-3-image-klein-base-Q4_K_M.gguf": {
+    "lpips_avg": 0.0169,
+    "k12": {
+     "lpips": 0.0318,
+     "ssim": 0.9594,
+     "psnr": 29.81
+    },
+    "k25": {
+     "lpips": 0.0151,
+     "ssim": 0.9716,
+     "psnr": 33.56
+    },
+    "k37": {
+     "lpips": 0.0038,
+     "ssim": 0.9887,
+     "psnr": 38.37
+    }
+   },
+   "flux-3-image-klein-base-Q3_K_M.gguf": {
+    "lpips_avg": 0.0332,
+    "k12": {
+     "lpips": 0.0587,
+     "ssim": 0.9264,
+     "psnr": 27.27
+    },
+    "k25": {
+     "lpips": 0.0309,
+     "ssim": 0.9432,
+     "psnr": 29.79
+    },
+    "k37": {
+     "lpips": 0.0101,
+     "ssim": 0.9744,
+     "psnr": 34.23
+    }
+   }
+  }
+ }
 }
