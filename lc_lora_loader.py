@@ -181,5 +181,33 @@ except Exception:  # pragma: no cover - route registration is best-effort, the n
     pass
 
 
-NODE_CLASS_MAPPINGS = {NODE_NAME: LCLoraLoader}
-NODE_DISPLAY_NAME_MAPPINGS = {NODE_NAME: "LC LoRA Loader 🎚️"}
+class LCLoraLoaderSingle(LCLoraLoader):
+    """LC LoRA Loader with one row and no clip: the same row (on / off, the folder picker, strength, Info), the same
+    rules (a moved LoRA is found again, a missing one is skipped), no add / remove. For a turbo or style LoRA on its
+    own spot. Model only: MOSS Image's LoRAs (and most new models') leave the text encoder alone."""
+
+    RETURN_TYPES = ("MODEL",)
+    RETURN_NAMES = ("model",)
+    DESCRIPTION = ("One LoRA on the model: the LC LoRA Loader row (on / off, folders, strength, Info) without add or "
+                   "remove. For a turbo or style LoRA on its own spot. Model only.")
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {"model": ("MODEL",)},
+            "optional": {
+                "lora_rows": ("STRING", {"default": "[]", "multiline": True, "tooltip": "Internal: the one row (on/lora/strength), maintained by the node's own face."}),
+            },
+        }
+
+    def load(self, model=None, clip=None, lora_rows="[]"):
+        try:
+            rows = (json.loads(lora_rows) or [])[:1]
+        except Exception:
+            rows = []
+        out_model, _ = LCLoraLoader.load(self, model=model, clip=None, lora_rows=json.dumps(rows))
+        return (out_model,)
+
+
+NODE_CLASS_MAPPINGS = {NODE_NAME: LCLoraLoader, "LCLoraLoaderSingle": LCLoraLoaderSingle}
+NODE_DISPLAY_NAME_MAPPINGS = {NODE_NAME: "LC LoRA Loader 🎚️", "LCLoraLoaderSingle": "LC LoRA Loader (single) 🎚️"}

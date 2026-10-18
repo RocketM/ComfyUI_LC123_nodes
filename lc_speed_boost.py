@@ -2,7 +2,7 @@
 LC Speed Boost (BETA): starts the render at half size, then grows it to full size partway through, so the early steps
 cost about a quarter as much. The layout is decided while the picture is small (like the model's own trained size), the
 detail at full size. Roughly 1.5x to 2x faster first passes on Krea 2, Z-Image and Flux.2 Klein, with the same quality,
-about 1.4x on SDXL, Pony and Illustrious, and about 1.2x on Flux 3 Klein.
+about 1.4x on SDXL, Pony and Illustrious, about 1.2x on Flux 3 Klein and 1.6x on MOSS Image.
 
 Based on SPEED, "Spectral Progressive Diffusion for Efficient Image and Video Generation" (Xiao, Chao, Yariv and
 Wetzstein, 2026), and the MIT licensed ComfyUI-SPEED-SwarmNeo. This is LC's own version: it runs on the GPU, it always
@@ -140,15 +140,21 @@ AUTO_NOISE_SDXL = 0.6
 # size and text smeared, small faces went blotchy and hands broke. Clean down to 0.938, sign letters break at 0.92,
 # small faces at 0.87 (5 prompts + 2 edits x 3 seeds, 2026-10-17): about 1.2x faster.
 AUTO_NOISE_FLUX3 = 0.94
+# MOSS Image has shift 5 built in, so its schedule stays noisy long too: at 0.7 a 25-step run had 17 steps at half size
+# and only 8 at full size, and faces came out blotchy and smeared (3 seeds). Growing near 0.85 (step 12 of 25) stays
+# clean at about 1.5x; the 8-step DMD LoRA is fine either way (2026-10-18).
+AUTO_NOISE_MOSS = 0.85
 
 
-def _auto_target(model, kind):
+def _auto_target(model, kind, steps=0):
     """The noise level auto grows at for this model."""
     if kind != "flow":
         return AUTO_NOISE_SDXL
     p = _patcher(model)
     name = type(getattr(p, "model", None)).__name__ if p is not None else ""
-    return AUTO_NOISE_FLUX3 if name == "Flux3" else AUTO_NOISE
+    if name == "MOSSImage" and 0 < steps <= 10:  # a few-step distill (the 8-step DMD LoRA) stays clean at 0.7: 2.4x
+        return AUTO_NOISE
+    return {"Flux3": AUTO_NOISE_FLUX3, "MOSSImage": AUTO_NOISE_MOSS}.get(name, AUTO_NOISE)
 
 
 def plan(sigmas, auto, step, kind="flow", target=None):
@@ -203,7 +209,7 @@ def _sampler(model, x, sigmas, extra_args=None, callback=None, disable=None, *, 
         why = _auto_off(model)
     elif _flow_t(float(sigmas[0]), kind) < MIN_START:
         why = f"the run starts at noise {_flow_t(float(sigmas[0]), kind):.2f}, too little to start small (upscale / image to image pass)"
-    j = None if why else plan(sigmas, lc_auto, lc_step, kind, _auto_target(model, kind))
+    j = None if why else plan(sigmas, lc_auto, lc_step, kind, _auto_target(model, kind, len(sigmas) - 1))
     if j is None:
         if not why:
             why = "grow_at_step is 0" if not lc_auto and lc_step <= 0 else "too few steps"
@@ -273,7 +279,7 @@ class LCSpeedBoost:
                    "Speeds up passes that start from noise (denoise 0.9 and up). Upscale and image to image passes run as "
                    "normal: their layout comes from your image.\n"
                    "Works on Krea 2, Z-Image, Flux.2 Klein, Qwen-Image, Wan, and SDXL / Pony / Illustrious (about 1.4x "
-                   "there). On Flux 3 Klein auto grows early (about 1.2x) so text and small faces stay clean. It switches itself off on inpaint masks (the console says why). On Qwen-Image 2.1 auto stays "
+                   "there). On Flux 3 Klein auto grows early (about 1.2x) so text and small faces stay clean. On MOSS Image it grows at noise 0.85 (about 1.6x, 2.4x with the 8-step LoRA). It switches itself off on inpaint masks (the console says why). On Qwen-Image 2.1 auto stays "
                    "off: line art, text and flat color break at its half size. Set grow_at_step by hand for photos.\n"
                    "Based on SPEED (Xiao, Chao, Yariv and Wetzstein, 2026).")
 
@@ -347,7 +353,7 @@ class LCSpeedBoostKSampler:
                    "ClownShark (RES4LYF) samplers are in the sampler list when RES4LYF is installed. Wire a ClownSampler "
                    "into sampler to use its own settings.\n"
                    "Works on Krea 2, Z-Image, Flux.2 Klein, Qwen-Image, Wan, and SDXL / Pony / Illustrious (about 1.4x "
-                   "there). On Flux 3 Klein auto grows early (about 1.2x) so text and small faces stay clean. On image to image (denoise under 0.9) and inpaint masks it samples like a plain KSampler. On "
+                   "there). On Flux 3 Klein auto grows early (about 1.2x) so text and small faces stay clean. On MOSS Image it grows at noise 0.85 (about 1.6x, 2.4x with the 8-step LoRA). On image to image (denoise under 0.9) and inpaint masks it samples like a plain KSampler. On "
                    "Qwen-Image 2.1 auto stays off: line art, text and flat color break at its half size. Set grow_at_step "
                    "by hand for photos.\n"
                    "Based on SPEED (Xiao, Chao, Yariv and Wetzstein, 2026).")

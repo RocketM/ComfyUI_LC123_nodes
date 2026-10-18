@@ -140,7 +140,7 @@ def collect_lora_metadata(prompt, save_node_id=None, execution_list=None):
         kind = node.get("class_type", "")
         inputs = node.get("inputs", {})
         slots = []
-        if kind in ("LCLoraLoader", "LCLoraLoaderStack"):
+        if kind in ("LCLoraLoader", "LCLoraLoaderStack", "LCLoraLoaderSingle"):
             stack = kind == "LCLoraLoaderStack"  # outputs a LORA_STACK: whatever applies it uses the row strength
             for index, row in enumerate(parse_lc_lora_rows(resolve(inputs.get("lora_rows", "[]"), nid))):
                 model = row["strength"] if stack or inputs.get("model") is not None else 0.0
