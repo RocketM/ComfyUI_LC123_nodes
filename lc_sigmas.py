@@ -126,6 +126,27 @@ def _clown_node():
         return None
 
 
+def linked_inputs_ok(node_cls, input_types):
+    """The type check for wired inputs, for nodes whose VALIDATE_INPUTS takes input_types. A sampler or scheduler list
+    from another node (rgthree KSampler Config, a Sampler Selector) is accepted even when it is not the exact same list:
+    ComfyUI wants the two lists identical, and they stop being identical when a pack adds samplers after LC123 loaded
+    ("sampler_name input expects <list> but the connected output is <other list>")."""
+    from comfy_execution.validation import validate_node_input
+    spec = node_cls.INPUT_TYPES()
+    inputs = {**spec.get("required", {}), **spec.get("optional", {})}
+    for name, got in (input_types or {}).items():
+        want = inputs.get(name, (None,))[0]
+        if want is None:
+            continue
+        if isinstance(want, list):
+            if isinstance(got, list) or got in ("COMBO", "STRING", "*"):
+                continue
+            return f"{name}: expects a list of choices, but the connected output is {got}"
+        if not validate_node_input(got, want):
+            return f"{name}: expects {want}, but the connected output is {got}"
+    return True
+
+
 def clown_names() -> dict:
     """{name as typed or as a Clown Sampler Selector sends it: folder/name} for RES4LYF's samplers. Empty without RES4LYF.
     The Selector sends the bare name (radau_iia_3s), the dropdowns use folder/name (fully_implicit/radau_iia_3s)."""
@@ -655,8 +676,11 @@ class LCSigmas:
                    "each pass.")
 
     @classmethod
-    def VALIDATE_INPUTS(cls, sampler, sigma_curve_presets):
+    def VALIDATE_INPUTS(cls, sampler, sigma_curve_presets, input_types=None):
         # a wired sampler (e.g. a Clown Sampler Selector) arrives as None here; its name is checked when the node runs
+        ok = linked_inputs_ok(cls, input_types)
+        if ok is not True:
+            return ok
         if not (sampler is None or sampler in comfy.samplers.KSampler.SAMPLERS or sampler in clown_names()):
             return f"Unknown sampler: {sampler}"
         if sigma_curve_presets is not None and sigma_curve_presets not in SCHEDULES and not str(sigma_curve_presets).startswith(SAVED):

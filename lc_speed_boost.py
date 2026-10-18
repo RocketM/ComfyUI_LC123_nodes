@@ -333,6 +333,12 @@ class LCSpeedBoostKSampler:
     RETURN_TYPES = ("LATENT",)
     FUNCTION = "sample"
     CATEGORY = "LC123/sampling"
+
+    @classmethod
+    def VALIDATE_INPUTS(cls, input_types):
+        # a wired sampler_name / scheduler list (rgthree KSampler Config etc.) passes even when it isn't our exact list
+        from .lc_sigmas import linked_inputs_ok
+        return linked_inputs_ok(cls, input_types)
     DESCRIPTION = ("BETA. A KSampler with LC Speed Boost built in: about half the processing time, same VRAM, same detail. "
                    "Drop it in where your KSampler was. The layout is worked out at a lower resolution, so a seed frames "
                    "a bit tighter with it on.\n"
