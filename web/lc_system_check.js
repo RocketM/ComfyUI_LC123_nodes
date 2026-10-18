@@ -164,7 +164,7 @@ function shopping(sg, h, lines) {
   }
   h.push(`<div style="margin:8px 0 4px;color:#60a5fa;font-weight:600">Size guide (the model file)</div>`);
   lines.push("Size guide:");
-  for (const t of sg.size.text) {
+  for (const t of sg.size?.text || []) {
     h.push(`<div style="margin:2px 0 2px 10px">📏 ${esc(t)}</div>`);
     lines.push(`📏 ${t}`);
   }

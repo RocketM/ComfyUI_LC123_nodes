@@ -407,8 +407,6 @@ def shopping_guide(sysp):
     """What to look for in a model file on this machine, a size guide, and what to avoid. Model independent."""
     major, minor, g = _cap(sysp)
     m = sysp.get("machine") or {}
-    t = sysp.get("tests") or {}
-    c = sysp.get("comfy") or {}
     vram = g.get("vram_gb") or 0
     ram = m.get("ram_total_gb") or 0
     nv = g.get("vendor") == "NVIDIA"
@@ -436,7 +434,7 @@ def shopping_guide(sysp):
         look.append({"what": "fp8_scaled / fp8mixed", "why": "Fast fp8 math on this card: 1.2 to 1.75x the speed of bf16, near identical (0.014 to 0.037)."})
     if mxfp8:
         look.append({"what": "mxfp8", "why": "Native on RTX 50: 8-bit with a scale for every 32 values, so it stays close even without the per-layer settings a plain fp8 file needs (Krealism V3.1: 0.019). About int8 speed."})
-    elif nv:
+    if nv and not fp8:
         look.append({"what": "fp8 files (to save VRAM only)", "why": "Half the size of bf16, but this card has no fast fp8 math: no speed gain."})
     if w4a8:
         look.append({"what": "w4a8 (small and close)", "why": "4-bit weights, int8 math: nvfp4 size, but closer to bf16 (Krealism V3.1: 0.031 vs 0.059 for nvfp4). As fast as int8 on an RTX 5090 and an RTX 5060 laptop."})

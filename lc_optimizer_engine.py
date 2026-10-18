@@ -811,6 +811,8 @@ def loaded_files(inputs):
     base = inputs.get("base_model")
     base = LEGACY_BASE.get(base, base)
     pid = next((p for p, n in base_names(None) if n == base), None)
+    if pid == "custom" and "latent_upscaler" in inputs:  # both Customs are named "Custom": a video node has these widgets
+        pid = "custom_video"
     prof = profiles().get(pid) if pid else None
     goal = inputs.get("goal") or "Optimal"
     roles = roles_for(pid) if pid else ["model", "clip", "vae"]

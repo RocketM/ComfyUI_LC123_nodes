@@ -8,21 +8,9 @@ other LC image FX node. The actual recipes live in lc_phone_filters_recipes.py.
 
 from nodes import PreviewImage
 
-from .lc_image_helpers import tensor_to_np, np_to_tensor, preview_frames, _alpha_safe
+from .lc_image_helpers import tensor_to_np, np_to_tensor, _alpha_safe
+from .lc_image_tools import _preview  # shared: also puts an RGBA input's alpha back on the preview PNGs
 from .lc_phone_filters_recipes import apply_style, STYLE_NAMES
-
-
-def _preview(self, result_tensor, source_tensor=None):
-    out = {"ui": {}, "result": (result_tensor,)}
-    try:
-        after = self.save_images(preview_frames(result_tensor), filename_prefix="lc_after")
-        out["ui"]["lc_preview"] = after["ui"]["images"]
-        if source_tensor is not None:
-            before = self.save_images(preview_frames(source_tensor), filename_prefix="lc_before")
-            out["ui"]["lc_before"] = before["ui"]["images"]
-    except Exception:
-        pass
-    return out
 
 
 class LCPhoneFilters(PreviewImage):

@@ -106,9 +106,10 @@ function firstTarget(node) {
   if (!out?.links?.length) return null;
 
   for (const linkId of out.links) {
-    const link = app.graph?.links?.[linkId];
+    const g = node.graph ?? app.graph; // the node's own graph, so it also works inside a subgraph
+    const link = g?.links?.[linkId];
     if (!link) continue;
-    const tNode = app.graph.getNodeById?.(link.target_id);
+    const tNode = g.getNodeById?.(link.target_id);
     if (!tNode) continue;
     const slot = link.target_slot;
     const inp = tNode.inputs?.[slot];

@@ -270,6 +270,8 @@ function attachFace(node) {
     // where the pad actually sits on screen, and only the sliver below the pad's true bottom
     // edge is visible.
     node._lcDbDomWidget.computeSize = (w) => [w, FACE_H];
+    // the right side Parameters panel writes its own column width onto widgets it lists: always follow the node
+    Object.defineProperty(node._lcDbDomWidget, "width", { get: () => undefined, set: () => {}, configurable: true });
   } catch (e) {
     console.warn("LC Directional Blur face widget failed", e);
   }

@@ -852,7 +852,9 @@ class LCFilmGrain(PreviewImage):
         else:
             # classic: luminance-weighted amount (more visible in midtones)
             weight = (4.0 * lum * (1.0 - lum)).clamp(0.15, 1.0)
-        return (image + grain * strength * 0.18 * weight).clamp(0, 1)
+        # grain is 3-channel: an RGBA clip (LC Film Grain (Video) is not wrapped by _alpha_safe) keeps its alpha
+        rgb = (image[..., :3] + grain * strength * 0.18 * weight).clamp(0, 1)
+        return torch.cat([rgb, image[..., 3:]], -1) if c > 3 else rgb
 
 
 # ---------------------------------------------------------------------------

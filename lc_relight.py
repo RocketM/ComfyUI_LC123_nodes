@@ -284,7 +284,6 @@ def _cast_shadow_ss(
     steps = int(max(6, min(int(steps), 48)))
     max_range = float(np.clip(max_range, 0.06, 0.6))
     bias_n = max(float(bias), 0.02)
-    thickness_n = max(float(thickness), 0.35)
     soft = float(np.clip(softness, 0.0, 1.0))
 
     y_idx, x_idx = np.indices((h, w), dtype=np.float32)

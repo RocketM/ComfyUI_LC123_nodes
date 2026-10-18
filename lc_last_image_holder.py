@@ -66,7 +66,8 @@ def _load_held(path):
     if not os.path.isfile(path):
         return None
     try:
-        return _pil_to_tensor(Image.open(path))
+        with Image.open(path) as im:  # closed right away: the same file is overwritten later in this run
+            return _pil_to_tensor(im)
     except Exception:
         return None
 

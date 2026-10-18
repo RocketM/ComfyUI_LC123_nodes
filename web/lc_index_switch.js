@@ -16,9 +16,10 @@ function slotName(i) {
 
 function typeOf(node, inp) {
   if (!inp?.link) return null;
-  const link = app.graph?.links?.[inp.link];
+  const g = node.graph ?? app.graph; // the node's own graph, so it also works inside a subgraph
+  const link = g?.links?.[inp.link];
   if (!link) return null;
-  const origin = app.graph.getNodeById?.(link.origin_id);
+  const origin = g.getNodeById?.(link.origin_id);
   return origin?.outputs?.[link.origin_slot]?.type || null;
 }
 
@@ -96,7 +97,7 @@ function syncSlots(node, { forceFit = false } = {}) {
     const old = byName.get(slotName(i));
     if (old?.link != null) {
       try {
-        app.graph.removeLink(old.link);
+        (node.graph ?? app.graph).removeLink(old.link);
       } catch (_) {}
     }
   }

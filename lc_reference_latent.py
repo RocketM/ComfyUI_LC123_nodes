@@ -11,7 +11,7 @@ in the graph with everything bypassed/disconnected.
 
 from __future__ import annotations
 
-from typing import Any, List, Optional
+from typing import Any, List
 
 try:
     import torch
@@ -60,7 +60,8 @@ class LCReferenceLatent:
     CATEGORY = "LC123/conditioning"
     DESCRIPTION = (
         "Attach up to 8 reference latents to conditioning (Klein index method). "
-        "All latent inputs optional — if none are valid, passes conditioning through."
+        "Chain more than one and the references add up. "
+        "All latent inputs optional: if none are valid, passes conditioning through."
     )
 
     def apply(self, conditioning, **kwargs):
@@ -80,8 +81,10 @@ class LCReferenceLatent:
         out = []
         for cond, meta in conditioning:
             meta = dict(meta) if isinstance(meta, dict) else {}
-            meta["reference_latents"] = list(refs)
-            meta["reference_latents_method"] = "index"
+            # added after any references already on the conditioning (chained nodes add up, like core ReferenceLatent);
+            # a method set upstream (index_timestep_zero, say) is kept
+            meta["reference_latents"] = list(meta.get("reference_latents") or []) + refs
+            meta.setdefault("reference_latents_method", "index")
             out.append([cond, meta])
         return (out,)
 

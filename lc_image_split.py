@@ -121,9 +121,6 @@ class LCImageSplit(PreviewImage):
         saved_b = self.save_images(
             image_b, filename_prefix="lc.split.b_", prompt=prompt, extra_pnginfo=extra_pnginfo
         )
-        saved_out = self.save_images(
-            tensor, filename_prefix="lc.split.out_", prompt=prompt, extra_pnginfo=extra_pnginfo
-        )
         ui["a_images"] = saved_a["ui"]["images"]
         ui["b_images"] = saved_b["ui"]["images"]
         # Do not put baked composite in images[] — JS draws live wipe from A/B

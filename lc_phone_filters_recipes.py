@@ -183,7 +183,8 @@ def _blend_mode(a, b, mode):
     if mode == "overlay":
         return np.where(a <= 0.5, 2 * a * b, 1.0 - 2 * (1.0 - a) * (1.0 - b))
     if mode == "soft-light":
-        d = np.where(b <= 0.25, ((16 * b - 12) * b + 4) * b, np.sqrt(np.maximum(b, 0.0)))
+        # W3C D() is a function of the backdrop (a), not the source
+        d = np.where(a <= 0.25, ((16 * a - 12) * a + 4) * a, np.sqrt(np.maximum(a, 0.0)))
         return np.where(b <= 0.5, a - (1.0 - 2 * b) * a * (1.0 - a), a + (2 * b - 1.0) * (d - a))
     if mode == "hard-light":
         return np.where(b <= 0.5, 2 * a * b, 1.0 - 2 * (1.0 - a) * (1.0 - b))

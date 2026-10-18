@@ -14,7 +14,7 @@ import torch
 
 from .lc_prompt_builder_lists import (
     POSES, ACTIONS, OUTFITS, POS_H, POS_V, POS_D,
-    CAMERA_ANGLES, DISTANCES, F_STOPS, DEPTH_PRESETS,
+    CAMERA_ANGLES, DISTANCES, DEPTH_PRESETS,
     CAMERA_DISTANCE_DETAIL, CAMERA_ANGLE_DETAIL,
     LIGHTING_STYLES, LIGHTING_DETAIL, LIGHTING_DIRECTIONS, LIGHT_DIR_DETAIL,
     SCENE_PRESETS, SCENE_PRESET_NAMES, SCENE_OBJECTS,
@@ -75,16 +75,22 @@ _H_RANGE = {
     "left": (0.00, 0.48),
     "center": (0.18, 0.82),
     "right": (0.52, 1.00),
+    "far left": (0.00, 0.34),
+    "far right": (0.66, 1.00),
 }
 _V_RANGE = {
     "top": (0.00, 0.48),
     "middle": (0.18, 0.82),
     "bottom": (0.52, 1.00),
+    "upper third": (0.00, 0.40),
+    "lower third": (0.60, 1.00),
 }
 _D_SCALE = {
     "foreground": 1.00,
     "midground": 0.88,
     "background": 0.58,
+    "extreme foreground": 1.00,
+    "extreme background": 0.40,
 }
 
 

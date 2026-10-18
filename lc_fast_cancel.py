@@ -33,21 +33,32 @@ def enabled() -> bool:
         return True
     if mtime != _cache["mtime"]:
         try:
-            _cache["on"] = json.load(open(path, encoding="utf-8")).get(SETTING, True) is not False
+            with open(path, encoding="utf-8") as f:
+                _cache["on"] = json.load(f).get(SETTING, True) is not False
         except Exception:
             _cache["on"] = True
         _cache["mtime"] = mtime
     return _cache["on"]
 
 
+AHEAD = 3  # blocks the GPU may run behind Python: Cancel lands within this many blocks
+_events = []
+
+
 def _check(_module, args):
     if not _cache["on"]:
         return
-    # The GPU runs behind Python: a whole step's blocks are queued in a blink, then Python waits. Wait for the GPU to
-    # reach this block first, so the check sees Cancel at the moment it is pressed, not a step later.
+    # The GPU runs behind Python: a whole step's blocks are queued in a blink, then Python waits. Keep Python at most
+    # AHEAD blocks in front of the GPU, so the check sees Cancel within a few blocks, not a step later. Waiting for the
+    # block AHEAD back (a recorded event) instead of a full synchronize keeps a few blocks queued, so the GPU never
+    # stalls on Python between blocks.
     x = args[0] if args and isinstance(args[0], torch.Tensor) else None
     if x is not None and x.is_cuda:
-        torch.cuda.current_stream(x.device).synchronize()
+        ev = torch.cuda.Event()
+        ev.record(torch.cuda.current_stream(x.device))
+        _events.append(ev)
+        if len(_events) > AHEAD:
+            _events.pop(0).synchronize()
     # cheap read first: the locked check (which also resets the flag and raises) only runs when Cancel was pressed
     if mm.interrupt_processing:
         mm.throw_exception_if_processing_interrupted()

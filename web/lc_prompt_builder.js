@@ -199,6 +199,8 @@ function ensurePreview(node) {
     },
     serialize: false,
   });
+  // the right side Parameters panel writes its own column width onto widgets it lists: always follow the node
+  Object.defineProperty(widget, "width", { get: () => undefined, set: () => {}, configurable: true });
   // Keep DOM widget height stable so LiteGraph computeSize includes it
   widget.computeSize = function (width) {
     return [width || WIDTH, PREVIEW_H + 10];
@@ -248,6 +250,7 @@ function hookWidgets(node) {
   }
   const onCfg = node.onConfigure;
   node.onConfigure = function () {
+    this._lcPromptConfigured = true; // restored from a workflow: keep its saved size
     const r = onCfg?.apply(this, arguments);
     setTimeout(() => {
       ensurePreview(this);
@@ -259,6 +262,7 @@ function hookWidgets(node) {
   setTimeout(() => {
     ensurePreview(node);
     refreshPreview(node);
+    if (node._lcPromptConfigured) return node.setDirtyCanvas?.(true, true); // a loaded node keeps its saved size
     try {
       const sz = node.computeSize?.(node.size?.[0] || WIDTH);
       if (sz) {

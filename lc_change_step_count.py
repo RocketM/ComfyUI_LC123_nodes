@@ -25,7 +25,6 @@ def _as_list(sigmas) -> list[float]:
 def _lerp_curve(sigmas: list[float], new_steps: int) -> list[float]:
     if len(sigmas) < 2 or new_steps < 1:
         return sigmas[:]
-    old_steps = len(sigmas) - 1
     out = []
     for i in range(new_steps + 1):
         x = 0.0 if new_steps == 0 else i / new_steps

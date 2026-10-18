@@ -13,7 +13,7 @@ from __future__ import annotations
 import numpy as np
 from nodes import PreviewImage
 
-from .lc_image_helpers import tensor_to_np, np_to_tensor, blend
+from .lc_image_helpers import tensor_to_np, np_to_tensor
 from .lc_temporal import is_clip, segments, smooth_masks
 
 
@@ -672,8 +672,6 @@ class LCSkinBeauty(PreviewImage):
         mask_frames = None
         if mask is not None:
             # mask tensor [B,H,W]
-            import torch
-
             if hasattr(mask, "detach"):
                 mt = mask.detach().float().cpu().numpy().astype(np.float32)
                 if mt.ndim == 2:

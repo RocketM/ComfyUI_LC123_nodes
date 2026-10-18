@@ -31,6 +31,7 @@ function defaultHeight(node) {
 
 function paint(node) {
   lcApplyLaunchColor(node, COLOR);
+  if (node._lcToneConfigured) return; // restored from a workflow: keep its saved size
   const h = Math.max(node.size?.[1] || 0, defaultHeight(node), 470);
   node.size = [Math.max(node.size?.[0] || 0, DEFAULT_W), h];
 }
@@ -50,6 +51,11 @@ app.registerExtension({
           this.setDirtyCanvas?.(true, true);
         } catch (_) {}
       }, 50);
+    };
+    const onConfigure = nodeType.prototype.onConfigure;
+    nodeType.prototype.onConfigure = function () {
+      this._lcToneConfigured = true;
+      return onConfigure?.apply(this, arguments);
     };
     const origResize = nodeType.prototype.onResize;
     nodeType.prototype.onResize = function (size) {

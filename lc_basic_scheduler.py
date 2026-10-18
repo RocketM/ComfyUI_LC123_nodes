@@ -4,7 +4,6 @@ LC Basic Scheduler
 Build a full SIGMAS curve from model + scheduler + steps (no denoise trim).
 """
 
-import torch
 import comfy.samplers
 
 

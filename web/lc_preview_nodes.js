@@ -68,6 +68,8 @@ function installPreview(node, cls) {
     serialize: false,
   });
   dom.serializeValue = () => undefined;
+  // the right side Parameters panel writes its own column width onto widgets it lists: always follow the node
+  Object.defineProperty(dom, "width", { get: () => undefined, set: () => {}, configurable: true });
   // the canvas treats a press on a widget as a widget click. This one is display only, so hide it from that hit test:
   // a press on the window then drags the node like a press on any other part of it (a disabled widget would vanish)
   const hitTest = node.getWidgetOnPos;

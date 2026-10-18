@@ -64,6 +64,8 @@ app.registerExtension({
       if (mode === "never") return;
 
       if (mode === "on empty queue") {
+        // LC H3 Segment (make: all remaining) lines up the next segment itself: the movie isn't done yet
+        if (window.__lcH3ChainNext) return;
         if (app.ui?.lastQueueSize !== 0) {
           await new Promise((r) => setTimeout(r, 500));
         }

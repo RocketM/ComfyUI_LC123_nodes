@@ -323,7 +323,7 @@ app.registerExtension({
 
         nodeType.prototype._lcDnDHandler = function (e) {
             const canvas = app.canvas;
-            if (!canvas || !this.graph) return false;
+            if (!canvas || !this.graph || this.graph !== canvas.graph) return false; // only a label on the graph on screen
             const point = canvas.convertEventToCanvasOffset(e);
             return point[0] >= this.pos[0] && point[0] <= this.pos[0] + this.size[0] &&
                    point[1] >= this.pos[1] && point[1] <= this.pos[1] + this.size[1];
@@ -514,15 +514,18 @@ app.registerExtension({
 
         nodeType.prototype.loadImage = function (src) {
             if (!src) {
+                this._ilLoadTok = (this._ilLoadTok || 0) + 1; // a load still in flight must not bring the image back
                 this.cachedImage = null;
                 this.imageLoaded = false;
                 this.updateNodeSize();
                 this.setDirtyCanvas(true, true);
                 return;
             }
+            const tok = (this._ilLoadTok = (this._ilLoadTok || 0) + 1); // the latest load wins
             const img = new Image();
             img.crossOrigin = "Anonymous";
             img.onload = () => {
+                if (tok !== this._ilLoadTok) return;
                 this.cachedImage = img;
                 this.imageLoaded = true;
                 if (!src.startsWith("data:")) this.updateEmbeddedData();
@@ -530,6 +533,7 @@ app.registerExtension({
                 this.setDirtyCanvas(true, true);
             };
             img.onerror = () => {
+                if (tok !== this._ilLoadTok) return;
                 console.warn("[LC Image Label] Failed to load image:", src);
                 this.cachedImage = null;
                 this.imageLoaded = false;
@@ -609,16 +613,18 @@ app.registerExtension({
                 title.style.cursor = "grabbing";
                 e.preventDefault();
             });
-            document.addEventListener("mousemove", (e) => {
+            const onDragMove = (e) => {
                 if (!isDragging) return;
                 const newX = Math.max(10, Math.min(window.innerWidth - dialog.offsetWidth - 10, e.clientX - dragOffsetX));
                 const newY = Math.max(10, Math.min(window.innerHeight - 20, e.clientY - dragOffsetY));
                 dialog.style.left = newX + "px";
                 dialog.style.top = newY + "px";
-            });
-            document.addEventListener("mouseup", () => {
+            };
+            const onDragUp = () => {
                 if (isDragging) { isDragging = false; title.style.cursor = "grab"; }
-            });
+            };
+            document.addEventListener("mousemove", onDragMove);
+            document.addEventListener("mouseup", onDragUp);
 
             const originalPushState = history.pushState;
             const originalReplaceState = history.replaceState;
@@ -631,6 +637,8 @@ app.registerExtension({
                 history.replaceState = originalReplaceState;
                 document.removeEventListener("keydown", escHandler);
                 document.removeEventListener("visibilitychange", visibilityHandler);
+                document.removeEventListener("mousemove", onDragMove); // these piled up, one pair per dialog open
+                document.removeEventListener("mouseup", onDragUp);
                 if (dialog.parentNode) document.body.removeChild(dialog);
                 this.dialogOpen = false;
                 this.setDirtyCanvas(true, true);

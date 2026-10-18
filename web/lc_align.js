@@ -843,10 +843,17 @@ const ICON = `<img src="${LOGO_OFF}" alt="Align" draggable="false" style="width:
 new Image().src = LOGO_ON; // preloaded, so the first click swaps without a blank frame
 const BG_ON = "rgb(175,175,175)"; // light gray: Align is on
 const BG_OFF = "rgb(75,75,75)"; // dark gray: Align is off
+let mountPending = false; // one retry chain at a time (the per-frame re-mount below used to start a new one every frame)
 function mountButton(tries = 0) {
   const anchor = app.menu?.settingsGroup?.element;
   if (!anchor) {
-    if (tries < 40) setTimeout(() => mountButton(tries + 1), 250);
+    if (tries < 40 && !mountPending) {
+      mountPending = true;
+      setTimeout(() => {
+        mountPending = false;
+        mountButton(tries + 1);
+      }, 250);
+    }
     return;
   }
   if (btnGroup) {

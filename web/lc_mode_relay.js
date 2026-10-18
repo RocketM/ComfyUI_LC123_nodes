@@ -109,7 +109,8 @@ function remapType(node) {
   if (OLD_TYPES.has(node.type)) {
     node.type = TYPE;
     node.comfyClass = TYPE;
-    node.constructor.comfyClass = TYPE;
+    // not node.constructor.comfyClass: an old, unregistered type loads as a plain LGraphNode, so that line set the
+    // static comfyClass on LGraphNode itself (inherited by every node class without its own)
   }
 }
 

@@ -10,10 +10,6 @@ the image never jumps when the batch size changes (including single-image runs).
 """
 
 from nodes import PreviewImage
-from folder_paths import get_temp_directory
-import folder_paths
-import os
-import json
 
 import torch.nn.functional as F
 

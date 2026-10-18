@@ -31,7 +31,9 @@ def _build_sigmas(model, scheduler, total_steps, denoise):
     ).cpu()
 
     if denoise < 1.0 and len(sigmas) > 0:
-        sigmas = sigmas[-(int(total_steps * denoise) + 1):]
+        # the last total_steps steps of the longer schedule, the way core BasicScheduler does it (denoise was applied
+        # twice before: 40 steps at 0.5 ran 20 steps over the bottom quarter of the noise)
+        sigmas = sigmas[-(total_steps + 1):]
 
     return sigmas
 

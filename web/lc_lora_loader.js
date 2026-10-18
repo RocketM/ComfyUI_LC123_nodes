@@ -712,6 +712,8 @@ function ensureFace(node) {
     serialize: false,
   });
   dom.serializeValue = () => undefined;
+  // the right side Parameters panel writes its own column width onto widgets it lists: always follow the node
+  Object.defineProperty(dom, "width", { get: () => undefined, set: () => {}, configurable: true });
 
   node.__lcFace = { wrap, header, headerLabel, toggleAll, rowsHost, addBtn };
   return node.__lcFace;

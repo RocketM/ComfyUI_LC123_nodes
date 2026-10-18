@@ -137,7 +137,9 @@ def _merge_incoming(pipe):
     if not isinstance(pipe, dict):
         return base
     t = pipe.get("_type")
-    if t == PIPE_TYPE:
+    # A V2 pipe can reach here through V1 Pipe Out's passthrough "pipe"
+    # output (typed LC_H3_PIPE, still _type V2); take its V1 keys too.
+    if t in (PIPE_TYPE, PIPE_TYPE_V2):
         for key, _kind, _label in _slot_keys():
             if key in pipe and pipe[key] is not None:
                 base[key] = pipe[key]

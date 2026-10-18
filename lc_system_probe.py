@@ -934,7 +934,7 @@ def findings(p):
     if m.get("swap_none"):
         add("memory", 3, "No page file", "When RAM runs out ComfyUI crashes instead of slowing down. Turn the page file back on (let Windows manage it).")
     elif m.get("swap_managed"):
-        add("memory", 2, "Page file managed by Windows", f"Currently {sw:g} GB. Windows grows it when RAM runs out, as long as the drive has free space.")
+        add("memory", 2, "Page file managed by Windows", (f"Currently {sw:g} GB. " if sw is not None else "") + "Windows grows it when RAM runs out, as long as the drive has free space.")
     elif sw is not None and ram:
         cap = m.get("swap_max_gb") or sw
         if cap < 16:

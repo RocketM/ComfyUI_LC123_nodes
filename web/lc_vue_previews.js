@@ -40,6 +40,8 @@ function setReadout(node, text) {
     div.style.cssText = "font:12px sans-serif;color:#e5e7eb;padding:4px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;";
     w = node.addDOMWidget(READOUT, "LC_READOUT", div, { serialize: false, getMinHeight: () => 24, getMaxHeight: () => 24 });
     w.serialize = false;
+    // the right side Parameters panel writes its own column width onto widgets it lists: always follow the node
+    Object.defineProperty(w, "width", { get: () => undefined, set: () => {}, configurable: true });
   }
   w.element.textContent = text;
   w.element.title = text;
@@ -95,7 +97,7 @@ setInterval(() => {
     wasVue = v;
   }
   if (!v) return;
-  for (const n of app.graph?._nodes || []) {
+  for (const n of (app.canvas?.graph ?? app.graph)?._nodes || []) { // the graph on screen (a subgraph too)
     if (n.type !== "LCBoolean" && n.comfyClass !== "LCBoolean") continue;
     const val = n._lcBool;
     const text = val === undefined ? null : String(!!val);
