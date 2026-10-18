@@ -132,5 +132,347 @@
    ]
   }
  },
- "source": "Hugging Face tree API sizes and the model card of black-forest-labs/flux-3-image-klein-comfy, 2026-10-16.; unsloth GGUF sizes. Not measured yet."
+ "source": "Hugging Face tree API sizes and the model card of black-forest-labs/flux-3-image-klein-comfy, 2026-10-16.; unsloth GGUF sizes. Not measured yet. | measured 2026-10-17 (Goliath 5090, thinkforge 5060 Laptop)",
+ "benchmarks": {
+  "workflow": "BFL flux3 klein t2i graph as API, 16 steps, euler/simple, cfg 1.0, TE qwen3vl_4b int8_convrot, 2026-10-17",
+  "references": [
+   {
+    "machine": {
+     "gpu": "NVIDIA GeForce RTX 5090",
+     "attention_sdpa_ms": 2.42,
+     "fp8_tflops": 399.8,
+     "note": "power limit 80% (460 W) during this bench"
+    },
+    "runs": [
+     {
+      "file": "flux3_image_klein_sd_bf16.safetensors",
+      "megapixels": 1.0,
+      "step_s": 0.23,
+      "peak_vram_mib": 11227
+     },
+     {
+      "file": "flux3_image_klein_sd_bf16.safetensors",
+      "megapixels": 2.0,
+      "step_s": 0.47,
+      "peak_vram_mib": 11699
+     },
+     {
+      "file": "flux3_image_klein_sd_int8_convrot.safetensors",
+      "megapixels": 1.0,
+      "step_s": 0.11,
+      "peak_vram_mib": 8592
+     },
+     {
+      "file": "flux3_image_klein_sd_int8_convrot.safetensors",
+      "megapixels": 2.0,
+      "step_s": 0.2,
+      "peak_vram_mib": 11885
+     },
+     {
+      "file": "flux3_image_klein_sd_nvfp4.safetensors",
+      "megapixels": 1.0,
+      "step_s": 0.13,
+      "peak_vram_mib": 6612
+     },
+     {
+      "file": "flux3_image_klein_sd_nvfp4.safetensors",
+      "megapixels": 2.0,
+      "step_s": 0.27,
+      "peak_vram_mib": 10506
+     },
+     {
+      "file": "flux-3-image-klein-Q8_0.gguf",
+      "megapixels": 1.0,
+      "step_s": 0.27,
+      "peak_vram_mib": 8411
+     },
+     {
+      "file": "flux-3-image-klein-Q8_0.gguf",
+      "megapixels": 2.0,
+      "step_s": 0.53,
+      "peak_vram_mib": 13560
+     },
+     {
+      "file": "flux-3-image-klein-Q6_K.gguf",
+      "megapixels": 1.0,
+      "step_s": 0.34,
+      "peak_vram_mib": 7983
+     },
+     {
+      "file": "flux-3-image-klein-Q6_K.gguf",
+      "megapixels": 2.0,
+      "step_s": 0.59,
+      "peak_vram_mib": 8183
+     },
+     {
+      "file": "flux-3-image-klein-Q5_K_M.gguf",
+      "megapixels": 1.0,
+      "step_s": 0.37,
+      "peak_vram_mib": 7287
+     },
+     {
+      "file": "flux-3-image-klein-Q5_K_M.gguf",
+      "megapixels": 2.0,
+      "step_s": 0.62,
+      "peak_vram_mib": 11104
+     },
+     {
+      "file": "flux-3-image-klein-Q4_K_M.gguf",
+      "megapixels": 1.0,
+      "step_s": 0.34,
+      "peak_vram_mib": 6564
+     },
+     {
+      "file": "flux-3-image-klein-Q4_K_M.gguf",
+      "megapixels": 2.0,
+      "step_s": 0.59,
+      "peak_vram_mib": 7024
+     },
+     {
+      "file": "flux-3-image-klein-Q3_K_M.gguf",
+      "megapixels": 1.0,
+      "step_s": 0.39,
+      "peak_vram_mib": 6408
+     },
+     {
+      "file": "flux-3-image-klein-Q3_K_M.gguf",
+      "megapixels": 2.0,
+      "step_s": 0.63,
+      "peak_vram_mib": 10633
+     }
+    ]
+   },
+   {
+    "machine": {
+     "gpu": "NVIDIA GeForce RTX 5060 Laptop GPU",
+     "vram_gb": 8.0,
+     "attention_sdpa_ms": 17.2,
+     "fp8_tflops": 66.5,
+     "note": "64 GB RAM, PCIe Gen5 x8, no SageAttention"
+    },
+    "runs": [
+     {
+      "file": "flux3_image_klein_sd_bf16.safetensors",
+      "megapixels": 1.0,
+      "step_s": 1.4,
+      "peak_vram_mib": 7335,
+      "peak_ram_gib": 29.15,
+      "peak_swap_gib": 0.21
+     },
+     {
+      "file": "flux3_image_klein_sd_int8_convrot.safetensors",
+      "megapixels": 1.0,
+      "step_s": 0.51,
+      "peak_vram_mib": 7358,
+      "peak_ram_gib": 24.17,
+      "peak_swap_gib": 0.21
+     },
+     {
+      "file": "flux3_image_klein_sd_int8_convrot.safetensors",
+      "megapixels": 2.0,
+      "step_s": 1.08,
+      "peak_vram_mib": 7123,
+      "peak_ram_gib": 23.62,
+      "peak_swap_gib": 0.46
+     },
+     {
+      "file": "flux3_image_klein_sd_nvfp4.safetensors",
+      "megapixels": 1.0,
+      "step_s": 0.67,
+      "peak_vram_mib": 7230,
+      "peak_ram_gib": 24.58,
+      "peak_swap_gib": 0.21
+     },
+     {
+      "file": "flux-3-image-klein-Q8_0.gguf",
+      "megapixels": 1.0,
+      "step_s": 1.63,
+      "peak_vram_mib": 6702,
+      "peak_ram_gib": 24.55,
+      "peak_swap_gib": 0.21
+     },
+     {
+      "file": "flux-3-image-klein-Q8_0.gguf",
+      "megapixels": 2.0,
+      "step_s": 3.23,
+      "peak_vram_mib": 6300,
+      "peak_ram_gib": 24.49,
+      "peak_swap_gib": 0.46
+     },
+     {
+      "file": "flux-3-image-klein-Q6_K.gguf",
+      "megapixels": 1.0,
+      "step_s": 1.93,
+      "peak_vram_mib": 6501,
+      "peak_ram_gib": 23.97,
+      "peak_swap_gib": 0.21
+     },
+     {
+      "file": "flux-3-image-klein-Q5_K_M.gguf",
+      "megapixels": 1.0,
+      "step_s": 1.96,
+      "peak_vram_mib": 6101,
+      "peak_ram_gib": 22.95,
+      "peak_swap_gib": 0.3
+     },
+     {
+      "file": "flux-3-image-klein-Q4_K_M.gguf",
+      "megapixels": 1.0,
+      "step_s": 1.82,
+      "peak_vram_mib": 5411,
+      "peak_ram_gib": 22.05,
+      "peak_swap_gib": 0.46
+     },
+     {
+      "file": "flux-3-image-klein-Q4_K_M.gguf",
+      "megapixels": 2.0,
+      "step_s": 3.34,
+      "peak_vram_mib": 6157,
+      "peak_ram_gib": 21.98,
+      "peak_swap_gib": 0.46
+     },
+     {
+      "file": "flux-3-image-klein-Q3_K_M.gguf",
+      "megapixels": 1.0,
+      "step_s": 1.96,
+      "peak_vram_mib": 5405,
+      "peak_ram_gib": 21.79,
+      "peak_swap_gib": 0.46
+     }
+    ]
+   }
+  ]
+ },
+ "quality": {
+  "method": "single step from the same bf16 latent (steps 4, 8, 12 of 16), 3 prompts, LPIPS vs bf16; 0 = identical",
+  "reference": "flux3_image_klein_sd_bf16.safetensors",
+  "files": {
+   "flux3_image_klein_sd_int8_convrot.safetensors": {
+    "lpips_avg": 0.0201,
+    "k4": {
+     "lpips": 0.0318,
+     "ssim": 0.9573,
+     "psnr": 30.79
+    },
+    "k8": {
+     "lpips": 0.0225,
+     "ssim": 0.9591,
+     "psnr": 30.65
+    },
+    "k12": {
+     "lpips": 0.006,
+     "ssim": 0.9833,
+     "psnr": 36.02
+    }
+   },
+   "flux3_image_klein_sd_nvfp4.safetensors": {
+    "lpips_avg": 0.1068,
+    "k4": {
+     "lpips": 0.1602,
+     "ssim": 0.7751,
+     "psnr": 21.23
+    },
+    "k8": {
+     "lpips": 0.1189,
+     "ssim": 0.7866,
+     "psnr": 22.14
+    },
+    "k12": {
+     "lpips": 0.0413,
+     "ssim": 0.8928,
+     "psnr": 26.68
+    }
+   },
+   "flux-3-image-klein-Q8_0.gguf": {
+    "lpips_avg": 0.0044,
+    "k4": {
+     "lpips": 0.0076,
+     "ssim": 0.9892,
+     "psnr": 38.3
+    },
+    "k8": {
+     "lpips": 0.0044,
+     "ssim": 0.9908,
+     "psnr": 38.3
+    },
+    "k12": {
+     "lpips": 0.0011,
+     "ssim": 0.9957,
+     "psnr": 43.87
+    }
+   },
+   "flux-3-image-klein-Q6_K.gguf": {
+    "lpips_avg": 0.0131,
+    "k4": {
+     "lpips": 0.0225,
+     "ssim": 0.9693,
+     "psnr": 32.82
+    },
+    "k8": {
+     "lpips": 0.0136,
+     "ssim": 0.973,
+     "psnr": 33.2
+    },
+    "k12": {
+     "lpips": 0.0033,
+     "ssim": 0.9883,
+     "psnr": 38.81
+    }
+   },
+   "flux-3-image-klein-Q5_K_M.gguf": {
+    "lpips_avg": 0.0275,
+    "k4": {
+     "lpips": 0.0461,
+     "ssim": 0.9384,
+     "psnr": 29.18
+    },
+    "k8": {
+     "lpips": 0.0285,
+     "ssim": 0.9456,
+     "psnr": 29.54
+    },
+    "k12": {
+     "lpips": 0.0078,
+     "ssim": 0.9754,
+     "psnr": 34.9
+    }
+   },
+   "flux-3-image-klein-Q4_K_M.gguf": {
+    "lpips_avg": 0.0629,
+    "k4": {
+     "lpips": 0.0992,
+     "ssim": 0.8559,
+     "psnr": 24.29
+    },
+    "k8": {
+     "lpips": 0.0672,
+     "ssim": 0.8738,
+     "psnr": 25.24
+    },
+    "k12": {
+     "lpips": 0.0224,
+     "ssim": 0.9337,
+     "psnr": 29.77
+    }
+   },
+   "flux-3-image-klein-Q3_K_M.gguf": {
+    "lpips_avg": 0.131,
+    "k4": {
+     "lpips": 0.1864,
+     "ssim": 0.7379,
+     "psnr": 21.38
+    },
+    "k8": {
+     "lpips": 0.1431,
+     "ssim": 0.746,
+     "psnr": 21.63
+    },
+    "k12": {
+     "lpips": 0.0634,
+     "ssim": 0.8369,
+     "psnr": 25.58
+    }
+   }
+  }
+ }
 }
