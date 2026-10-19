@@ -487,6 +487,22 @@ def _positive_int(value) -> int | None:
 
 def civitai_resources_payload(air: str) -> list:
     """
+    One entry per AIR / URL / version ID. Several can be given, separated by
+    commas or new lines (e.g. the model and the workflow page). Duplicate
+    version IDs are written once.
+    """
+    out = []
+    seen = set()
+    for part in re.split(r"[,\n]+", air or ""):
+        for item in _civitai_resource(part):
+            if item["modelVersionId"] not in seen:
+                seen.add(item["modelVersionId"])
+                out.append(item)
+    return out
+
+
+def _civitai_resource(air: str) -> list:
+    """
     Build the ``CivitAI resources`` array CivitAI's parser actually reads:
     ``[{"type": "checkpoint", "modelVersionId": 128713, "air": "urn:air:..."}]``.
     A bare AIR or URL string on its own (the old shape here -- ``{"air": ...}``

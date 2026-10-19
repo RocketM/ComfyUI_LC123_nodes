@@ -15,7 +15,7 @@ import numpy as np
 import torch
 from nodes import PreviewImage
 
-from .lc_image_helpers import tensor_to_np, np_to_tensor, blend
+from .lc_image_helpers import tensor_to_np, np_to_tensor
 from .lc_detail_band import transfer_detail
 
 

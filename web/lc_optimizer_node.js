@@ -250,6 +250,7 @@ function renderFace(node) {
     lines.push(`<div style="display:flex;gap:6px;color:${icon === "⚠️" ? "#f3c969" : "#b8c2d0"}" title="${tip("", LEGEND.hint)}"><span>${icon}</span><span style="flex:1">${esc(text)}</span></div>`);
   }
   f.status.innerHTML = lines.join("");
+  requestAnimationFrame(() => faceHeight(node)); // measure once the new lines are laid out
   const e = pl.estimate, rep = pl.report;
   const est = e === "unsupported" ? "Estimate: unsupported" : e ? `~${e.step_s} s/step${e.total_s ? ` · ~${e.total_s} s` : ""}${e.fits === "vram" ? " · fits on the card" : e.fits ? " · streams from RAM" : ""}` : "";
   f.foot.innerHTML = `<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(est || (rep ? `Report: ${rep.when?.slice(0, 10)} · ${rep.gpu}` : "No report yet"))}</span>`;
@@ -270,8 +271,22 @@ function renderFace(node) {
 function faceHeight(node) {
   const f = node._lcOptFace;
   if (!f) return 0;
-  const kids = [...f.wrap.children];
-  return kids.reduce((h, k) => h + k.offsetHeight, 0) + 6 * Math.max(0, kids.length - 1) + 8 + 8;
+  // from the top of the face to the bottom of its last line (the footer), plus the bottom padding and a little
+  // room. Measured on the content, never on the box it sits in (that crept up), and the face clips to the node,
+  // so a short sum cut the last line off
+  if (!f.foot.offsetHeight) {
+    // not laid out yet (a DOM widget with no height is hidden, so it can't be measured): show it at a fair size,
+    // then measure it for real once it is on screen
+    clearTimeout(node._lcOptMeasure);
+    node._lcOptMeasure = setTimeout(() => faceHeight(node), 250);
+    return node._lcOptFaceH || 330;
+  }
+  const h = f.foot.offsetTop + f.foot.offsetHeight + 10 + 20; // + the 20 px margin ComfyUI keeps around a DOM widget
+  if (Math.abs(h - (node._lcOptFaceH || 0)) > 1) {
+    node._lcOptFaceH = h;
+    fit(node); // the node follows the new height
+  }
+  return node._lcOptFaceH;
 }
 
 // The node follows its content both ways: it grows for more status lines and shrinks back when there are fewer.
@@ -326,17 +341,21 @@ function setup(node) {
   lcApplyLaunchColor?.(node, COLOR);
   for (const [wn] of FILE_WIDGETS) hideWidget(wByName(node, wn));
   const wrap = document.createElement("div");
-  wrap.style.cssText = "display:flex;flex-direction:column;gap:6px;padding:4px 2px;font:12px sans-serif;color:#e6e9ee;box-sizing:border-box";
+  wrap.style.cssText = "display:flex;flex-direction:column;gap:6px;padding:4px 2px;font:12px sans-serif;color:#e6e9ee;box-sizing:border-box;width:100%;max-width:100%;min-width:0;overflow:hidden;position:relative";
   const pickers = document.createElement("div");
   const status = document.createElement("div");
   status.style.cssText = "display:grid;grid-template-columns:minmax(0,1fr);gap:4px;border:1px solid #333b46;border-radius:6px;padding:6px 8px;background:#161a1f";
   const foot = document.createElement("div");
   foot.style.cssText = "display:flex;gap:6px;align-items:center;color:#8a95a5";
+  for (const el of [pickers, status, foot]) el.style.flex = "none"; // natural heights: a squeezed box can't shrink them
   wrap.append(pickers, status, foot);
   // stop canvas zoom/drag from swallowing clicks inside the face
   for (const ev of ["pointerdown", "mousedown", "wheel"]) wrap.addEventListener(ev, (e) => e.stopPropagation());
   const dom = node.addDOMWidget("lc_optimizer_face", "LC_OPTIMIZER_FACE", wrap, { serialize: false, getMinHeight: () => faceHeight(node), getMaxHeight: () => faceHeight(node) });
   dom.serializeValue = () => undefined;
+  // the right side Parameters panel writes its own column width onto widgets it lists, which left the face wider
+  // than the node and sliding when the node moved (the video preview had the same): always follow the node
+  Object.defineProperty(dom, "width", { get: () => undefined, set: () => {}, configurable: true });
   node._lcOptFace = { wrap, pickers, status, foot };
 
   let timer = 0;

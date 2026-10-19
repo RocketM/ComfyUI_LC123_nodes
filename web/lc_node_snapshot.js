@@ -177,6 +177,8 @@ function ensureNameCombo(node, names) {
   if (!opts.length) opts.push("");
 
   let w = widgetByName(node, "widget_name");
+  // no target found yet (on load it can still be configuring): keep the saved choice instead of blanking it
+  if (!names.length && w && w.value) return w;
   let prefer = node._lcSnapWidgetName;
   if (w && w.value && opts.includes(String(w.value))) {
     prefer = String(w.value);

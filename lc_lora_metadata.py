@@ -149,9 +149,11 @@ def collect_lora_metadata(prompt, save_node_id=None, execution_list=None):
         kind = node.get('class_type', '')
         inputs = node.get('inputs', {})
         slots = []
-        if kind in ('LCLoraLoader', 'LCGroupLoraLoader', 'LCLoraLoaderStack', 'LCGroupLoraLoaderStack'):
+        if kind in ('LCLoraLoader', 'LCGroupLoraLoader', 'LCLoraLoaderStack', 'LCGroupLoraLoaderStack', 'LCLoraLoaderSingle'):
             stack = kind in ('LCLoraLoaderStack', 'LCGroupLoraLoaderStack')
             rows = parse_lc_lora_rows(resolve(inputs.get('lora_rows', '[]'), nid))
+            if kind == 'LCLoraLoaderSingle':
+                rows = rows[:1]  # Match the loader: only the first configured row is applied.
             for index, row in enumerate(rows):
                 model, clip = row_strengths(row) if kind in ('LCGroupLoraLoader', 'LCGroupLoraLoaderStack') else (row['strength'], row['strength'])
                 model = model if stack or inputs.get('model') is not None else 0.0

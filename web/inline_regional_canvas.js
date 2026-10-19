@@ -1353,11 +1353,13 @@ app.registerExtension({
       canvasResizeObserver.observe(canvasBox);
       syncPromptTextareas();
 
-      node.addDOMWidget("anima_canvas_editor", "AnimaRegionalCanvasEditor", wrap, {
+      const editorWidget = node.addDOMWidget("anima_canvas_editor", "AnimaRegionalCanvasEditor", wrap, {
         serialize: false,
         hideOnZoom: false,
         getMinHeight: () => 980,
       });
+      // the right side Parameters panel writes its own column width onto widgets it lists: always follow the node
+      if (editorWidget) Object.defineProperty(editorWidget, "width", { get: () => undefined, set: () => {}, configurable: true });
       node.resizable = true;
       const targetSize = STANDARD_NODE_SIZE;
       if (node.size[0] < targetSize[0] || node.size[1] < targetSize[1]) {

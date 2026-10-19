@@ -1,27 +1,13 @@
 """
-LC Image Pass / LC Mask Pass -- identity with enable mute.
+LC Image Pass / LC Mask Pass: a firewall for an optional IMAGE / MASK input.
 
-`enable` off used to only work when it stayed a plain widget: the JS side reads that widget's value and mutes the
-node (mode 2), so the engine skips it and downstream optional sockets see nothing. Wire a BOOLEAN into `enable`
-instead and the widget's own value never updates -- the frontend never knows the wired value, so it can't mute --
-and `run()` had a bug on top of that: both branches returned the same thing, so `enable` never did anything at the
-Python level either. The result was that a wired `enable=False` was silently ignored and the real value always
-passed through.
+Bypassing or muting the node that makes a mask can crash the node it feeds (Skin Beauty's mask, for example). Put
+a Pass in between instead: with enable off, the next node sees nothing on that input and runs without it.
 
-Fixed here: `run()` now actually returns a blocked signal when `enable` is off, checked at execution time, so it
-is correct however `enable` is set -- widget or wire. The JS mute is left in place for a plain widget: it still
-skips the node running at all, which is a nice-to-have, but the fix above is the part that makes this node correct.
+enable as a widget: the JS mutes the node, so it never runs and the link is dropped.
+enable wired (a BOOLEAN from a switch): the frontend can't see the wired value, so run() returns None instead,
+which an optional input reads as "not connected".
 """
-
-try:  # ComfyUI: skip downstream nodes without an error, the same way LC Preview Image/Mask do
-    from comfy_execution.graph import ExecutionBlocker as _Blocker
-except Exception:  # pragma: no cover
-    _Blocker = None
-
-
-def _blocked():
-    return _Blocker(None) if _Blocker is not None else None
-
 
 def _as_bool(v, default=True):
     if v is None:
@@ -43,15 +29,15 @@ def _as_bool(v, default=True):
 
 
 class LCImagePass:
-    """Pass IMAGE through unchanged. enable=False mutes the node (JS) so optional taps drop."""
+    """Pass IMAGE through unchanged. enable off: the next node sees no image on this input."""
 
     CATEGORY = "LC123/image"
     RETURN_TYPES = ("IMAGE",)
     RETURN_NAMES = ("image",)
     FUNCTION = "run"
     DESCRIPTION = (
-        "Identity IMAGE. Wire on a side tap, not the main series. "
-        "enable off (widget or a wired BOOLEAN) blocks the output so downstream optional sockets see no feed."
+        "Passes the image through. With enable off, the next node sees nothing on that input and runs without it. "
+        "Use it on optional inputs only: a required image input will error."
     )
 
     @classmethod
@@ -67,22 +53,21 @@ class LCImagePass:
 
     def run(self, image, enable=True):
         if not _as_bool(enable, True):
-            return (_blocked(),)
+            return (None,)
         return (image,)
 
 
 class LCMaskPass:
-    """Pass MASK through unchanged. enable=False mutes so Color/Tone Match mask = None."""
+    """Pass MASK through unchanged. enable off: the next node sees no mask on this input."""
 
     CATEGORY = "LC123/mask"
     RETURN_TYPES = ("MASK",)
     RETURN_NAMES = ("mask",)
     FUNCTION = "run"
     DESCRIPTION = (
-        "Identity MASK for a bank tap. Leave Ultra live. "
-        "enable off (widget or a wired BOOLEAN) blocks the output — Color Match / Tone Match then run with "
-        "mask=None (full frame). Do not put this on the only mask wire into Skin Beauty / Skin Upscale if those "
-        "must stay masked."
+        "Passes the mask through. With enable off, the next node sees no mask and runs without one "
+        "(Skin Beauty uses its own skin mask, Color / Tone Match use the full frame). "
+        "Use it instead of bypassing or muting the node that makes the mask."
     )
 
     @classmethod
@@ -98,7 +83,7 @@ class LCMaskPass:
 
     def run(self, mask, enable=True):
         if not _as_bool(enable, True):
-            return (_blocked(),)
+            return (None,)
         return (mask,)
 
 

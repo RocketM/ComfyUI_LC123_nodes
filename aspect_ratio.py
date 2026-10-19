@@ -9,7 +9,6 @@ import math
 from typing import Optional, Tuple
 
 import torch
-import comfy.utils
 
 from . import lc_rtx
 
@@ -73,6 +72,9 @@ def _make_divisible(v: int, d: int) -> int:
 
 
 def _parse_pad_color(pad_color: str):
+    if isinstance(pad_color, (tuple, list)) and len(pad_color) >= 3:
+        # already parsed (run() passes the (r, g, b) tuple through to _resize_image)
+        return float(pad_color[0]), float(pad_color[1]), float(pad_color[2])
     try:
         parts = [float(x.strip()) for x in pad_color.split(",")]
         if len(parts) == 1:

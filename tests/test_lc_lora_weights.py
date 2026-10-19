@@ -109,7 +109,10 @@ class LoraWeightTests(unittest.TestCase):
     def test_distinct_node_mappings_and_routes(self):
         group, original = self.group_module, self.original_module
         self.assertEqual(group.NODE_DISPLAY_NAME_MAPPINGS, {'LCGroupLoraLoader': 'LC Group LoRA Loader 🎚️'})
-        self.assertEqual(original.NODE_DISPLAY_NAME_MAPPINGS, {'LCLoraLoader': 'LC LoRA Loader 🎚️'})
+        self.assertEqual(original.NODE_DISPLAY_NAME_MAPPINGS, {
+            'LCLoraLoader': 'LC LoRA Loader 🎚️',
+            'LCLoraLoaderSingle': 'LC LoRA Loader (single) 🎚️',
+        })
         paths = [(route.method, route.path) for route in self.routes]
         self.assertIn(('GET', '/lc123/lora_loader/info'), paths)
         self.assertIn(('GET', '/lc123/group_lora_loader/info'), paths)

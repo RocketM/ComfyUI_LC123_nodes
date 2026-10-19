@@ -1135,6 +1135,12 @@ app.registerExtension({
     const isWm = name === WATERMARK;
     if (!NODE_CLASSES.has(name) && !isText && !isWm) return;
 
+    const onConfigure = nodeType.prototype.onConfigure;
+    nodeType.prototype.onConfigure = function () {
+      this._lcPvConfigured = true;
+      return onConfigure?.apply(this, arguments);
+    };
+
     const onCreated = nodeType.prototype.onNodeCreated;
     nodeType.prototype.onNodeCreated = function () {
       if (onCreated) onCreated.apply(this, arguments);
@@ -1154,6 +1160,7 @@ app.registerExtension({
 
       this.size = [DEFAULT_W, defaultHeight(this)];
       setTimeout(() => {
+        if (this._lcPvConfigured) return; // restored from a workflow (load, undo, paste): keep its saved size
         try {
           this.size = [
             Math.max(this.size[0], DEFAULT_W),

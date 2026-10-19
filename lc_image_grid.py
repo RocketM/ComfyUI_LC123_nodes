@@ -11,7 +11,7 @@ Build a grid from a batch of images (CR Image Grid Panel–style, self-contained
 from __future__ import annotations
 
 import math
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
 import numpy as np
 import torch
@@ -40,6 +40,8 @@ def _tensor_batch_to_pils(image: torch.Tensor) -> List[Image.Image]:
         a = np.clip(arr, 0, 1)
         if a.ndim == 2:
             a = np.stack([a, a, a], axis=-1)
+        if a.shape[-1] == 1:
+            a = np.repeat(a, 3, axis=-1)
         if a.shape[-1] > 3:
             a = a[..., :3]
         out.append(Image.fromarray((a * 255.0).astype(np.uint8), mode="RGB"))
@@ -181,8 +183,8 @@ class LCImageGrid:
         oc = _hex_to_rgb(outline_color, (255, 255, 255))
         bc = _hex_to_rgb(border_color, (0, 0, 0))
 
-        cols = max(1, int(max_columns))
         n = len(pils)
+        cols = max(1, min(int(max_columns), n))  # max_columns is a cap: 2 images in a 3-column grid leave no empty column
         rows = max(1, int(math.ceil(n / cols)))
 
         cell_w = max(im.width for im in pils)

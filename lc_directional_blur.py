@@ -86,7 +86,7 @@ def _make_line_kernel(angle_deg: float, length: float, taps: int):
         size += 1
 
     kernel = np.zeros((size, size), dtype=np.float64)
-    c = size / 2.0
+    c = (size - 1) / 2.0  # center pixel index of the odd-sized kernel (size / 2 put the line half a pixel off)
     rad = np.deg2rad(angle_deg)
     dx, dy = np.cos(rad), np.sin(rad)
     weight = 1.0 / taps

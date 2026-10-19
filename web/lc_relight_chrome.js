@@ -64,6 +64,8 @@ function installStage(node) {
   });
   // Don’t serialize DOM chrome
   widget.serializeValue = () => undefined;
+  // the right side Parameters panel writes its own column width onto widgets it lists: always follow the node
+  Object.defineProperty(widget, "width", { get: () => undefined, set: () => {}, configurable: true });
 
   let dragging = null; // "1" | "2" | null
   let lastY = 0;

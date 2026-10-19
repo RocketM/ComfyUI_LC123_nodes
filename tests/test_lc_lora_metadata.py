@@ -65,6 +65,25 @@ class LCLoraMetadataTests(unittest.TestCase):
         self.assertEqual((rows[0]['strength_model'], rows[0]['strength_clip']), (0.5, 0))
         self.assertEqual([r['scope'] for r in rows], ['image_upstream', 'configured_only'])
 
+    def test_single_lora_loader_collects_only_first_model_row(self):
+        prompt = graph([{'lora': 'single.safetensors', 'on': True, 'strength': 0.7},
+                        {'lora': 'unused.safetensors', 'on': True, 'strength': 1}], clip=False)
+        prompt['1']['class_type'] = 'LCLoraLoaderSingle'
+        rows = metadata.collect_lora_metadata(prompt, '3')['loras']
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]['filename'], 'single.safetensors')
+        self.assertEqual((rows[0]['strength_model'], rows[0]['strength_clip']), (0.7, 0))
+        self.assertEqual(rows[0]['scope'], 'image_upstream')
+
+    def test_multiple_manual_civitai_resources_keep_types_and_deduplicate(self):
+        air = 'urn:air:anima:checkpoint:civitai:100@200'
+        workflow = 'urn:air:anima:workflows:civitai:101@201'
+        result = hashes.civitai_resources_payload(air + ', ' + workflow + '\n' + air)
+        self.assertEqual([r['modelVersionId'] for r in result], [200, 201])
+        self.assertEqual(result[0]['type'], 'checkpoint')
+        self.assertNotEqual(result[1]['type'], 'checkpoint')
+        self.assertEqual(hashes.civitai_resources_payload(''), [])
+
     def test_original_size_and_missing_size_fallback(self):
         for sw, sh, expected in [(1024, 1536, '1024x1536'), (0, 0, '24x16'), (24, 0, '24x16')]:
             with self.subTest(source=(sw, sh)), tempfile.TemporaryDirectory() as tmp:

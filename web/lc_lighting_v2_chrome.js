@@ -204,6 +204,8 @@ function installStage(node) {
     hideOnZoom: false,
   });
   dom.serializeValue = () => undefined;
+  // the right side Parameters panel writes its own column width onto widgets it lists: always follow the node
+  Object.defineProperty(dom, "width", { get: () => undefined, set: () => {}, configurable: true });
   // the stage goes first, so the picture of the light is the first thing on the node
   try {
     const arr = node.widgets;

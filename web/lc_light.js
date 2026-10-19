@@ -223,7 +223,7 @@ div:has(> .lg-node-widgets .lc-light){padding-bottom:2px !important}
 
 // Nodes 2.0 does not draw node foregrounds, so the live follow also runs on a slow timer
 setInterval(() => {
-  for (const n of app.graph?._nodes || []) if (n._lcLight) paint(n);
+  for (const n of (app.canvas?.graph ?? app.graph)?._nodes || []) if (n._lcLight) paint(n); // the graph on screen (a subgraph too)
 }, 250);
 
 app.registerExtension({

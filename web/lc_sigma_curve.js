@@ -245,6 +245,8 @@ app.registerExtension({
                     setWidget(this, "total_steps", vals.length - 1);
                 }
             }
+            // Save curve is a one-shot: the run saved the file, so the next runs (and the saved workflow) don't re-save it
+            if (widget(this, "save_curve")?.value === true) setWidget(this, "save_curve", false);
             this.setDirtyCanvas(true, true);
         };
 

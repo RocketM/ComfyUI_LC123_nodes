@@ -1,0 +1,131 @@
+{
+ "id": "moss_image_base",
+ "name": "MOSS Image (Base)",
+ "kind": "image",
+ "params_b": 5.1,
+ "notes": [
+  "The untuned MOSS-Image (Apache-2.0): no post-training, so cfg and steps are yours to find. For training LoRAs on, or picking your own settings. For pictures, SFT is the better start.",
+  "Settings (OpenMOSS): 50 steps, cfg 3 (up to 6 for a short prompt), euler, 1 to 2 MP in multiples of 16. ComfyUI's template runs faster: 25 steps, cfg 2.5, er_sde / simple.",
+  "Shift 5 is built in. To change it use ModelSamplingAuraFlow or ModelSamplingFlux: ModelSamplingSD3 uses another scale and turns the picture to noise.",
+  "Skip Layer Guidance DiT Simple on layer 22 (single_layers) keeps fine details from falling apart. Off looks a little more real but details can collapse; it can overblow anime.",
+  "Put text you want written in quotes. Natural sentences, tags and JSON layouts all work. Negative that helps: nsfw, worst quality, bad anatomy, watermark, jpeg artifact.",
+  "Needs a ComfyUI with native MOSS-Image (the dev branch after 0.41.3, 2026-10-16). The MOSS-Image plugin reads OpenMOSS's own checkpoints, not these files."
+ ],
+ "components": {
+  "diffusion": {
+   "label": "Image model",
+   "role": "diffusion",
+   "variants": [
+    {
+     "file": "moss_image_base_bf16.safetensors",
+     "format": "bf16",
+     "gb": 10.16,
+     "bits": 16,
+     "repo": "Comfy-Org/MOSS-Image",
+     "loader": "UNETLoader",
+     "also": [
+      "mossImage_base_bf16.safetensors"
+     ]
+    },
+    {
+     "file": "moss_image_base_int8_convrot.safetensors",
+     "format": "int8_convrot",
+     "gb": 5.41,
+     "bits": 8,
+     "repo": "Comfy-Org/MOSS-Image",
+     "loader": "UNETLoader",
+     "default": true,
+     "also": [
+      "mossImage_base_int8_convrot.safetensors"
+     ]
+    }
+   ]
+  },
+  "text_encoder": {
+   "label": "Text encoder (Qwen3.5-9B)",
+   "role": "text_encoder",
+   "clip_type": "moss_image",
+   "variants": [
+    {
+     "file": "qwen3.5_9b_bf16.safetensors",
+     "format": "bf16",
+     "gb": 19.31,
+     "bits": 16,
+     "repo": "Comfy-Org/MOSS-Image",
+     "loader": "CLIPLoader"
+    },
+    {
+     "file": "qwen3.5_9b_int8_convrot.safetensors",
+     "format": "int8_convrot",
+     "gb": 9.75,
+     "bits": 8,
+     "repo": "Comfy-Org/MOSS-Image",
+     "loader": "CLIPLoader",
+     "default": true
+    },
+    {
+     "file": "qwen3.5_9b_w4a8_gptq.safetensors",
+     "format": "w4a8_gptq",
+     "gb": 7.34,
+     "bits": 4,
+     "repo": "Comfy-Org/MOSS-Image",
+     "loader": "CLIPLoader"
+    },
+    {
+     "file": "qwen3.5_9b_uncensored_int8_convrot.safetensors",
+     "format": "int8_convrot",
+     "gb": 12.35,
+     "bits": 8,
+     "repo": "prithivMLmods/Qwen3.5-9B-Uncensored-ComfyUI",
+     "loader": "CLIPLoader",
+     "community": true,
+     "note": "uncensored"
+    },
+    {
+     "file": "qwen3.5_9b_uncensored_fp8_e4m3fn.safetensors",
+     "format": "fp8",
+     "gb": 9.41,
+     "bits": 8,
+     "repo": "prithivMLmods/Qwen3.5-9B-Uncensored-ComfyUI",
+     "loader": "CLIPLoader",
+     "community": true,
+     "note": "uncensored"
+    },
+    {
+     "file": "qwen3.5_9b_uncensored_bf16.safetensors",
+     "format": "bf16",
+     "gb": 18.82,
+     "bits": 16,
+     "repo": "prithivMLmods/Qwen3.5-9B-Uncensored-ComfyUI",
+     "loader": "CLIPLoader",
+     "community": true,
+     "note": "uncensored"
+    }
+   ]
+  },
+  "vae": {
+   "label": "VAE (Flux.2)",
+   "role": "fixed",
+   "variants": [
+    {
+     "file": "flux2-vae_small.safetensors",
+     "format": "bf16",
+     "gb": 0.25,
+     "bits": 16,
+     "repo": "Comfy-Org/MOSS-Image",
+     "loader": "VAELoader",
+     "default": true
+    },
+    {
+     "file": "flux2-vae.safetensors",
+     "format": "bf16",
+     "gb": 0.34,
+     "bits": 16,
+     "repo": "Comfy-Org/MOSS-Image",
+     "loader": "VAELoader"
+    }
+   ]
+  }
+ },
+ "source": "Hugging Face tree API sizes (Comfy-Org/MOSS-Image, prithivMLmods/Qwen3.5-9B-Uncensored-ComfyUI) and the OpenMOSS model card + user guide, 2026-10-18. Tested 2026-10-18 on ComfyUI master 446ef4e00 (Goliath 5090): 50 steps cfg 3 + SLG 22 at 1 MP 32 s with load; DMD LoRA 8 steps cfg 1 4 s."
+}

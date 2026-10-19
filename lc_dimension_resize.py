@@ -7,8 +7,6 @@ Returns rounded integer width and height.
 
 from __future__ import annotations
 
-import math
-
 
 def _to_number(value) -> float:
     if value is None:

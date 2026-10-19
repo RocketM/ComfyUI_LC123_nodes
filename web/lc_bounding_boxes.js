@@ -398,6 +398,8 @@ function attach(node) {
   const total = CANVAS_H + EDITOR_H;
   const dw = node.addDOMWidget("box_canvas", "LC_BOUNDING_BOXES", wrap, { getMinHeight: () => total, getHeight: () => total, serialize: false });
   if (dw) dw.serialize = false;
+  // the right side Parameters panel writes its own column width onto widgets it lists: always follow the node
+  if (dw) Object.defineProperty(dw, "width", { get: () => undefined, set: () => {}, configurable: true });
   for (const name of ["width", "height"]) {
     const w = W(node, name);
     if (!w) continue;

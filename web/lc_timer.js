@@ -130,7 +130,9 @@ function attach(node) {
   const list = Object.assign(document.createElement("div"), { className: "lc-rt-list" }); // squeeze the node: this scrolls
   wrap.append(now, sum, list);
   node._lcRt = { wrap, now, sum, list };
-  node.addDOMWidget("lc_rt", "LC_RT", wrap, { serialize: false, getMinHeight: () => 64 }); // the time + one line; the list scrolls
+  const dom = node.addDOMWidget("lc_rt", "LC_RT", wrap, { serialize: false, getMinHeight: () => 64 }); // the time + one line; the list scrolls
+  // the right side Parameters panel writes its own column width onto widgets it lists: always follow the node
+  if (dom) Object.defineProperty(dom, "width", { get: () => undefined, set: () => {}, configurable: true });
   nodes.add(node);
   render(node);
   fitBox(node);

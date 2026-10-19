@@ -923,7 +923,11 @@ function classicCards(node) {
     document.head.appendChild(style);
     st = { layer, style, key: "" };
     classicState.set(el, st);
-    pm.addEventListener("scroll", () => placeClassic(el, pm), { passive: true });
+    // once per text box: the cards are taken down and rebuilt on every edit, the box stays
+    if (!pm._lcScrollHooked) {
+      pm._lcScrollHooked = true;
+      pm.addEventListener("scroll", () => placeClassic(el, pm), { passive: true });
+    }
   }
   const kids = [...pm.children];
   const key = lines.map((l) => kids.indexOf(l.p) + "|" + l.kind + "|" + l.url + "|" + l.caption).join(";");

@@ -33,7 +33,8 @@ def enabled() -> bool:
         return True
     if mtime != _cache["mtime"]:
         try:
-            _cache["on"] = json.load(open(path, encoding="utf-8")).get(SETTING, True) is not False
+            with open(path, encoding="utf-8") as f:
+                _cache["on"] = json.load(f).get(SETTING, True) is not False
         except Exception:
             _cache["on"] = True
         _cache["mtime"] = mtime

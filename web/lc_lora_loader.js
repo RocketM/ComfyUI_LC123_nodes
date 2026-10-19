@@ -28,7 +28,9 @@ import { lcApplyLaunchColor } from "./lc_color.js";
 
 // LC LoRA Loader Stack (lc_lora_stack.py) shares this exact face -- same rows, same subfolder-grouped
 // dropdown, same Info button -- it just has no model/clip sockets. Both node types are driven from here.
-const NODES = new Set(["LCLoraLoader", "LCLoraLoaderStack"]);
+const NODES = new Set(["LCLoraLoader", "LCLoraLoaderStack", "LCLoraLoaderSingle"]);
+// LC LoRA Loader (single): the same row, always exactly one, without the header, add, drag handle and remove
+const isSingle = (node) => (node?.comfyClass || node?.type) === "LCLoraLoaderSingle";
 const ROW_H = 28;
 const HEADER_H = 24;
 const FOOTER_H = 28;
@@ -321,6 +323,7 @@ function hideRowsWidget(node) {
 }
 
 function desiredHeight(node) {
+  if (isSingle(node)) return ROW_H + PAD * 2;
   const rows = getRows(node);
   return HEADER_H + Math.max(rows.length, 0) * ROW_H + FOOTER_H + PAD * 2;
 }
@@ -712,7 +715,14 @@ function ensureFace(node) {
     serialize: false,
   });
   dom.serializeValue = () => undefined;
+  // the right side Parameters panel writes its own column width onto widgets it lists: always follow the node
+  Object.defineProperty(dom, "width", { get: () => undefined, set: () => {}, configurable: true });
 
+  if (isSingle(node)) {
+    header.style.display = "none";
+    footer.style.display = "none";
+    rowsHost.style.padding = `${PAD}px 0`;
+  }
   node.__lcFace = { wrap, header, headerLabel, toggleAll, rowsHost, addBtn };
   return node.__lcFace;
 }
@@ -758,7 +768,7 @@ function makeRow(node, row, index, rows, dragState) {
 
   const strength = makeStrengthControl(node, index);
 
-  el.append(handle, on, picker, strength.wrap);
+  el.append(...(isSingle(node) ? [] : [handle]), on, picker, strength.wrap);
 
   if (infoEnabled()) {
     const info = document.createElement("button");
@@ -781,7 +791,7 @@ function makeRow(node, row, index, rows, dragState) {
     rs.splice(index, 1);
     setRows(node, rs);
   });
-  el.appendChild(del);
+  if (!isSingle(node)) el.appendChild(del);
 
   // drag to reorder: a plain vertical list reorder among the sibling row elements, window-level pointer
   // listeners so a fast drag never loses the pointer even if it briefly leaves the row
@@ -829,6 +839,16 @@ function makeRow(node, row, index, rows, dragState) {
 
 function renderRows(node) {
   const face = ensureFace(node);
+  if (isSingle(node) && getRows(node).length !== 1) {
+    // always exactly one row: a new node gets one (the usual default LoRA), extra rows are dropped
+    const rs = getRows(node).slice(0, 1);
+    if (rs.length) setRows(node, rs, { rerender: false });
+    else {
+      getLoraList().then((list) => {
+        if (getRows(node).length === 0) setRows(node, [{ on: true, lora: defaultLoraFor(node, list), strength: 1.0 }]);
+      });
+    }
+  }
   const rows = getRows(node);
   face.rowsHost.innerHTML = "";
   for (let i = 0; i < rows.length; i++) {
@@ -854,6 +874,7 @@ app.registerExtension({
       ensureFace(this);
       renderRows(this);
       if (!this.size || this.size[0] < MIN_W) this.setSize([MIN_W, this.computeSize()[1]]);
+      if (isSingle(this)) this.setSize([Math.max(this.size[0], 360), this.computeSize()[1]]); // just the one row tall
       return r;
     };
 
@@ -873,6 +894,7 @@ app.registerExtension({
     nodeType.prototype.getExtraMenuOptions = function (canvas, options) {
       getExtra?.apply(this, arguments);
       const node = this;
+      if (isSingle(node)) return;
       options.push(
         { content: "Select all LoRAs", callback: () => setRows(node, getRows(node).map((r) => ({ ...r, on: true }))) },
         { content: "Deselect all LoRAs", callback: () => setRows(node, getRows(node).map((r) => ({ ...r, on: false }))) },

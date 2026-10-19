@@ -24,7 +24,6 @@ import torch
 from PIL import Image, ImageDraw, ImageEnhance, ImageFont
 
 import comfy.utils
-import folder_paths
 import node_helpers
 import nodes
 

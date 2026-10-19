@@ -99,7 +99,9 @@ function setup(node) {
   const tip = document.createElement("div");
   tip.style.cssText = "display:none;height:16px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font:11px sans-serif;color:#9fd0a0;padding:0 4px";
   wrap.append(canvas, text, tip);
-  node.addDOMWidget("lc_dd_graph", "LC_DD_GRAPH", wrap, { serialize: false, getMinHeight: () => ddHeight(node), getMaxHeight: () => 4000 });  // drag the node taller: the graph gets the room
+  const dom = node.addDOMWidget("lc_dd_graph", "LC_DD_GRAPH", wrap, { serialize: false, getMinHeight: () => ddHeight(node), getMaxHeight: () => 4000 });  // drag the node taller: the graph gets the room
+  // the right side Parameters panel writes its own column width onto widgets it lists: always follow the node
+  if (dom) Object.defineProperty(dom, "width", { get: () => undefined, set: () => {}, configurable: true });
   node._lcDD = { canvas, text, tip };
   for (const k of ["amount", "start", "end", "peak", "exponent", "mode"]) {
     const wg = node.widgets.find((x) => x.name === k);

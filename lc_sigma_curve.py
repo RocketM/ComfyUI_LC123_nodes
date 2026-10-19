@@ -266,6 +266,11 @@ def _beta_norm(a, b):
 
 def _beta_ppf(p, a, b):
     p = min(max(float(p), 0.0), 1.0)
+    try:  # the real beta distribution, the same one core's beta scheduler uses
+        import scipy.stats
+        return float(scipy.stats.beta.ppf(p, a, b))
+    except Exception:  # no scipy: the series below (rough)
+        pass
     if a == 1.0 and b == 1.0:
         return p
     lo, hi = 0.0, 1.0
@@ -389,7 +394,7 @@ def _load_saved(name: str) -> list[float] | None:
             data = json.load(f)
     except (OSError, json.JSONDecodeError):
         return None
-    raw = data.get("sigmas", data)
+    raw = data.get("sigmas", data) if isinstance(data, dict) else data
     return parse_curve(raw)
 
 

@@ -343,7 +343,9 @@ app.registerExtension({
       if (metas?.length) {
         const url = viewUrl(metas[0]);
         if (url) {
+          const tok = (this._lcImgTok = (this._lcImgTok || 0) + 1); // the latest run's picture wins
           loadImg(url).then((img) => {
+            if (tok !== this._lcImgTok) return;
             this._lcCropImg = img;
             this.setDirtyCanvas?.(true, true);
           }).catch(() => {});

@@ -193,11 +193,38 @@ def local_files(role):
     return out
 
 
+_ALIAS_CACHE = {"stamp": None, "map": {}}
+
+
+def _aliases():
+    """{file: {other names}} from the profiles' "also" lists: the same file published under another name. Read again
+    only when a profile file changes."""
+    try:
+        d = lc_model_calc.PROFILE_DIR
+        stamp = tuple(sorted((f, os.path.getmtime(os.path.join(d, f))) for f in os.listdir(d) if f.endswith(".json")))
+    except Exception:
+        stamp = None
+    if stamp is not None and stamp == _ALIAS_CACHE["stamp"]:
+        return _ALIAS_CACHE["map"]
+    out = {}
+    try:
+        for prof in lc_model_calc.load_profiles().values():
+            for comp in (prof.get("components") or {}).values():
+                for v in comp.get("variants") or []:
+                    if v.get("also"):
+                        out.setdefault(v["file"].lower(), set()).update(a.lower() for a in v["also"])
+    except Exception:
+        pass
+    _ALIAS_CACHE.update(stamp=stamp, map=out)
+    return out
+
+
 def find_on_disk(filename, folders):
     base = filename.lower()
+    names = {base} | _aliases().get(base, set())
     for folder in folders:
         for n in _list(folder):
-            if os.path.basename(n.replace("\\", "/")).lower() == base:
+            if os.path.basename(n.replace("\\", "/")).lower() in names:
                 return folder, n
     return None
 
@@ -811,6 +838,8 @@ def loaded_files(inputs):
     base = inputs.get("base_model")
     base = LEGACY_BASE.get(base, base)
     pid = next((p for p, n in base_names(None) if n == base), None)
+    if pid == "custom" and "latent_upscaler" in inputs:  # both Customs are named "Custom": a video node has these widgets
+        pid = "custom_video"
     prof = profiles().get(pid) if pid else None
     goal = inputs.get("goal") or "Optimal"
     roles = roles_for(pid) if pid else ["model", "clip", "vae"]
@@ -882,10 +911,45 @@ def load_model(folder, name):
         if "LoaderGGUF" in nodes.NODE_CLASS_MAPPINGS:
             return _call("LoaderGGUF", gguf_name=name)[0], None, None, "GGUF (calcuis)"
         raise RuntimeError("[LC Optimizer] GGUF files need the ComfyUI-GGUF pack (install it from ComfyUI-Manager).")
+    if _is_moss(full_path(folder, name)) and not _native_moss():
+        # the MOSS-Image plugin reads OpenMOSS's own checkpoints: with these (fused qkv) files it renders noise
+        raise RuntimeError("[LC Optimizer] MOSS-Image needs a ComfyUI with native MOSS-Image support (update ComfyUI: "
+                           "the dev branch after 0.41.3 has it).")
     return _call("UNETLoader", unet_name=name, weight_dtype="default")[0], None, None, "diffusion model"
 
 
+def _is_moss(path):
+    """A MOSS-Image diffusion model, by its weight names (read from the header only)."""
+    if not path or not path.lower().endswith(".safetensors"):
+        return False
+    try:
+        import json
+        import struct
+
+        with open(path, "rb") as f:
+            n = struct.unpack("<Q", f.read(8))[0]
+            if n > 64 * 1024 * 1024:
+                return False
+            keys = json.loads(f.read(n)).keys()
+        return any(k.endswith("shared_block_modulation.weight") for k in keys)
+    except Exception:
+        return False
+
+
+def _native_moss():
+    """True once ComfyUI loads MOSS-Image itself (its CLIPLoader lists the moss_image type)."""
+    try:
+        import nodes
+
+        return "moss_image" in nodes.NODE_CLASS_MAPPINGS["CLIPLoader"].INPUT_TYPES()["required"]["type"][0]
+    except Exception:
+        return False
+
+
 def load_clip(folder, name, clip_type, ckpt_name=None):
+    if clip_type == "moss_image" and not _native_moss():
+        raise RuntimeError("[LC Optimizer] MOSS-Image's text encoder needs a ComfyUI with native MOSS-Image support "
+                           "(update ComfyUI: the dev branch after 0.41.3 has it).")
     if clip_type == "LTXAVTextEncoderLoader":
         if not ckpt_name:
             raise RuntimeError("[LC Optimizer] LTX 2.3's text encoder also reads the LTX 2.3 checkpoint: pick a checkpoint as the model.")

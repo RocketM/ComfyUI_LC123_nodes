@@ -431,11 +431,13 @@ function attach(node) {
   wrap.append(list, add);
   node._lcCp = { wrap, list, add, rows: [] };
   try {
-    node.addDOMWidget("lc_cp_face", "LC_CP_FACE", wrap, {
+    const dom = node.addDOMWidget("lc_cp_face", "LC_CP_FACE", wrap, {
       getMinHeight: () => faceHeight(node),
       getHeight: () => faceHeight(node),
       serialize: false,
     });
+    // the right side Parameters panel writes its own column width onto widgets it lists: always follow the node
+    if (dom) Object.defineProperty(dom, "width", { get: () => undefined, set: () => {}, configurable: true });
   } catch (e) {
     console.warn("LC Control Panel face failed", e);
   }
@@ -490,6 +492,7 @@ app.registerExtension({
     let mouseDown = false;
     window.addEventListener("pointerdown", () => (mouseDown = true), true);
     window.addEventListener("pointerup", () => (mouseDown = false), true);
+    window.addEventListener("pointercancel", () => (mouseDown = false), true); // else a cancelled press leaves the height guard off
     nodeType.prototype.setSize = function (size) {
       if (!mouseDown && this._lcCpHeight && Array.isArray(size) && Math.abs(size[1] - this._lcCpHeight) > 1) size = [size[0], this._lcCpHeight];
       if (Array.isArray(size) && size[0] < MIN_W) size = [MIN_W, size[1]];

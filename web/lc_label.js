@@ -510,7 +510,7 @@ function showSettings(node) {
     alignBtns[k] = ab;
     alignRow.appendChild(ab);
   }
-  alignBtns[p.align].style.background = "#324B4B";
+  if (alignBtns[p.align]) alignBtns[p.align].style.background = "#324B4B"; // an unknown align value no longer throws (the dialog then never opened again)
   row("Align", alignRow);
 
   // colors

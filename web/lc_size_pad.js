@@ -279,6 +279,8 @@ function attach(node) {
 
   const dw = node.addDOMWidget("size_pad", "LC_SIZE_PAD", wrap, { getMinHeight: () => PAD_H, getHeight: () => PAD_H, serialize: false });
   if (dw) dw.serialize = false;
+  // the right side Parameters panel writes its own column width onto widgets it lists: always follow the node
+  if (dw) Object.defineProperty(dw, "width", { get: () => undefined, set: () => {}, configurable: true });
 
   // settings
   const hook = (name, fn) => {
