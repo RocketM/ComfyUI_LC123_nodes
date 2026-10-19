@@ -289,7 +289,7 @@ class LCSaveImageMetadata:
                     "STRING",
                     {
                         "default": "",
-                        "tooltip": "Primary CivitAI AIR or model URL. No hash lookup. Fill it to link your workflow/model on CivitAI. Trade-off: CivitAI then labels the image \"made on-site\". Leave it empty and the image reads as an external generator (models and LoRAs still match by hash).",
+                        "tooltip": "CivitAI AIR or model URL. Several are fine, comma-separated (e.g. the model and your workflow page). No hash lookup. Fill it to link your workflow/model on CivitAI. Trade-off: CivitAI then labels the image \"made on-site\". Leave it empty and the image reads as an external generator (models and LoRAs still match by hash).",
                     },
                 ),
                 "width": (
@@ -336,7 +336,7 @@ class LCSaveImageMetadata:
     CATEGORY = "LC123/io"
     DESCRIPTION = (
         "Save metadata for LC Save Image. Optional LC_PIPE in (no pipe out). "
-        "Models are one comma-separated string. civitai_air is the primary AIR or URL only."
+        "Models are one comma-separated string. civitai_air takes one or more AIRs or URLs, comma-separated."
     )
 
     def build(

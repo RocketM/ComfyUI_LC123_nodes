@@ -676,7 +676,7 @@ Full directions: [`LC_Prompt_Builder_Note.md`](LC_Prompt_Builder_Note.md)
 |------|----------------|
 | **LC Easy Folder 📂** | A combined prefix for Save Image, or wire it into LC Save Image's `filename_prefix` |
 | **LC Advanced Folder 📂** | Filename and path split apart |
-| **LC Save Metadata 🏷️** | Optional **LC_PIPE in**. Fills prompts, seed, steps, CFG, sampler, scheduler, size and denoise. Widgets win when set (seed `-1`, steps/cfg `0` = use the pipe). **civitai_air** takes an AIR tag or a CivitAI URL |
+| **LC Save Metadata 🏷️** | Optional **LC_PIPE in**. Fills prompts, seed, steps, CFG, sampler, scheduler, size and denoise. Widgets win when set (seed `-1`, steps/cfg `0` = use the pipe). **civitai_air** takes one or more AIR tags or CivitAI URLs, comma-separated (e.g. the model and your workflow page) |
 | **LC Save Image 💾** | `filename` + `path` under the output folder. PNG gets the workflow, `parameters`, `civitaiResources` and AutoV2 hashes. JPEG/WebP only get a short comment (a format limit, not a bug). Only resources that feed the saved image are listed: LoRAs that are muted, bypassed, switched off, at strength 0 or on another branch are skipped. A `lora_metadata` chunk records each LoRA's model and CLIP strength |
 | **📝 LC Save Text** | Writes text to a file, cleaning illegal path characters |
 | **LC Join Strings 🔗** | Joins N strings. Empty slots skip the delimiter. `\n` allowed |

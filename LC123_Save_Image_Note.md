@@ -7,7 +7,7 @@
 - Pipe fills: prompts, seed, steps (`total_steps`), CFG (`cfg_1`), sampler, scheduler, size, denoise.
 - Widgets override pipe when set (seed `-1` and steps/cfg `0` = use pipe).
 - **models** — one field, comma-separated (`Model 1, Model 2`).
-- **civitai_air** — primary CivitAI AIR *or* model URL only. No lookup.
+- **civitai_air**: one or more CivitAI AIRs or model URLs, comma-separated. No lookup.
 
 ### Save Image
 - **filename** + **path** (subfolder under Comfy output).
