@@ -44,6 +44,15 @@ def _frac_box(b):
     return [_grid(y0), _grid(x0), _grid(y1), _grid(x1)]
 
 
+def palette_list(raw):
+    """A box or picture palette as a list of colours: a list, or text like "#1a1a1a, warm beige"."""
+    if isinstance(raw, (list, tuple)):
+        items = raw
+    else:
+        items = re.split(r"[,;\n]", str(raw or ""))
+    return [str(c).strip() for c in items if str(c).strip()]
+
+
 def _clean_name(name, fallback="object"):
     name = re.sub(r"[^a-z0-9]+", "_", str(name or "").strip().lower()).strip("_")
     return name or fallback
@@ -86,6 +95,11 @@ def to_elements(boxes, ref=0):
               "bbox": tgt if b["kind"] != "remove" else src, "kind": b["kind"]}
         if el["type"] == "text":
             el["text"] = str(b.get("text") or "")
+        if b.get("type") == "character":
+            el["label"] = "character"  # MOSS Image: a person or creature; everything else reads it as an object
+        pal = palette_list(b.get("palette"))
+        if pal:
+            el["color_palette"] = pal
         if b["kind"] == "new":
             el.update({"from": "target", "src_bbox": None, "tgt_bbox": src})
         elif b["kind"] == "remove":
@@ -136,7 +150,7 @@ def render_preview(boxes, width, height, image=None):
             t = rect(b["to"])
             draw.rectangle(t, outline=c, width=2)
             draw.line([(r[0] + r[2]) / 2, (r[1] + r[3]) / 2, (t[0] + t[2]) / 2, (t[1] + t[3]) / 2], fill=c, width=2)
-        label = f"{bid} ({b['kind']})"
+        label = f"{bid} (character)" if b.get("type") == "character" and b["kind"] == "new" else f"{bid} ({b['kind']})"
         tw = draw.textlength(label, font=font)
         draw.rectangle([r[0], r[1], r[0] + tw + 8, r[1] + fs + 4], fill=c)
         draw.text((r[0] + 4, r[1] + 1), label, fill=(0, 0, 0), font=font)
@@ -167,8 +181,11 @@ def _incoming(data, width, height):
             kind = d.get("kind") or ("new" if d.get("from") == "target" else "remove" if d.get("from") and d.get("tgt_bbox") is None
                                      else "move" if d.get("src_bbox") and d.get("tgt_bbox") and d["src_bbox"] != d["tgt_bbox"] else "change")
             box = {"x": x0, "y": y0, "w": x1 - x0, "h": y1 - y0, "kind": kind, "desc": d.get("desc", ""),
-                   "name": re.sub(r"_\d+$", "", str(d.get("id") or "object")), "type": "text" if d.get("type") == "text" else "obj",
+                   "name": re.sub(r"_\d+$", "", str(d.get("id") or "object")),
+                   "type": "text" if d.get("type") == "text" else "character" if d.get("label") == "character" else "obj",
                    "text": d.get("text", ""), "to": None}
+            if d.get("color_palette") or d.get("palette"):
+                box["palette"] = ", ".join(palette_list(d.get("color_palette") or d.get("palette")))
             if kind == "move" and d.get("tgt_bbox"):
                 ty0, tx0, ty1, tx1 = (float(v) / 1000 for v in d["tgt_bbox"])
                 box["to"] = {"x": tx0, "y": ty0, "w": tx1 - tx0, "h": ty1 - ty0}
@@ -227,7 +244,10 @@ class LCBoundingBoxes:
         preview = render_preview(drawn, width, height, image)
         pixels = [{"x": round(min(b["x"], b["x"] + b["w"]) * width), "y": round(min(b["y"], b["y"] + b["h"]) * height),
                    "width": round(abs(b["w"]) * width), "height": round(abs(b["h"]) * height)} for b in drawn]
-        return {"ui": ui, "result": (preview, [pixels] if pixels else [], to_elements(drawn))}
+        elements = to_elements(drawn)
+        for e in elements:
+            e["canvas"] = [width, height]  # LC MOSS Layout Prompt sizes itself from this
+        return {"ui": ui, "result": (preview, [pixels] if pixels else [], elements)}
 
 
 # ---------------------------------------------------------------- layout prompt

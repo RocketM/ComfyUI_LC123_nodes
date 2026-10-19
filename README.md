@@ -27,7 +27,7 @@ Custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by [loneca
 8. [Image FX](#image-fx)
 9. [Image and size](#image-size)
 10. [Prompt Builder](#prompt-builder)
-11. [Flux 3 (boxes and references)](#flux3)
+11. [Flux 3 and MOSS Image (boxes and references)](#flux3)
 12. [Sampling, sigmas, latents and pipes](#sampling)
 13. [Saving, metadata and text](#saving)
 14. [Switches, logic and control](#switches)
@@ -609,15 +609,16 @@ Full directions: [`LC_Prompt_Builder_Note.md`](LC_Prompt_Builder_Note.md)
 ---
 
 <a id="flux3"></a>
-## 🖼️ Flux 3 (boxes and references)
+## 🖼️ Flux 3 and MOSS Image (boxes and references)
 
 <details>
 <summary><b>Click to open</b></summary>
 
 | Node | What it does |
 |------|----------------|
-| **LC Bounding Boxes 🔲** | Draw boxes on a picture: drag on empty space for a box, drag a box to move it, a corner to resize it. Each box gets a **name** (hat, cup), what happens to it (**new**, **change**, **move** with a second dashed box, **remove**), a description and, for text, the exact words. Connect a Load Image and the picture shows right away. Outputs a preview plus the same **bboxes** and **elements** as ComfyUI's Create Bounding Boxes, so it plugs into anything that takes those. Works in the classic canvas and in Nodes 2.0 |
+| **LC Bounding Boxes 🔲** | Draw boxes on a picture: drag on empty space for a box, drag a box to move it, a corner to resize it. Each box gets a **name** (hat, cup), what happens to it (**new**, **change**, **move** with a second dashed box, **remove**), a description and, for text, the exact words. For MOSS Image a box can be a **character** and get its own **palette**. Connect a Load Image and the picture shows right away. Outputs a preview plus the same **bboxes** and **elements** as ComfyUI's Create Bounding Boxes, so it plugs into anything that takes those. Works in the classic canvas and in Nodes 2.0 |
 | **LC Flux 3 Layout Prompt 🗺️** | Adds the boxes to a Flux 3 prompt as the element table the model was trained on (Black Forest Labs' own format): the layout table for a new picture, the edit table (from, source box, target box) for an edit. Write **<1>**, **<2>** in the prompt for box 1, box 2: they become the box ids (**<hat_1>**). Edits end with "everything else stays identical", and **info** lists any box the prompt doesn't name |
+| **LC MOSS Layout Prompt 🗺️** | Turns the boxes into MOSS Image's layout prompt: each box becomes an object, a character or a block of text with its own caption and palette, right where you drew it. Adds the picture's **canvas** (single, multi panel, collage), medium tags and palette, and outputs the width and height the boxes were drawn on, so the latent always matches |
 | **LC Flux 3 Reference Latent 🖼️** | Flux 3 references in one node: up to 4 pictures (**<ref_image_0>** to **<ref_image_3>**) on the positive and the negative, the negative the model wants (zeroed for the distilled model, an empty prompt for Base) and the latent to sample, at picture 1's size or your own. No pictures = plain text to image |
 
 </details>

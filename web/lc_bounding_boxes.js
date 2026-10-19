@@ -225,13 +225,16 @@ function buildEditor(node) {
   const name = el("input", `${FIELD}flex:1;min-width:0;`, { placeholder: "name (person, cup, hat)", title: "A plain noun: the box id becomes name_1" });
   const kind = el("select", `${FIELD}flex:none;`, { title: "new = add it here; change = edit it in place; move = take it to the dashed box; remove = take it out" });
   for (const k of KINDS) kind.append(el("option", "", { value: k, textContent: k }));
-  const type = el("select", `${FIELD}flex:none;`, { title: "object, or a block of text to write" });
-  for (const [v, t] of [["obj", "object"], ["text", "text"]]) type.append(el("option", "", { value: v, textContent: t }));
+  const type = el("select", `${FIELD}flex:none;`, { title: "object, character (a person or creature: MOSS Image keeps them apart), or a block of text to write" });
+  for (const [v, t] of [["obj", "object"], ["character", "character"], ["text", "text"]]) type.append(el("option", "", { value: v, textContent: t }));
+  const palette = el("input", `${FIELD}flex:1;min-width:0;`, { placeholder: "palette (MOSS): olive green, #f2e6d0", title: "MOSS Image: the box's colours, comma separated (#1a1a1a, warm beige). Leave empty for none." });
   row2.append(name, kind, type);
-  const text = el("input", `${FIELD}width:100%;`, { placeholder: "the exact text to write in this box" });
+  const text = el("input", `${FIELD}flex:1;min-width:0;`, { placeholder: "the exact text to write in this box" });
+  const row3 = el("div", "display:flex;gap:4px;");
+  row3.append(text, palette);
   const desc = el("textarea", `${FIELD}width:100%;flex:1;resize:none;`, { placeholder: "what it looks like (the result): \"a black pirate tricorn hat in worn leather\"" });
-  ed.append(row1, row2, text, desc);
-  for (const e of [name, text, desc]) e.addEventListener("keydown", (ev) => ev.stopPropagation());
+  ed.append(row1, row2, row3, desc);
+  for (const e of [name, text, desc, palette]) e.addEventListener("keydown", (ev) => ev.stopPropagation());
   const edit = (field, value) => {
     const b = st.boxes[st.sel];
     if (!b) return;
@@ -247,7 +250,8 @@ function buildEditor(node) {
   type.onchange = () => edit("type", type.value);
   text.oninput = () => edit("text", text.value);
   desc.oninput = () => edit("desc", desc.value);
-  st.ed = { root: ed, chips, name, kind, type, text, desc, del };
+  palette.oninput = () => edit("palette", palette.value);
+  st.ed = { root: ed, chips, name, kind, type, text, desc, palette, del };
   return ed;
 }
 
@@ -272,7 +276,7 @@ function renderEditor(node) {
   }
   const b = st.boxes[st.sel];
   const on = !!b;
-  for (const k of ["name", "kind", "type", "text", "desc", "del"]) ed[k].disabled = !on;
+  for (const k of ["name", "kind", "type", "text", "desc", "palette", "del"]) ed[k].disabled = !on;
   ed.text.style.display = on && b.type === "text" ? "" : "none";
   if (!on) return;
   const set = (inp, v) => {
@@ -283,6 +287,7 @@ function renderEditor(node) {
   set(ed.type, b.type || "obj");
   set(ed.text, b.text || "");
   set(ed.desc, b.desc || "");
+  set(ed.palette, b.palette || "");
   ed.text.style.display = b.type === "text" ? "" : "none";
 }
 
