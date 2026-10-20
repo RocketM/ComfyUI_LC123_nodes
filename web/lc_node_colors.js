@@ -41,6 +41,7 @@ const COLORS = {
     LCSizePad: { color: "#324b4b", bgcolor: "#324b4b" },
     LCBoundingBoxes: { color: "#324B4B", bgcolor: "#324B4B" },
     LCFlux3LayoutPrompt: { color: "#28281E", bgcolor: "#28281E" },
+    LCMOSSLayoutPrompt: { color: "#143c14", bgcolor: "#143c14" },
     LCFlux3ReferenceLatent: { color: "#1C6D6D", bgcolor: "#1C6D6D" },
     LCApplyLUT: { color: "#324B4B", bgcolor: "#324B4B" },
     LCBloom: { color: "#324B4B", bgcolor: "#324B4B" },
