@@ -511,6 +511,13 @@ app.registerExtension({
       return r ? (isBool(r) ? "BOOLEAN" : clampDec(r.decimals) > 0 ? "FLOAT" : "INT") : null;
     };
 
+    // what output i holds right now, for nodes that read a wired boolean / number on the canvas (LC Bypasser, LC Groups
+    // Bypasser, LC Boolean): the panel has one hidden JSON widget, so they cannot find the row from the widgets
+    nodeType.prototype.lcOutputValue = function (index) {
+      const r = rows(this)[index];
+      return r ? (isBool(r) ? !!r.value : r.value) : undefined;
+    };
+
     const onNodeCreated = nodeType.prototype.onNodeCreated;
     nodeType.prototype.onNodeCreated = function () {
       const r = onNodeCreated?.apply(this, arguments);

@@ -266,6 +266,36 @@
       ],
       "version": "Krea 2 V1.0",
       "featured": true
+    },
+    {
+      "family": "Animosity",
+      "file": "AniMOSSity_bf16.safetensors",
+      "repo": "Lonecatone23/Animosity",
+      "path": "moss/AniMOSSity_bf16.safetensors",
+      "gb": 10.16,
+      "sha256": "053e93a581d8274bf9d268eaad36e771389c6d63e38a4c3abe3f60c30129e851",
+      "profile": "moss_image",
+      "format": "bf16",
+      "names": [
+        "AniMOSSity_bf16.safetensors"
+      ],
+      "version": "MOSS V1.0",
+      "featured": true
+    },
+    {
+      "family": "Animosity",
+      "file": "AniMOSSity_int8_convrot.safetensors",
+      "repo": "Lonecatone23/Animosity",
+      "path": "moss/AniMOSSity_int8_convrot.safetensors",
+      "gb": 5.41,
+      "sha256": "5f2467452bb59586a8f042ad264a6bec8ff1e0b36530cf675e33c2d3c8af48ff",
+      "profile": "moss_image",
+      "format": "int8_convrot",
+      "names": [
+        "AniMOSSity_int8_convrot.safetensors"
+      ],
+      "version": "MOSS V1.0",
+      "featured": true
     }
   ]
 }

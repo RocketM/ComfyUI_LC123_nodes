@@ -87,6 +87,12 @@ function resolveBoolean(graph, input, depth = 0) {
   if (!link) return null;
   const origin = graph.getNodeById?.(link.origin_id);
   if (!origin) return null;
+  // a node with several value outputs (LC Control Panel) says what the wired output holds
+  if (typeof origin.lcOutputValue === "function") {
+    const v = origin.lcOutputValue(link.origin_slot);
+    const c = v === undefined || v === null ? null : (typeof v === "number" ? v !== 0 : coerceBool(v));
+    if (c !== null) return isInvertNode(origin) ? !c : c;
+  }
   const invert = isInvertNode(origin);
   const boolIns = (origin.inputs || []).filter(
     (i) => i && (i.type === "BOOLEAN" || /bool|enable/i.test(i.name || ""))
