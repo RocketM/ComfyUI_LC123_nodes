@@ -26,6 +26,14 @@ MANUAL = {
 QWEN_TIP = ("Qwen-Image 2.1 only (Qwen Image 2.1 Cache): where the KV cache lives and how it is stored. auto = lossless, "
             "int8 on the Fast goal or cards under 16 GB. int8 halves the cache at about bf16 accuracy, int4 quarters it "
             "but roughly doubles the per-step error. RAM costs little speed. off = slowest.")
+SPECTRUM_TIP = ("MiniMax H3 only: Spectrum by xmarre (ComfyUI-Spectrum-MiniMax-H3, install it separately) forecasts some "
+                "steps instead of running them, about 1.3x faster. Step- and size-aware: it sits out runs over 12 steps or "
+                "under 0.9 MP, where it cost lip sync in our tests. auto = FL2VA on the Optimal and Fast goals (off on Ref2VA, "
+                "where it smeared reference videos in our tests). off = opt out (works with speed_ups on Auto too). "
+                "Replaces the step cache when on.")
+VEDA_TIP = ("MiniMax H3 only: Veda sparse attention (Veda-on-ComfyUI + its predictor in models/veda, install separately) "
+            "for low resolution. auto = runs under 0.9 MP (about 1.4x on an 8 GB card, same look), full attention above it, "
+            "where the face drifted in our tests. on = every resolution. off = opt out (works with speed_ups on Auto too).")
 ROLES_IMAGE = ["model", "clip", "vae"]
 ROLES_VIDEO = ["model", "clip", "vae", "audio_vae", "upscaler", "lora"]
 CLIP_TIP = ("Custom only: how the text encoder is loaded (CLIPLoader's type). auto = from the encoder's shape when it "
@@ -93,7 +101,10 @@ class _LCOptimizerBase:
             req[k] = (opts, {"default": d, "tooltip": tip})
         if cls.KIND == "image":  # last, so saved workflows keep their widget order
             req["qwen21_cache"] = (["auto"] + list(E.QWEN_CACHE), {"default": "auto", "tooltip": QWEN_TIP})
-        req["clip_type"] = (E.clip_types(cls.KIND), {"default": E.CLIP_AUTO, "tooltip": CLIP_TIP})  # last: Custom only
+        req["clip_type"] = (E.clip_types(cls.KIND), {"default": E.CLIP_AUTO, "tooltip": CLIP_TIP})  # Custom only
+        if cls.KIND == "video":  # last, so saved workflows keep their widget order
+            req["spectrum"] = (["auto", "on", "off"], {"default": "auto", "tooltip": SPECTRUM_TIP})
+            req["veda"] = (["auto", "on", "off"], {"default": "auto", "tooltip": VEDA_TIP})  # last
         return {"required": req}
 
     @classmethod
@@ -117,7 +128,10 @@ class _LCOptimizerBase:
     def run(self, base_model, goal, speed_ups, **kw):
         pid = self._profile_id(base_model)
         prof = E.profiles()[pid]
-        manual = {k: kw.get(k) for k in list(MANUAL) + ["qwen21_cache"]} if speed_ups == "Manual" else None
+        manual = {k: kw.get(k) for k in list(MANUAL) + ["qwen21_cache", "spectrum", "veda"]} if speed_ups == "Manual" else None
+        for k in ("spectrum", "veda"):  # their opt-outs work on Auto too
+            if kw.get(k) in ("on", "off"):
+                manual = {**(manual or {}), k: kw[k]}
         picks = {role: kw.get(WIDGET_OF[role]) for role in self.ROLES}
         loaded, swap = [], {}
         got = {}
@@ -299,6 +313,10 @@ try:
         if not pid:
             return web.json_response({"error": "unknown base model"}, status=400)
         manual = body.get("manual") if body.get("speed_ups") == "Manual" else None
+        for k in ("spectrum", "veda"):  # their opt-outs work on Auto too
+            val = (body.get("manual") or {}).get(k)
+            if val in ("on", "off"):
+                manual = {**(manual or {}), k: val}
         pl = await asyncio.get_running_loop().run_in_executor(None, lambda: E.plan(pid, body.get("goal", "Optimal"), body.get("picks") or {}, manual))
         return web.json_response(json.loads(json.dumps(pl, default=str)))
 

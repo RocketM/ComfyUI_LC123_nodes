@@ -294,6 +294,8 @@ The **System & Model Optimization Report** tells you what suits your machine. Th
     - ⚠️ Don't put `--use-sage-attention` in your .bat. It forces Sage on every model, and some (e.g. Krea 2 image edit) give black images with it. Leave it out and let the node turn Sage on per model. The node shows a ⚠️ when the flag is on.
 - **Comfy Kitchen:** used on its own for int8 / fp8 / nvfp4 files. The node just tells you if it's working.
 - **fp16 accumulation** and **Step cache (EasyCache):** Fast goal only. The step cache only when it's worth it (20+ steps).
+- **Spectrum (MiniMax H3 FL2VA only):** Optimal and Fast goals, when [ComfyUI-Spectrum-MiniMax-H3](https://github.com/xmarre/ComfyUI-Spectrum-MiniMax-H3) by **xmarre** is installed. About 1.3x faster on 8-step runs at about 1 MP, same lip sync, face and sharpness. **Step- and size-aware:** it sits out runs over 12 steps or under 0.9 MP (1344 x 768 is in, 1152 x 640 is out), where it cost lip sync in my tests. It stays off on **Ref2VA**: it smeared reference videos and scrambled text in my tests. It replaces the step cache when on. To opt out, set `spectrum` to off (it shows on H3 even with speed_ups on Auto).
+- **Veda (MiniMax H3, low resolution):** Optimal and Fast goals, when [Veda-on-ComfyUI](https://github.com/veda-sparse/Veda-on-ComfyUI) by **veda-sparse** and its predictor (`models/veda`) are installed. It runs under 0.9 MP, where Spectrum sits out: about **1.4x** faster on an 8 GB laptop at 0.4 MP, same lip sync, face and sharpness. Above that it goes back to full attention (the face drifted at 1 MP in my tests). To opt out, set `veda` to off.
 - **Manual:** set `speed_ups` to Manual and pick each one yourself, **torch.compile** included.
 
 **The status panel (on the node)**
