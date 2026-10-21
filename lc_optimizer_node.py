@@ -102,10 +102,11 @@ class _LCOptimizerBase:
         if cls.KIND == "image":  # last, so saved workflows keep their widget order
             req["qwen21_cache"] = (["auto"] + list(E.QWEN_CACHE), {"default": "auto", "tooltip": QWEN_TIP})
         req["clip_type"] = (E.clip_types(cls.KIND), {"default": E.CLIP_AUTO, "tooltip": CLIP_TIP})  # Custom only
-        if cls.KIND == "video":  # last, so saved workflows keep their widget order
-            req["spectrum"] = (["auto", "on", "off"], {"default": "auto", "tooltip": SPECTRUM_TIP})
-            req["veda"] = (["auto", "on", "off"], {"default": "auto", "tooltip": VEDA_TIP})  # last
-        return {"required": req}
+        opt = {}
+        if cls.KIND == "video":  # last, and optional, so saved workflows and API jobs made before them still run
+            opt["spectrum"] = (["auto", "on", "off"], {"default": "auto", "tooltip": SPECTRUM_TIP})
+            opt["veda"] = (["auto", "on", "off"], {"default": "auto", "tooltip": VEDA_TIP})
+        return {"required": req, "optional": opt}
 
     @classmethod
     def VALIDATE_INPUTS(cls, **kw):
@@ -128,7 +129,8 @@ class _LCOptimizerBase:
     def run(self, base_model, goal, speed_ups, **kw):
         pid = self._profile_id(base_model)
         prof = E.profiles()[pid]
-        manual = {k: kw.get(k) for k in list(MANUAL) + ["qwen21_cache", "spectrum", "veda"]} if speed_ups == "Manual" else None
+        manual = ({k: kw[k] for k in list(MANUAL) + ["qwen21_cache", "spectrum", "veda"] if kw.get(k) is not None}
+                  if speed_ups == "Manual" else None)  # a missing one (older API job) falls back to auto
         for k in ("spectrum", "veda"):  # their opt-outs work on Auto too
             if kw.get(k) in ("on", "off"):
                 manual = {**(manual or {}), k: kw[k]}
