@@ -44,13 +44,31 @@ def _frac_box(b):
     return [_grid(y0), _grid(x0), _grid(y1), _grid(x1)]
 
 
+_HEX = re.compile(r"^#?([0-9a-f]{3}|[0-9a-f]{6})$", re.I)
+_WORDS = re.compile(r"^[a-z][a-z '-]{1,39}$", re.I)
+
+
+def palette_split(raw):
+    """(good colours, bad entries). Good: #rgb / #rrggbb (written #rrggbb) or a plain colour name ("warm beige")."""
+    items = raw if isinstance(raw, (list, tuple)) else re.split(r"[,;\n]", str(raw or ""))
+    good, bad = [], []
+    for c in (str(x).strip() for x in items):
+        if not c:
+            continue
+        m = _HEX.match(c)
+        if m:
+            h = m.group(1).lower()
+            good.append("#" + ("".join(ch * 2 for ch in h) if len(h) == 3 else h))
+        elif _WORDS.match(c):
+            good.append(c)
+        else:
+            bad.append(c)
+    return good, bad
+
+
 def palette_list(raw):
-    """A box or picture palette as a list of colours: a list, or text like "#1a1a1a, warm beige"."""
-    if isinstance(raw, (list, tuple)):
-        items = raw
-    else:
-        items = re.split(r"[,;\n]", str(raw or ""))
-    return [str(c).strip() for c in items if str(c).strip()]
+    """A box or picture palette as a list of colours; entries that are not a colour are dropped."""
+    return palette_split(raw)[0]
 
 
 def _clean_name(name, fallback="object"):
@@ -97,9 +115,11 @@ def to_elements(boxes, ref=0):
             el["text"] = str(b.get("text") or "")
         if b.get("type") == "character":
             el["label"] = "character"  # MOSS Image: a person or creature; everything else reads it as an object
-        pal = palette_list(b.get("palette"))
+        pal, bad = palette_split(b.get("palette"))
         if pal:
             el["color_palette"] = pal
+        if bad:
+            el["palette_left_out"] = bad  # LC MOSS Layout Prompt names them in its info
         if b["kind"] == "new":
             el.update({"from": "target", "src_bbox": None, "tgt_bbox": src})
         elif b["kind"] == "remove":
@@ -140,7 +160,8 @@ def render_preview(boxes, width, height, image=None):
         return [x0, y0, x1, y1]
 
     for b, bid in zip(boxes, ids):
-        c = KIND_COLORS[b["kind"]]
+        hexes = [x for x in palette_list(b.get("palette")) if x.startswith("#")]
+        c = hexes[0] if hexes else KIND_COLORS[b["kind"]]  # a box draws in its palette's first colour
         r = rect(b)
         draw.rectangle(r, outline=c, width=3)
         if b["kind"] == "remove":
@@ -153,7 +174,11 @@ def render_preview(boxes, width, height, image=None):
         label = f"{bid} (character)" if b.get("type") == "character" and b["kind"] == "new" else f"{bid} ({b['kind']})"
         tw = draw.textlength(label, font=font)
         draw.rectangle([r[0], r[1], r[0] + tw + 8, r[1] + fs + 4], fill=c)
-        draw.text((r[0] + 4, r[1] + 1), label, fill=(0, 0, 0), font=font)
+        ink = (0, 0, 0)
+        if isinstance(c, str) and len(c) == 7:
+            rr, gg, bb = (int(c[k:k + 2], 16) for k in (1, 3, 5))
+            ink = (0, 0, 0) if 0.299 * rr + 0.587 * gg + 0.114 * bb > 140 else (255, 255, 255)
+        draw.text((r[0] + 4, r[1] + 1), label, fill=ink, font=font)
     arr = np.asarray(bg, dtype=np.float32) / 255.0
     return torch.from_numpy(arr).unsqueeze(0)
 
@@ -192,8 +217,12 @@ def _incoming(data, width, height):
             out.append(box)
         elif all(k in d for k in ("x", "y", "width", "height")):
             meta = d.get("metadata") if isinstance(d.get("metadata"), dict) else {}
-            out.append({"x": d["x"] / max(1, width), "y": d["y"] / max(1, height), "w": d["width"] / max(1, width), "h": d["height"] / max(1, height),
-                        "kind": "new", "desc": meta.get("desc", ""), "name": "object", "type": meta.get("type", "obj"), "text": meta.get("text", ""), "to": None})
+            box = {"x": d["x"] / max(1, width), "y": d["y"] / max(1, height), "w": d["width"] / max(1, width), "h": d["height"] / max(1, height),
+                   "kind": meta.get("kind", "new"), "desc": meta.get("desc", ""), "name": meta.get("name", "object"), "type": meta.get("type", "obj"),
+                   "text": meta.get("text", ""), "to": None}
+            if meta.get("palette"):
+                box["palette"] = meta["palette"]
+            out.append(box)
     return out
 
 
@@ -202,16 +231,26 @@ class LCBoundingBoxes:
     def INPUT_TYPES(cls):
         return {
             "required": {
+                "size": (["use image size", "custom"], {"default": "use image size",
+                         "tooltip": "use image size: a connected picture sets the canvas (width / height are used only without one). "
+                                    "custom: width / height always win; the picture is stretched to fit."}),
                 "width": ("INT", {"default": 1024, "min": 64, "max": 16384, "step": 16,
-                                  "tooltip": "Canvas width when no picture is connected (a connected picture sets the size)."}),
+                                  "tooltip": "Canvas width: with size on custom, or when no picture is connected."}),
                 "height": ("INT", {"default": 1024, "min": 64, "max": 16384, "step": 16,
-                                   "tooltip": "Canvas height when no picture is connected."}),
+                                   "tooltip": "Canvas height: with size on custom, or when no picture is connected."}),
                 "boxes": ("STRING", {"default": "[]", "multiline": False, "tooltip": "The boxes drawn on the canvas (kept by the node)."}),
+                "block": ("BOOLEAN", {"default": False, "label_on": "if_empty", "label_off": "never",
+                                      "tooltip": "if_empty: with no boxes drawn, everything after this node stops so you can draw them, "
+                                                 "then queue again (handy with a new picture). never: always passes on."}),
+                "keep_boxes": ("BOOLEAN", {"default": True, "label_on": "held", "label_off": "reset_after_run",
+                                           "tooltip": "held: the boxes stay, run after run. reset_after_run: this run uses them, then the "
+                                                      "canvas clears, so the next picture starts empty."}),
             },
             "optional": {
                 "image": ("IMAGE", {"tooltip": "The picture to draw on. Its size sets the box grid. For an edit, this is ref_image_0."}),
-                "bboxes": ("BOUNDING_BOX,ARRAY,STRING", {"tooltip": "Boxes from another node (Create Bounding Boxes, a layout JSON) to start the canvas with. "
-                                                                    "Boxes drawn here win until the incoming boxes change."}),
+                "bboxes": ("BOUNDING_BOX,ARRAY,STRING", {"tooltip": "Boxes from another LC Bounding Boxes (a chain, e.g. one per panel), Create "
+                                                                    "Bounding Boxes or a layout JSON. They show here (dimmed, edit them where they "
+                                                                    "were drawn) and come out first, followed by the boxes drawn here."}),
             },
         }
 
@@ -228,26 +267,44 @@ class LCBoundingBoxes:
                    "Each box gets a name, a description and what happens to it: new, change, move (drag its second box) "
                    "or remove. Works in the classic canvas and in Nodes 2.0.")
 
-    def run(self, width, height, boxes, image=None, bboxes=None):
+    def run(self, width, height, boxes, size="use image size", block=False, keep_boxes=True, image=None, bboxes=None):
         if image is not None:
-            height, width = int(image.shape[1]), int(image.shape[2])
+            if size == "custom":
+                if (int(image.shape[1]), int(image.shape[2])) != (int(height), int(width)):
+                    image = comfy.utils.common_upscale(image[..., :3].movedim(-1, 1), int(width), int(height), "lanczos", "disabled").movedim(1, -1)
+            else:
+                height, width = int(image.shape[1]), int(image.shape[2])
         drawn = parse_boxes(boxes)
         incoming = _incoming(bboxes, width, height)
         ui = {"lc_size": [{"width": width, "height": height}]}
         if incoming:
             ui["lc_incoming"] = [json.dumps(incoming)]
-            if not drawn:
-                drawn = parse_boxes(incoming)
+        # a chain adds up: the boxes from upstream (another LC Bounding Boxes, Create Bounding Boxes, a layout JSON) come
+        # first, then the ones drawn here; a drawn box sitting exactly on an incoming one (copied in by older versions) is
+        # not repeated
+        def same(a, b):
+            return all(abs(float(a[k]) - float(b[k])) < 0.004 for k in ("x", "y", "w", "h"))
+        own = [d for d in drawn if not any(same(d, i) for i in incoming)]
+        drawn = parse_boxes(incoming) + own
         if image is not None:
             saved = nodes.PreviewImage().save_images(image[:1], "lc.bboxes.background")
             ui["lc_background"] = saved["ui"]["images"]
         preview = render_preview(drawn, width, height, image)
         pixels = [{"x": round(min(b["x"], b["x"] + b["w"]) * width), "y": round(min(b["y"], b["y"] + b["h"]) * height),
-                   "width": round(abs(b["w"]) * width), "height": round(abs(b["h"]) * height)} for b in drawn]
+                   "width": round(abs(b["w"]) * width), "height": round(abs(b["h"]) * height),
+                   # rides along so the next LC Bounding Boxes in a chain keeps names and descriptions; other nodes ignore it
+                   "metadata": {k: b.get(k) for k in ("name", "desc", "type", "text", "kind", "palette") if b.get(k)}} for b in drawn]
         elements = to_elements(drawn)
         for e in elements:
             e["canvas"] = [width, height]  # LC MOSS Layout Prompt sizes itself from this
-        return {"ui": ui, "result": (preview, [pixels] if pixels else [], elements)}
+        out = (preview, [pixels] if pixels else [], elements)
+        if block and not drawn:
+            from comfy_execution.graph import ExecutionBlocker
+
+            out = (ExecutionBlocker(None),) * 3
+        elif not keep_boxes and drawn:
+            ui["lc_reset_after"] = [True]
+        return {"ui": ui, "result": out}
 
 
 # ---------------------------------------------------------------- layout prompt

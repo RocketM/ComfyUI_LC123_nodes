@@ -312,11 +312,6 @@ def choices(profile_id, role, goal):
         return out
     rec = recommended(prof, role, goal)
     folders = ROLE_FOLDERS[role]
-    if role == "model":  # Lonecat's featured models first (Krealism V3.1 for Krea 2 Turbo)
-        for m in shipped_all():
-            if m.get("featured") and m.get("profile") == profile_id and not find_on_disk(m["file"], ROLE_FOLDERS[role]):
-                out["downloads"].append({"value": DOWNLOAD + m["file"], "file": m["file"], "gb": m.get("gb"), "format": m.get("format"),
-                                         "community": False, "gated": False, "featured": m["family"]})
     if rec:
         hit = find_on_disk(rec["file"], [FOLDER_BY_LOADER.get(rec["loader"], folders[0])])
         out["recommended"] = {"file": rec["file"], "gb": rec.get("gb"), "on_disk": bool(hit), "source": rec["source"]}
@@ -328,6 +323,11 @@ def choices(profile_id, role, goal):
         elif not v.get("unconfirmed"):
             out["downloads"].append({"value": DOWNLOAD + v["file"], "file": v.get("display") or v["file"], "gb": v.get("gb"), "format": v.get("format"),
                                      "community": bool(v.get("community")), "gated": v["repo"].startswith(("black-forest-labs",))})
+    if role == "model":  # Lonecat's featured models, after the base model's own files
+        for m in shipped_all():
+            if m.get("featured") and m.get("profile") == profile_id and not find_on_disk(m["file"], ROLE_FOLDERS[role]):
+                out["downloads"].append({"value": DOWNLOAD + m["file"], "file": m["file"], "gb": m.get("gb"), "format": m.get("format"),
+                                         "community": False, "gated": False, "featured": m["family"]})
     out["local"] = [n for _, n in local_files(role)]
     if role == "model":  # every version of Lonecat's own models made for this base model
         known.update(n for _, n in local_files(role) if own_profile(n) == profile_id)
@@ -749,7 +749,7 @@ def on_disk_groups(profile_id, role):
     if not prof or role != "model":
         return []
     want = MODEL_CLASSES.get(profile_id)
-    official = {v["file"].lower() for v in variants(prof, role)}
+    official = {n.lower() for v in variants(prof, role) for n in [v["file"]] + list(v.get("also") or [])}
     tree = {}
     for folder, name in local_files(role):
         base = os.path.basename(name.replace("\\", "/"))
@@ -768,7 +768,7 @@ def on_disk_groups(profile_id, role):
         tree.setdefault(fam, {}).setdefault(ver, []).append(name)
     return [{"family": f, "versions": [{"version": v, "files": sorted(fs, key=lambda n: os.path.basename(n).lower())}
                                        for v, fs in sorted(vs.items(), key=lambda x: x[0], reverse=True)]}
-            for f, vs in sorted(tree.items(), key=lambda x: x[0].lower())]
+            for f, vs in sorted(tree.items(), key=lambda x: (not x[0].endswith(" (official)"), x[0].lower()))]  # the base model's own files first
 
 
 # ---------------------------------------------------------------- resolve a widget value to a file
@@ -1041,7 +1041,8 @@ def plan_speedups(profile_id, goal, manual=None):
     if kit.get("installed"):
         cuda = ((kit.get("backends") or {}).get("cuda") or {}).get("available")
         rows.append({"key": "kitchen", "label": "Comfy Kitchen (int8 / fp8 / nvfp4 files)", "state": "on" if cuda else "off", "value": None,
-                     "why": "used automatically for those files" if cuda else "GPU backend not available: slower path"})
+                     "why": "ComfyUI uses it by itself for those model files (not an attention setting)" if cuda
+                     else "GPU backend not available: slower path"})
     elif sysp:
         rows.append({"key": "kitchen", "label": "Comfy Kitchen", "state": "na", "value": None, "why": "not installed: see Recommended to install in the report"})
 
@@ -1125,6 +1126,9 @@ def apply_speedups(model, rows):
 
 
 # ---------------------------------------------------------------- the plan shown on the node before a run
+_QUANT_NAME = re.compile(r"int8|fp8|nvfp4|mxfp8|mxfp4|w4a8|convrot|e4m3|e5m2|\.gguf$", re.I)
+
+
 def plan(profile_id, goal, picks, manual=None):
     """picks: {role: widget value}. Everything the face shows, without loading or downloading anything."""
     prof = profiles().get(profile_id)
@@ -1140,8 +1144,15 @@ def plan(profile_id, goal, picks, manual=None):
     else:
         out["hints"].append(("💡⚠️", "No report yet: using Comfy's default files. Run the System & Model Optimization Report for picks that suit this machine."))
     if _sage_flag():
-        out["hints"].append(("⚠️", "--use-sage-attention is in your .bat: it forces Sage on every model, and some models give black "
-                                   "images with it. Remove it, this node turns Sage on per model."))
+        att = next((r for r in out["speedups"] if r["key"] == "attention"), None)
+        if att and att.get("value") and att["value"] != "sage":
+            out["hints"].append(("⚠️", f"--use-sage-attention is in your .bat, so Sage is ComfyUI's default. This node's choice "
+                                       f"({ATTN_LABEL.get(att['value'], att['value'])}) still wins for this model. Remove the flag: some "
+                                       "models give black images with Sage, and this node turns it on per model."))
+        else:
+            out["hints"].append(("⚠️", "--use-sage-attention is in your .bat: it forces Sage on every model, and some models give black "
+                                       "images with it. Remove it, this node turns Sage on per model (or set speed_ups to Manual and "
+                                       "attention to pytorch)."))
     if custom:
         out["hints"].append(("ℹ️", "Custom: recommended files, downloads, estimates and file checks are unsupported. Pick your own files; the speed-ups still apply."))
     paths = {}
@@ -1233,6 +1244,12 @@ def plan(profile_id, goal, picks, manual=None):
         out["hints"].append(("ℹ️", f"Could not check the files ({type(e).__name__})."))
     if prof and "Needs BOTH" in " ".join(prof.get("notes", [])):
         out["hints"].append(("ℹ️", "Ideogram 4 samples with two models: LC Optimizer (pipe) loads the unconditional one into model 2."))
+    # Comfy Kitchen only speeds up int8 / fp8 / nvfp4 files: for a bf16 / fp16 model it is not in play
+    kit_row = next((r for r in out["speedups"] if r["key"] == "kitchen" and r["state"] == "on"), None)
+    mrow = next((f for f in out["files"] if f.get("role") == "model"), None)
+    name = str((mrow or {}).get("label") or "")
+    if kit_row and name and mrow.get("state") not in ("ckpt", UNSUPPORTED) and not _QUANT_NAME.search(name):
+        kit_row["state"], kit_row["why"] = "off", "not in play: the model file is bf16 / fp16 (it only speeds up int8 / fp8 / nvfp4 files)"
     return out
 
 

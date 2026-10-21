@@ -242,7 +242,11 @@ function renderFace(node) {
     lines.push(`<div style="display:flex;gap:6px" title="${tip(baseName(x.label), LEGEND.file)}"><span>${ICON[x.state] || "•"}</span><span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(baseName(x.label))}</span><span style="color:#8a95a5;white-space:nowrap">${what}</span></div>`);
   }
   for (const s of pl.speedups || []) {
-    const applied = !pl.applied || pl.applied.includes(s.label) || s.key === "kitchen";
+    const applied = !pl.applied || pl.applied.includes(s.label) || s.key === "kitchen"; // Kitchen: ComfyUI uses it by itself
+    if (s.key === "kitchen" && s.state === "on") {
+      lines.push(`<div style="display:flex;gap:6px" title="${tip(s.why, LEGEND.speed)}"><span>${ICON[s.state]}</span><span style="flex:1">${esc(s.label)}</span><span style="color:#8a95a5;white-space:nowrap">used by ComfyUI</span></div>`);
+      continue;
+    }
     lines.push(`<div style="display:flex;gap:6px" title="${tip(s.why, LEGEND.speed)}"><span>${ICON[s.state]}</span><span style="flex:1">${esc(s.label)}</span><span style="color:#8a95a5;white-space:nowrap;max-width:48%;overflow:hidden;text-overflow:ellipsis">${s.state === "on" ? (pl.applied ? (applied ? "applied" : "failed") : "will apply") : esc(s.why)}</span></div>`);
   }
   for (const [icon, text] of pl.hints || []) {

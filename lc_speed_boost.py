@@ -187,7 +187,49 @@ def _shrink_start(model, x, s0, h, w, kind="flow"):
     return shrink(x, h, w) if s0 >= 0.99 else None
 
 
-def _sampler(model, x, sigmas, extra_args=None, callback=None, disable=None, *, lc_inner, lc_auto, lc_step, **kw):
+LAYOUT_NODES = {"LCMOSSLayoutPrompt", "MOSSImageLayoutPrompt"}
+
+
+def layout_upstream(prompt, node_id):
+    """True when a MOSS layout prompt feeds this node (through any input). Its boxes are pixel positions at the full
+    size: at Speed Boost's half size they would land twice as far from the centre."""
+    if not isinstance(prompt, dict) or node_id is None:
+        return False
+    seen, todo = set(), [str(node_id)]
+    while todo:
+        nid = todo.pop()
+        if nid in seen or nid not in prompt:
+            continue
+        seen.add(nid)
+        if prompt[nid].get("class_type") in LAYOUT_NODES:
+            return True
+        for v in (prompt[nid].get("inputs") or {}).values():
+            if isinstance(v, list) and len(v) == 2 and isinstance(v[1], int):
+                todo.append(str(v[0]))
+    return False
+
+
+def layout_for_sampler_node(prompt, node_id):
+    """LC Speed Boost (the SAMPLER node): look upstream of the samplers it feeds."""
+    if not isinstance(prompt, dict):
+        return False
+    users = [k for k, n in prompt.items() for v in (n.get("inputs") or {}).values()
+             if isinstance(v, list) and len(v) == 2 and str(v[0]) == str(node_id)]
+    return any(layout_upstream(prompt, u) for u in users)
+
+
+def _half_conds(model, raw, xs):
+    """The half-size prompt prepared the way ComfyUI prepares the positive (for the half-size latent)."""
+    import comfy.sampler_helpers
+    import comfy.samplers
+
+    guider = model.inner_model
+    conds = {"positive": comfy.sampler_helpers.convert_cond(raw)}
+    return comfy.samplers.process_conds(guider.inner_model, xs, conds, xs.device)["positive"]
+
+
+def _sampler(model, x, sigmas, extra_args=None, callback=None, disable=None, *, lc_inner, lc_auto, lc_step, lc_layout=False,
+             lc_half_positive=None, **kw):
     extra_args = dict(extra_args or {})
     inner_fn, inner_opts = lc_inner.sampler_function, dict(lc_inner.extra_options)
 
@@ -200,6 +242,9 @@ def _sampler(model, x, sigmas, extra_args=None, callback=None, disable=None, *, 
     why = None
     if extra_args.get("denoise_mask") is not None:
         why = "inpaint mask (it only works on the whole picture)"
+    elif lc_layout and lc_half_positive is None:
+        why = ("MOSS layout boxes (they are placed in full-size pixels and would miss their mark at half size; wire LC MOSS "
+               "Layout Prompt's prompt_half, encoded, into positive_half to keep Speed Boost on)")
     kind = None if why else _kind(model, sigmas)
     if why:
         pass
@@ -223,7 +268,22 @@ def _sampler(model, x, sigmas, extra_args=None, callback=None, disable=None, *, 
     if xs is None:
         print("[LC Speed Boost] Off for this run: can't separate the starting picture from the noise. Sampling at full size.")
         return run(x, sigmas, 0)
-    y = run(xs, sigmas[: j + 1], 0)
+    guider = getattr(model, "inner_model", None)
+    swap = None
+    if lc_half_positive is not None and guider is not None and isinstance(getattr(guider, "conds", None), dict):
+        try:
+            swap = guider.conds.get("positive")
+            guider.conds["positive"] = _half_conds(model, lc_half_positive, xs)
+        except Exception as e:  # never lose the run over it: the half-size steps use the normal prompt
+            print(f"[LC Speed Boost] positive_half could not be used ({e}); the half-size steps use the positive.")
+            if swap is not None:
+                guider.conds["positive"] = swap
+            swap = None
+    try:
+        y = run(xs, sigmas[: j + 1], 0)
+    finally:
+        if swap is not None:
+            guider.conds["positive"] = swap
     X, t2 = grow(y, H, W, t, extra_args.get("seed", 0) + 7, kind)
     rest = torch.cat([torch.tensor([t2], dtype=sigmas.dtype, device=sigmas.device), sigmas[j + 1:]])
     n = len(sigmas) - 1
@@ -245,15 +305,16 @@ def _reset_size_cache(model):
         dm.reset_prefix_cache(True)
 
 
-def _wrap(sampler, auto, step):
+def _wrap(sampler, auto, step, layout=False, half_positive=None):
     # The LC Detail Daemon times its window by step. Wrapped inside the size switch, each size part would restart that
     # window, so it goes outside: the Daemon sees the whole schedule, Speed Boost runs inside it.
     opts = getattr(sampler, "extra_options", {}) or {}
     if "lc_wrapped" in opts and "lc_amount" in opts:
-        inner = _wrap(opts["lc_wrapped"], auto, step)
+        inner = _wrap(opts["lc_wrapped"], auto, step, layout, half_positive)
         return KSAMPLER(sampler.sampler_function, extra_options={**opts, "lc_wrapped": inner},
                         inpaint_options=getattr(sampler, "inpaint_options", {}))
-    return KSAMPLER(_sampler, extra_options={"lc_inner": sampler, "lc_auto": bool(auto), "lc_step": int(step)},
+    return KSAMPLER(_sampler, extra_options={"lc_inner": sampler, "lc_auto": bool(auto), "lc_step": int(step), "lc_layout": bool(layout),
+                                             "lc_half_positive": half_positive},
                     inpaint_options=getattr(sampler, "inpaint_options", {}))
 
 
@@ -267,7 +328,7 @@ class LCSpeedBoost:
             "grow_at_step": ("INT", {"default": 4, "min": 0, "max": 200, "step": 1,
                                      "tooltip": "Used when auto is off. The step where the picture grows to full size, counted "
                                                 "like step_swap. 0 = every step at full size."}),
-        }}
+        }, "hidden": {"prompt": "PROMPT", "unique_id": "UNIQUE_ID"}}
 
     RETURN_TYPES = ("SAMPLER",)
     FUNCTION = "go"
@@ -279,12 +340,12 @@ class LCSpeedBoost:
                    "Speeds up passes that start from noise (denoise 0.9 and up). Upscale and image to image passes run as "
                    "normal: their layout comes from your image.\n"
                    "Works on Krea 2, Z-Image, Flux.2 Klein, Qwen-Image, Wan, and SDXL / Pony / Illustrious (about 1.4x "
-                   "there). On Flux 3 Klein auto grows early (about 1.2x) so text and small faces stay clean. On MOSS Image it grows at noise 0.85 (about 1.6x, 2.4x with the 8-step LoRA). It switches itself off on inpaint masks (the console says why). On Qwen-Image 2.1 auto stays "
+                   "there). On Flux 3 Klein auto grows early (about 1.2x) so text and small faces stay clean. On MOSS Image it grows at noise 0.85 (about 1.6x, 2.4x with the 8-step LoRA). It switches itself off on inpaint masks and MOSS layout boxes (the console says why). On Qwen-Image 2.1 auto stays "
                    "off: line art, text and flat color break at its half size. Set grow_at_step by hand for photos.\n"
                    "Based on SPEED (Xiao, Chao, Yariv and Wetzstein, 2026).")
 
-    def go(self, sampler, auto, grow_at_step):
-        return (_wrap(sampler, auto, grow_at_step),)
+    def go(self, sampler, auto, grow_at_step, prompt=None, unique_id=None):
+        return (_wrap(sampler, auto, grow_at_step, layout_for_sampler_node(prompt, unique_id)),)
 
 
 class LCSpeedBoostKSampler:
@@ -334,7 +395,10 @@ class LCSpeedBoostKSampler:
         }, "optional": {
             "sampler": ("SAMPLER", {"tooltip": "Optional. A ClownSampler (or any SAMPLER) with its own settings, like eta. "
                                                "Replaces sampler_name."}),
-        }}
+            "positive_half": ("CONDITIONING", {"tooltip": "MOSS layout boxes: LC MOSS Layout Prompt's prompt_half, encoded. The "
+                                                          "half-size steps use it so the boxes land where you drew them. Without "
+                                                          "it Speed Boost switches off on a layout."}),
+        }, "hidden": {"prompt": "PROMPT", "unique_id": "UNIQUE_ID"}}
 
     RETURN_TYPES = ("LATENT",)
     FUNCTION = "sample"
@@ -353,14 +417,14 @@ class LCSpeedBoostKSampler:
                    "ClownShark (RES4LYF) samplers are in the sampler list when RES4LYF is installed. Wire a ClownSampler "
                    "into sampler to use its own settings.\n"
                    "Works on Krea 2, Z-Image, Flux.2 Klein, Qwen-Image, Wan, and SDXL / Pony / Illustrious (about 1.4x "
-                   "there). On Flux 3 Klein auto grows early (about 1.2x) so text and small faces stay clean. On MOSS Image it grows at noise 0.85 (about 1.6x, 2.4x with the 8-step LoRA). On image to image (denoise under 0.9) and inpaint masks it samples like a plain KSampler. On "
+                   "there). On Flux 3 Klein auto grows early (about 1.2x) so text and small faces stay clean. On MOSS Image it grows at noise 0.85 (about 1.6x, 2.4x with the 8-step LoRA). On image to image (denoise under 0.9), inpaint masks and MOSS layout boxes it samples like a plain KSampler. On "
                    "Qwen-Image 2.1 auto stays off: line art, text and flat color break at its half size. Set grow_at_step "
                    "by hand for photos.\n"
                    "Based on SPEED (Xiao, Chao, Yariv and Wetzstein, 2026).")
 
     def sample(self, model, positive, negative, latent_image, speed_boost=True, grow_at_step=4, seed=0, steps=20, cfg=8.0,
                sampler_name="euler", scheduler="simple", denoise=1.0, start_at_step=0, end_at_step=10000,
-               return_with_leftover_noise=False, sampler=None, **_gaps):
+               return_with_leftover_noise=False, sampler=None, positive_half=None, prompt=None, unique_id=None, **_gaps):
         import comfy.sample
         import comfy.samplers
         import comfy.utils
@@ -393,7 +457,8 @@ class LCSpeedBoostKSampler:
             out["samples"] = latent
             return (out,)
         noise = comfy.sample.prepare_noise(latent, seed, latent_image.get("batch_index", None))
-        boosted = _wrap(sampler if sampler is not None else make_sampler(sampler_name), speed_boost, grow_at_step)
+        boosted = _wrap(sampler if sampler is not None else make_sampler(sampler_name), speed_boost, grow_at_step,
+                        layout_upstream(prompt, unique_id), positive_half)
         callback = latent_preview.prepare_callback(model, sigmas.shape[-1] - 1)
         out["samples"] = comfy.sample.sample_custom(model, noise, cfg, boosted, sigmas, positive, negative, latent,
                                                     noise_mask=latent_image.get("noise_mask", None), callback=callback,

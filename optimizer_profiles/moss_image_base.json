@@ -36,7 +36,8 @@
      "loader": "UNETLoader",
      "default": true,
      "also": [
-      "mossImage_base_int8_convrot.safetensors"
+      "mossImage_base_int8_convrot.safetensors",
+      "moss_image_int8_convrot.safetensors"
      ]
     }
    ]

@@ -34,6 +34,8 @@ function save(node) {
   const w = W(node, "boxes");
   if (w) w.value = JSON.stringify(node._lcBb.boxes);
   node.setDirtyCanvas?.(true, true);
+  // the next canvases in a chain show these boxes: redraw them too
+  for (const n of bbNodes()) if (n !== node && n._lcBb) draw(n);
 }
 
 /** BFL ids as the Python side numbers them: name + index per name, text blocks En_Text_N. */
@@ -47,9 +49,9 @@ function ids(boxes) {
 }
 
 function gridSize(node) {
-  const s = node._lcBb.size;
-  if (s) return s;
-  return { w: Number(W(node, "width")?.value) || 1024, h: Number(W(node, "height")?.value) || 1024 };
+  const custom = { w: Number(W(node, "width")?.value) || 1024, h: Number(W(node, "height")?.value) || 1024 };
+  if (W(node, "size")?.value === "custom") return custom; // width / height win; the picture is stretched to fit
+  return node._lcBb.size || custom;
 }
 
 // ---------------------------------------------------------------- background picture
@@ -73,13 +75,68 @@ function setBackground(node, url) {
   img.src = url;
 }
 
-/** A Load Image upstream shows its picture right away, before the first run. */
+const inactive = (n) => !n || n.mode === 2 || n.mode === 4;
+
+/** The node that really feeds an input: through Reroutes and Get / Set nodes (KJ and rgthree style). */
+function realSource(node, inputName, depth = 0) {
+  const slot = node.inputs?.findIndex((i) => i.name === inputName || i.type === inputName);
+  if (slot == null || slot < 0 || node.inputs[slot].link == null || depth > 20) return null;
+  let src = node.getInputNode?.(slot);
+  for (let hop = 0; src && hop < 20; hop++) {
+    const t = src.type || "";
+    if (/Reroute/i.test(t)) {
+      const nxt = src.inputs?.[0]?.link != null ? src.getInputNode?.(0) : null;
+      if (!nxt) return null;
+      src = nxt;
+    } else if (/GetNode/i.test(t)) {
+      const key = src.widgets?.[0]?.value;
+      const setter = (node.graph?._nodes || []).find((n) => /SetNode/i.test(n.type || "") && n.widgets?.[0]?.value === key);
+      const nxt = setter?.inputs?.[0]?.link != null ? setter.getInputNode?.(0) : null;
+      if (!nxt) return null;
+      src = nxt;
+    } else break;
+  }
+  return src || null;
+}
+
+/** Boxes from further up a chain of LC Bounding Boxes, read live from their canvases (no run needed). Other sources
+ * (Create Bounding Boxes, a JSON) show what they sent on the last run. */
+function upstreamBoxes(node, seen = new Set()) {
+  if (seen.has(node.id)) return [];
+  seen.add(node.id);
+  const src = realSource(node, "bboxes");
+  if (!src || inactive(src)) return [];
+  if (src.type === TYPE || src.comfyClass === TYPE) {
+    const own = src._lcBb ? src._lcBb.boxes : load(src);
+    return [...upstreamBoxes(src, seen), ...(own || [])];
+  }
+  return node._lcBb?.runIncoming || [];
+}
+
+function clearBackground(node) {
+  const st = node._lcBb;
+  if (!st) return;
+  st.bg = null;
+  st.bgUrl = null;
+  st.size = null;
+}
+
+/** The picture upstream, shown before a run: a Load Image's file right away; any other node (Aspect Ratio
+ * Simplifier, etc.) once it has shown a picture. A bypassed or muted source means no picture. */
 function upstreamPicture(node) {
   const slot = node.inputs?.findIndex((i) => i.name === "image");
   if (slot == null || slot < 0 || node.inputs[slot].link == null) return;
-  const src = node.getInputNode?.(slot);
+  const src = realSource(node, "image");
+  if (inactive(src)) {
+    clearBackground(node);
+    return;
+  }
   const name = src && /LoadImage/i.test(src.type) ? (src.widgets || []).find((w) => w.name === "image")?.value : null;
-  if (!name || typeof name !== "string") return;
+  if (!name || typeof name !== "string") {
+    const shown = src?.imgs?.[0]?.src;
+    if (shown) setBackground(node, shown);
+    return;
+  }
   const m = /^(.*?)[\\/]([^\\/]+)$/.exec(name.replace(/ \[(input|output|temp)\]$/, ""));
   setBackground(node, viewUrl({ filename: m ? m[2] : name.replace(/ \[(input|output|temp)\]$/, ""), subfolder: m ? m[1] : "", type: "input" }));
 }
@@ -145,9 +202,30 @@ function draw(node) {
     ctx.fillText("Connect a picture (or run once) to draw on it", cw / 2, ch / 2);
     ctx.textAlign = "left";
   }
+  const up = upstreamBoxes(node);
+  const upNames = ids(up);
+  up.forEach((b, i) => {
+    const r = toPx(L, b);
+    ctx.globalAlpha = 0.55;
+    ctx.strokeStyle = "#bbb";
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([5, 4]);
+    ctx.strokeRect(r.x, r.y, r.w, r.h);
+    ctx.setLineDash([]);
+    const label = `${i + 1} ${upNames[i]} ↑`;
+    ctx.font = "bold 11px sans-serif";
+    const tw = ctx.measureText(label).width;
+    const ly = r.y - (r.y - L.y > 15 ? 15 : 0);
+    ctx.fillStyle = "#bbb";
+    ctx.fillRect(r.x, ly, tw + 8, 15);
+    ctx.fillStyle = "#000";
+    ctx.fillText(label, r.x + 4, ly + 11);
+    ctx.globalAlpha = 1;
+  });
   const names = ids(st.boxes);
+  const offset = up.length;
   st.boxes.forEach((b, i) => {
-    const c = COLORS[b.kind] || COLORS.new;
+    const c = boxColor(b);
     const r = toPx(L, b);
     const selected = i === st.sel;
     ctx.strokeStyle = c;
@@ -176,12 +254,12 @@ function draw(node) {
         ctx.fillRect(hx - 3, hy - 3, 6, 6);
       }
     }
-    const label = `${i + 1} ${names[i]}`;
+    const label = `${i + 1 + offset} ${names[i]}`;
     ctx.font = "bold 11px sans-serif";
     const tw = ctx.measureText(label).width;
     ctx.fillStyle = c;
     ctx.fillRect(r.x, r.y - (r.y - L.y > 15 ? 15 : 0), tw + 8, 15);
-    ctx.fillStyle = "#000";
+    ctx.fillStyle = inkOn(c);
     ctx.fillText(label, r.x + 4, r.y - (r.y - L.y > 15 ? 15 : 0) + 11);
     if (selected) for (const [hx, hy] of [[r.x, r.y], [r.x + r.w, r.y], [r.x, r.y + r.h], [r.x + r.w, r.y + r.h]]) {
       ctx.fillStyle = c;
@@ -231,7 +309,22 @@ function buildEditor(node) {
   row2.append(name, kind, type);
   const text = el("input", `${FIELD}flex:1;min-width:0;`, { placeholder: "the exact text to write in this box" });
   const row3 = el("div", "display:flex;gap:4px;");
-  row3.append(text, palette);
+  // 🎨 the system colour picker: each pick is added to the palette as a hex code (typed names still work)
+  const pick = el("input", "position:absolute;width:0;height:0;opacity:0;pointer-events:none;", { type: "color" });
+  const swatch = el("button", `${FIELD}cursor:pointer;flex:none;width:30px;padding:0;`, { textContent: "🎨", title: "Pick a colour: it is added to this box's palette (up to 6)" });
+  swatch.onclick = () => {
+    const last = (palette.value.match(/#[0-9a-f]{6}/gi) || []).pop();
+    if (last) pick.value = last;
+    pick.click();
+  };
+  pick.onchange = () => {
+    const parts = palette.value.split(",").map((x) => x.trim()).filter(Boolean);
+    if (!parts.some((x) => x.toLowerCase() === pick.value.toLowerCase())) parts.push(pick.value);
+    palette.value = parts.slice(-6).join(", ");
+    edit("palette", palette.value);
+    paletteCheck(palette);
+  };
+  row3.append(text, palette, swatch, pick);
   const desc = el("textarea", `${FIELD}width:100%;flex:1;resize:none;`, { placeholder: "what it looks like (the result): \"a black pirate tricorn hat in worn leather\"" });
   ed.append(row1, row2, row3, desc);
   for (const e of [name, text, desc, palette]) e.addEventListener("keydown", (ev) => ev.stopPropagation());
@@ -250,10 +343,41 @@ function buildEditor(node) {
   type.onchange = () => edit("type", type.value);
   text.oninput = () => edit("text", text.value);
   desc.oninput = () => edit("desc", desc.value);
-  palette.oninput = () => edit("palette", palette.value);
-  st.ed = { root: ed, chips, name, kind, type, text, desc, palette, del };
+  palette.oninput = () => {
+    edit("palette", palette.value);
+    paletteCheck(palette);
+  };
+  st.ed = { root: ed, chips, name, kind, type, text, desc, palette, swatch, del };
   return ed;
 }
+
+/** A box draws in its palette's first hex colour; without one, in its kind's colour (new / change / move / remove). */
+function boxColor(b) {
+  const m = /#([0-9a-f]{6}|[0-9a-f]{3})\b/i.exec(String(b?.palette || ""));
+  if (!m) return COLORS[b?.kind] || COLORS.new;
+  const h = m[1].length === 3 ? [...m[1]].map((x) => x + x).join("") : m[1];
+  return `#${h.toLowerCase()}`;
+}
+
+/** Black or white label text, whichever reads on the box colour. */
+function inkOn(hex) {
+  const h = String(hex).replace("#", "");
+  if (h.length !== 6) return "#000";
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16));
+  return 0.299 * r + 0.587 * g + 0.114 * b > 140 ? "#000" : "#fff";
+}
+
+const PAL_OK = (c) => /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.test(c) || /^[a-z][a-z '-]{1,39}$/i.test(c);
+const PAL_TIP = "MOSS Image: the box's colours, comma separated (#1a1a1a, warm beige), or pick them with 🎨. Leave empty for none.";
+
+/** Bad palette entries (not a hex code or a colour name) are left out by the node: show which, in red. */
+function paletteCheck(inp) {
+  const bad = inp.value.split(/[,;\n]/).map((x) => x.trim()).filter((x) => x && !PAL_OK(x));
+  inp.style.borderColor = bad.length ? "#e65050" : "#444";
+  inp.title = bad.length ? `Left out (not a colour): ${bad.join(", ")}. Use a hex code (#1a1a1a) or a colour name (warm beige).` : PAL_TIP;
+}
+
+const EMPTY_TIP = "Drag on the picture to draw a box first, or click a box to select it. Then fill this in.";
 
 function renderEditor(node) {
   const st = node._lcBb;
@@ -264,7 +388,7 @@ function renderEditor(node) {
   if (ed.key !== key) {
     ed.key = key;
     ed.chips.replaceChildren(...st.boxes.map((b, i) => {
-      const c = el("span", `cursor:pointer;padding:1px 6px;border-radius:9px;white-space:nowrap;font:bold 11px sans-serif;color:#000;background:${COLORS[b.kind]};${i === st.sel ? "outline:2px solid #fff;" : "opacity:0.75;"}`,
+      const c = el("span", `cursor:pointer;padding:1px 6px;border-radius:9px;white-space:nowrap;font:bold 11px sans-serif;color:${inkOn(boxColor(b))};background:${boxColor(b)};${i === st.sel ? "outline:2px solid #fff;" : "opacity:0.75;"}`,
         { textContent: `${i + 1} ${names[i]}`, title: "Select this box" });
       c.onclick = () => {
         st.sel = i;
@@ -276,7 +400,14 @@ function renderEditor(node) {
   }
   const b = st.boxes[st.sel];
   const on = !!b;
-  for (const k of ["name", "kind", "type", "text", "desc", "palette", "del"]) ed[k].disabled = !on;
+  for (const k of ["name", "kind", "type", "text", "desc", "palette", "swatch", "del"]) {
+    const e = ed[k];
+    e.disabled = !on;
+    if (e.dataset.tip == null) e.dataset.tip = e.title || "";
+    e.title = on ? e.dataset.tip : EMPTY_TIP;
+  }
+  ed.root.title = on ? "" : EMPTY_TIP;
+  if (st.cv) st.cv.title = st.boxes.length ? "" : "Empty: drag here to draw a box. Then drag a box to move it, a corner to resize it.";
   ed.text.style.display = on && b.type === "text" ? "" : "none";
   if (!on) return;
   const set = (inp, v) => {
@@ -288,6 +419,8 @@ function renderEditor(node) {
   set(ed.text, b.text || "");
   set(ed.desc, b.desc || "");
   set(ed.palette, b.palette || "");
+  ed.palette.dataset.tip = PAL_TIP;
+  paletteCheck(ed.palette);
   ed.text.style.display = b.type === "text" ? "" : "none";
 }
 
@@ -421,6 +554,23 @@ function attach(node) {
   });
 }
 
+// reset_after_run: the boxes clear once the whole run has finished (like LC Outpaint's snap back)
+function bbNodes() {
+  return (app.graph?._nodes || []).filter((n) => n?.comfyClass === TYPE || n?.type === TYPE);
+}
+api.addEventListener("execution_success", () => {
+  for (const n of bbNodes()) {
+    if (n._lcBbResetAfter && n._lcBb) {
+      n._lcBb.boxes = [];
+      n._lcBb.sel = null;
+      save(n);
+      draw(n);
+    }
+    n._lcBbResetAfter = false;
+  }
+});
+for (const ev of ["execution_error", "execution_interrupted"]) api.addEventListener(ev, () => { for (const n of bbNodes()) n._lcBbResetAfter = false; });
+
 app.registerExtension({
   name: "LC123.BoundingBoxes",
   async beforeRegisterNodeDef(nodeType, nodeData) {
@@ -429,6 +579,16 @@ app.registerExtension({
     nodeType.prototype.onNodeCreated = function () {
       const r = created?.apply(this, arguments);
       attach(this);
+      for (const name of ["size", "width", "height"]) {
+        const w = W(this, name);
+        if (!w) continue;
+        const cb = w.callback;
+        w.callback = (...args) => {
+          const out = cb?.apply(w, args);
+          if (this._lcBb) draw(this);
+          return out;
+        };
+      }
       setTimeout(() => {
         if (this._lcBbConfigured) return;
         const min = this.computeSize?.() || this.size;
@@ -463,6 +623,24 @@ app.registerExtension({
       }
       return r;
     };
+    // the picture's source switched on / off (LC Bypasser, Ctrl+B): show or drop its picture without a run
+    const fg = nodeType.prototype.onDrawForeground;
+    nodeType.prototype.onDrawForeground = function () {
+      const r = fg?.apply(this, arguments);
+      const slot = this.inputs?.findIndex((i) => i.name === "image");
+      const src = slot != null && slot >= 0 && this.inputs[slot].link != null ? this.getInputNode?.(slot) : null;
+      const key = src ? `${src.id}:${src.mode}` : "";
+      if (this._lcBb && key !== this._lcBbSrcKey) {
+        this._lcBbSrcKey = key;
+        if (src && inactive(src)) {
+          clearBackground(this);
+          draw(this);
+        } else if (src) {
+          upstreamPicture(this);
+        }
+      }
+      return r;
+    };
     const executed = nodeType.prototype.onExecuted;
     nodeType.prototype.onExecuted = function (msg) {
       const r = executed?.apply(this, arguments);
@@ -472,17 +650,17 @@ app.registerExtension({
       if (sz) st.size = { w: sz.width, h: sz.height };
       const bg = msg?.lc_background?.[0];
       if (bg) setBackground(this, viewUrl(bg));
-      else if (!this.inputs?.find((i) => i.name === "image")?.link) {
+      else {
+        // no picture arrived (nothing wired, or the source is bypassed / muted): a plain canvas
         st.bg = null;
         st.bgUrl = null;
       }
-      // boxes from another node start an empty canvas
-      const inc = msg?.lc_incoming?.[0];
-      if (inc && !st.boxes.length) {
-        try {
-          st.boxes = JSON.parse(inc);
-          save(this);
-        } catch {}
+      this._lcBbResetAfter = !!msg?.lc_reset_after?.[0];
+      // boxes from upstream are shown dimmed (and merged by the node), not copied in
+      try {
+        st.runIncoming = msg?.lc_incoming?.[0] ? JSON.parse(msg.lc_incoming[0]) : [];
+      } catch {
+        st.runIncoming = [];
       }
       draw(this);
       return r;
