@@ -25,7 +25,7 @@ const FILE_WIDGETS = [
   ["model_file", "model", "Model file"], ["text_encoder", "clip", "Text encoder"], ["vae", "vae", "VAE"],
   ["audio_vae", "audio_vae", "Audio VAE"], ["latent_upscaler", "upscaler", "Latent upscaler"], ["lora", "lora", "Distilled LoRA"],
 ];
-const MANUAL = ["attention", "fp16_accumulation", "step_cache", "torch_compile", "qwen21_cache"];
+const MANUAL = ["attention", "fp16_accumulation", "step_cache", "torch_compile", "qwen21_cache", "spectrum", "veda"];
 const LEGEND = {
   picker: "★ recommended for this machine · ⬇ downloads on the first run · 📦 from the checkpoint",
   file: "✅ on disk · ⬇️ downloads on the first run · 📦 from the checkpoint · ⚠️ not found",
@@ -335,6 +335,11 @@ async function refreshPlan(node) {
 function applyManual(node) {
   const manual = wByName(node, "speed_ups")?.value === "Manual";
   for (const k of MANUAL) (manual ? showWidget : hideWidget)(wByName(node, k));
+  // Spectrum and Veda (H3 only) stay visible on Auto too, so they can be switched off without going Manual
+  if (String(wByName(node, "base_model")?.value || "").startsWith("MiniMax H3")) {
+    showWidget(wByName(node, "spectrum"));
+    showWidget(wByName(node, "veda"));
+  }
   // the text encoder type is only asked for Custom (the known base models bring their own)
   (wByName(node, "base_model")?.value === CUSTOM ? showWidget : hideWidget)(wByName(node, "clip_type"));
   fit(node);

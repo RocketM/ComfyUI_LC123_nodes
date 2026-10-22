@@ -587,6 +587,7 @@ function showLoraPickerPopover(anchorEl, node, index) {
         icon.style.opacity = "0.85";
         const label = document.createElement("span");
         label.textContent = fname;
+        label.title = fname;
         label.style.cssText = "flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;";
         const chevron = document.createElement("span");
         chevron.textContent = "›";
@@ -604,6 +605,7 @@ function showLoraPickerPopover(anchorEl, node, index) {
         const base = full.replace(/\\/g, "/").split("/").pop();
         const r = makeRowEl();
         r.textContent = base;
+        r.title = base;
         if (full === cur) {
           r.style.color = "#fff";
           r.style.fontWeight = "bold";
@@ -639,6 +641,7 @@ function showLoraPickerPopover(anchorEl, node, index) {
           r.style.color = "#fff";
           r.style.fontWeight = "bold";
         }
+        r.title = r.textContent;
         r.addEventListener("click", () => select(full));
         listEl.appendChild(r);
       }
@@ -758,6 +761,7 @@ function makeRow(node, row, index, rows, dragState) {
     getLoraList().then((list) => {
       picker.textContent = name ? name : "(none)";
       if (name && list.length && !list.includes(name)) picker.textContent += "  [missing]";
+      picker.title = picker.textContent; // the full name on hover when the box is too narrow to show it
     });
   };
   refreshPickerLabel();

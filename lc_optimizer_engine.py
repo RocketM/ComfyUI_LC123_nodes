@@ -1012,8 +1012,106 @@ def _sage_flag():
         return False
 
 
+# Spectrum for MiniMax H3 (xmarre's ComfyUI-Spectrum-MiniMax-H3, GPL-3.0, installed separately): forecasts some
+# steps instead of running them. 2026-10-21 bench, 3 seeds,
+# Optimal goal with Sage: 119 s -> 91 s, sharpness, lip sync and face match unchanged.
+SPECTRUM_PROFILES = {"minimax_h3", "minimax_h3_fl2va"}
+# auto only where it held up: on Ref2VA (minimax_h3) it smeared the picture and scrambled text in every test
+# (2026-10-21, desktop and laptop, with or without the sigma shift), so there it is on by hand only
+SPECTRUM_AUTO = {"minimax_h3_fl2va"}
+SPECTRUM_NODE = "SpectrumApplyMiniMaxH3"
+SPECTRUM_SETTINGS = dict(
+    enabled=True, blend_weight=0.5, degree=1, ridge_lambda=0.1, window_size=2.0, flex_window=0.75, warmup_steps=1,
+    tail_actual_steps=1, max_history=8, debug=False, history_storage="system_ram", bootstrap_first_forecast=True,
+    anchor_residual_feedback=False, selective_rollback_correction=False, offline_smoothing_replay=True, audio_blend_weight=0.0,
+    offline_archive_storage="system_ram", model_aware_mode="off", model_aware_risk_threshold=0.65,
+    model_aware_trust_shrinkage=False, model_aware_replay_generic_correction=False, generic_correction_mode="coordinate_rls",
+    generic_correction_limiter="hard_clip", generic_correction_limit=0.4, generic_correction_attenuation="no_attenuation")
+
+
+# step- and size-aware: on 8-step turbo runs at about 1 MP nothing changed, but lip sync dropped at 25 steps (5 of 6
+# seeds) and at low resolution (0.4 MP clearly, 0.7 MP on 1 of 3 seeds; 2026-10-21), so Spectrum sits out those runs
+SPECTRUM_MAX_STEPS = 12
+SPECTRUM_MIN_MP = 0.9
+H3_LATENT_SCALE = 16  # H3 video latent: one cell per 16 x 16 pixels
+SPECTRUM_BINDING = "spectrum_h3_binding"  # Spectrum's own wrappers pass straight through when this is missing
+
+
+# Veda (learned sparse attention, Veda-on-ComfyUI, installed separately) is the low-resolution partner: on an 8 GB laptop
+# at 0.4 MP it was 1.4x faster with nothing lost, while at about 1 MP the face drifted on every seed (2026-10-21). So it
+# runs below the size where Spectrum takes over, and goes back to full attention above it.
+VEDA_PROFILES = {"minimax_h3", "minimax_h3_fl2va"}
+VEDA_NODE = "VedaSparseAttention"
+VEDA_PREDICTOR = "minimax_h3_t2va_veda_8nfe_600step_preview_fp8.safetensors"
+VEDA_SETTINGS = dict(predictor=VEDA_PREDICTOR, generated_sparsity="32", reference_sparsity="32", full_attention_layers="",
+                     full_attention_steps="", verbose=False)
+VEDA_MAX_MP = SPECTRUM_MIN_MP
+VEDA_KEY = "veda_sparse_attention"  # Veda's own callback key
+
+
+def _veda_patch(model):
+    """Veda's per-model patch object, from the callback it registers (the node only returns the model)."""
+    import comfy.patcher_extension as pe
+
+    for fn in (model.callbacks.get(pe.CallbacksMP.ON_PREPARE_STATE, {}).get(VEDA_KEY) or []):
+        for cell in (getattr(fn, "__closure__", None) or ()):
+            obj = cell.cell_contents
+            if hasattr(obj, "settings") and hasattr(obj, "make_override"):
+                return obj
+    return None
+
+
+def _h3_speed_guard(executor, noise, latent_image, sampler, sigmas, *args, state=None, **kwargs):
+    """Per run: Spectrum only on short runs at about 1 MP, Veda only below that. Each sits out the rest."""
+    opts = getattr(executor.class_obj, "model_options", None) or {}
+    steps = max(0, len(sigmas) - 1)
+    # the latent arrives packed flat here; its real shapes come in latent_shapes (video: B, C, T, H/16, W/16)
+    shapes = kwargs.get("latent_shapes") or (args[4] if len(args) > 4 else None) or []
+    video = next((tuple(sh) for sh in shapes if len(sh) == 5), None)
+    mp = video[-2] * video[-1] * H3_LATENT_SCALE ** 2 / 1e6 if video else SPECTRUM_MIN_MP
+    undo, notes = [], []
+    if SPECTRUM_BINDING in opts and not (steps <= SPECTRUM_MAX_STEPS and mp >= SPECTRUM_MIN_MP):
+        binding = opts.pop(SPECTRUM_BINDING)
+        undo.append(lambda: opts.__setitem__(SPECTRUM_BINDING, binding))
+        notes.append(f"Spectrum sits out ({steps} steps)" if steps > SPECTRUM_MAX_STEPS else f"Spectrum sits out ({mp:.2f} MP)")
+    veda = (state or {}).get("veda")
+    if veda is not None and not state.get("veda_force") and mp >= VEDA_MAX_MP:
+        import dataclasses
+
+        old = veda.settings
+        veda.settings = dataclasses.replace(old, dense_steps=range(1 << 20))  # every step full attention
+        undo.append(lambda: setattr(veda, "settings", old))
+        notes.append(f"Veda sits out ({mp:.2f} MP)")
+    if notes:
+        print(f"[LC Optimizer] {', '.join(notes)}: where it cost quality in our tests.")
+    try:
+        return executor(noise, latent_image, sampler, sigmas, *args, **kwargs)
+    finally:
+        for u in undo:
+            u()
+
+
+def _veda_installed():
+    try:
+        import folder_paths
+        import nodes
+
+        return VEDA_NODE in nodes.NODE_CLASS_MAPPINGS and VEDA_PREDICTOR in folder_paths.get_filename_list("veda")
+    except Exception:
+        return False
+
+
+def _spectrum_installed():
+    try:
+        import nodes
+
+        return SPECTRUM_NODE in nodes.NODE_CLASS_MAPPINGS
+    except Exception:
+        return False
+
+
 def plan_speedups(profile_id, goal, manual=None):
-    """What to apply and why. manual: {attention, fp16_accumulation, step_cache, torch_compile} or None (Auto).
+    """What to apply and why. manual: {attention, fp16_accumulation, step_cache, torch_compile, spectrum, veda} or None (Auto).
     Returns [{key, label, state: on/off/na, value, why}]."""
     sysp = report() or {}
     t = sysp.get("tests") or {}
@@ -1058,6 +1156,36 @@ def plan_speedups(profile_id, goal, manual=None):
                                                  ("Fast goal only" if steps >= 20 else f"not worth it at {steps} steps"))
     rows.append({"key": "step_cache", "label": "Step cache (EasyCache)", "state": "on" if on else "off", "value": bool(on), "why": why})
 
+    if profile_id in VEDA_PROFILES:
+        want = manual.get("veda", "auto")
+        if not _veda_installed():
+            rows.append({"key": "veda", "label": "Veda (sparse attention, low res)", "state": "na", "value": None,
+                         "why": f"not installed: Veda-on-ComfyUI + {VEDA_PREDICTOR} in models/veda"})
+        else:
+            on = want == "on" or (want == "auto" and goal != "Quality")
+            why = ("set by hand: every resolution" if want == "on" else "set by hand") if want != "auto" else (
+                f"under {VEDA_MAX_MP} MP only: about 1.4x on an 8 GB card, same look" if on else "Optimal and Fast goals only")
+            rows.append({"key": "veda", "label": "Veda (sparse attention, low res)", "state": "on" if on else "off",
+                         "value": want == "on", "why": why})
+
+    if profile_id in SPECTRUM_PROFILES:
+        want = manual.get("spectrum", "auto")
+        if not _spectrum_installed():
+            rows.append({"key": "spectrum", "label": "Spectrum (step forecast)", "state": "na", "value": None,
+                         "why": "not installed: ComfyUI-Spectrum-MiniMax-H3 by xmarre (Manager or GitHub)"})
+        else:
+            auto_ok = profile_id in SPECTRUM_AUTO
+            on = want == "on" or (want == "auto" and goal != "Quality" and auto_ok)
+            why = "set by hand" if want != "auto" else (
+                f"about 1.3x faster; sits out runs over {SPECTRUM_MAX_STEPS} steps or under {SPECTRUM_MIN_MP} MP" if on else
+                ("off on Ref2VA: it smeared reference videos in our tests (set it to on to try)" if not auto_ok
+                 else "Optimal and Fast goals only"))
+            rows.append({"key": "spectrum", "label": "Spectrum (step forecast)", "state": "on" if on else "off", "value": bool(on), "why": why})
+            if on:  # one step skipper at a time
+                for r in rows:
+                    if r["key"] == "step_cache" and r["state"] == "on":
+                        r["state"], r["value"], r["why"] = "off", False, "Spectrum is on (one step skipper at a time)"
+
     if profile_id == "qwen_image_21":
         # Qwen Image 2.1 Cache (ComfyUI core): where the KV cache lives and how it is stored. int4 is never picked
         # automatically: its tooltip says it roughly doubles the per-step error.
@@ -1086,6 +1214,13 @@ def plan_speedups(profile_id, goal, manual=None):
 def apply_speedups(model, rows):
     m = model.clone()
     applied = []
+    if any(r["key"] in ("spectrum", "veda") and r["state"] == "on" for r in rows):
+        import functools
+        import comfy.patcher_extension as pe
+
+        # added first so it sits outside Spectrum's and Veda's own hooks; clones share the state dict
+        state = {}
+        m.add_wrapper_with_key(pe.WrappersMP.OUTER_SAMPLE, "lc_optimizer_h3_guard", functools.partial(_h3_speed_guard, state=state))
     for r in rows:
         if r["state"] != "on" and r["key"] != "qwen21_cache":  # the cache is set even when switched off
             continue
@@ -1113,6 +1248,13 @@ def apply_speedups(model, rows):
                 r["state"], r["why"] = "na", "needs PyTorch 2.7 or newer"
         elif r["key"] == "step_cache":
             m = _call("EasyCache", model=m, reuse_threshold=0.2, start_percent=0.15, end_percent=0.95, verbose=False)[0]
+            applied.append(r["label"])
+        elif r["key"] == "veda":
+            m = _call(VEDA_NODE, model=m, **VEDA_SETTINGS)[0]
+            state["veda"], state["veda_force"] = _veda_patch(m), bool(r["value"])
+            applied.append(r["label"])
+        elif r["key"] == "spectrum":
+            m = _call(SPECTRUM_NODE, model=m, **SPECTRUM_SETTINGS)[0]
             applied.append(r["label"])
         elif r["key"] == "qwen21_cache":
             dev, dt = r["value"]
