@@ -56,14 +56,12 @@ class LCMOSSLayoutPrompt:
             },
         }
 
-    RETURN_TYPES = ("STRING", "INT", "INT", "STRING", "STRING")
-    RETURN_NAMES = ("prompt", "width", "height", "info", "speed_boost_prompt")
+    RETURN_TYPES = ("STRING", "INT", "INT", "STRING")
+    RETURN_NAMES = ("prompt", "width", "height", "info")
     OUTPUT_TOOLTIPS = ("The layout prompt: wire it into the positive prompt's text.",
                        "The width the boxes were placed in: use it for the latent.",
                        "The height the boxes were placed in.",
-                       "What went in, and anything to fix.",
-                       "Only for the LC Speed Boost KSampler. Encode it like the prompt and plug it into positive_half so "
-                       "Speed Boost stays on with boxes. Not using Speed Boost? Leave it empty.")
+                       "What went in, and anything to fix.")
     FUNCTION = "run"
     CATEGORY = "LC123/MOSS Image"
     DESCRIPTION = ("Builds MOSS Image's layout prompt from boxes: each box becomes an object, a character or a block of text "
@@ -75,7 +73,7 @@ class LCMOSSLayoutPrompt:
         width, height = snap16(width or cw), snap16(height or ch)
         caption = prompt.strip()
         if not els:
-            return (caption, width, height, "No boxes: the prompt goes through unchanged.", caption)
+            return (caption, width, height, "No boxes: the prompt goes through unchanged.")
         if not caption:
             caption = "A picture."  # never the box descriptions: repeated in the caption they lock the characters in
         summary = {"canvas": canvas, "caption": caption}
@@ -104,22 +102,15 @@ class LCMOSSLayoutPrompt:
             if bad:
                 notes.append(f"box {i + 1} palette: left out {', '.join(repr(b) for b in bad)} (not a colour)")
             item["bbox"] = centred_box(e.get("tgt_bbox") or e["bbox"], width, height)
-            item["_bbox_src"] = e.get("tgt_bbox") or e["bbox"]
             items.append(item)
-        # LC Speed Boost's half size: half the latent (1/16 of the pixels), rounded the way it rounds
-        hw, hh = max(2, round(width // 16 / 2)) * 16, max(2, round(height // 16 / 2)) * 16
-        half_items = [{**{k: v for k, v in it.items() if k != "_bbox_src"}, "bbox": centred_box(it["_bbox_src"], hw, hh)} for it in items]
-        items = [{k: v for k, v in it.items() if k != "_bbox_src"} for it in items]
         layout = {"summary": summary, "items": items, "bbox_coord_space": "abs_centralized", "bbox_format": "yxyx"}
-        layout_half = {"summary": summary, "items": half_items, "bbox_coord_space": "abs_centralized", "bbox_format": "yxyx"}
         parts = [f"{n} {k}{'s' if n != 1 else ''}" for k, n in counts.items() if n]
         info = f"{width}x{height}, {canvas}: " + ", ".join(parts) + "."
         if (width, height) != (snap16(cw), snap16(ch)):
             info += f" ⚠️ The boxes were drawn on {cw}x{ch}: they are stretched to fit."
         if notes:
             info += " ⚠️ " + "; ".join(notes) + "."
-        return (json.dumps(layout, ensure_ascii=False, separators=(",", ":")), width, height, info,
-                json.dumps(layout_half, ensure_ascii=False, separators=(",", ":")))
+        return (json.dumps(layout, ensure_ascii=False, separators=(",", ":")), width, height, info)
 
 
 NODE_CLASS_MAPPINGS = {"LCMOSSLayoutPrompt": LCMOSSLayoutPrompt}

@@ -31,6 +31,10 @@ SPECTRUM_TIP = ("MiniMax H3 only: Spectrum by xmarre (ComfyUI-Spectrum-MiniMax-H
                 "under 0.9 MP, where it cost lip sync in our tests. auto = FL2VA on the Optimal and Fast goals (off on Ref2VA, "
                 "where it smeared reference videos in our tests). off = opt out (works with speed_ups on Auto too). "
                 "Replaces the step cache when on.")
+MOSS_SPECTRUM_TIP = ("MOSS Image and Krea 2: Spectrum forecasts some steps instead of running them, with no visible change "
+                     "in our tests (MOSS about 1.7x, Krea 2 Turbo about 1.35x, Raw about 1.6x). Built in, nothing to install. "
+                     "auto = Optimal and Fast goals; the first 20% of the steps always run (the layout forms there) and it "
+                     "sits out runs under 8 steps. off = opt out (works with speed_ups on Auto too). Replaces the step cache when on.")
 VEDA_TIP = ("MiniMax H3 only: Veda sparse attention (Veda-on-ComfyUI + its predictor in models/veda, install separately) "
             "for low resolution. auto = runs under 0.9 MP (about 1.4x on an 8 GB card, same look), full attention above it, "
             "where the face drifted in our tests. on = every resolution. off = opt out (works with speed_ups on Auto too).")
@@ -103,6 +107,8 @@ class _LCOptimizerBase:
             req["qwen21_cache"] = (["auto"] + list(E.QWEN_CACHE), {"default": "auto", "tooltip": QWEN_TIP})
         req["clip_type"] = (E.clip_types(cls.KIND), {"default": E.CLIP_AUTO, "tooltip": CLIP_TIP})  # Custom only
         opt = {}
+        if cls.KIND == "image":  # optional, so saved workflows and API jobs made before it still run
+            opt["spectrum"] = (["auto", "on", "off"], {"default": "auto", "tooltip": MOSS_SPECTRUM_TIP})
         if cls.KIND == "video":  # last, and optional, so saved workflows and API jobs made before them still run
             opt["spectrum"] = (["auto", "on", "off"], {"default": "auto", "tooltip": SPECTRUM_TIP})
             opt["veda"] = (["auto", "on", "off"], {"default": "auto", "tooltip": VEDA_TIP})

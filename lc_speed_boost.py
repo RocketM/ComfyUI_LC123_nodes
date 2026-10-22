@@ -243,8 +243,7 @@ def _sampler(model, x, sigmas, extra_args=None, callback=None, disable=None, *, 
     if extra_args.get("denoise_mask") is not None:
         why = "inpaint mask (it only works on the whole picture)"
     elif lc_layout and lc_half_positive is None:
-        why = ("MOSS layout boxes (they are placed in full-size pixels and would miss their mark at half size; wire LC MOSS "
-               "Layout Prompt's speed_boost_prompt, encoded, into positive_half to keep Speed Boost on)")
+        why = "MOSS layout boxes (placed in full-size pixels; Speed Boost does not work on MOSS Image anyway)"
     kind = None if why else _kind(model, sigmas)
     if why:
         pass
@@ -395,8 +394,8 @@ class LCSpeedBoostKSampler:
         }, "optional": {
             "sampler": ("SAMPLER", {"tooltip": "Optional. A ClownSampler (or any SAMPLER) with its own settings, like eta. "
                                                "Replaces sampler_name."}),
-            "positive_half": ("CONDITIONING", {"tooltip": "Plug in LC MOSS Layout Prompt's speed_boost_prompt, encoded. Without "
-                                                          "it, Speed Boost turns off when boxes are used."}),
+            "positive_half": ("CONDITIONING", {"tooltip": "Optional positive for the half-size steps. Speed Boost does not work "
+                                                          "on MOSS Image."}),
         }, "hidden": {"prompt": "PROMPT", "unique_id": "UNIQUE_ID"}}
 
     RETURN_TYPES = ("LATENT",)
