@@ -53,14 +53,13 @@ class LCMOSSLayoutPrompt:
         }
 
     RETURN_TYPES = ("STRING", "INT", "INT", "STRING", "STRING")
-    RETURN_NAMES = ("prompt", "width", "height", "info", "prompt_half")
+    RETURN_NAMES = ("prompt", "width", "height", "info", "speed_boost_prompt")
     OUTPUT_TOOLTIPS = ("The layout prompt: wire it into the positive prompt's text.",
                        "The width the boxes were placed in: use it for the latent.",
                        "The height the boxes were placed in.",
                        "What went in, and anything to fix.",
-                       "The same layout at LC Speed Boost's half size. Encode it like the prompt and wire it into the Speed "
-                       "Boost KSampler's positive_half: the first steps then keep the boxes too (without it Speed Boost "
-                       "switches off on a layout).")
+                       "Only for the LC Speed Boost KSampler. Encode it like the prompt and plug it into positive_half so "
+                       "Speed Boost stays on with boxes. Not using Speed Boost? Leave it empty.")
     FUNCTION = "run"
     CATEGORY = "LC123/MOSS Image"
     DESCRIPTION = ("Builds MOSS Image's layout prompt from boxes: each box becomes an object, a character or a block of text "
