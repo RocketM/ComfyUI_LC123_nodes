@@ -37,7 +37,11 @@ class LCMOSSLayoutPrompt:
         return {
             "required": {
                 "prompt": ("STRING", {"multiline": True, "dynamicPrompts": True, "default": "",
-                                      "tooltip": "The scene only: place, light, style, mood. Characters and objects go in their boxes; named here too, they lock into the picture."}),
+                                      "placeholder": "base prompt (empty = the model picks the setting)",
+                                      "tooltip": "Your base prompt: the scene and anyone not in a box (characters in boxes are described in "
+                                                 "their boxes only). Wire this node's output into LC Vision Prompt Enhancer's prompt_text: the boxes stay "
+                                                 "intact. Bypass this node and the base prompt goes straight through. Empty: the model picks "
+                                                 "the setting."}),
                 "elements": ("ARRAY", {"tooltip": "The boxes from LC Bounding Boxes (or Create Bounding Boxes). Draw the background first, "
                                                   "the foreground last."}),
                 "canvas": (CANVAS, {"default": "single", "tooltip": "single = one picture. multi_panel = comic panels or a split screen. "
