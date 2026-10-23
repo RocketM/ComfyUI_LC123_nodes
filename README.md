@@ -110,7 +110,7 @@ Tools for the canvas itself, not nodes. Nothing here touches your generations.
 
 *note:* Align works on the classic canvas and in Nodes 2.0. Connection FX is classic only; with Nodes 2.0 turned on it stays out of the way.
 
-**Nodes 2.0:** every LC node works, but the live on-canvas extras (hover wipe, drag-to-place, the Sigma Curve editor, the crop box) are classic only. In Nodes 2.0 you get the result as it was at the last run instead: the finished image on FX nodes, the cropped image, a picture of the sigma curve, and the Get Image / Image-Mask Resize / Boolean readouts as a line of text. Classic always comes first.
+**Nodes 2.0:** every LC node works, but the live on-canvas extras (drag-to-place, the Sigma Curve editor, the crop box) are classic only. The preview zoom (click, wheel, double-click) works in both. In Nodes 2.0 you get the result as it was at the last run instead: the finished image on FX nodes, the cropped image, a picture of the sigma curve, and the Get Image / Image-Mask Resize / Boolean readouts as a line of text. Classic always comes first.
 
 </details>
 
@@ -167,7 +167,7 @@ Open **Settings** (the gear) and pick **LC Settings ⚙️**. These are **UI onl
 
 | Setting | Default | What it does |
 |--------|---------|--------|
-| **Remove wipe** | Off | No hover wipe on the Image FX previews |
+| **Remove wipe** | Off | The zoomed preview shows the result only, no before / after wipe |
 | **Half-resolution previews** | Off | FX previews drawn at half size |
 | **Clamp longest side** | Off | Shrinks preview textures to **Max edge** |
 | **Max edge (px)** | 768 | Used by Clamp. Try 512 on heavy graphs |
@@ -446,6 +446,7 @@ Works on brightness only, so colors never shift, in three stages:
 - Flat areas are left alone based on the noise in each image, so anime fills and gradients stay clean.
 - **Presets:** Natural, Subtle, Portrait, Product, Landscape, Crisp, plus **Lineart**, **Anime sharp** and **Illustration**. Touch a slider and it flips to **Custom**.
 - 💡 Line art, anime and illustration: keep **skin_protect** at 0 (the art presets already do).
+- **skin_mask** (optional): wire LC Skin Master's **skin_mask** and **skin_protect** covers all the skin. Unwired, skin is found by colour, which misses part of it.
 - Upscaled 4K no longer gets pores dug into craters: the sharpening follows the softness measured in the picture instead of guessing from its size, and **skin_protect** now covers sharpening too.
 
 **Updated settings:** Natural, Subtle and Portrait retuned for upscaled and detailed images (1.49.17). Old → new:
@@ -512,7 +513,7 @@ What a real camera does to a scene, in the order light travels. Wire a depth map
 <details>
 <summary><b>Click to open</b></summary>
 
-Hover any of these to wipe against the original. Heavy graph? See **Performance** in [Settings](#settings).
+**The preview:** the result, fitted to the node. Click a spot: it zooms to 100% there and the pointer wipes against the original (after left, before right). The wheel zooms in and out, double-click goes back. It also goes back when you zoom the canvas far out or the node leaves the screen. The original is only loaded once you zoom. LC Skin Master shows its preview beside its widgets. Heavy graph? See **Performance** in [Settings](#settings).
 
 | Node | What it does |
 |------|----------------|
@@ -537,6 +538,7 @@ Hover any of these to wipe against the original. Heavy graph? See **Performance*
 | **LC Image Desaturate** | Desaturate, plain and simple |
 | **LC Skin Beauty ✨** / **LC Skin Upscale** / **LC Photo Style 📷** | See above |
 | **LC Skin Texture ✨ (BETA)** | Adds real pore texture to skin that came out too smooth (after a strong denoise, a beauty pass or a plastic-looking model). Takes only the fine relief of a real skin photo, never its colour, and adds less where skin already has detail. **mask**: LC Person Mask (mediapipe, face + body, remove_features) is ideal; unwired, skin is found by colour. **reference**: your own skin close-up, or the bundled CC0 photo **protect_mask** (optional): areas left alone, e.g. the faces and hands the detailers already redrew (LC VOSR2 Upscale (pipe) **protected** output), so skin detail is not added twice. |
+| **LC Skin Master ✨ (BETA)** | The whole skin chain in one node, each step done once on one face-aware skin map: **clean** (grit out), **pores** (crisp or ease the skin's own), **add_pores** (real pore relief on plastic skin), **even_skin**, **wrinkles** (below 0 softens, above 0 deepens the lines already there), **even_colour**, **pigmentation** (freckles where the sun lands, grown from her own), **eye_detail**, then skin **warmth**, **brightness**, **rosy**, **saturation**, **shadow_lift**. **preset**: Natural, Clean Even Tone, Soft Beauty, Editorial Detail, Real Skin Restore, Mature Skin, Weathered, Body Skin, Sun-Kissed; moving a slider switches to Custom. Keep **pores** at 1 or more with pigmentation. **mask** (optional): your own skin mask; unwired, faces and body skin are found for you, clothes kept out (✋ first run downloads about 80 MB into `models/facexlib`). **protect_mask**: areas left alone. **skin_mask** out: wire it into LC Sharpen Pro so its skin_protect covers all the skin. Retouch and skin finding adapted from [sd-living-skin](https://github.com/sca-285/sd-living-skin) by sca-285 (MIT). |
 | **LC Apply LUT** | Reads `.cube` files from **`ComfyUI/models/luts/`**. Launches with **LC_Crushed_Blacks** at 0.3. Sample LUTs copy over from `assets/luts/` and never overwrite yours. **interpolation**: **tetrahedral** (default, GPU, cleaner greys) or the old **trilinear** |
 | **LC Text Overlay** | Text on an image: align, drag or type the position. Shrinks to fit if the font would run off the edge. Includes the 14 bundled fonts |
 | **LC Phone Filters 📱** | The 37 phone-app presets (1977, Aden, Brooklyn, Xpro2, etc.). Pick one, dial strength, wipe to compare |

@@ -316,7 +316,13 @@ class LCClarity(PreviewImage):
                     "default": 0.15, "min": 0.0, "max": 1.0, "step": 0.01,
                     "tooltip": "Mid-size detail: pores, fabric, fur, pencil hatching. 0 = off.",
                 }),
-            }
+            },
+            "optional": {
+                "skin_mask": ("MASK", {
+                    "tooltip": "Optional. The skin skin_protect covers (white = skin), e.g. LC Skin Master's skin_mask. "
+                               "Unwired, skin is found by colour, which misses some skin.",
+                }),
+            },
         }
 
     RETURN_TYPES = ("IMAGE",)
@@ -441,6 +447,7 @@ class LCClarity(PreviewImage):
         shadow_protect=0.25,
         highlight_protect=0.25,
         texture=0.15,
+        skin_mask=None,
     ):
         cl = float(max(0.0, min(1.0, clarity)))
         sh = float(max(0.0, min(1.0, sharpen)))
@@ -476,7 +483,11 @@ class LCClarity(PreviewImage):
         detail_mask = self._smoothstep(1.5 * sn, 5.0 * sn, lstd)
 
         skin = None
-        if skin_protect > 0 and (tx > 0 or cl > 0 or sh > 0):
+        if skin_protect > 0 and (tx > 0 or cl > 0 or sh > 0) and skin_mask is not None:
+            sm = skin_mask if skin_mask.ndim == 3 else skin_mask[None]
+            sm = sm[torch.arange(b) % sm.shape[0]].to(dev, torch.float32)[:, None]
+            skin = F.interpolate(sm, size=(h, w), mode="bilinear", align_corners=False).clamp(0, 1)
+        elif skin_protect > 0 and (tx > 0 or cl > 0 or sh > 0):
             try:
                 from .lc_skin_beauty import _auto_skin_mask
                 arr = x.detach().cpu().numpy()
