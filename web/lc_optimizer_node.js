@@ -336,10 +336,13 @@ function applyManual(node) {
   const manual = wByName(node, "speed_ups")?.value === "Manual";
   for (const k of MANUAL) (manual ? showWidget : hideWidget)(wByName(node, k));
   // Spectrum and Veda (H3 only) stay visible on Auto too, so they can be switched off without going Manual
-  if (String(wByName(node, "base_model")?.value || "").startsWith("MiniMax H3")) {
+  const base = String(wByName(node, "base_model")?.value || "");
+  if (base.startsWith("MiniMax H3")) {
     showWidget(wByName(node, "spectrum"));
     showWidget(wByName(node, "veda"));
   }
+  // the built-in Spectrum (MOSS Image, Krea 2): same opt-out on Auto
+  if (base.startsWith("MOSS Image") || base.startsWith("Krea 2")) showWidget(wByName(node, "spectrum"));
   // the text encoder type is only asked for Custom (the known base models bring their own)
   (wByName(node, "base_model")?.value === CUSTOM ? showWidget : hideWidget)(wByName(node, "clip_type"));
   fit(node);

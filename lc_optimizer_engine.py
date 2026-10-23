@@ -1048,6 +1048,16 @@ VEDA_SETTINGS = dict(predictor=VEDA_PREDICTOR, generated_sparsity="32", referenc
 VEDA_MAX_MP = SPECTRUM_MIN_MP
 VEDA_KEY = "veda_sparse_attention"  # Veda's own callback key
 
+# Spectrum for image models is our own (lc_spectrum), nothing to install. Every 2nd middle step forecast on Optimal:
+# MOSS 1.7x (2.1x on an 8 GB laptop), Krea 2 Turbo 1.36x at 10 steps, Raw 1.6x at 52 steps, no visible change.
+# Every 3rd on Fast: MOSS 2.1x with a sign's lettering style changed; on Krea 2 Turbo it left a ghost pattern, so Turbo
+# stays at every 2nd on Fast too.
+IMAGE_SPECTRUM_PROFILES = {"moss_image", "moss_image_base", "krea2", "krea2_raw"}
+IMAGE_SPECTRUM_INTERVAL = {"Optimal": 2, "Fast": 3, "Quality": 2}
+IMAGE_SPECTRUM_EVERY_2ND = {"krea2"}
+IMAGE_SPECTRUM_GAIN = {"moss_image": "about 1.7x", "moss_image_base": "about 1.7x", "krea2": "about 1.35x at 10 steps",
+                       "krea2_raw": "about 1.6x at 52 steps"}
+
 
 def _veda_patch(model):
     """Veda's per-model patch object, from the callback it registers (the node only returns the model)."""
@@ -1181,10 +1191,21 @@ def plan_speedups(profile_id, goal, manual=None):
                 ("off on Ref2VA: it smeared reference videos in our tests (set it to on to try)" if not auto_ok
                  else "Optimal and Fast goals only"))
             rows.append({"key": "spectrum", "label": "Spectrum (step forecast)", "state": "on" if on else "off", "value": bool(on), "why": why})
-            if on:  # one step skipper at a time
-                for r in rows:
-                    if r["key"] == "step_cache" and r["state"] == "on":
-                        r["state"], r["value"], r["why"] = "off", False, "Spectrum is on (one step skipper at a time)"
+
+    if profile_id in IMAGE_SPECTRUM_PROFILES:
+        want = manual.get("spectrum", "auto")
+        on = want == "on" or (want == "auto" and goal != "Quality")
+        every = 2 if profile_id in IMAGE_SPECTRUM_EVERY_2ND else IMAGE_SPECTRUM_INTERVAL.get(goal, 2)
+        why = "set by hand" if want != "auto" else (
+            (f"{IMAGE_SPECTRUM_GAIN.get(profile_id, 'faster')} ({'every 3rd' if every == 3 else 'every 2nd'} step after the "
+             f"warm-up forecast); sits out runs under 8 steps") if on else "Optimal and Fast goals only")
+        rows.append({"key": "spectrum", "label": "Spectrum (step forecast)", "state": "on" if on else "off",
+                     "value": ("img", every) if on else False, "why": why})
+
+    if any(r["key"] == "spectrum" and r["state"] == "on" for r in rows):  # one step skipper at a time
+        for r in rows:
+            if r["key"] == "step_cache" and r["state"] == "on":
+                r["state"], r["value"], r["why"] = "off", False, "Spectrum is on (one step skipper at a time)"
 
     if profile_id == "qwen_image_21":
         # Qwen Image 2.1 Cache (ComfyUI core): where the KV cache lives and how it is stored. int4 is never picked
@@ -1214,7 +1235,7 @@ def plan_speedups(profile_id, goal, manual=None):
 def apply_speedups(model, rows):
     m = model.clone()
     applied = []
-    if any(r["key"] in ("spectrum", "veda") and r["state"] == "on" for r in rows):
+    if any(r["key"] in ("spectrum", "veda") and r["state"] == "on" and not isinstance(r["value"], tuple) for r in rows):
         import functools
         import comfy.patcher_extension as pe
 
@@ -1252,6 +1273,11 @@ def apply_speedups(model, rows):
         elif r["key"] == "veda":
             m = _call(VEDA_NODE, model=m, **VEDA_SETTINGS)[0]
             state["veda"], state["veda_force"] = _veda_patch(m), bool(r["value"])
+            applied.append(r["label"])
+        elif r["key"] == "spectrum" and isinstance(r["value"], tuple):  # image models: our own
+            from . import lc_spectrum
+
+            m = lc_spectrum.apply(m, r["value"][1])
             applied.append(r["label"])
         elif r["key"] == "spectrum":
             m = _call(SPECTRUM_NODE, model=m, **SPECTRUM_SETTINGS)[0]

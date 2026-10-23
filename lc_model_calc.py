@@ -368,7 +368,10 @@ def recommend(model, sysp, goal="Optimal", megapixels=None):
                 r = min(pool, key=lambda r: (round(r["_q"], 3), not r["_q_measured"], r.get("_t") or 1e9, r["gb"]))
             else:
                 good = [r for r in pool if r["_q"] <= limit] or [min(pool, key=lambda r: (round(r["_q"], 3), not r["_q_measured"], r["gb"]))]
-                r = min(good, key=lambda r: (round(r.get("_t") or 1e9, 2), round(r["_q"], 3), not r["_q_measured"], r["gb"]))
+                # files without a measured step time tie on speed: one that fits in VRAM goes before the closest to bf16
+                # (MOSS bf16 on an 8 GB laptop streamed from RAM and ran 2.5x slower than int8, 2026-10-22)
+                r = min(good, key=lambda r: (round(r.get("_t") or 1e9, 2), r.get("fits") != "vram", round(r["_q"], 3),
+                                             not r["_q_measured"], r["gb"]))
             # Fast on a small GPU: the file tested as the fast pick there (H3 pruned Q4 on an 8 GB laptop: 1.6x faster,
             # visibly softer, so never the Optimal default)
             vram = ((sysp.get("gpus") or [{}])[0].get("vram_gb") or 0)
