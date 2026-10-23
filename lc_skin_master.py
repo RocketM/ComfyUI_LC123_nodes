@@ -127,11 +127,15 @@ def _add_pores(x, where, amount, ref, size, seed):
         return x
     relief = relief / energy.sqrt()
     yc = _luma(x[..., y0:y1, x0:x1])
+    # skin in shadow shows its pores fainter: relief follows the skin's brightness (a dark neck would read as leather)
+    local = _blur(yc, 6.0 * f).clamp_min(0.02)
+    on = local[wc > 0.5]
+    rel = (local / torch.quantile(on[:: max(1, on.numel() // 200000)].float(), 0.75)).clamp(0, 1)
     existing = _blur(yc, 0.6 * f) - _blur(yc, 2.0 * f)
-    rms = _blur(existing.square(), 4.0 * f).clamp_min(0).sqrt()
+    rms = _blur(existing.square(), 4.0 * f).clamp_min(0).sqrt() / rel.clamp_min(0.15)
     needs = 1.0 / (1.0 + (rms / 0.012).square())
     lit = ((yc - 0.04) / 0.1).clamp(0, 1) * ((0.97 - yc) / 0.1).clamp(0, 1)
-    detail = 0.05 * torch.tanh(relief * 0.02 * amount / 0.05) * needs * lit * wc
+    detail = 0.05 * torch.tanh(relief * 0.02 * amount / 0.05) * needs * lit * wc * rel
     out = x.clone()
     out[..., y0:y1, x0:x1] = (x[..., y0:y1, x0:x1] + detail).clamp(0, 1)  # one offset for all channels: tone stays
     return out
@@ -575,7 +579,6 @@ class LCSkinMaster(PreviewImage):
             "optional": {
                 "mask": ("MASK", {"tooltip": "Skin to work on (white). Unwired: faces and skin are found for you (facexlib, about "
                                              "80 MB downloaded into models/facexlib on the first run)."}),
-                "protect_mask": ("MASK", {"tooltip": "Optional. Areas left alone, e.g. the faces the detailers already redrew."}),
                 "delicate_skin": ("BOOLEAN", {"default": True, "tooltip": "Lips and other delicate skin are found and treated "
                                                                           "lightly, their colour kept."}),
                 "skin_match": ("FLOAT", {"default": 1.0, "min": 0.5, "max": 2.0, "step": 0.05,
@@ -592,7 +595,7 @@ class LCSkinMaster(PreviewImage):
                    "each done once on one face-aware skin map. Presets from a light clean-up to plastic-skin restore, weathered and "
                    "sun-kissed. Outputs the skin_mask for other nodes. On-node before/after wipe.")
 
-    def run(self, image, preset="Natural", seed=0, mask=None, protect_mask=None, delicate_skin=True, skin_match=1.0, **sliders):
+    def run(self, image, preset="Natural", seed=0, mask=None, delicate_skin=True, skin_match=1.0, **sliders):
         s = dict(PRESETS[preset]) if preset in PRESETS else {k: float(sliders.get(k, v)) for k, v in DEFAULTS.items()}
         if preset in PRESETS:
             s["strength"] = float(sliders.get("strength", 1.0))  # strength is always the node's own
@@ -613,8 +616,6 @@ class LCSkinMaster(PreviewImage):
             skin = torch.from_numpy(skin)
             if mask is not None:  # your mask decides where; the found maps still give delicate skin, brows and the face size
                 skin = _frame_mask(mask, i, h, w).clamp(0, 1)
-            if protect_mask is not None:
-                skin = skin * (1.0 - _frame_mask(protect_mask, i, h, w).clamp(0, 1))
             x = frame.permute(0, 3, 1, 2).to(device)
             to = lambda a: torch.as_tensor(a, dtype=x.dtype)[None, None].to(device)
             res = _retouch(x, to(skin), to(deli), to(feats), s, int(seed), scale, None if sun is None else to(sun), tick)

@@ -3,7 +3,7 @@ LC Natural Look 🍃
 ------------------
 Tones down what makes a render read as generated, without making it dull:
   loud colours pulled back (only the loudest), orange skin made a touch more neutral, highlights rolled off
-  instead of clipped, the glossy large-scale glow calmed while fine texture is lifted, then the original black
+  instead of clipped, the glossy large-scale glow calmed while fine texture (not flat skin) is lifted, then the original black
   point, contrast and brightness are given back, with a whisper of grain.
 """
 
@@ -84,9 +84,13 @@ def natural_look(img, strength, skin_amount, seed):
     rolled = knee + (1 - knee) * torch.tanh(over / (1 - knee) * 1.4) / torch.tanh(torch.tensor(1.4))
     x = torch.where(x > knee, x + (rolled - x) * min(1.0, 0.85 * k), x)
 
-    # 4) calm the glossy large-scale glow, lift the fine texture
+    # 4) calm the glossy large-scale glow, lift the fine texture. Flat skin is left out (sharpened, a plain neck turns to
+    # leather); brows, lashes and hair inside the skin mask have strong fine detail and keep the lift
     x = x - (x - _blur(x, max(3, side // 55))) * 0.07 * k
-    x = x + (x - _blur(x, 1)) * 0.32 * k
+    fine = x - _blur(x, 1)
+    detail = _blur(_luma(fine).square(), 3).clamp_min(0).sqrt() / _blur(_luma(x), 6).clamp_min(0.03)
+    flat = 1 - _smoothstep(0.02, 0.04, detail)
+    x = x + fine * 0.32 * k * (1 - skin * flat)
 
     # 5) give the punch back: black point, contrast and brightness of the original
     l = _luma(x)

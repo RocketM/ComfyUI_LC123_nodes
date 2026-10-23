@@ -1,6 +1,6 @@
 /**
  * Shared on-node preview for LC image nodes.
- * Most nodes: the result fitted; click = 100% zoom with an after | before wipe, double-click = back.
+ * Most nodes: the result fitted; click = 100% zoom with a before | after wipe, double-click = back.
  * LCTextOverlay: no wipe; live text/size/color/position on the base image.
  */
 
@@ -663,12 +663,14 @@ class LCPreviewCompare {
       ctx.save();
       ctx.imageSmoothingEnabled = false;
       const wipe = pol.wipe && this.imgB;
-      if (wipe) crop(this.imgB, dx, dy, dw, dh);
-      const splitX = wipe && this.pointerOver ? Math.max(0, Math.min(dw, this.pointerPos[0] - dx)) : dw;
-      ctx.beginPath();
-      ctx.rect(dx, dy, splitX, dh);
-      ctx.clip();
-      crop(imgA, dx, dy, dw, dh);
+      crop(imgA, dx, dy, dw, dh); // after underneath, before left of the pointer
+      const splitX = wipe && this.pointerOver ? Math.max(0, Math.min(dw, this.pointerPos[0] - dx)) : 0;
+      if (splitX > 0) {
+        ctx.beginPath();
+        ctx.rect(dx, dy, splitX, dh);
+        ctx.clip();
+        crop(this.imgB, dx, dy, dw, dh);
+      }
       ctx.restore();
       if (wipe && this.pointerOver) {
         ctx.strokeStyle = "rgba(255,255,255,0.9)";
@@ -684,7 +686,7 @@ class LCPreviewCompare {
       ctx.textBaseline = "bottom";
       ctx.fillStyle = "rgba(0,0,0,0.55)";
       const pct = `${Math.round((this.zoom.mag || 1) * 100)}%`;
-      const label = wipe ? `${pct} · after | before · double-click: back` : `${pct} · double-click: back`;
+      const label = wipe ? `${pct} · before | after · double-click: back` : `${pct} · double-click: back`;
       const tw = ctx.measureText(label).width;
       ctx.fillRect(dx + dw - tw - 10, dy + dh - 18, tw + 10, 18);
       ctx.fillStyle = "#fff";

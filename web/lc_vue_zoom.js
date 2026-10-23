@@ -3,7 +3,7 @@
  * MaskMaker's lc_mask_refine.js).
  *
  * Nodes 2.0 shows a node's picture with its own image element. Click it on an LC node that has a before picture: a
- * layer is laid over it at 100% (one picture pixel per screen pixel) and the pointer wipes after (left) | before (right).
+ * layer is laid over it at 100% (one picture pixel per screen pixel) and the pointer wipes before (left) | after (right).
  * The wheel zooms in and out, double-click takes the layer away. It also goes when the canvas is zoomed out until the
  * picture is tiny or the node leaves the screen. Nothing is added to the node until you click.
  */
@@ -61,14 +61,16 @@ function draw() {
     const k = img.naturalWidth / iw;
     ctx.drawImage(img, u0 * k, v0 * k, sw * k, sh * k, dx, dy, w, dh);
   };
-  const split = z.before && z.pointer != null ? Math.max(0, Math.min(dw, z.pointer * ds * dpr - dx)) : dw;
-  if (z.before) crop(z.before, dw);
-  ctx.save();
-  ctx.beginPath();
-  ctx.rect(dx, dy, split, dh);
-  ctx.clip();
-  crop(a, dw);
-  ctx.restore();
+  const split = z.before && z.pointer != null ? Math.max(0, Math.min(dw, z.pointer * ds * dpr - dx)) : 0;
+  crop(a, dw); // after underneath, before left of the pointer
+  if (split > 0) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(dx, dy, split, dh);
+    ctx.clip();
+    crop(z.before, dw);
+    ctx.restore();
+  }
   if (z.before && z.pointer != null) {
     ctx.strokeStyle = "rgba(255,255,255,0.9)";
     ctx.lineWidth = 2 * dpr;
@@ -77,7 +79,7 @@ function draw() {
     ctx.lineTo(dx + split, dy + dh);
     ctx.stroke();
   }
-  const label = `${Math.round(z.mag * 100)}%${z.before ? " · after | before" : ""} · double-click: back`;
+  const label = `${Math.round(z.mag * 100)}%${z.before ? " · before | after" : ""} · double-click: back`;
   ctx.font = `${11 * dpr}px sans-serif`;
   const tw = ctx.measureText(label).width;
   ctx.fillStyle = "rgba(0,0,0,0.55)";
