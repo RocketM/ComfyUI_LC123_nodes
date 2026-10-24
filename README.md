@@ -458,6 +458,7 @@ Works on brightness only, so colors never shift, in three stages:
 
 - Subtle also moved shadow / highlight protect from 0.25 to 0.3.
 - A saved workflow set to a preset picks up the new values when it loads. **Custom** keeps your own numbers. The looks on LC Depth FX, Bloom, Lens Profile, Vignette, Film Stock and Film Grain work the same way.
+- ⚠️ 1.53.15: **Bloom** intensity, **Depth FX** haze / light_wrap / dof_blur / bokeh, **Lens Profile** strength and **Natural Look** strength now read on a doubled scale (old 0.5 = new 1.0), so everyday settings are no longer crammed at the bottom. Looks are updated. **Custom** numbers in saved workflows: double them to keep the old look.
 
 **LC Depth FX 🌫️ + Looks 🎞️**
 
@@ -473,7 +474,7 @@ What a real camera does to a scene, in the order light travels. Wire a depth map
 
 **LC Bloom** has a **mode**:
 - **Bloom:** the classic glow. Old workflows render exactly the same.
-- **Pro-Mist:** a diffusion filter in front of the lens. Soft warm glow, gentler contrast.
+- **Pro-Mist:** a diffusion filter in front of the lens. Soft warm glow, gentler contrast, blacks kept deep.
 - **Halation:** the red-orange glow film gets around bright edges.
 
 **Looks:** Natural, Portrait, Cinematic, Golden hour, Vintage, Dreamy, Landscape, Night, B&W.
@@ -526,7 +527,7 @@ What a real camera does to a scene, in the order light travels. Wire a depth map
 | **LC Film Grain (Video) 🎞️** | The same grain for a whole clip: GPU, a few frames at a time, with a progress bar (about 1 s for 124 frames of 1080p). The grain is sized to the video, so it survives the h264 / h265 save (pixel-sized grain is smeared away and only bloats the file). **grain_motion** changing (new grain every frame, like film) or fixed. **frame_offset** carries the grain on across a video made in parts. 💡 0.25 is a light film texture |
 | **LC Film Stock (B&W)** / **(Color)** | Stock film looks, real blacks on B&W. Bright colours roll off and keep their hue instead of clipping |
 | **LC Vibrance** | Smart saturation that won't blow out skin. Works on colour strength only, so hues never shift |
-| **LC Natural Look 🍃** | Takes the AI look out without making it dull: only the loudest colours are pulled back, orange / plastic skin is calmed (**skin** sets how much), highlights roll off instead of clipping, the glossy large-scale glow is reduced and fine texture lifted (flat skin left out), then the original black point, contrast and brightness are given back with a whisper of grain. **strength** 0.3 - 0.6 for most renders. Before/after wipe on the node |
+| **LC Natural Look 🍃** | Takes the AI look out without making it dull: only the loudest colours are pulled back, orange / plastic skin is calmed (**skin** sets how much), highlights roll off instead of clipping, the glossy large-scale glow is reduced and fine texture lifted (flat skin left out), then the original black point, contrast and brightness are given back with a whisper of grain. **strength** 0.6 - 1.2 for most renders. Before/after wipe on the node |
 | **LC Vignette** | Edge darkening: real lens falloff, or (cos4 off) an old-photo vignette up to black corners |
 | **LC Bloom** | Glow, Pro-Mist or Halation |
 | **LC Depth FX 🌫️** | Haze, light wrap and depth of field from a depth map |
