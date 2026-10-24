@@ -107,7 +107,13 @@ async function openOn(img, node, key, e) {
   const parent = img.offsetParent || img.parentElement;
   parent.appendChild(canvas);
   // 100%, or the on-screen size when the canvas already shows the picture bigger than that
-  open = { node, key, img, canvas, after, before, u, v, mag: Math.max(1, pw / img.naturalWidth), pointer: null };
+  open = { node, key, img, canvas, after, before, u, v, mag: Math.max(1, pw / img.naturalWidth), pointer: null,
+    ds0: app.canvas?.ds?.scale || 1 };
+  // zooming the canvas well out from where it was clicked (70%) closes it, like the classic previews
+  const watch = setInterval(() => {
+    if (!open || open.canvas !== canvas) return clearInterval(watch);
+    if ((app.canvas?.ds?.scale || 1) < open.ds0 * 0.7) close();
+  }, 250);
   canvas.addEventListener("pointermove", (ev) => {
     if (!open) return;
     const b = canvas.getBoundingClientRect();

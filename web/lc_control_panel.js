@@ -122,7 +122,7 @@ function ensureStyle() {
   st.textContent = `
 .lc-cp{display:flex;flex-direction:column;width:100%;min-width:0;box-sizing:border-box;padding:0 30px 0 6px;color:#ddd;font:12px system-ui,sans-serif;user-select:none}
 .lc-cp-row{display:flex;align-items:center;gap:6px;min-width:0}
-.lc-cp-name{flex:0 1 auto;width:var(--lc-cp-name,78px);min-width:28px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#bbb}
+.lc-cp-name{flex:0 1 auto;width:max(78px,min(var(--lc-cp-max,78px),calc(78px + (100% - 164px) / 2)));min-width:28px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#bbb}
 .lc-cp-row input[type=range]{--lc-p:0%;flex:1 1 auto;min-width:24px;height:14px;margin:0;background:transparent;cursor:pointer;-webkit-appearance:none;appearance:none}
 .lc-cp-row input[type=range]:focus{outline:none}
 .lc-cp-row input[type=range]::-webkit-slider-runnable-track{height:3px;border-radius:2px;background:linear-gradient(to right,#cfcfcf var(--lc-p),#555 var(--lc-p))}
@@ -285,10 +285,22 @@ function setValue(node, i, raw) {
   node.setDirtyCanvas?.(true, true);
 }
 
+// the longest row name, so the name column grows with the node only as far as it needs to
+let measureCtx = null;
+function fitNames(node) {
+  const f = node._lcCp;
+  if (!f?.list) return;
+  measureCtx ||= document.createElement("canvas").getContext("2d");
+  measureCtx.font = "12px system-ui, sans-serif";
+  const widest = Math.max(0, ...rows(node).map((r) => measureCtx.measureText(String(r.name ?? "")).width));
+  f.list.style.setProperty("--lc-cp-max", `${Math.ceil(widest) + 4}px`);
+}
+
 function paintRow(node, i) {
   const ui = node._lcCp?.rows[i];
   const r = rows(node)[i];
   if (!ui || !r) return;
+  fitNames(node); // a renamed row can change the name column
   ui.range.style.display = isBool(r) ? "none" : "";
   ui.tog.style.display = isBool(r) ? "" : "none";
   if (isBool(r)) {
