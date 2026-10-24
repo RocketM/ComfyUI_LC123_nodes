@@ -126,9 +126,10 @@ class LCImageSplitPreview {
     const node = this.node;
     const w = Math.max(MIN_W - PAD * 2, (node.size?.[0] || DEFAULT_W) - PAD * 2);
     const widgetsBottom = this._widgetsBottom();
-    const top = Math.max(TITLE + 8, widgetsBottom + 10);
-    const h = Math.max(80, (node.size?.[1] || 320) - top - 12);
-    return { x: PAD / 2, y: top, w, h };
+    // the LC image standard: 16 px on every side, so the launch size (defaultSize) gives a 268 x 335 picture
+    const top = Math.max(TITLE + 8, widgetsBottom + PAD);
+    const h = Math.max(80, (node.size?.[1] || 320) - top - PAD);
+    return { x: PAD, y: top, w, h };
   }
 
   _widgetsBottom() {
@@ -136,7 +137,7 @@ class LCImageSplitPreview {
     let y = TITLE;
     try {
       for (const w of node.widgets || []) {
-        if (!w || w.type === "converted-widget") continue;
+        if (!w || w.type === "converted-widget" || w.type === "hidden") continue; // counted like widgetsHeight()
         const sz = w.computeSize?.(node.size[0]) || [0, LiteGraph?.NODE_WIDGET_HEIGHT || 20];
         y += (sz[1] || 20) + 4;
       }

@@ -437,8 +437,11 @@ class LCLightingControlV2:
         s = float(np.clip(blend, 0.0, 1.0))
         out = (rgb * (1.0 - s) + relit * s).clamp(0, 1)
         layer = (lit / lit.amax(dim=(1, 2, 3), keepdim=True).clamp_min(1e-4)).clamp(0, 1)
+        out = out.permute(0, 2, 3, 1).cpu()
+        if image.shape[-1] == 4:  # an RGBA input keeps its alpha, like the other LC image nodes
+            out = torch.cat([out, image[..., 3:].detach().float().cpu()], dim=-1)
         return (
-            out.permute(0, 2, 3, 1).cpu(),
+            out,
             (1.0 - shadow_out[:, 0]).cpu(),  # inverted: white = lit, black = in shadow
             layer.permute(0, 2, 3, 1).cpu(),
         )

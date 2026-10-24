@@ -134,7 +134,7 @@ def assess(variant, sysp, role, others_gb=0.0):
             r[k] = variant[k]
     if variant.get("unconfirmed"):
         r["notes"].append("ComfyUI loading not confirmed: " + variant["unconfirmed"])
-    budget = vram - SPARE_GB
+    budget = max(vram - SPARE_GB, 0.0)  # no GPU (vram 0): nothing fits, but offload doesn't count a negative budget
     if role == "diffusion":
         act = variant.get("activation_gb")  # measured per model; None until the benchmark fills it in
         need = size + (act or 0)

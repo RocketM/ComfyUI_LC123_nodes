@@ -115,7 +115,10 @@ try:
         models = calc.load_profiles([q.get("model")])
         if not models:
             return web.json_response({"error": "Unknown model."}, status=404)
-        mp = float(q["mp"]) if q.get("mp") else None
+        try:
+            mp = float(q["mp"]) if q.get("mp") else None
+        except ValueError:
+            return web.json_response({"error": "mp must be a number."}, status=400)
         rec = calc.recommend(next(iter(models.values())), sysp, q.get("goal", "Optimal"), mp)
         return web.json_response(json.loads(json.dumps(rec, default=str)))
 

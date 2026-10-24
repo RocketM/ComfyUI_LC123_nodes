@@ -24,6 +24,25 @@ const lcImageLabelState = {
 // ---- the on-canvas look: an HTML layer above the canvas, with rotate / grow / stretch handles ------------------------
 // (the label used to be drawn on the canvas, which could not rotate and could get buried under nodes)
 const ilNodes = new Set();
+
+// open settings dialogs close when the page navigates. One shared history patch, installed once: per-dialog patches
+// restored out of order (two dialogs) left a stale wrapper behind
+const navClosers = new Set();
+let navHooked = false;
+function hookNavigation() {
+    if (navHooked) return;
+    navHooked = true;
+    for (const k of ["pushState", "replaceState"]) {
+        const orig = history[k];
+        history[k] = function (...args) {
+            const r = orig.apply(this, args);
+            for (const f of [...navClosers]) {
+                try { f(); } catch (_) {}
+            }
+            return r;
+        };
+    }
+}
 let ilLoopOn = false;
 function ilStart() {
     if (ilLoopOn) return;
@@ -414,7 +433,9 @@ app.registerExtension({
             window.addEventListener("drop", this._boundDrop, { capture: true });
         };
 
+        const prevConfigure = nodeType.prototype.onConfigure;
         nodeType.prototype.onConfigure = function (info) {
+            prevConfigure?.apply(this, arguments); // chain: other extensions may hook it too
             this.properties = Object.assign({ imgW: 0, imgH: 0, angle: 0 }, this.properties);
             {
                 // an older label has no image size of its own: its saved node size is the exact display size, so take it from there
@@ -442,7 +463,9 @@ app.registerExtension({
             }
         };
 
+        const prevSerialize = nodeType.prototype.onSerialize;
         nodeType.prototype.onSerialize = function (o) {
+            prevSerialize?.apply(this, arguments); // chain: other extensions may hook it too
             if (!o.properties) o.properties = {};
             for (const key in this.properties) {
                 // plain copies only: other extensions keep live objects (Use Everywhere's are proxies) in properties,
@@ -466,6 +489,7 @@ app.registerExtension({
         const onRemoved = nodeType.prototype.onRemoved;
         nodeType.prototype.onRemoved = function () {
             onRemoved?.apply(this, arguments);
+            try { this._lcCloseDialog?.(); } catch (_) {} // removing the node closes its settings dialog too
             ilNodes.delete(this);
             try { this.__il?.box.remove(); } catch (_) {}
             this.__il = null;
@@ -626,15 +650,10 @@ app.registerExtension({
             document.addEventListener("mousemove", onDragMove);
             document.addEventListener("mouseup", onDragUp);
 
-            const originalPushState = history.pushState;
-            const originalReplaceState = history.replaceState;
-            const onNavigate = () => closeDialog();
-            history.pushState = function (...args) { originalPushState.apply(this, args); onNavigate(); };
-            history.replaceState = function (...args) { originalReplaceState.apply(this, args); onNavigate(); };
-
+            hookNavigation();
             const closeDialog = () => {
-                history.pushState = originalPushState;
-                history.replaceState = originalReplaceState;
+                navClosers.delete(closeDialog);
+                this._lcCloseDialog = null;
                 document.removeEventListener("keydown", escHandler);
                 document.removeEventListener("visibilitychange", visibilityHandler);
                 document.removeEventListener("mousemove", onDragMove); // these piled up, one pair per dialog open
@@ -643,6 +662,8 @@ app.registerExtension({
                 this.dialogOpen = false;
                 this.setDirtyCanvas(true, true);
             };
+            navClosers.add(closeDialog);
+            this._lcCloseDialog = closeDialog;
             const escHandler = (e) => { if (e.key === "Escape") closeDialog(); };
             document.addEventListener("keydown", escHandler);
             const visibilityHandler = () => { if (document.hidden) closeDialog(); };

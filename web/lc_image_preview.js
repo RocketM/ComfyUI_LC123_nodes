@@ -1163,6 +1163,10 @@ class LCWatermarkPreview {
 
     const origDown = node.onMouseDown;
     node.onMouseDown = function (e, pos, canvas) {
+      // Only primary button
+      if (e && e.button != null && e.button !== 0) {
+        return origDown ? origDown.apply(this, arguments) : false;
+      }
       const { ox, oy, sw, sh } = self._imageRect();
       if (
         pos[0] >= ox &&

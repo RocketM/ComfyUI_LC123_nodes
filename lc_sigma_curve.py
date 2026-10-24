@@ -162,7 +162,10 @@ def build_preset(name: str, steps: int, sigma_max: float, sigma_min: float) -> l
     name = (name or "simple").lower()
 
     if name in ("simple", "linear", "normal"):
-        return [hi + (lo - hi) * i / n for i in range(n)] + [0.0 if lo == 0 else lo]
+        if lo == 0:
+            return [hi + (lo - hi) * i / n for i in range(n)] + [0.0]
+        # sigma_min is the floor: n points from hi down to lo, then the final 0 (as the tooltip says)
+        return [hi + (lo - hi) * i / max(n - 1, 1) for i in range(n)] + [0.0]
 
     if name == "karras":
         rho = 7.0

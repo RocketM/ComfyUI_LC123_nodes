@@ -37,9 +37,17 @@ async function askInstall() {
   await api.fetchApi("/lc123/rtx/install", { method: "POST" });
   toast("info", `Installing nvidia-vfx (${SIZE}). This takes a few minutes; progress is in the console.`, 8000);
   clearInterval(polling);
+  let lost = 0; // polls with no install news (status route failing): stop after 30 s of that, or after 40 min in all
+  const started = Date.now();
   polling = setInterval(async () => {
     const s = await getStatus(true);
     for (const n of app.graph?._nodes || []) if (n._lcRtxBtn) label(n);
+    lost = s.install?.running || s.install?.done ? 0 : lost + 1;
+    if (!s.install?.done && (lost >= 10 || Date.now() - started > 40 * 60 * 1000)) {
+      clearInterval(polling);
+      toast("warn", "Lost track of the install. Check the ComfyUI console, then restart ComfyUI.", 12000);
+      return;
+    }
     if (s.install?.done) {
       clearInterval(polling);
       if (s.install.ok) toast("success", "RTX support installed. Restart ComfyUI to use it.", 12000);

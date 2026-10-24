@@ -166,10 +166,21 @@ function syncVisibility(node) {
   // the gel strength only matters once a color is picked
   setVisible(widget(node, "light1_color_amount"), String(wval(node, "light1_color", "none")) !== "none");
   setVisible(widget(node, "light2_color_amount"), two && String(wval(node, "light2_color", "none")) !== "none");
-  // keep the width, follow the new content height
+  // keep the width, follow the new content height (but keep a height the user dragged taller, also after a reload)
   try {
     const sz = node.computeSize();
-    node.setSize([node.size[0], Math.max(sz[1], 120)]);
+    const need = Math.max(sz[1], 120);
+    if (node._lcSavedH != null) {
+      node._lcUserTall = node._lcSavedH > need + 2;
+      node._lcSavedH = null;
+    }
+    const h = node._lcUserTall ? Math.max(need, node.size[1]) : need;
+    node.__lcSyncing = true;
+    try {
+      node.setSize([node.size[0], h]);
+    } finally {
+      node.__lcSyncing = false;
+    }
   } catch (_) {}
   node.setDirtyCanvas?.(true, true);
 }
@@ -507,10 +518,22 @@ app.registerExtension({
     };
     // a saved workflow restores widget values after creation: redraw and re-check visibility once it has
     const onConfigure = nodeType.prototype.onConfigure;
-    nodeType.prototype.onConfigure = function () {
+    nodeType.prototype.onConfigure = function (info) {
       const r = onConfigure?.apply(this, arguments);
+      if (Array.isArray(info?.size)) this._lcSavedH = info.size[1]; // the first sync decides whether it was dragged taller
       setTimeout(() => this.__lcStageRedraw?.(), 30);
       setTimeout(() => this.__lcStageRedraw?.(), 300);
+      return r;
+    };
+    // a resize by hand taller than the content: syncVisibility keeps that height instead of snapping back
+    const onResize = nodeType.prototype.onResize;
+    nodeType.prototype.onResize = function (size) {
+      const r = onResize?.apply(this, arguments);
+      if (!this.__lcSyncing && this._lcSavedH == null) {
+        try {
+          this._lcUserTall = !!size && size[1] > Math.max(this.computeSize()[1], 120) + 2;
+        } catch (_) {}
+      }
       return r;
     };
   },

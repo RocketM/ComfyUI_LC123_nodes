@@ -259,7 +259,7 @@ class LCDepthFX(PreviewImage):
         # focus: the nearer part of the frame's middle (the subject), or the manual depth
         if focus_mask is not None:
             m = focus_mask.to(dev).float()
-            m = m if m.dim() == 3 else m[..., 0]
+            m = m[None] if m.dim() == 2 else (m if m.dim() == 3 else m[..., 0])  # [H,W] / [B,H,W] / [B,H,W,1]
             m = F.interpolate(m[:, None], size=(h, w), mode="bilinear", align_corners=False)
             if m.shape[0] != b:
                 m = m[:1].expand(b, -1, -1, -1)

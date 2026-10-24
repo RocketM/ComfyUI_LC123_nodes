@@ -78,13 +78,24 @@ function readoutFor(out) {
   return null;
 }
 
+// the node an "executed" message is about: a plain id at the root, "outer:inner" (nested "a:b:c") inside subgraphs
+function nodeByExecId(key) {
+  let g = app.rootGraph || app.graph;
+  let node = null;
+  for (const part of String(key).split(":")) {
+    node = g?.getNodeById?.(Number(part)) || g?.getNodeById?.(part) || null;
+    g = node?.subgraph;
+  }
+  return node;
+}
+
 api.addEventListener("executed", ({ detail }) => {
   if (!vue()) return;
   const out = detail?.output;
   if (!out) return;
   const key = String(detail.display_node || detail.node);
   // LC Preview Image / Mask draw their own window (a DOM widget, fine in Nodes 2.0): a copy would show it twice
-  const node = app.graph?.getNodeById?.(Number(key)) || app.graph?.getNodeById?.(key);
+  const node = nodeByExecId(key);
   if (["LCPreviewImage", "LCPreviewMask"].includes(node?.comfyClass || node?.type)) return;
   const pics = pictureFor(out);
   const text = readoutFor(out);
@@ -93,7 +104,7 @@ api.addEventListener("executed", ({ detail }) => {
   setTimeout(() => {
     try {
       if (pics) app.nodeOutputs[key] = { ...(app.nodeOutputs?.[key] || {}), images: pics };
-      if (text) setReadout(app.graph?.getNodeById?.(Number(key)) || app.graph?.getNodeById?.(key), text);
+      if (text) setReadout(nodeByExecId(key), text);
     } catch (_) {}
   }, 0);
 });

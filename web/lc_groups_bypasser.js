@@ -160,11 +160,20 @@ function groupStableId(group) {
   return group._lcStableId;
 }
 
+// links are a Map in newer frontends, a plain object in older ones
+const linkOf = (graph, id) => graph?.getLink?.(id) ?? (graph?.links?.get ? graph.links.get(id) : graph?.links?.[id]);
+
+// group -> the graph it was collected from (a subgraph's groups belong to that subgraph)
+const groupGraph = new WeakMap();
+
 function collectGroups(graph) {
   if (!graph) return [];
   const out = [];
   for (const g of graph._groups || graph.groups || []) {
-    if (g) out.push(g);
+    if (g) {
+      groupGraph.set(g, graph);
+      out.push(g);
+    }
   }
   for (const n of graph._nodes || []) {
     if (n?.subgraph) {
@@ -209,6 +218,8 @@ function nodesInGroup(graph, group) {
   if (Array.isArray(group.nodes) && group.nodes.length) {
     return group.nodes.filter((n) => n && n.type !== NODE_TYPE);
   }
+  // an empty list is not trusted: the frontend's member check uses each node's drawn box, which nodes that were
+  // never on screen do not have yet (V27's prompt group came back empty right after load), so fall back to the area
 
   const { x, y, w, h } = groupBounds(group);
   const result = [];
@@ -387,6 +398,7 @@ app.registerExtension({
             value:
               this.widgets[i] != null ? !!this.widgets[i].value : true,
             originId: origin?.id ?? null,
+            originSlot: origin ? linkOf(graph, this.inputs[i].link)?.origin_slot ?? null : null,
           };
         }
 
@@ -421,6 +433,17 @@ app.registerExtension({
           this.inputs[i].type = "BOOLEAN";
         }
 
+        // a wire belongs to its group, not to the slot number: after groups re-sort or a middle group is deleted,
+        // unplug wires that now sit on another group's slot; the loop below plugs each back in from its group's binding
+        for (let i = 0; i < groups.length; i++) {
+          const inp = this.inputs[i];
+          if (inp?.link != null && prevIds[i] && prevIds[i] !== this._lcSlotIds[i] && graph) {
+            try {
+              graph.removeLink(inp.link);
+            } catch (_) {}
+          }
+        }
+
         // ---- Widgets ----
         while (this.widgets.length < groups.length) {
           const pair = this.widgets.length;
@@ -449,7 +472,8 @@ app.registerExtension({
           // Reconnect boolean from saved origin if slot empty
           if (inp.link == null && saved.originId != null && graph) {
             const origin = graph.getNodeById?.(saved.originId);
-            const outSlot = origin?.outputs?.findIndex(
+            const savedSlot = saved.originSlot != null && origin?.outputs?.[saved.originSlot] ? saved.originSlot : -1;
+            const outSlot = savedSlot >= 0 ? savedSlot : origin?.outputs?.findIndex(
               (o) =>
                 o &&
                 (o.type === "BOOLEAN" ||
@@ -479,6 +503,7 @@ app.registerExtension({
           bindings[id] = {
             value: !!w.value,
             originId: origin?.id ?? null,
+            originSlot: origin ? linkOf(graph, inp.link)?.origin_slot ?? null : null,
           };
         }
 
@@ -532,7 +557,7 @@ app.registerExtension({
       setGroupEnabled(index, enabled) {
         const group = this._lcGroups?.[index];
         if (!group) return;
-        const members = nodesInGroup(app.graph, group);
+        const members = nodesInGroup(group.graph ?? groupGraph.get(group) ?? app.graph, group); // the group's own graph (subgraphs too)
         const mode = enabled ? MODE_ALWAYS : MODE_BYPASS;
         for (const n of members) changeMode(n, mode);
       }

@@ -11,8 +11,7 @@ function widgetByName(node, name) {
   return (node.widgets || []).find((w) => w.name === name);
 }
 
-function allGraphNodes() {
-  const g = app.graph;
+function allGraphNodes(g = app.graph) {
   if (!g) return [];
   if (Array.isArray(g._nodes)) return g._nodes;
   if (Array.isArray(g.nodes)) return g.nodes;
@@ -23,12 +22,13 @@ function findTargetFromSource(node) {
   if (!node.inputs) return null;
   const inp = node.inputs.find((i) => i.name === "source");
   if (!inp || inp.link == null) return null;
-  const link = app.graph?.links?.[inp.link];
+  const g = node.graph ?? app.graph; // the node's own graph, so it also works inside a subgraph
+  const link = g?.getLink?.(inp.link) ?? (g?.links?.get ? g.links.get(inp.link) : g?.links?.[inp.link]); // links are a Map in newer frontends
   if (!link) return null;
   const originId = link.origin_id;
   return (
-    app.graph?.getNodeById?.(originId) ||
-    allGraphNodes().find((n) => n.id == originId) ||
+    g?.getNodeById?.(originId) ||
+    allGraphNodes(g).find((n) => n.id == originId) ||
     null
   );
 }
@@ -37,13 +37,12 @@ function findTargetFromSource(node) {
  * Resolve target text: numeric id OR node title OR type name.
  * Uses loose id match (string/number). Does not invent nodes.
  */
-function findTargetByQuery(query) {
+function findTargetByQuery(query, g = app.graph) {
   if (query === undefined || query === null) return null;
   const q = String(query).trim();
   if (!q) return null;
 
-  const nodes = allGraphNodes();
-  const g = app.graph;
+  const nodes = allGraphNodes(g);
 
   // --- numeric id ---
   if (/^\d+$/.test(q)) {
@@ -87,7 +86,7 @@ function resolveTarget(node) {
   const fromSource = findTargetFromSource(node);
   if (fromSource) return { node: fromSource, via: "source" };
   const q = widgetByName(node, "target")?.value;
-  const fromQuery = findTargetByQuery(q);
+  const fromQuery = findTargetByQuery(q, node.graph ?? app.graph); // searched in the Snapshot's own graph
   if (fromQuery) return { node: fromQuery, via: "target", query: String(q ?? "").trim() };
   return {
     node: null,
@@ -300,13 +299,25 @@ function refreshSnapshotNode(node) {
   };
 }
 
+// every Snapshot with its prompt id: root nodes by id, nodes inside a subgraph as "outer:inner" (nested: "a:b:c")
+function snapshotNodes(g = app.graph, prefix = "", out = [], seen = new Set()) {
+  for (const node of allGraphNodes(g)) {
+    if (!node) continue;
+    const id = prefix + String(node.id);
+    if (node.type === TYPE || node.comfyClass === TYPE) out.push([node, id]);
+    if (node.subgraph && !seen.has(id)) {
+      seen.add(id);
+      snapshotNodes(node.subgraph, id + ":", out, seen);
+    }
+  }
+  return out;
+}
+
 function injectIntoPrompt(prompt) {
   if (!prompt || !prompt.output) return;
-  for (const node of allGraphNodes()) {
-    if (node.type !== TYPE && node.comfyClass !== TYPE) continue;
+  for (const [node, id] of snapshotNodes()) {
     const payload = refreshSnapshotNode(node);
     if (!payload) continue;
-    const id = String(node.id);
     const entry = prompt.output[id];
     if (!entry) continue;
     entry.inputs = entry.inputs || {};

@@ -266,8 +266,9 @@ app.registerExtension({
       }
 
       onResize(size) {
-        // Keep height at fitted minimum for current slot count
-        const fitH = this._lcPanelFitH || Math.max(56, 34 + (this.widgets?.length || 0) * 24 + 20);
+        // Keep height at fitted minimum for current slot count: the same formula syncWidgets enforces, so the
+        // height doesn't jump after a connection change
+        const fitH = 70 + (this.widgets?.length || 0) * 30;
         if (size && size[1] < fitH) size[1] = fitH;
         if (size && size[0] < 260) size[0] = 260;
         return size;
@@ -840,7 +841,10 @@ app.registerExtension({
             const bv = resolveBoolean(graph, item.enableInput);
             if (bv !== null) enabled = bv;
           }
-          this._applyOne(item, enabled);
+          // a group row only acts when its value really changed: re-applying it on every configure / connection change
+          // set every member back to on, undoing nodes bypassed by hand inside an enabled group
+          const groupSame = item.kind === "group" && !!this.getHub()?.widgets?.[item.index]?.value === enabled;
+          if (!groupSame) this._applyOne(item, enabled);
           if (this.widgets?.[p]) {
             if (this.widgets[p].value !== enabled) this.widgets[p].value = enabled;
             if (!!this.widgets[p]._lcLocked !== driven) {

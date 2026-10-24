@@ -263,7 +263,13 @@ app.registerExtension({
                 const prev = presetW.callback;
                 presetW.callback = function (v) {
                     if (prev) prev.apply(this, arguments);
-                    if (v && String(v).startsWith("─")) return;
+                    if (v && String(v).startsWith("─")) {
+                        // a separator line isn't a preset (Python would refuse it): go back to the last real one
+                        presetW.value = self._lcLastPreset || "simple";
+                        self.setDirtyCanvas(true, true);
+                        return;
+                    }
+                    self._lcLastPreset = String(v);
                     if (v === "from_input" || v === "Custom") {
                         self.setDirtyCanvas(true, true);
                         return;
@@ -375,12 +381,16 @@ app.registerExtension({
                         const names = (data && data.curves) || [];
                         setPresetList(names);
                         const want = presetCombo.value;
+                        if (want && !String(want).startsWith("─")) nodeRef._lcLastPreset = String(want);
                         if (want && names.indexOf(want) >= 0) {
                             const jr = await fetch(url.replace("index.json", encodeURIComponent(want) + ".json") + "?t=" + Date.now());
                             if (jr.ok) {
                                 const body = await jr.json();
                                 const pts = parseCurve(body.sigmas || body);
-                                if (pts.length >= 2) setWidget(nodeRef, "curve", formatCurve(pts));
+                                // only when it still matches the step count: a curve resampled to other steps and saved
+                                // with the workflow is kept
+                                const steps = Number(widgetVal(nodeRef, "total_steps", pts.length - 1));
+                                if (pts.length >= 2 && pts.length - 1 === steps) setWidget(nodeRef, "curve", formatCurve(pts));
                             }
                         }
                         nodeRef.setDirtyCanvas(true, true);

@@ -227,7 +227,9 @@ def _linux_disk_kind(path):
             rot = os.path.join(real, "queue", "rotational")
             if os.path.exists(rot):
                 name = os.path.basename(real)
-                return "NVMe" if name.startswith("nvme") else ("HDD" if open(rot).read().strip() == "1" else "SSD")
+                with open(rot) as f:
+                    spinning = f.read().strip() == "1"
+                return "NVMe" if name.startswith("nvme") else ("HDD" if spinning else "SSD")
             real = os.path.dirname(real)
     except Exception:
         pass
@@ -236,7 +238,8 @@ def _linux_disk_kind(path):
 
 # ---------------------------------------------------------------- GPU
 def nvidia_smi():
-    q = "index,name,driver_version,memory.total,pcie.link.gen.max,pcie.link.gen.gpumax,pcie.link.width.current,pcie.link.width.max,power.limit"
+    q = ("index,name,driver_version,memory.total,pcie.link.gen.max,pcie.link.gen.gpumax,pcie.link.width.current,pcie.link.width.max,power.limit,"
+         "pci.bus_id")
     txt = _run(["nvidia-smi", f"--query-gpu={q}", "--format=csv,noheader,nounits"])
     rows = []
     for line in txt.splitlines():
@@ -244,16 +247,38 @@ def nvidia_smi():
         if len(v) < 9:
             continue
         num = lambda s: int(float(s)) if s.replace(".", "", 1).isdigit() else None
+        bus = None
+        if len(v) > 9:  # "00000000:02:00.0" -> 2, the same number torch reports as pci_bus_id
+            try:
+                bus = int(v[9].split(":")[-2], 16)
+            except (ValueError, IndexError):
+                bus = None
         rows.append({"index": num(v[0]), "name": v[1], "driver": v[2], "vram_mb": num(v[3]), "pcie_gen": num(v[4]), "pcie_gen_gpu": num(v[5]),
-                     "pcie_width": num(v[6]), "pcie_width_max": num(v[7]), "power_limit_w": num(v[8])})
+                     "pcie_width": num(v[6]), "pcie_width_max": num(v[7]), "power_limit_w": num(v[8]), "bus": bus})
     return rows
+
+
+def _smi_row(rows, i, p):
+    """The nvidia-smi row for torch device i. nvidia-smi numbers every card, torch only the visible ones
+    (CUDA_VISIBLE_DEVICES), so match by PCI bus first, then by a unique name, and by index only when nothing is hidden."""
+    bus = getattr(p, "pci_bus_id", None)
+    if bus is not None:
+        hit = [r for r in rows if r.get("bus") == bus]
+        if len(hit) == 1:
+            return hit[0]
+    same = [r for r in rows if r["name"] == p.name]
+    if len(same) == 1:
+        return same[0]
+    if not os.environ.get("CUDA_VISIBLE_DEVICES"):
+        return next((r for r in rows if r["index"] == i), None)
+    return None
 
 
 def gpus(torch):
     out = []
     if torch is None or not torch.cuda.is_available():
         return out
-    smi = {r["index"]: r for r in nvidia_smi()}
+    smi = nvidia_smi()
     hip = getattr(torch.version, "hip", None)
     for i in range(torch.cuda.device_count()):
         p = torch.cuda.get_device_properties(i)
@@ -263,7 +288,7 @@ def gpus(torch):
         else:
             g["capability"] = f"{p.major}.{p.minor}"
             g["arch"] = ARCH.get(p.major * 10 + p.minor, f"SM{p.major}{p.minor}")
-            s = smi.get(i)
+            s = _smi_row(smi, i, p)
             if s:
                 g.update(driver=s["driver"], pcie_gen=s["pcie_gen"], pcie_gen_gpu=s["pcie_gen_gpu"], pcie_width=s["pcie_width"], pcie_width_max=s["pcie_width_max"], power_limit_w=s["power_limit_w"])
         try:
@@ -916,8 +941,10 @@ def findings(p):
         add("gpu", 0, f"{g['name']}, {vram:g} GB", f"{g.get('arch', '')}. VRAM tier: {tier}.")
         if g["vendor"] == "NVIDIA":
             major = int(str(g.get("capability", "0.0")).split(".")[0])
-            if major < 7 or g.get("capability") == "7.0":
+            if major < 7:
                 add("gpu", 3, "Older card generation", "Pascal-era cards have no tensor cores for fp16 / bf16: expect very slow generation, and most speed-ups here will not work.")
+            elif g.get("capability") == "7.0":  # Volta has fp16 tensor cores, but no bf16
+                add("gpu", 1, "No fast bf16 on Volta (Titan V / V100)", "Volta cards run bf16 models slowly. Prefer fp16 or GGUF files where the model offers them.")
             elif g.get("capability") == "7.5":
                 add("gpu", 1, "No fast bf16 on RTX 20 / GTX 16", "Turing cards run bf16 models slowly. Prefer fp16 or GGUF files where the model offers them.")
         pg, pw = g.get("pcie_gen"), g.get("pcie_width")

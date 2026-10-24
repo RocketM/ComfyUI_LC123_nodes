@@ -1148,11 +1148,16 @@ class LCBloom(PreviewImage):
                 "image": ("IMAGE",),
                 "intensity": ("FLOAT", {"default": 2.0, "min": 0.0, "max": 8.0, "step": 0.01,
                                         "tooltip": "How strong the glow is. 1 = what 0.5 was before 1.53.15."}),
-                "threshold": ("FLOAT", {"default": 0.65, "min": 0.0, "max": 1.0, "step": 0.01}),
-                "smoothing": ("FLOAT", {"default": 0.3, "min": 0.0, "max": 1.0, "step": 0.01}),
-                "radius": ("FLOAT", {"default": 1.0, "min": 0.1, "max": 5.0, "step": 0.1}),
-                "saturation": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 2.0, "step": 0.05}),
-                "exposure": ("FLOAT", {"default": 1.0, "min": 0.1, "max": 4.0, "step": 0.05}),
+                "threshold": ("FLOAT", {"default": 0.65, "min": 0.0, "max": 1.0, "step": 0.01,
+                                        "tooltip": "Only what is brighter than this glows. Lower = more of the picture glows."}),
+                "smoothing": ("FLOAT", {"default": 0.3, "min": 0.0, "max": 1.0, "step": 0.01,
+                                        "tooltip": "How gently the glow fades in around the threshold. 0 = a hard cut."}),
+                "radius": ("FLOAT", {"default": 1.0, "min": 0.1, "max": 5.0, "step": 0.1,
+                                     "tooltip": "How far the glow spreads. Scales with the picture size."}),
+                "saturation": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 2.0, "step": 0.05,
+                                         "tooltip": "Colour of the glow. 0 = white, 1 = the light's own colour."}),
+                "exposure": ("FLOAT", {"default": 1.0, "min": 0.1, "max": 4.0, "step": 0.05,
+                                       "tooltip": "Brightness of the glow, on top of intensity."}),
                 "mode": (["Bloom", "Pro-Mist", "Halation"], {
                     "default": "Bloom",
                     "tooltip": "Bloom = glow from bright areas. Pro-Mist = a diffusion filter in front of the lens "
@@ -1659,7 +1664,9 @@ class LCToneMatch(PreviewImage):
         if refined.shape[0] == 1 and source.shape[0] > 1:
             refined = refined.expand(source.shape[0], -1, -1, -1)
         elif source.shape[0] != refined.shape[0]:
-            refined = refined[:1].expand(source.shape[0], -1, -1, -1)
+            # more references than images: keep every image, the last image covers the extra references
+            extra = refined[-1:].expand(source.shape[0] - refined.shape[0], -1, -1, -1)
+            refined = torch.cat([refined, extra], dim=0)
         if source.shape[-2:] != refined.shape[-2:]:
             refined = F.interpolate(refined, size=source.shape[-2:], mode="bicubic", align_corners=False)
 

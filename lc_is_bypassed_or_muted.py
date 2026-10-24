@@ -49,6 +49,7 @@ class LCIsBypassedOrMuted:
                 "value": (
                     any_type,
                     {
+                        "lazy": True,  # never pulled: the watched node isn't forced to run just to be reported on
                         "tooltip": "Wire anything from the node you want to watch -- the type doesn't "
                         "matter, only which node the wire comes from.",
                     },
@@ -65,6 +66,9 @@ class LCIsBypassedOrMuted:
         "live off the graph by the node's face -- no need to queue first, same contract as LC Boolean "
         "/ LC Invert Boolean. Shows true/false on the face."
     )
+
+    def check_lazy_status(self, **kwargs):
+        return []
 
     def check(self, value=None, is_bypassed_or_muted=False):
         return (bool(is_bypassed_or_muted),)

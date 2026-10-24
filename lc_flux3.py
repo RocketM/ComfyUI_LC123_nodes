@@ -84,10 +84,21 @@ def parse_boxes(raw):
         return []
     out = []
     for b in data if isinstance(data, list) else []:
-        if not isinstance(b, dict) or float(b.get("w", 0)) == 0 or float(b.get("h", 0)) == 0:
+        if not isinstance(b, dict):
+            continue
+        try:  # hand-edited or foreign JSON: a missing x / y is 0, a box with a non-number is left out
+            b = {**b, **{k: float(b.get(k) or 0) for k in ("x", "y", "w", "h")}}
+        except (TypeError, ValueError):
+            continue
+        if b["w"] == 0 or b["h"] == 0:
             continue
         kind = b.get("kind") if b.get("kind") in KINDS else "new"
         to = b.get("to") if kind == "move" and isinstance(b.get("to"), dict) else None
+        if to is not None:
+            try:
+                to = {**to, **{k: float(to.get(k) or 0) for k in ("x", "y", "w", "h")}}
+            except (TypeError, ValueError):
+                to = None
         out.append({**b, "kind": kind, "to": to})
     return out
 
@@ -371,9 +382,9 @@ class LCFlux3ReferenceLatent:
                 "reference_size": (["1 MP", "2 MP", "4 MP", "keep size"], {"default": "1 MP",
                                    "tooltip": "Each reference picture is scaled to this many megapixels (shape kept). BFL keeps references "
                                               "at their own size: more detail, slower."}),
-                "width": ("INT", {"default": 0, "min": 0, "max": 16384, "step": 16, "tooltip": "Size of the result. 0 = the size of picture 1 "
-                                                                                              "(1024 when there is none)."}),
-                "height": ("INT", {"default": 0, "min": 0, "max": 16384, "step": 16, "tooltip": "0 = the size of picture 1."}),
+                "width": ("INT", {"default": 0, "min": 0, "max": 16384, "step": 16, "tooltip": "Size of the result. 0 = the size of the first "
+                                                                                              "connected picture (1024 when there is none)."}),
+                "height": ("INT", {"default": 0, "min": 0, "max": 16384, "step": 16, "tooltip": "0 = the size of the first connected picture."}),
             },
             "optional": {
                 "image_1": ("IMAGE", {"tooltip": "<ref_image_0> in the prompt."}),
@@ -390,7 +401,7 @@ class LCFlux3ReferenceLatent:
     FUNCTION = "run"
     CATEGORY = "LC123/Flux 3"
     DESCRIPTION = ("FLUX 3 references in one node: up to 4 pictures on the positive and negative, the negative the model wants, "
-                   "and the latent to sample (picture 1's size, or your own). No pictures = plain text to image.")
+                   "and the latent to sample (the first connected picture's size, or your own). No pictures = plain text to image.")
 
     def run(self, positive, vae, model, reference_size, width, height, image_1=None, image_2=None, image_3=None, image_4=None,
             negative=None, clip=None):

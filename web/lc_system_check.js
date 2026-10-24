@@ -226,13 +226,16 @@ async function initRec(root, lines) {
     } catch (_) {}
     const out = el.querySelector(".lc-rec-out");
     out.textContent = "…";
+    const seq = (el._lcRecSeq = (el._lcRecSeq || 0) + 1); // the newest pick wins over an older, slower answer
     let r;
     try {
       r = await (await api.fetchApi(`/lc123/syscheck/recommend?model=${encodeURIComponent(st.model)}&goal=${goal}&mp=${st.mp}`)).json();
     } catch (e) {
+      if (seq !== el._lcRecSeq) return;
       out.textContent = String(e);
       return;
     }
+    if (seq !== el._lcRecSeq) return;
     if (r.error) {
       out.textContent = r.error;
       return;
@@ -262,6 +265,7 @@ async function glance(root, goal) {
   const out = root.querySelector(".lc-rec-glance");
   if (!out) return;
   out.innerHTML = `<div style="color:#9aa3ad">Loading all models…</div>`;
+  const seq = (out._lcSeq = (out._lcSeq || 0) + 1); // a newer goal's table wins over an older, slower one
   let models = [];
   try {
     models = await (await api.fetchApi("/lc123/syscheck/models")).json();
@@ -275,6 +279,7 @@ async function glance(root, goal) {
       }
     })
   );
+  if (seq !== out._lcSeq) return;
   const h = [`<div style="font-weight:600;margin:10px 0 4px">All base models at a glance <span style="font-weight:400;color:#9aa3ad;font-size:12px">(${esc(goal)})</span></div>`,
     `<table style="width:100%;border-collapse:collapse;font-size:12px;color:#dfe3e8"><tr style="color:#9aa3ad;text-align:left"><th>Model</th><th>Model file</th><th>Size</th><th>vs bf16</th><th>Time per image / clip</th><th>Text encoder</th></tr>`];
   rows.forEach((r, i) => {
@@ -384,6 +389,7 @@ function openWindow(opts = {}) {
     showingLast = !showingLast;
     body.innerHTML = showingLast ? `<div style="color:#fbbf24;margin-bottom:8px">Last run: ${esc(last.when)}</div>` + last.html : current;
     paintLast();
+    initRec(body, recState); // the restored HTML is static: wire the model recommendation controls again
   };
   const recState = {};
   box.querySelector(".lc-sys-copy").onclick = () => navigator.clipboard?.writeText(text + (recState.rec || ""));

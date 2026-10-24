@@ -175,6 +175,9 @@ class LCDetailDaemon:
                    "Put it on the low pass sampler. Detail is made in the last steps.")
 
     def go(self, sampler, amount, start, end, peak, exponent=0.0, mode="look only", sigmas=None):
+        if not hasattr(sampler, "sampler_function"):  # custom Sampler classes from other packs can't be wrapped
+            raise ValueError(f"LC Detail Daemon: this sampler ({type(sampler).__name__}) can't be wrapped. "
+                             "Use KSamplerSelect, LC Sigmas or ClownSampler, or LC Detail Daemon (model).")
         s = KSAMPLER(_sampler, extra_options={"lc_wrapped": sampler, "lc_amount": float(amount), "lc_start": float(start),
                                               "lc_end": float(end), "lc_peak": float(peak), "lc_exponent": float(exponent),
                                               "lc_mode": mode},

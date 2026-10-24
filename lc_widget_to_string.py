@@ -165,8 +165,6 @@ class LCWidgetToString:
                 if node.get("title") == title:
                     node_id = node["id"]
                     break
-                if "title" not in node:
-                    logging.warning("Node title not found.")
             elif int(id or 0) != 0:
                 if node["id"] == id:
                     node_id = id
@@ -193,6 +191,9 @@ class LCWidgetToString:
 
         if link_id:
             node_id = link_to_node_map.get(link_id, None)
+
+        if title and node_id is None:
+            logging.warning(f"Node title not found: {title}")  # once, after the whole search
 
         if node_id is None:
             return ("",)

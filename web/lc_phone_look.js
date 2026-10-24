@@ -88,6 +88,8 @@ function widgetByName(node, name) {
 function applyPresetToSliders(node, presetName) {
   const cfg = PRESETS[presetName];
   if (!cfg) return;
+  node.properties = node.properties || {};
+  node.properties.lc_style_clean = true; // on a named style, untouched: later versions may update its values
   for (const key of SLIDER_KEYS) {
     const w = widgetByName(node, key);
     if (!w || cfg[key] === undefined) continue;
@@ -108,10 +110,59 @@ function hookPreset(node) {
   if (!styleW) return;
   const prev = styleW.callback;
   styleW.callback = function (value, ...rest) {
-    applyPresetToSliders(node, value);
+    node._lcApplying = true;
+    try {
+      applyPresetToSliders(node, value);
+    } finally {
+      node._lcApplying = false;
+    }
     if (typeof prev === "function") return prev.apply(this, [value, ...rest]);
   };
-  if (styleW.value) applyPresetToSliders(node, styleW.value);
+  // moving a slider makes it your own look
+  for (const key of SLIDER_KEYS) {
+    const w = widgetByName(node, key);
+    if (!w || w._lcSnapCustom) continue;
+    w._lcSnapCustom = true;
+    const prevW = w.callback;
+    w.callback = function (value, ...rest) {
+      if (!node._lcApplying && styleW.value !== "Custom") {
+        styleW.value = "Custom";
+        node.properties = node.properties || {};
+        node.properties.lc_style_clean = false;
+      }
+      if (typeof prevW === "function") return prevW.apply(this, [value, ...rest]);
+    };
+  }
+  if (styleW.value) {
+    node._lcApplying = true;
+    try {
+      applyPresetToSliders(node, styleW.value);
+    } finally {
+      node._lcApplying = false;
+    }
+  }
+}
+
+// on load a named style gets its current values; a saved node whose sliders were tweaked before Custom existed
+// (they no longer match its style) switches to Custom, so its numbers are kept
+function reapplyOnLoad(node) {
+  const styleW = widgetByName(node, "style");
+  const cfg = PRESETS[styleW?.value];
+  if (!cfg) return;
+  const tweaked = node._lcSavedClean !== true && SLIDER_KEYS.some((k) => {
+    const w = widgetByName(node, k);
+    return w && cfg[k] !== undefined && Math.abs(Number(w.value) - cfg[k]) > 1e-6;
+  });
+  if (tweaked) {
+    styleW.value = "Custom";
+    return;
+  }
+  node._lcApplying = true;
+  try {
+    applyPresetToSliders(node, styleW.value);
+  } finally {
+    node._lcApplying = false;
+  }
 }
 
 app.registerExtension({
@@ -124,9 +175,20 @@ app.registerExtension({
       lcApplyLaunchColor(this, "#324B4B");
       return r;
     };
+    // the saved marker, read from the file itself (configure merges properties into the new node's)
+    const onConfigure = nodeType.prototype.onConfigure;
+    nodeType.prototype.onConfigure = function (info) {
+      this._lcSavedClean = info?.properties?.lc_style_clean === true;
+      return onConfigure?.apply(this, arguments);
+    };
   },
   nodeCreated(node) {
     if (node.comfyClass !== "LCPhoneLook" && node.type !== "LCPhoneLook") return;
     hookPreset(node);
+  },
+  loadedGraphNode(node) {
+    if (node.comfyClass !== "LCPhoneLook" && node.type !== "LCPhoneLook") return;
+    hookPreset(node);
+    reapplyOnLoad(node);
   },
 });

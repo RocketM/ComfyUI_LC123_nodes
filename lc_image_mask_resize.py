@@ -228,6 +228,10 @@ class LCImageMaskResize:
             src_ref = None
 
         preset = ASPECT_PRESETS.get(aspect_ratio, None)
+        if preset is None and isinstance(aspect_ratio, str) and aspect_ratio != "custom":
+            # a renamed preset in an older workflow still matches by its size (same as Aspect Ratio Simplifier)
+            tail = aspect_ratio.rsplit(" - ", 1)[-1].strip()
+            preset = next((v for k, v in ASPECT_PRESETS.items() if v and k.rsplit(" - ", 1)[-1].strip() == tail), None)
         if preset is None:
             tw, th = int(custom_width), int(custom_height)
         else:

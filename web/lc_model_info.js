@@ -61,6 +61,18 @@ function upstreamSig(node) {
   return parts.join("|");
 }
 
+// the id this node has in the prompt: its plain id at the root, "outer:inner" inside a subgraph
+function execIdOf(node, g = app.rootGraph || app.graph, prefix = "") {
+  for (const n of g?._nodes || []) {
+    if (n === node) return prefix + n.id;
+    if (n.subgraph) {
+      const hit = execIdOf(node, n.subgraph, prefix + n.id + ":");
+      if (hit) return hit;
+    }
+  }
+  return null;
+}
+
 async function refresh(node) {
   const inp = node.inputs?.find((i) => i.name === "model");
   if (!inp || inp.link == null) {
@@ -73,7 +85,7 @@ async function refresh(node) {
     const r = await api.fetchApi("/lc123/model_info", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt: p.output, node_id: String(node.id) }),
+      body: JSON.stringify({ prompt: p.output, node_id: execIdOf(node) || String(node.id) }),
     });
     const j = await r.json();
     if (ticket === node._lcInfoTicket) show(node, j.info || EMPTY);

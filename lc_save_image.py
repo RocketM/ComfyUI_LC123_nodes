@@ -42,6 +42,8 @@ def _tensor_to_pil(image) -> Image.Image:
     pixels = np.clip(arr.astype(np.float32) * 255.0, 0, 255).astype(np.uint8)
     if pixels.shape[-1] == 1:
         return Image.fromarray(pixels[..., 0], mode="L")
+    if pixels.shape[-1] == 2:  # grey + alpha
+        return Image.fromarray(pixels, mode="LA")
     if pixels.shape[-1] == 3:
         return Image.fromarray(pixels, mode="RGB")
     return Image.fromarray(pixels, mode="RGBA")
@@ -582,6 +584,8 @@ class LCSaveImage:
         if hasattr(batch, "cpu"):
             batch = batch.detach().cpu()
         n = int(batch.shape[0]) if hasattr(batch, "shape") else len(batch)
+        if n == 0:  # an empty batch (everything filtered upstream): nothing to save
+            return {"ui": {"images": []}, "result": (images, "")}
         first = _tensor_to_pil(batch[0])
 
         # %width / %height in names follow the image being saved too (or the numbers typed on LC Save Metadata)
@@ -674,7 +678,7 @@ class LCSaveImage:
                     info.add_text("hashes", json.dumps(buckets["hashes_json"]))
                 save_kwargs["pnginfo"] = info
             else:
-                if pil.mode == "RGBA":
+                if pil.mode in ("RGBA", "LA"):
                     pil = pil.convert("RGB")
                 save_kwargs["quality"] = quality
                 if fmt == "webp":

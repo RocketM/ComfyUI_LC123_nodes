@@ -370,6 +370,7 @@ app.registerExtension({
     // chain whatever handlers were already on the prototype when the crop box does not take the event
     const onMouseDown = nodeType.prototype.onMouseDown;
     nodeType.prototype.onMouseDown = function (e, pos) {
+      if (e && e.button != null && e.button !== 0) return onMouseDown ? onMouseDown.apply(this, arguments) : false; // primary button only
       const layout = imageLayout(this);
       if (!layout) return onMouseDown ? onMouseDown.apply(this, arguments) : false;
       const hit = hitTest(layout, readCrop(this), pos[0], pos[1]);

@@ -387,9 +387,11 @@ function showSettings(node) {
     document.removeEventListener("keydown", onKey);
     if (dialog.parentNode) dialog.parentNode.removeChild(dialog);
     node.__lcDialog = false;
+    node.__lcCloseDialog = null;
     node.__lc && (node.__lc.key = "");
     commit();
   };
+  node.__lcCloseDialog = close; // removing the node closes its dialog too
   const onKey = (e) => { if (e.key === "Escape") close(); };
   document.addEventListener("keydown", onKey);
 
@@ -663,6 +665,7 @@ app.registerExtension({
     const onRemoved = nodeType.prototype.onRemoved;
     nodeType.prototype.onRemoved = function () {
       onRemoved?.apply(this, arguments);
+      try { this.__lcCloseDialog?.(); } catch (_) {}
       labelNodes.delete(this);
       try { this.__lc?.box.remove(); } catch (_) {}
       this.__lc = null;

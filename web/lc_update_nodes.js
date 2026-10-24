@@ -11,6 +11,7 @@
  * (a snapshot taken just before, per workflow). Also window.LC_UPDATE.{scan, update, undo, canUndo}.
  */
 import { app } from "../../scripts/app.js";
+import { api } from "../../scripts/api.js";
 
 const LC_MODULE = /ComfyUI_LC/i;
 
@@ -67,14 +68,30 @@ function missing(node) {
   return gone;
 }
 
-/** LC nodes that need rebuilding: [{node, graph, why}]. */
+/** True when a wire runs to a subgraph's own input / output node (ids -10 / -20): a rebuild can't put those back. */
+function wiredToSubgraphIO(node, graph) {
+  const linkOf = (id) => graph.links?.[id] ?? graph.links?.get?.(id);
+  for (const inp of node.inputs || []) {
+    const l = inp.link != null ? linkOf(inp.link) : null;
+    if (l && l.origin_id < 0) return true;
+  }
+  for (const o of node.outputs || []) {
+    for (const id of o.links || []) {
+      const l = linkOf(id);
+      if (l && l.target_id < 0) return true;
+    }
+  }
+  return false;
+}
+
+/** LC nodes that need rebuilding: [{node, graph, why, ioWired}]. ioWired ones are left alone by update(). */
 export function scan() {
   const out = [];
   for (const g of graphs()) {
     for (const node of g._nodes || g.nodes || []) {
       if (!isLC(node)) continue;
       const why = missing(node);
-      if (why.length) out.push({ node, graph: g, why });
+      if (why.length) out.push({ node, graph: g, why, ioWired: wiredToSubgraphIO(node, g) });
     }
   }
   return out;
@@ -164,6 +181,10 @@ export async function undo() {
   const snap = snapshots.get(tabKey());
   if (!snap) return false;
   const root = app.rootGraph || app.graph;
+  // show the root first: configure rebuilds every subgraph, so one left on screen would be a stale copy
+  try {
+    if (app.canvas?.graph && app.canvas.graph !== root) app.canvas.setGraph?.(root);
+  } catch (_) {}
   root.configure(JSON.parse(snap));
   snapshots.delete(tabKey());
   try {
@@ -176,6 +197,7 @@ export async function undo() {
 /** Rebuild the given scan items (default: everything scan() finds). -> number rebuilt. */
 export async function update(items = scan()) {
   let n = 0;
+  items = items.filter((it) => !it.ioWired); // wired to a subgraph's input / output: rebuilding would drop those wires
   if (items.length) {
     try {
       snapshots.set(tabKey(), JSON.stringify((app.rootGraph || app.graph).serialize()));
@@ -209,7 +231,7 @@ function toast(severity, summary, detail) {
 async function packsBehind() {
   let info = {};
   try {
-    const r = await fetch("/lc/pack_versions", { cache: "no-store" });
+    const r = await api.fetchApi("/lc/pack_versions", { cache: "no-store" });
     if (r.ok) info = await r.json();
   } catch (_) {
     return [];
@@ -241,9 +263,16 @@ async function runFromMenu() {
       + "the nodes are rebuilt from the pack you have installed.\n\nUpdate the nodes anyway, with the packs you have now?");
     if (!go) return;
   }
-  const items = scan();
+  const found = scan();
+  const skipped = found.filter((it) => it.ioWired);
+  const items = found.filter((it) => !it.ioWired);
+  const skipNote = skipped.length
+    ? `${skipped.length} node${skipped.length > 1 ? "s" : ""} inside a subgraph wired to its inputs / outputs left as is `
+      + `(${skipped.slice(0, 4).map((it) => it.node.title || it.node.type).join(", ")}): delete and re-add ${skipped.length > 1 ? "them" : "it"} by hand.`
+    : "";
   if (!items.length) {
-    toast("success", "LC nodes are up to date", "Every LC node in this workflow matches its pack.");
+    if (skipped.length) toast("warn", "LC nodes not updated", skipNote);
+    else toast("success", "LC nodes are up to date", "Every LC node in this workflow matches its pack.");
     return;
   }
   const list = items.slice(0, 12).map((it) => `• ${it.node.title || it.node.type}: missing ${it.why.join(", ")}`).join("\n");
@@ -253,6 +282,7 @@ async function runFromMenu() {
   if (!ok) return;
   const n = await update(items);
   toast("success", `Updated ${n} LC node${n === 1 ? "" : "s"}`, "Not what you expected? Right-click the canvas: Undo LC node update.");
+  if (skipped.length) toast("warn", "Some LC nodes not updated", skipNote);
 }
 
 async function undoFromMenu() {
