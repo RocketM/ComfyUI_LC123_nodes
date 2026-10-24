@@ -199,13 +199,15 @@ class LCImageSplitPreview {
       ctx.restore();
     }
 
-    // Divider line (visual only)
-    ctx.strokeStyle = "rgba(255,255,255,0.85)";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(cut, oy);
-    ctx.lineTo(cut, oy + dh);
-    ctx.stroke();
+    // the seam, as it will be in the output (width in picture pixels, at least a hairline so it can be seen)
+    const dWidth = Number(widgetVal(node, "divider_width", 2));
+    if (widgetVal(node, "show_divider", true) !== false && dWidth > 0 && pos > 0 && pos < 1) {
+      let col = String(widgetVal(node, "divider_color", "#FFFFFF") || "#FFFFFF").trim();
+      if (!col.startsWith("#")) col = `#${col}`;
+      const lw = Math.max(1 / (app.canvas?.ds?.scale || 1), dWidth * scale);
+      ctx.fillStyle = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(col) ? col : "#FFFFFF";
+      ctx.fillRect(cut - lw / 2, oy, lw, dh);
+    }
 
     ctx.restore();
   }

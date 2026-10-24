@@ -21,8 +21,17 @@ function pictureFor(out) {
     const blend = out.images.filter((m) => String(m?.filename || "").startsWith("lc_ov_out")); // Dynamic Overlay
     return blend.length && blend.length < out.images.length ? blend : null; // anything else already shows itself
   }
+  if (out.lc_inpaint?.length > 1) return [out.lc_inpaint[1]]; // MaskMaker detailers / AnyPaint: the after picture
   return out.lc_preview || out.a_images || out.lc_before || null;
 }
+
+// the before picture for the click zoom (lc_vue_zoom.js), per node
+function beforeFor(out) {
+  if (out.lc_inpaint?.length > 1) return out.lc_inpaint[0];
+  if (out.lc_preview?.length && out.lc_before?.length) return out.lc_before[0];
+  return null;
+}
+window.LC123VueBefore = window.LC123VueBefore || {};
 
 // ---------------------------------------------------------------- readout line
 // A small text line under the node's widgets, Nodes 2.0 only. It is never saved (serialize: false), and it is taken
@@ -79,6 +88,7 @@ api.addEventListener("executed", ({ detail }) => {
   if (["LCPreviewImage", "LCPreviewMask"].includes(node?.comfyClass || node?.type)) return;
   const pics = pictureFor(out);
   const text = readoutFor(out);
+  window.LC123VueBefore[key] = beforeFor(out);
   // after the frontend has stored this node's output (it would overwrite an earlier write)
   setTimeout(() => {
     try {

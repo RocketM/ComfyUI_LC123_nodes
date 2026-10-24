@@ -122,11 +122,16 @@ def _texture(base: torch.Tensor, mask: torch.Tensor, bank: torch.Tensor, amount:
         return base
     relief = relief / energy.sqrt()
     y = _luma(base)
+    # skin in shadow shows its pores fainter: the relief follows the skin's own brightness (the brighter skin = full),
+    # or a dark neck gets twice the contrast of the face and reads as cracked leather
+    local = blur(y, 12.0).clamp_min(0.02)
+    on = local[support[..., :1].expand_as(local)]
+    rel = (local / torch.quantile(on[:: max(1, on.numel() // 200000)], 0.75)).clamp(0.0, 1.0)
     existing = blur(y, 0.6) - blur(y, 2.0)
-    existing_rms = blur(existing.square(), 4.0).clamp_min(0.0).sqrt()
+    existing_rms = blur(existing.square(), 4.0).clamp_min(0.0).sqrt() / rel.clamp_min(0.15)
     needs = 1.0 / (1.0 + (existing_rms / 0.012).square())  # skin that already has detail gets less
     detail = relief * (0.026 * amount * (1.0 - 0.3 * softness))
-    detail = 0.055 * torch.tanh(detail / 0.055) * _confidence(y) * needs
+    detail = 0.055 * torch.tanh(detail / 0.055) * _confidence(y) * needs * rel
     detail = torch.maximum(detail, -base.amin(-1, keepdim=True))  # one offset for all channels: skin tone stays
     detail = torch.minimum(detail, 1.0 - base.amax(-1, keepdim=True))
     return (base + detail).clamp(0.0, 1.0)

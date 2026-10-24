@@ -430,14 +430,13 @@ function buildReport(phases, scan) {
     const row = (state, name, text, level = 2) => rows.push({ state, name, text, level });
     const fxWord = `${fx} LC FX node${fx === 1 ? "" : "s"} with a preview in this workflow`;
     if (!fx) row("na", "Hide FX on-node previews", "No LC FX preview nodes in this workflow.");
-    else if (hide) row("on", "Hide FX on-node previews", `On. The lightest setting: ${fxWord} draw nothing. (Half-res, Clamp and Remove wipe have nothing left to do while this is on.)`);
+    else if (hide) row("on", "Hide FX on-node previews", `On. The lightest setting: ${fxWord} draw nothing. (Half-res and Clamp have nothing left to do while this is on.)`);
     else row("off", "Hide FX on-node previews", `Off. Turn on for the lightest canvas: ${fxWord} stop drawing. Use Image Compare or Image Split when you need to look.`, lc.draw >= 1 ? 3 : 2);
     if (fx && !hide) {
       row(clamp ? "on" : "off", "Clamp longest side", clamp ? `On (Max edge ${maxEdge}).${maxEdge > 768 ? " Try 512." : ""}` : `Off. Turn on with Max edge 512: big images get a small preview texture (${fxWord}).`);
       row(halfRes ? "on" : "off", "Half-resolution previews", halfRes ? "On." : `Off. Turn on to draw FX previews at half size (${fxWord}).`, 1);
-      row(on("LC123.Performance.NoWipe", false) ? "on" : "off", "Remove wipe", on("LC123.Performance.NoWipe", false) ? "On." : "Off. The hover before/after wipe redraws the node on every mouse move while you hover it. Turn on if you do not use it.", 1);
       row(on("LC123.Performance.SkipCollapsed", true) ? "on" : "off", "No preview when collapsed", on("LC123.Performance.SkipCollapsed", true) ? "On." : "Off. Turn on: collapsed FX nodes stop drawing their preview.");
-    } else if (fx) row("on", "Clamp / Half-res / Remove wipe / No preview when collapsed", "Not needed while Hide FX on-node previews is on.");
+    } else if (fx) row("on", "Clamp / Half-res / No preview when collapsed", "Not needed while Hide FX on-node previews is on.");
     if (previews) row(minPx >= 20 ? "on" : "off", "Preview distance", minPx >= 20 ? `${minPx} px. Previews switch off when zoomed far out.` : `${minPx} px. Set to about 40 px so previews switch off when zoomed far out, like node text (${previews} LC previews here).`);
     else row("na", "Preview distance", "No LC previews in this workflow.");
     if (skin && (halfRes || clamp) && !hide)

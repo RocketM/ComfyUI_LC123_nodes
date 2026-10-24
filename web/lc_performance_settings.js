@@ -10,7 +10,6 @@
 import { app } from "../../scripts/app.js";
 
 const ID = {
-  noWipe: "LC123.Performance.NoWipe",
   halfRes: "LC123.Performance.HalfRes",
   clampEdge: "LC123.Performance.ClampEdge",
   maxEdge: "LC123.Performance.MaxEdge",
@@ -57,7 +56,6 @@ function policyFor(nodeClass) {
   if (skinOverride) {
     return {
       hide: false,
-      wipe: get(ID.noWipe, false) !== true,
       halfRes: false,
       maxEdge: 0,
       skipCollapsed: get(ID.skipCollapsed, true) === true,
@@ -71,7 +69,6 @@ function policyFor(nodeClass) {
 
   return {
     hide: get(ID.hidePreviews, false) === true,
-    wipe: get(ID.noWipe, false) !== true,
     halfRes: get(ID.halfRes, false) === true,
     maxEdge: clamp ? maxEdge : 0,
     skipCollapsed: get(ID.skipCollapsed, true) === true,
@@ -117,16 +114,6 @@ window.LC123Perf = { ID, get, policyFor, tooSmall, skipImage };
 app.registerExtension({
   name: "LC123.PerformanceSettings",
   settings: [
-    {
-      id: ID.noWipe,
-      name: "Remove wipe",
-      type: "boolean",
-      defaultValue: false,
-      tooltip:
-        "Disable hover wipe on LC image FX previews. Does not affect Image Compare, Image Split, or Dynamic Overlay.",
-      category: ["LC Settings ⚙️", "Performance", "Remove wipe"],
-      onChange: dirty,
-    },
     {
       id: ID.halfRes,
       name: "Half-resolution previews",
@@ -195,7 +182,7 @@ app.registerExtension({
       type: "boolean",
       defaultValue: true,
       tooltip:
-        "LC Skin Beauty keeps full-quality on-node preview (no half-res / no clamp). Wipe still follows Remove wipe.",
+        "LC Skin Beauty keeps full-quality on-node preview (no half-res / no clamp).",
       category: ["LC Settings ⚙️", "Performance", "Skin Beauty full preview override"],
       onChange: dirty,
     },
