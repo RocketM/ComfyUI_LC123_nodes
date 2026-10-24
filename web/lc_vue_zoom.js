@@ -106,7 +106,8 @@ async function openOn(img, node, key, e) {
   canvas.style.cssText = "position:absolute;z-index:5;cursor:crosshair;";
   const parent = img.offsetParent || img.parentElement;
   parent.appendChild(canvas);
-  open = { node, key, img, canvas, after, before, u, v, mag: 1, pointer: null };
+  // 100%, or the on-screen size when the canvas already shows the picture bigger than that
+  open = { node, key, img, canvas, after, before, u, v, mag: Math.max(1, pw / img.naturalWidth), pointer: null };
   canvas.addEventListener("pointermove", (ev) => {
     if (!open) return;
     const b = canvas.getBoundingClientRect();

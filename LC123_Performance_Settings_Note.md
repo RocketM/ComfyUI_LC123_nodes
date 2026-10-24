@@ -136,14 +136,13 @@ These only change what you see on the canvas. Generation, VRAM, **Save Image** a
 
 | Setting | Default | What it does |
 |---|---|---|
-| **Remove wipe** | Off | Turns off the hover A/B wipe on LC image FX nodes. The last result still shows. |
 | **Half-resolution previews** | Off | Draws FX previews at half size. Less work while panning. |
 | **Clamp longest side** | Off | Shrinks on-node previews so the longest side fits **Max edge**. |
 | **Max edge (px)** | 768 | Only used when **Clamp longest side** is on. Range 256 to 2048. Try 512 on heavy graphs. |
 | **No preview when collapsed** | On | Collapsed FX nodes skip drawing their preview. |
 | **Hide FX on-node previews** | Off | Hides every LC image FX preview. |
 | **Recent colors** | On | Keeps your last 8 custom colors in the right-click **Colors** menu. Adds a Custom picker if Custom Scripts is not installed. |
-| **Skin Beauty full preview override** | On | **LC Skin Beauty** keeps a full-quality preview even with half-res or clamp on, so you can still zoom into skin. Wipe still follows **Remove wipe**. |
+| **Skin Beauty full preview override** | On | **LC Skin Beauty** keeps a full-quality preview even with half-res or clamp on, so you can still zoom into skin. |
 | **LoRA loader info button** | On | Shows the ℹ button on each **LC LoRA Loader** row. Trigger words come from the LoRA file itself (no internet). Turn off to declutter. |
 | **Preview distance (px)** | 40 | Like node text, an on-node image switches off when you zoom out far enough that it is drawn smaller than this. Smaller previews switch off first. 0 = always draw. |
 

@@ -60,7 +60,6 @@ function lcPerfPolicy(node) {
   }
   return {
     hide: false,
-    wipe: true,
     halfRes: false,
     clampEdge: false,
     maxEdge: 0,
@@ -502,13 +501,22 @@ class LCPreviewCompare {
     node.onMouseMove = function (e, pos, canvas) {
       self.pointerPos = pos;
       const pol = lcPerfPolicy(this);
-      if (self.zoom && pol.wipe && !pol.hide && self.pointerOver && self.imgA && self.imgB) {
+      if (self.zoom && !pol.hide && self.pointerOver && self.imgA && self.imgB) {
         app.canvas?.setDirty?.(true, false); // the wipe is drawn in the foreground only
       }
       return origMouseMove ? origMouseMove.apply(this, arguments) : false;
     };
 
-    // click on the picture: zoom to 100% there; double-click: back to the fitted picture
+    // the usage tooltip (lc_preview_tip.js) shows over the fitted picture
+    node._lcPreviewHit = (pos) => {
+      const img = self.imgA;
+      if (!img || self.zoom || lcPerfPolicy(node).hide) return false;
+      const b = self._box();
+      const r = fitRect(img, b.x, b.y, b.w, b.h);
+      return pos[0] >= r.x && pos[0] <= r.x + r.w && pos[1] >= r.y && pos[1] <= r.y + r.h;
+    };
+    // click on the picture: zoom to 100% there (or stay at the on-screen size when the canvas already shows it bigger);
+    // double-click: back to the fitted picture
     const origMouseDown = node.onMouseDown;
     node.onMouseDown = function (e, pos, canvas) {
       const img = self.imgA;
@@ -516,7 +524,8 @@ class LCPreviewCompare {
         const b = self._box();
         const r = fitRect(img, b.x, b.y, b.w, b.h);
         if (pos[0] >= r.x && pos[0] <= r.x + r.w && pos[1] >= r.y && pos[1] <= r.y + r.h) {
-          self.zoom = { u: (pos[0] - r.x) / r.w, v: (pos[1] - r.y) / r.h };
+          const fit = ((app.canvas?.ds?.scale || 1) * r.w) / img.naturalWidth; // screen pixels per picture pixel now
+          self.zoom = { u: (pos[0] - r.x) / r.w, v: (pos[1] - r.y) / r.h, mag: Math.max(1, fit) };
           ZOOMED.add(self);
           watchZoomed();
           hookWheel();
@@ -662,7 +671,7 @@ class LCPreviewCompare {
       };
       ctx.save();
       ctx.imageSmoothingEnabled = false;
-      const wipe = pol.wipe && this.imgB;
+      const wipe = !!this.imgB;
       crop(imgA, dx, dy, dw, dh); // after underneath, before left of the pointer
       const splitX = wipe && this.pointerOver ? Math.max(0, Math.min(dw, this.pointerPos[0] - dx)) : 0;
       if (splitX > 0) {

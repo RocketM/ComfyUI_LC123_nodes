@@ -274,7 +274,7 @@ def _sun_map(faces, h, w):
     return sun
 
 
-def _retouch(x0, skin, delicate, features, s, seed, scale, sun=None, tick=lambda: None):
+def _retouch(x0, skin, delicate, features, s, seed, scale, sun=None, tick=lambda: None, eyes=None):
     _, _, h, w = x0.shape
     ref = scale or 0.25 * min(h, w)
     k = s["pore_size"]
@@ -330,9 +330,10 @@ def _retouch(x0, skin, delicate, features, s, seed, scale, sun=None, tick=lambda
         out = _deepen_lines(x, out, ordinary * inner * keep_form * (1 - features.clamp(0, 1)), g3, s["wrinkles"], ref)
     if s["pigmentation"] > 0:
         out = _pigment(x, out, m, ordinary, features, sun, s["pigmentation"], ref, k, seed)
-    if s["eye_detail"] > 0:  # brows and lashes: crisper and a touch deeper
-        out = out + s["eye_detail"] * 1.2 * features * _luma(x - _blur(x, max(0.8, 0.004 * ref)))
-        out = out + s["eye_detail"] * 0.35 * features * (x - _blur(x, max(2.0, 0.02 * ref)))
+    if s["eye_detail"] > 0:  # brows and lashes: crisper and a touch deeper (1 = what 0.5 was before 1.53.13)
+        out = out + s["eye_detail"] * 0.6 * features * _luma(x - _blur(x, max(0.8, 0.004 * ref)))
+        # the broader pass only on the eye opening: on the whole lid it darkens the crease
+        out = out + s["eye_detail"] * 0.175 * (features if eyes is None else eyes) * (x - _blur(x, max(2.0, 0.02 * ref)))
     tick()  # pores and character done
     out = _tone(out.clamp(0, 1), (ordinary + 0.3 * d).clamp(0, 1), s)  # 4. colour and light last, on the finished skin
     return torch.lerp(x0, out.clamp(0, 1), s["strength"])
@@ -453,6 +454,7 @@ def _skin_maps(rgb_full, device, tolerance=1.0, delicate=True, tick=lambda: None
     excluded = np.zeros((h, w), np.float32)
     lips = np.zeros((h, w), np.float32)
     feats = np.zeros((h, w), np.float32)
+    eyes = np.zeros((h, w), np.float32)  # the eye opening only, for eye_detail's broader pass
     faces = []
     try:
         tick()  # person matte done (or skipped)
@@ -477,6 +479,7 @@ def _skin_maps(rgb_full, device, tolerance=1.0, delicate=True, tick=lambda: None
         cloth |= np.isin(lab_map, (CLOTH, HAIR, HAT))
         lips = np.maximum(lips, np.isin(lab_map, LIPS).astype(np.float32))
         feats = np.maximum(feats, _dilate(np.isin(lab_map, BROWS_EYES).astype(np.float32), max(1, int(0.04 * (x2 - x1)))))
+        eyes = np.maximum(eyes, _dilate(np.isin(lab_map, BROWS_EYES).astype(np.float32), max(1, int(0.015 * (x2 - x1)))))
     tick()  # faces found and parsed
     lab = _to_lab(rgb)
     L = np.maximum(lab[..., 0], 12.0)
@@ -529,7 +532,27 @@ def _skin_maps(rgb_full, device, tolerance=1.0, delicate=True, tick=lambda: None
     widths = sorted((b[2] - b[0]) / s for b in faces)
     scale = float(widths[len(widths) // 2]) if widths else None
     sun = _resize(_sun_map(faces, h, w), H, W) if faces else None
-    return _resize(skin, H, W), _resize(dmap, H, W), _resize(feats, H, W), sun, scale, len(faces)
+    return _resize(skin, H, W), _resize(dmap, H, W), _resize(feats, H, W), sun, scale, len(faces), _resize(eyes, H, W)
+
+
+def _outlined(image, masks):
+    """The before picture for the on-node wipe, with the skin it worked on outlined (like the detailers' preview)."""
+    try:
+        import comfy.model_management
+        dev = comfy.model_management.get_torch_device()
+        frames = image[: min(4, image.shape[0]), ..., :3].float()
+        h, w = frames.shape[1:3]
+        m = F.interpolate(masks[: frames.shape[0]].unsqueeze(1).float().to(dev), size=(h, w), mode="bilinear", align_corners=False)
+        inside = (m > 0.5).float()
+        k = max(5, int(round(5 * max(h, w) / 768)) | 1)  # the outline keeps its look at any size
+        # separable max filter on the GPU: a square k x k one on the CPU took 15 s on a 15 MP picture
+        grown = F.max_pool2d(F.max_pool2d(inside, (k, 1), 1, (k // 2, 0)), (1, k), 1, (0, k // 2))
+        edge = (grown - inside).clamp(0, 1).permute(0, 2, 3, 1).cpu()
+        color = torch.tensor((0.25, 0.9, 1.0)).view(1, 1, 1, 3)
+        return frames.cpu() * (1 - edge) + color * edge
+    except Exception as e:
+        print(f"[LC Skin Master] mask outline skipped: {e}")
+        return image
 
 
 def _frame_mask(mask, i, h, w):
@@ -538,7 +561,10 @@ def _frame_mask(mask, i, h, w):
 
 
 # ---------------------------------------------------------------- the node
-TICKS = 7  # progress steps per picture: matte, faces + parsing, colour model, edge snap, bands, character, tone
+# progress steps per picture, as (seconds, seconds per megapixel), timed in the node on a 5090 (2026-10-23, 3 and 15 MP):
+# matte, faces + parsing, colour model, edge snap (these four run at 1024 px, so size barely matters), bands, character, tone
+STEP_COST = ((0.25, 0.0), (0.3, 0.0), (0.65, 0.0), (0.2, 0.0), (0.01, 0.031), (0.01, 0.001), (0.0, 0.002))
+PREVIEW_COST = (0.0, 0.1)  # outline + the two preview PNGs, per previewed picture
 SLIDERS = [  # name, min, max, step, tooltip (in the order the node works)
     ("strength", 0.0, 1.0, 0.05, "0 = original, 1 = everything below at full."),
     ("clean", 0.0, 1.0, 0.05, "Grit out: pixel speckle and colour noise on the skin. Pores and freckles stay."),
@@ -552,7 +578,7 @@ SLIDERS = [  # name, min, max, step, tooltip (in the order the node works)
     ("even_colour", 0.0, 1.0, 0.05, "Redness and colour patches pulled towards the skin's own colour."),
     ("pigmentation", 0.0, 1.0, 0.05, "Freckles where the sun lands (nose, cheekbones, forehead), grown from the ones "
                                      "already there and in their colour."),
-    ("eye_detail", 0.0, 1.0, 0.05, "Brows and lashes: crisper and deeper. Needs a face."),
+    ("eye_detail", 0.0, 2.0, 0.05, "Brows and lashes: crisper and deeper. Needs a face."),
     ("warmth", -1.0, 1.0, 0.05, "Below 0 cooler (calms orange AI skin), above 0 warmer."),
     ("brightness", -0.5, 1.0, 0.05, "Lighter or darker skin. Highlights are eased off."),
     ("rosy", -0.5, 0.5, 0.05, "Pinker or less pink."),
@@ -577,8 +603,9 @@ class LCSkinMaster(PreviewImage):
         return {
             "required": req,
             "optional": {
-                "mask": ("MASK", {"tooltip": "Skin to work on (white). Unwired: faces and skin are found for you (facexlib, about "
-                                             "80 MB downloaded into models/facexlib on the first run)."}),
+                "mask": ("MASK", {"tooltip": "Skin to work on (white). For body skin wire LC Person Mask (face + body). Unwired: faces "
+                                             "are found for you, body skin only partly (facexlib, about 80 MB downloaded into "
+                                             "models/facexlib on the first run)."}),
                 "delicate_skin": ("BOOLEAN", {"default": True, "tooltip": "Lips and other delicate skin are found and treated "
                                                                           "lightly, their colour kept."}),
                 "skin_match": ("FLOAT", {"default": 1.0, "min": 0.5, "max": 2.0, "step": 0.05,
@@ -602,23 +629,32 @@ class LCSkinMaster(PreviewImage):
         import comfy.model_management
         device = comfy.model_management.get_torch_device()
         import comfy.utils
-        bar = comfy.utils.ProgressBar(TICKS * image.shape[0])  # the bar across the top of the node
+        # the bar across the top of the node fills by predicted time, so it does not sit at the end while previews save
+        mp = image.shape[1] * image.shape[2] / 1e6
+        costs = [a + b * mp for a, b in STEP_COST] * image.shape[0]
+        costs.append((PREVIEW_COST[0] + PREVIEW_COST[1] * mp) * min(4, image.shape[0]))
+        total = sum(costs)
+        bar = comfy.utils.ProgressBar(1000)
+        done = [0, 0.0]
 
         def tick():
             comfy.model_management.throw_exception_if_processing_interrupted()
-            bar.update(1)
+            if done[0] < len(costs):
+                done[1] += costs[done[0]]
+                done[0] += 1
+            bar.update_absolute(int(1000 * done[1] / total), 1000)
         out, masks = [], []
         for i in range(image.shape[0]):
             frame = image[i:i + 1, ..., :3].float()
             rgb = frame[0].cpu().numpy()
             h, w = rgb.shape[:2]
-            skin, deli, feats, sun, scale, nfaces = _skin_maps(rgb, device, float(skin_match), bool(delicate_skin), tick)
+            skin, deli, feats, sun, scale, nfaces, eyes = _skin_maps(rgb, device, float(skin_match), bool(delicate_skin), tick)
             skin = torch.from_numpy(skin)
             if mask is not None:  # your mask decides where; the found maps still give delicate skin, brows and the face size
                 skin = _frame_mask(mask, i, h, w).clamp(0, 1)
             x = frame.permute(0, 3, 1, 2).to(device)
             to = lambda a: torch.as_tensor(a, dtype=x.dtype)[None, None].to(device)
-            res = _retouch(x, to(skin), to(deli), to(feats), s, int(seed), scale, None if sun is None else to(sun), tick)
+            res = _retouch(x, to(skin), to(deli), to(feats), s, int(seed), scale, None if sun is None else to(sun), tick, to(eyes))
             tick()  # tone done
             out.append(res.permute(0, 2, 3, 1).cpu())
             masks.append(skin[None].float())
@@ -627,7 +663,8 @@ class LCSkinMaster(PreviewImage):
             _models.clear()  # small models: free them between runs
         except Exception:
             pass
-        res = _preview(self, torch.cat(out, 0), image)
+        res = _preview(self, torch.cat(out, 0), _outlined(image, torch.cat(masks, 0)))
+        bar.update_absolute(1000, 1000)  # previews saved
         res["result"] = (res["result"][0], torch.cat(masks, 0))
         return res
 

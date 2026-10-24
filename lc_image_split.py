@@ -32,7 +32,17 @@ def _opaque_alpha(x: np.ndarray) -> np.ndarray:
     return x
 
 
-def _split_frame(a: np.ndarray, b: np.ndarray, pos: float, divider: bool) -> np.ndarray:
+def _hex(color: str):
+    s = str(color or "").strip().lstrip("#")
+    if len(s) == 3:
+        s = "".join(ch * 2 for ch in s)
+    try:
+        return [int(s[i:i + 2], 16) / 255.0 for i in (0, 2, 4)]
+    except ValueError:
+        return [1.0, 1.0, 1.0]
+
+
+def _split_frame(a: np.ndarray, b: np.ndarray, pos: float, divider: bool, width: int = 2, color: str = "#FFFFFF") -> np.ndarray:
     a, b = _match_size(a, b)
     h, w = a.shape[:2]
     pos = float(np.clip(pos, 0.0, 1.0))
@@ -41,10 +51,11 @@ def _split_frame(a: np.ndarray, b: np.ndarray, pos: float, divider: bool) -> np.
     out = b.copy()
     if cut > 0:
         out[:, :cut] = a[:, :cut]
-    if divider and 0 < cut < w:
-        x0 = max(0, cut - 1)
-        x1 = min(w, cut + 1)
-        out[:, x0:x1] = np.clip(out[:, x0:x1] * 0.25 + 0.85, 0, 1)
+    if divider and width > 0 and 0 < cut < w:
+        x0 = max(0, cut - width // 2)
+        x1 = min(w, x0 + width)
+        fill = _hex(color) + ([1.0] if out.shape[-1] == 4 else [])
+        out[:, x0:x1] = np.asarray(fill, dtype=out.dtype)
     return out.astype(np.float32)
 
 
@@ -69,9 +80,14 @@ class LCImageSplit(PreviewImage):
                     "BOOLEAN",
                     {
                         "default": True,
-                        "tooltip": "Thin light seam on the cut in the saved/output image.",
+                        "tooltip": "A seam on the cut in the saved/output image.",
                     },
                 ),
+            },
+            "optional": {
+                "divider_width": ("INT", {"default": 2, "min": 0, "max": 512, "step": 1,
+                                          "tooltip": "Width of the seam on the cut, in pixels. 0 = no seam."}),
+                "divider_color": ("STRING", {"default": "#FFFFFF", "tooltip": "Color of the seam (hex)."}),
             },
             "hidden": {
                 "prompt": "PROMPT",
@@ -94,6 +110,8 @@ class LCImageSplit(PreviewImage):
         image_b,
         split_position=0.5,
         show_divider=True,
+        divider_width=2,
+        divider_color="#FFFFFF",
         prompt=None,
         extra_pnginfo=None,
     ):
@@ -110,7 +128,7 @@ class LCImageSplit(PreviewImage):
         for i in range(n):
             a = arrays_a[min(i, len(arrays_a) - 1)]
             b = arrays_b[min(i, len(arrays_b) - 1)]
-            out.append(_split_frame(a, b, split_position, bool(show_divider)))
+            out.append(_split_frame(a, b, split_position, bool(show_divider), int(divider_width), divider_color))
         tensor = np_to_tensor(out)
 
         # UI keeps full A and B so the frontend can draw a live wipe
