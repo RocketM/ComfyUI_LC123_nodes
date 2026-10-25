@@ -38,7 +38,7 @@ export function toggleGroup(rows, groupId, enabled) {
 }
 
 export function removeGroup(rows, groupId) {
-  return rows.map((row) => row.group === groupId ? { ...row, group: "" } : row);
+  return rows.filter((row) => row.group !== groupId);
 }
 
 // Only workflows saved with the feature's group marker migrate; stock loaders stay stock.

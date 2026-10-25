@@ -411,7 +411,7 @@ function makeGroup(node, group) {
   header.append(iconButton("plus", "Add LoRA to group", () => openLibrary(node, null, group.id)));
   if (group.id) header.append(
     iconButton("edit", "Edit group", () => editGroup(node, group)),
-    iconButton("trash", "Remove group · keep LoRAs in Ungrouped", () => {
+    iconButton("trash", "Remove group and its LoRAs", () => {
       const rows = removeGroup(getRows(node), group.id);
       node.properties.lc_lora_groups = getGroups(node).filter((item) => item.id !== group.id);
       setRows(node, rows);

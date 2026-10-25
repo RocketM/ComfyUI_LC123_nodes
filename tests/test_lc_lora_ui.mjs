@@ -15,7 +15,13 @@ const moved = state.moveRow(baseRows, "a", "g1", "b");
 assert.deepEqual(moved.map((row) => [row.id, row.group]), [["a", "g1"], ["b", "g1"]]);
 assert.equal(state.groupState(moved, "g1").mixed, true);
 assert.equal(state.groupState(state.toggleGroup(moved, "g1", true), "g1").checked, true);
-assert.equal(state.removeGroup(moved, "g1").every((row) => row.group === ""), true);
+assert.deepEqual(state.removeGroup(moved, "g1"), []);
+const deletionRows = [...baseRows, { id: "c", lora: "b", on: true, strength: 0.7, strengthTwo: 0.3, group: "g2" }];
+const deletionSnapshot = structuredClone(deletionRows);
+assert.deepEqual(state.removeGroup(deletionRows, "g1"), [deletionRows[0], deletionRows[2]], "Keep root and other-group LoRAs, even with the same file name");
+assert.deepEqual(state.removeGroup(deletionRows, "missing"), deletionRows);
+assert.deepEqual(state.removeGroup([], "g1"), []);
+assert.deepEqual(deletionRows, deletionSnapshot, "Removing a group must not mutate the input rows");
 assert.deepEqual(state.normalizeRows([{ lora: "legacy", group: "missing", on: false }], groups, () => "id1"), [{ lora: "legacy", group: "", on: false, id: "id1" }]);
 
 const migrated = {nodes:[{type:'LCLoraLoader',properties:{},title:'Original'}, {type:'LCLoraLoader',properties:{lc_lora_groups:[{id:'g1',name:'Group'}]},title:'LC LoRA Loader 🎚️',widgets_values:['rows'],pos:[1,2]}],definitions:{subgraphs:[{nodes:[{type:'LCLoraLoader',properties:{lc_lora_groups:[]},title:'Custom title'}]}]}};
@@ -248,7 +254,10 @@ try {
   assert.equal(await page.locator('.lc-group-lora-group').last().getAttribute('data-group-id'), '');
   await page.evaluate(() => window.restore());
   assert.equal(await page.evaluate(() => window.node.properties.lc_lora_groups[0].name), "Second");
-  await second.getByRole("button", { name: "Remove group · keep LoRAs in Ungrouped", exact: true }).click();
+  const rowsBeforeEmptyDeletion = await page.evaluate(() => window.node.widgets[0].value);
+  await second.getByRole("button", { name: "Remove group and its LoRAs", exact: true }).click();
+  assert.equal(await page.evaluate(() => window.node.widgets[0].value), rowsBeforeEmptyDeletion, "Deleting an empty group keeps all LoRAs");
+  assert.deepEqual(await page.evaluate(() => window.node.properties.lc_lora_groups.map(item => item.id)), [groupId]);
   if (output) {
     await page.mouse.move(600, 400);
     await page.screenshot({ path: path.join(output, "lora-groups.png") });
@@ -277,8 +286,19 @@ try {
   refreshError = null;
   if (output) await page.screenshot({ path: path.join(output, "lora-info.png") });
   await page.getByRole("button", { name: "Close", exact: true }).click();
-  await group.getByRole("button", { name: "Remove group · keep LoRAs in Ungrouped", exact: true }).click();
-  assert.equal(await page.evaluate(() => JSON.parse(window.node.widgets[0].value).length), 2);
+  await group.getByRole('button', {name:'Add LoRA to group',exact:true}).click();
+  await page.getByRole('button', {name:`Select ${names[1]}`,exact:true}).click();
+  await page.getByRole('button', {name:'Confirm (1)',exact:true}).click();
+  await group.getByRole('checkbox', {name:`Enable ${names[1]}`,exact:true}).uncheck();
+  const retainedRows = await page.evaluate((id) => JSON.parse(window.node.widgets[0].value).filter(row => row.group !== id), groupId);
+  assert.equal(await group.locator('.lc-group-lora-row').count(), 2);
+  await group.getByRole('button', {name:'Collapse group',exact:true}).click();
+  await group.getByRole("button", { name: "Remove group and its LoRAs", exact: true }).click();
+  assert.deepEqual(await page.evaluate(() => JSON.parse(window.node.widgets[0].value)), retainedRows, "Deleting a collapsed group removes active and disabled members without touching root LoRAs");
+  assert.equal(await group.count(), 0);
+  assert.equal(await page.evaluate(() => window.node.properties.lc_lora_groups.length), 0);
+  await page.evaluate(() => window.restore());
+  assert.deepEqual(await page.evaluate(() => JSON.parse(window.node.widgets[0].value)), retainedRows, "Deleted LoRAs must not return after restoring the workflow");
   assert.equal(await page.evaluate(() => window.node.properties.lc_lora_groups.length), 0);
   await page.getByRole("combobox", {name:"Show Strengths"}).selectOption("Single Strength");
   assert.ok(await page.evaluate(() => JSON.parse(window.node.widgets[0].value).every(row => !('strengthTwo' in row))));
@@ -472,7 +492,7 @@ try {
   assert.equal(clippedGroup.height,320,'Expanded groups do not grow node height');
   if (process.env.LC_UI_SCREENSHOT_DIR) await page.screenshot({path:path.join(process.env.LC_UI_SCREENSHOT_DIR, 'scrolling-list.png')});
   assert.deepEqual(errors, [], "Browser runtime errors");
-  console.log("PASS: library, groups, independent weights, 200-row drag stability, fixed height, resize/restore, scroll retention, wheel isolation and edge auto-scroll/drop.");
+  console.log("PASS: library, groups, group deletion with members, independent weights, 200-row drag stability, fixed height, resize/restore, scroll retention, wheel isolation and edge auto-scroll/drop.");
 } catch (error) {
   console.error('Browser errors:', errors);
   console.error('Page text:', (await page.locator('body').innerText()).slice(0, 2000));
