@@ -200,7 +200,9 @@ async function refresh(node) {
   removeButton(node);
   if ((st === "missing" || st === "stale") && t) {
     const name = BY_CODE[code][1];
-    node._lcButton = node.addWidget("button", st === "stale" ? `⚠️ Source changed: re-translate to ${name} now` : `🌐 Translate to ${name} now`, null, () => translateNow(node, code));
+    node._lcButton = node.addWidget("button", st === "stale" ? `⚠️ Source changed: re-translate to ${name} now` : `🌐 Translate to ${name} now`, null, async () => {
+      if (await slowOk(1)) translateNow(node, code);
+    });
     // keep the button right under the dropdown
     node.widgets.splice(node.widgets.indexOf(node._lcButton), 1);
     node.widgets.splice(1, 0, node._lcButton);
@@ -222,7 +224,8 @@ function show(node, code, skipSync = false) {
   refresh(node);
 }
 
-async function translateNow(node, code) {
+// batch: Translate all notes collects problems and reports them once at the end instead of a toast per note
+async function translateNow(node, code, batch = null) {
   syncFromEditor(node);
   const d = data(node);
   const src = d.texts[d.source].text || "";
@@ -250,10 +253,44 @@ async function translateNow(node, code) {
     if (node._lcShown === code) show(node, code, true);
     else refresh(node);
     app.graph?.setDirtyCanvas?.(true, true);
+    if (j.warning) {
+      if (batch) batch.warnings.push(`"${sentTitle || "LC Note"}": ${j.warning}`);
+      else app.extensionManager?.toast?.add?.({ severity: "warn", summary: "LC Note", detail: `Translated, but ${j.warning}`, life: 8000 });
+    }
   } catch (e) {
-    app.extensionManager?.toast?.add?.({ severity: "error", summary: "LC Note", detail: `Translation failed: ${e.message}`, life: 6000 });
+    if (batch) batch.errors.push(`"${sentTitle || "LC Note"}": ${e.message}`);
+    else app.extensionManager?.toast?.add?.({ severity: "error", summary: "LC Note", detail: `Translation failed: ${e.message}`, life: 6000 });
     refresh(node);
   }
+}
+
+// a small status pill while Translate all notes runs: it keeps going after the settings window is closed
+function progressPill() {
+  const el = document.createElement("div");
+  el.style.cssText = "position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:10001;background:#1e2227;color:#dfe3e8;" +
+    "border:1px solid #3a4048;border-radius:16px;padding:6px 14px;font:12px system-ui,sans-serif;box-shadow:0 2px 10px #0008;pointer-events:none";
+  document.body.appendChild(el);
+  return { set: (t) => (el.textContent = t), remove: () => el.remove() };
+}
+
+// a small card translates on the CPU (LC Vision picks what fits the card): safe, but minutes per note. Say so and ask
+// first: every time for Translate all notes, once per session for a single note.
+let slowAsked = false;
+async function slowOk(count) {
+  const s = await translatorStatus();
+  if (s?.plan?.mode !== "cpu" || (count === 1 && slowAsked)) return true;
+  const msg = `This graphics card (${s.plan.vram_gb} GB) is too small to translate on, so LC Vision translates on the CPU instead: `
+    + `nothing is at risk, but it takes a few minutes per note${count > 1 ? `, roughly ${count * 3} to ${count * 6} minutes for these ${count} notes` : ""}. `
+    + "You can keep working while it runs. Start?";
+  let ok;
+  const dlg = app.extensionManager?.dialog;
+  try {
+    ok = dlg?.confirm ? await dlg.confirm({ title: "LC Note: small graphics card", message: msg }) : window.confirm(msg);
+  } catch (_) {
+    ok = window.confirm(msg);
+  }
+  if (ok && count === 1) slowAsked = true;
+  return !!ok;
 }
 
 // ---------------------------------------------------------------- LC Vision helpers: write the note, fix spelling
@@ -464,7 +501,7 @@ app.registerExtension({
       tooltip:
         "Translates every LC Note in the open workflow (subgraphs too) into the Note language above, one after " +
         "another, then shows them in it. Notes already in that language, or with an up-to-date translation, are skipped. " +
-        "Needs LC Vision installed. Only LC Notes are touched; other notes are left alone. Save the workflow afterwards to keep it.",
+        "Needs LC Vision installed. Only LC Notes are touched; other notes are left alone. It keeps going if you close the settings (a pill at the bottom shows progress). Save the workflow afterwards to keep it.",
       type: () => {
         const IDLE = "Translate all notes in this workflow";
         const b = document.createElement("button");
@@ -650,13 +687,30 @@ async function translateAllNotes(progress) {
     const st = status(n, code);
     return d.source !== code && (d.texts[d.source]?.text || "").trim() && (st === "missing" || st === "stale");
   });
+  if (todo.length && !(await slowOk(todo.length))) return { error: "Not started", name };
   let done = 0;
   let failed = 0;
-  for (const n of todo) {
-    progress?.(done + failed + 1, todo.length, name);
-    await translateNow(n, code); // it reports its own failures
-    if (status(n, code) === "ok") done++;
-    else failed++;
+  const batch = { warnings: [], errors: [] };
+  const pill = todo.length ? progressPill() : null;
+  try {
+    for (const n of todo) {
+      const i = done + failed + 1;
+      progress?.(i, todo.length, name);
+      pill?.set(`📝 Translating notes to ${name}: ${i} of ${todo.length} (you can close the settings, it keeps going)`);
+      await translateNow(n, code, batch);
+      if (status(n, code) === "ok") done++;
+      else failed++;
+    }
+  } finally {
+    pill?.remove();
+  }
+  if (todo.length) {
+    const lines = [`Translated ${done} of ${todo.length} notes to ${name}.`];
+    if (batch.errors.length) lines.push(`Failed (run it again for those): ${batch.errors.join(" · ")}`);
+    if (batch.warnings.length) lines.push(`Check: ${batch.warnings.join(" · ")}`);
+    lines.push("Save the workflow to keep them.");
+    const severity = batch.errors.length ? "error" : batch.warnings.length ? "warn" : "success";
+    app.extensionManager?.toast?.add?.({ severity, summary: "LC Note", detail: lines.join("\n"), life: batch.errors.length || batch.warnings.length ? 0 : 6000 });
   }
   for (const n of notes) if (data(n).texts[code] || data(n).source === code) show(n, code);
   if (done) {

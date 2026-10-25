@@ -1,0 +1,3767 @@
+{
+  "AspectRatioSimplifier": {
+    "description": "将图像和遮罩缩放到你想要的尺寸。from the image：保持其形状，放大或缩小使长边等于 max_resolution。也可选预设/自定义尺寸。\n可裁剪、拉伸、填充或适应，并输出同尺寸的空 latent。",
+    "inputs": {
+      "max_resolution": {
+        "tooltip": "输出的较长边。从图像/蒙版：图像按比例缩放使其较长边等于此值。从预设/自定义尺寸：较大的尺寸会缩小到此值。0 = 保持原尺寸。"
+      },
+      "resolution_source": {
+        "tooltip": "关：图像/遮罩的宽高比，缩放到较长边等于 max_resolution（放大或缩小）。开：预设或自定义 width x height。"
+      },
+      "aspect_ratio": {
+        "tooltip": "使用 custom/preset 来源时的预设比例。"
+      },
+      "custom_width": {
+        "tooltip": "自定义尺寸的目标宽度。"
+      },
+      "custom_height": {
+        "tooltip": "自定义尺寸的目标高度。"
+      },
+      "swap_dimensions": {
+        "tooltip": "选定 size 之后交换宽和高。"
+      },
+      "upscale_method": {
+        "tooltip": "重采样滤波器。Lanczos 是照片的良好默认选项。nvidia_rtx_vsr = RTX Video Super Resolution（RTX 显卡，需要 nvidia-vfx）：放大更锐利、更干净；缩小时使用 lanczos。"
+      },
+      "proportion": {
+        "tooltip": "stretch=强制尺寸；resize=缩放至内接；crop=填满并裁剪；pad=缩放至内接并加黑边；total_pixels=匹配像素总量。"
+      },
+      "crop_location": {
+        "tooltip": "proportion 为 crop 时的裁剪锚点。"
+      },
+      "pad_color": {
+        "tooltip": "pad 模式的 RGB。0-255 或 0-1。"
+      },
+      "divisible_by": {
+        "tooltip": "将宽/高取整到此值的倍数（latent 通常用 8）。"
+      },
+      "batch_size": {
+        "tooltip": "空 latent 批次。Image/mask 批次沿用输入。"
+      }
+    }
+  },
+  "LCAspectRatioPipeOut": {
+    "description": "将图像和遮罩缩放到你想要的尺寸。from the image：保持其形状，放大或缩小使长边等于 max_resolution。也可选预设/自定义尺寸。\n可裁剪、拉伸、填充或适应，并输出同尺寸的空 latent。",
+    "inputs": {
+      "max_resolution": {
+        "tooltip": "输出的较长边。从图像/蒙版：图像按比例缩放使其较长边等于此值。从预设/自定义尺寸：较大的尺寸会缩小到此值。0 = 保持原尺寸。"
+      },
+      "resolution_source": {
+        "tooltip": "关：图像/遮罩的宽高比，缩放到较长边等于 max_resolution（放大或缩小）。开：预设或自定义 width x height。"
+      },
+      "aspect_ratio": {
+        "tooltip": "使用 custom/preset 来源时的预设比例。"
+      },
+      "custom_width": {
+        "tooltip": "自定义尺寸的目标宽度。"
+      },
+      "custom_height": {
+        "tooltip": "自定义尺寸的目标高度。"
+      },
+      "swap_dimensions": {
+        "tooltip": "选定 size 之后交换宽和高。"
+      },
+      "upscale_method": {
+        "tooltip": "重采样滤波器。Lanczos 是照片的良好默认选项。nvidia_rtx_vsr = RTX Video Super Resolution（RTX 显卡，需要 nvidia-vfx）：放大更锐利、更干净；缩小时使用 lanczos。"
+      },
+      "proportion": {
+        "tooltip": "stretch=强制尺寸；resize=缩放至内接；crop=填满并裁剪；pad=缩放至内接并加黑边；total_pixels=匹配像素总量。"
+      },
+      "crop_location": {
+        "tooltip": "proportion 为 crop 时的裁剪锚点。"
+      },
+      "pad_color": {
+        "tooltip": "pad 模式的 RGB。0-255 或 0-1。"
+      },
+      "divisible_by": {
+        "tooltip": "将宽/高取整到此值的倍数（latent 通常用 8）。"
+      },
+      "batch_size": {
+        "tooltip": "空 latent 批次。Image/mask 批次沿用输入。"
+      }
+    }
+  },
+  "LCAspectRatioPipe": {
+    "description": "从 pipe 中解包 image、mask、尺寸、latent 和 batch。pipe 仍从顶部输出。",
+    "inputs": {
+      "pipe": {
+        "tooltip": "来自 LC Aspect Ratio Simplifier 📐(Pipe) 或 LC Pipe 的 pipe。"
+      }
+    }
+  },
+  "LCAspectRatioPipeIn": {
+    "description": "把 image、mask、尺寸、latent 和 batch 打包成 pipe，或只修改已有 pipe 上你接线的部分。",
+    "inputs": {
+      "pipe": {
+        "tooltip": "要编辑的现有 LC_PIPE(可选)。其上的其他键全部原样通过。"
+      },
+      "image": {
+        "tooltip": "image。接入后会覆盖 pipe 的 image。"
+      },
+      "mask": {
+        "tooltip": "mask。接入时覆盖 pipe 的 mask。"
+      },
+      "width": {
+        "tooltip": "width。接入时覆盖 pipe 的 width。"
+      },
+      "height": {
+        "tooltip": "height。接线后会覆盖 pipe 的 height。"
+      },
+      "latent": {
+        "tooltip": "latent。接入后会覆盖 pipe 的 latent。"
+      },
+      "batch": {
+        "tooltip": "batch。接入时会覆盖 pipe 的 batch。"
+      },
+      "resolution": {
+        "tooltip": "resolution。接入时会覆盖 pipe 的 resolution。"
+      }
+    }
+  },
+  "LCSlider": {
+    "description": "节点上的滑块界面。Min / max / step / decimals 在 Settings 中设置。输出 INT 或 FLOAT。支持 Nodes 2.0。"
+  },
+  "LCSizePad": {
+    "description": "宽 x 高的二维滑块：拖动框的角，选择模型预设（MiniMax H3、Krea 2、SDXL、LTX、Klein 9B、Wan 2.2）和宽高比。尺寸会对齐到模型的步长，并限制在其百万像素上限内。",
+    "inputs": {
+      "model": {
+        "tooltip": "将尺寸对齐到该模型所需的值（其步长和尺寸），并在拖动到其百万像素上限时停止。Custom：步长 8，几乎无上限。"
+      },
+      "aspect": {
+        "tooltip": "拖动时将画框锁定为此形状。free：任意形状。"
+      },
+      "megapixels": {
+        "tooltip": "当前形状下的尺寸。修改它会调整框的大小；拖动会更新它。永远不会超过模型的上限。"
+      }
+    },
+    "outputs": {
+      "0": {
+        "tooltip": "宽度，已按模型要求对齐。"
+      },
+      "1": {
+        "tooltip": "高度,按模型要求对齐。"
+      },
+      "2": {
+        "tooltip": "例如 1344 x 768 · 1.03 MP · Krea 2"
+      }
+    }
+  },
+  "LCBoundingBoxes": {
+    "description": "在图片上画框：在空白处拖动创建新框，拖动框可移动，拖动角可调整大小。每个框都有名称、描述以及对它的处理：new、change、move（拖动它的第二个框）或 remove。在经典画布和 Nodes 2.0 中均可使用。",
+    "inputs": {
+      "size": {
+        "tooltip": "use image size:接入的图片决定画布(没有图片时才使用 width / height)。custom:始终以 width / height 为准;图片会被拉伸以适应。"
+      },
+      "width": {
+        "tooltip": "画布宽度：size 为 custom 时，或未连接图片时使用。"
+      },
+      "height": {
+        "tooltip": "画布高度：size 为 custom 时，或没有连接图片时有效。"
+      },
+      "boxes": {
+        "tooltip": "画在画布上的框（由节点保存）。"
+      },
+      "block": {
+        "tooltip": "if_empty：没有画框时，此节点之后的所有内容都会停止，让你去画框，然后再次排队（换新图时很方便）。never：始终放行。"
+      },
+      "keep_boxes": {
+        "tooltip": "held：框保持不变，每次运行都在。reset_after_run：本次运行使用它们，之后画布清空，下一张图从空白开始。"
+      },
+      "image": {
+        "tooltip": "要绘制的图片。其尺寸决定框的网格。对于编辑,这就是 ref_image_0。"
+      },
+      "bboxes": {
+        "tooltip": "来自另一个 LC Bounding Boxes（链式，例如每个分格一个）、Create Bounding Boxes 或布局 JSON 的框。它们会显示在这里（变暗，请在原处编辑），并排在最前，之后是在这里绘制的框。"
+      }
+    },
+    "outputs": {
+      "0": {
+        "tooltip": "画上了框的图片。"
+      },
+      "1": {
+        "tooltip": "像素框(与 Create Bounding Boxes 相同)。"
+      },
+      "2": {
+        "tooltip": "带有名称、描述及其处理方式的框，供 LC Flux 3 Layout Prompt（或 FLUX.3 Layout Prompt）使用。"
+      }
+    }
+  },
+  "LCFlux3LayoutPrompt": {
+    "description": "将这些框作为 BFL 的 element table 添加到 FLUX 3 提示词中，与模型训练时的方式一致。",
+    "inputs": {
+      "prompt": {
+        "tooltip": "标题（新图）或指令（编辑）。用 <1>、<2> 表示框 1、框 2，或直接使用框 id（<earring_1>）。每个框都应被提及一次。"
+      },
+      "elements": {
+        "tooltip": "来自 LC Bounding Boxes（或 Create Bounding Boxes）的框。"
+      },
+      "table": {
+        "tooltip": "auto：当某个框发生更改、移动或移除内容时用编辑表，否则用布局表。"
+      },
+      "keep_rest": {
+        "tooltip": "Edit：以 BFL 的结尾语收尾，声明其余一切保持完全一致。"
+      }
+    }
+  },
+  "LCFlux3ReferenceLatent": {
+    "description": "一个节点搞定 FLUX 3 参考：正面和负面各最多 4 张图，模型所需的负面提示，以及要采样的 latent（第一张已连接图片的尺寸，或你自己的尺寸）。不放图片 = 纯文生图。",
+    "inputs": {
+      "positive": {
+        "tooltip": "编码后的提示词。"
+      },
+      "model": {
+        "tooltip": "未接入 negative 时的设置：distilled = 归零的提示词，Base = 空提示词（需要 clip）。"
+      },
+      "reference_size": {
+        "tooltip": "每张参考图会被缩放到这么多百万像素（保持形状）。BFL 让参考图保持原始尺寸：细节更多，速度更慢。"
+      },
+      "width": {
+        "tooltip": "结果的尺寸。0 = 第一张已连接图片的尺寸（没有则为 1024）。"
+      },
+      "height": {
+        "tooltip": "0 = 第一张已连接图片的尺寸。"
+      },
+      "image_1": {
+        "tooltip": "prompt 中的 <ref_image_0>。"
+      },
+      "image_2": {
+        "tooltip": "<ref_image_1>。"
+      },
+      "image_3": {
+        "tooltip": "<ref_image_2>。"
+      },
+      "image_4": {
+        "tooltip": "<ref_image_3>。"
+      },
+      "negative": {
+        "tooltip": "你自己的 negative。空 = 由模型决定。"
+      },
+      "clip": {
+        "tooltip": "仅用于没有负面提示词的 Base：编码空提示词。"
+      }
+    }
+  },
+  "LCMOSSLayoutPrompt": {
+    "description": "根据框构建 MOSS Image 的布局提示词：每个框变成一个物体、一个角色或一块文字，带有各自的描述和色板，位置就在你画的地方。",
+    "inputs": {
+      "prompt": {
+        "tooltip": "你的基础提示词：场景以及不在框内的任何人（框内的角色只在各自的框中描述）。把此节点的输出接到 LC Vision Prompt Enhancer 的 prompt_text：框保持完整。绕过此节点，基础提示词会直接通过。留空：由模型决定场景。"
+      },
+      "elements": {
+        "tooltip": "来自 LC Bounding Boxes（或 Create Bounding Boxes）的框。先画背景，最后画前景。"
+      },
+      "canvas": {
+        "tooltip": "single = 一张图。multi_panel = 漫画分格或分屏。collage = 情绪板或贴纸页。"
+      },
+      "width": {
+        "tooltip": "0 = 框所在的画布（通常如此）。只有想覆盖图片尺寸时才设置，例如此节点位于放大之后。必须与 latent 一致，否则框会落在错误的位置。"
+      },
+      "height": {
+        "tooltip": "0 = 使用框的画布。仅在需要覆盖图片尺寸时设置（放大之后）。"
+      }
+    },
+    "outputs": {
+      "0": {
+        "tooltip": "布局提示词：接到 positive 提示词的 text。"
+      },
+      "1": {
+        "tooltip": "放置框时所用的宽度：latent 请使用它。"
+      },
+      "2": {
+        "tooltip": "放置这些框时所用的高度。"
+      },
+      "3": {
+        "tooltip": "输入了什么,以及需要修正的内容。"
+      }
+    }
+  },
+  "LCDynamicOverlay": {
+    "description": "把图像 B 叠加到 A 上。A 决定分辨率；B 按适应方式缩放。运行一次后，可在节点上调整 opacity，无需重新生成。"
+  },
+  "LCAnySwitch": {
+    "description": "从多个输入中选取第一个已连接的。类型由第一根线锁定。会阻止 Use Everywhere 自动连线。动态 2–20 个输入。"
+  },
+  "LCIndexSwitch": {
+    "description": "传递位于 index 的输入。其他已接入的槽位会被忽略，也不会改变输出长度。将 index 控件转换为输入，即可接入 LC Custom Combo。",
+    "inputs": {
+      "index": {
+        "tooltip": "从 0 开始的槽位。右键 → Convert Widget to Input，把 INDEX 接到这里。"
+      }
+    }
+  },
+  "LCCustomCombo": {
+    "description": "选项槽 + 选择 → STRING + INDEX。OPT_CONNECTION → 面板。"
+  },
+  "LCCustomComboPanel": {
+    "description": "LC Custom Combo 的 Choice remote。"
+  },
+  "LCComboSelector": {
+    "description": "下拉框，接入已转换的 combo 输入时，会镜像另一个节点的 combo 选项（scheduler、sampler 等）。"
+  },
+  "LCInvertBoolean": {
+    "description": "与 LC Boolean 相同的多类型转换，然后取反结果。在节点面上显示 true/false。",
+    "inputs": {
+      "value": {
+        "tooltip": "BOOLEAN、INT、FLOAT 或 number。非零 / True → true，否则 false；然后取反。"
+      }
+    }
+  },
+  "LCIsBypassedOrMuted": {
+    "description": "如果接到 `value` 的节点当前被绕过 (bypass) 或静音 (mute),则为 true,否则为 false。直接从图上按节点状态实时读取 -- 无需先排队运行,约定与 LC Boolean / LC Invert Boolean 相同。节点上会显示 true/false。",
+    "inputs": {
+      "is_bypassed_or_muted": {
+        "tooltip": "内部使用：由此节点自己的界面实时同步。不要手动设置。"
+      },
+      "value": {
+        "tooltip": "接入你想监视的节点的任意输出 -- 类型无所谓,只看这根线来自哪个节点。"
+      }
+    }
+  },
+  "LCBoolean": {
+    "description": "把 boolean、int 或 float 转换为干净的 true/false，并显示在节点表面。",
+    "inputs": {
+      "value": {
+        "tooltip": "BOOLEAN、INT、FLOAT 或数字 → 转换为 true/false（不取反）。"
+      }
+    }
+  },
+  "LCBooleanSwitch": {
+    "description": "布尔开关：state 选择 on_true 或 on_false（任意类型）。只有被选中的分支会运行。重命名 on_true / on_false 接口，开关的两个状态就会采用这些名称。",
+    "inputs": {
+      "state": {
+        "tooltip": "True → on_true，False → on_false。\n💡 重命名 on_true 或 on_false 接口（右键它 > Rename Slot），此开关就会显示这些名称，例如 Upscale / Skip。未重命名时：显示所连节点的标题。"
+      },
+      "on_true": {
+        "tooltip": "state 为 true 时透传。重命名这个接口即可重命名开关的 true 状态。"
+      },
+      "on_false": {
+        "tooltip": "state 为 false 时通过。重命名此接口即可重命名开关的 false 状态。"
+      }
+    }
+  },
+  "LCBooleanFlip": {
+    "description": "布尔取反：控件 False → 输出 True；控件 True → 输出 False。",
+    "inputs": {
+      "boolean": {
+        "tooltip": "输出时取反：off→True，on→False。"
+      }
+    }
+  },
+  "LCBooleanValue": {
+    "description": "Boolean 控件来源（primitive 风格）。",
+    "inputs": {
+      "value": {
+        "tooltip": "要输出的布尔值。"
+      }
+    }
+  },
+  "LCSubject": {
+    "inputs": {
+      "description": {
+        "tooltip": "主体是谁或是什么（外貌、年龄、气质）。自由文本。"
+      },
+      "pose": {
+        "tooltip": "身体姿势。选 none 则只依据描述。"
+      },
+      "action": {
+        "tooltip": "他们在做什么。none 会跳过这一行。"
+      },
+      "outfit": {
+        "tooltip": "服装预设（Female/… 或 Male/…）。none = 在文本中描述服装。"
+      },
+      "position_horizontal": {
+        "tooltip": "在画面中靠左 / 居中 / 靠右放置。"
+      },
+      "position_vertical": {
+        "tooltip": "在画面中的上 / 中 / 下位置。"
+      },
+      "position_depth": {
+        "tooltip": "前景 / 中景 / 背景深度。"
+      }
+    }
+  },
+  "LCSubjectArray": {
+    "description": "把多个主体输出合并成一行。",
+    "inputs": {
+      "subject_01": {
+        "tooltip": "主体提示词槽位 1。不连接则跳过。"
+      },
+      "subject_02": {
+        "tooltip": "主体提示词槽位 2。不连接则跳过。"
+      },
+      "subject_03": {
+        "tooltip": "主体提示词槽位 3。不连接则跳过。"
+      },
+      "subject_04": {
+        "tooltip": "主体提示词插槽 4。不连接则跳过。"
+      },
+      "subject_05": {
+        "tooltip": "主体 prompt 插槽 5。不接则跳过。"
+      },
+      "subject_06": {
+        "tooltip": "主体提示词槽 6。不接则跳过。"
+      },
+      "subject_07": {
+        "tooltip": "主体提示词槽位 7。不连接则跳过。"
+      },
+      "subject_08": {
+        "tooltip": "主体提示词槽位 8。不连接则跳过。"
+      }
+    }
+  },
+  "LCCamera": {
+    "description": "镜头景别和景深。距离预设包含镜头特性；没有原始 mm/f-stop。",
+    "inputs": {
+      "prompt": {
+        "tooltip": "额外的摄影机备注。景别预设包含自然的镜头语言。"
+      },
+      "angle": {
+        "tooltip": "相机相对于主体的高度和俯仰。"
+      },
+      "distance": {
+        "tooltip": "主体在画面中占多少（特写 → 全身）。包含镜头特性。"
+      },
+      "depth_of_field": {
+        "tooltip": "背景模糊 vs 全程清晰(光圈的简易替代)。"
+      }
+    }
+  },
+  "LCLighting": {
+    "inputs": {
+      "prompt": {
+        "tooltip": "预设之外的额外灯光说明。"
+      },
+      "lighting": {
+        "tooltip": "整体光线质感和氛围（柔光、硬光、黄金时刻、霓虹等）。"
+      },
+      "light_direction": {
+        "tooltip": "主光相对于主体的位置。"
+      }
+    }
+  },
+  "LCStyleSelector": {
+    "inputs": {
+      "prompt": {
+        "tooltip": "额外的风格备注（胶片类型、美术指导等）。"
+      },
+      "style_category": {
+        "tooltip": "大类风格（photo、editorial、anime 等）。"
+      },
+      "style_preset": {
+        "tooltip": "此系列的详细风格措辞。"
+      },
+      "quality_level": {
+        "tooltip": "成品的精致程度（standard → editorial/hero）。"
+      }
+    }
+  },
+  "LCSceneBuilder": {
+    "inputs": {
+      "scene_preset": {
+        "tooltip": "详细的环境预设（会填充场景描述）。"
+      },
+      "description": {
+        "tooltip": "覆盖或扩展预设。为空 = 只使用预设文本。"
+      },
+      "time_of_day": {
+        "tooltip": "时间点。none = 不写时间。"
+      },
+      "weather": {
+        "tooltip": "天空 / 天气。none = 不写天气。"
+      },
+      "environment_details": {
+        "tooltip": "预设未涵盖的道具、建筑、氛围。"
+      }
+    }
+  },
+  "LCColorPalette": {
+    "inputs": {
+      "mode": {
+        "tooltip": "preset = 内置调色板。from_image = 从输入图像取样。"
+      },
+      "preset": {
+        "tooltip": "mode 为 preset 时使用的命名调色板。"
+      },
+      "num_colors": {
+        "tooltip": "使用或采样多少种颜色（4–6）。"
+      },
+      "image": {
+        "tooltip": "mode 为 from_image 时的源图像。"
+      }
+    }
+  },
+  "LCPromptAssembler": {
+    "inputs": {
+      "pretty_print": {
+        "tooltip": "开启时 JSON 带缩进；关闭时为紧凑格式。"
+      },
+      "remove_empty": {
+        "tooltip": "跳过空白段落,这样空的接口不会留下空行。"
+      },
+      "include_scene_bboxes": {
+        "tooltip": "开启时，JSON 还会包含场景家具/地标的框。关闭（默认）时只有主体 bbox——主要的区域用法。"
+      },
+      "subjects": {
+        "tooltip": "来自 🗒️LC Subject 或 Subject Array。"
+      },
+      "scene": {
+        "tooltip": "来自 🗒️LC Scene Builder。"
+      },
+      "camera": {
+        "tooltip": "来自 🗒️LC Camera。"
+      },
+      "lighting": {
+        "tooltip": "来自 🗒️LC Lighting。"
+      },
+      "style": {
+        "tooltip": "来自 🗒️LC Style Selector。"
+      },
+      "palette": {
+        "tooltip": "来自 🎨LC Color Palette(文本输出)。"
+      },
+      "mood": {
+        "tooltip": "可选的氛围行（自由文本）。"
+      },
+      "background": {
+        "tooltip": "可选的额外背景说明。"
+      },
+      "composition": {
+        "tooltip": "可选的构图备注（三分法等）。"
+      },
+      "extra": {
+        "tooltip": "追加在末尾的其他任何内容。"
+      },
+      "margin": {
+        "tooltip": "将所有 bbox 从画面边缘向内缩进（0–0.25）。默认 0.05 = 5%。"
+      }
+    }
+  },
+  "LCJoinStrings": {
+    "description": "用分隔符连接多个字符串。Null/空输入会被跳过。分隔符：\\n = 换行，\\n\\n = 空行。",
+    "inputs": {
+      "inputcount": {
+        "tooltip": "要显示并连接的字符串输入数量。"
+      },
+      "delimiter": {
+        "tooltip": "加在非空部分之间。用 \\n 表示换行,\\n\\n 表示空行,\\t 表示制表符。"
+      }
+    }
+  },
+  "LCShowText": {
+    "description": "在节点上显示字符串（类似 ShowText）。保留换行；JSON 会美化输出。透传 STRING 输出。"
+  },
+  "LCWidgetToString": {
+    "description": "以 STRING 读取另一个节点上的 widget(KJ WidgetToString)。没有 any_input、id 为 0、标题为空 → 休眠,返回空字符串。",
+    "inputs": {
+      "id": {
+        "tooltip": "目标节点 id。0 = 不使用（使用 any_input 或标题）。"
+      },
+      "widget_name": {
+        "tooltip": "控件名称，或逗号分隔的列表。"
+      },
+      "return_all": {
+        "tooltip": "把目标上的每个 widget 以 name: value 的形式导出。"
+      },
+      "any_input": {
+        "tooltip": "接到你要读取的节点。休眠直到接线的行为需要它。id 和 title 都为空时也会用到。"
+      },
+      "node_title": {
+        "tooltip": "匹配手动编辑过的节点标题。"
+      },
+      "allowed_float_decimals": {
+        "tooltip": "浮点数的小数位数。"
+      }
+    }
+  },
+  "LCTextReplace": {
+    "description": "文本查找/替换，支持 1–20 个按顺序的配对。提高 entrycount 添加行，降低则移除。空的查找项会被跳过。可选 regex。",
+    "inputs": {
+      "text": {
+        "tooltip": "要转换的源文本。"
+      },
+      "entrycount": {
+        "tooltip": "要显示并应用的查找/替换对数量。"
+      },
+      "use_regex": {
+        "tooltip": "把 find 当作正则表达式。"
+      },
+      "count": {
+        "tooltip": "每对最多替换次数。0 = 全部替换。"
+      },
+      "find_1": {
+        "tooltip": "查找字符串 #1(为空则跳过)。"
+      },
+      "replace_1": {
+        "tooltip": "find #1 的替换内容。"
+      },
+      "find_2": {
+        "tooltip": "查找字符串 #2（为空则跳过）。"
+      },
+      "replace_2": {
+        "tooltip": "find #2 的替换内容。"
+      },
+      "find_3": {
+        "tooltip": "查找字符串 #3（为空则跳过）。"
+      },
+      "replace_3": {
+        "tooltip": "find #3 的替换内容。"
+      },
+      "find_4": {
+        "tooltip": "查找字符串 #4（为空则跳过）。"
+      },
+      "replace_4": {
+        "tooltip": "find #4 的替换内容。"
+      },
+      "find_5": {
+        "tooltip": "查找字符串 #5（为空则跳过）。"
+      },
+      "replace_5": {
+        "tooltip": "find #5 的替换内容。"
+      },
+      "find_6": {
+        "tooltip": "查找字符串 #6（为空则跳过）。"
+      },
+      "replace_6": {
+        "tooltip": "find #6 的替换内容。"
+      },
+      "find_7": {
+        "tooltip": "查找字符串 #7(为空则跳过)。"
+      },
+      "replace_7": {
+        "tooltip": "find #7 的替换内容。"
+      },
+      "find_8": {
+        "tooltip": "查找字符串 #8（为空则跳过）。"
+      },
+      "replace_8": {
+        "tooltip": "find #8 的替换内容。"
+      },
+      "find_9": {
+        "tooltip": "查找字符串 #9（为空则跳过）。"
+      },
+      "replace_9": {
+        "tooltip": "find #9 的替换内容。"
+      },
+      "find_10": {
+        "tooltip": "查找字符串 #10（为空则跳过）。"
+      },
+      "replace_10": {
+        "tooltip": "find #10 的替换内容。"
+      },
+      "find_11": {
+        "tooltip": "查找字符串 #11（为空则跳过）。"
+      },
+      "replace_11": {
+        "tooltip": "find #11 的替换内容。"
+      },
+      "find_12": {
+        "tooltip": "查找字符串 #12（为空则跳过）。"
+      },
+      "replace_12": {
+        "tooltip": "find #12 的替换内容。"
+      },
+      "find_13": {
+        "tooltip": "查找字符串 #13(为空则跳过)。"
+      },
+      "replace_13": {
+        "tooltip": "find #13 的替换内容。"
+      },
+      "find_14": {
+        "tooltip": "查找字符串 #14（为空则跳过）。"
+      },
+      "replace_14": {
+        "tooltip": "find #14 的替换内容。"
+      },
+      "find_15": {
+        "tooltip": "查找字符串 #15（为空则跳过）。"
+      },
+      "replace_15": {
+        "tooltip": "find #15 的替换内容。"
+      },
+      "find_16": {
+        "tooltip": "查找字符串 #16（为空则跳过）。"
+      },
+      "replace_16": {
+        "tooltip": "find #16 的替换内容。"
+      },
+      "find_17": {
+        "tooltip": "查找字符串 #17（为空则跳过）。"
+      },
+      "replace_17": {
+        "tooltip": "find #17 的替换内容。"
+      },
+      "find_18": {
+        "tooltip": "查找字符串 #18（为空则跳过）。"
+      },
+      "replace_18": {
+        "tooltip": "find #18 的替换内容。"
+      },
+      "find_19": {
+        "tooltip": "查找字符串 #19(为空则跳过)。"
+      },
+      "replace_19": {
+        "tooltip": "find #19 的替换内容。"
+      },
+      "find_20": {
+        "tooltip": "查找字符串 #20（为空则跳过）。"
+      },
+      "replace_20": {
+        "tooltip": "find #20 的替换内容。"
+      }
+    }
+  },
+  "LCDuplicateTags": {
+    "description": "移除重复标签，避免某个标签被重复加权。匹配时忽略大小写、下划线和权重（long_hair = (long hair:1.2)）。句子、空行分隔和 BREAK 原样通过。可选的第二个提示词用于合并两个提示词并一起清理。",
+    "inputs": {
+      "keep": {
+        "tooltip": "重复标签保留哪一个。first：第一个，保持原样。strongest：权重最高的那个，放在第一个出现的位置。"
+      },
+      "text": {
+        "tooltip": "要清理的提示词。可选，这样任一输入都可以在上游被绕过。"
+      },
+      "text_2": {
+        "tooltip": "可选的第二个提示词，接在 text 之后一起清理（例如你自己的提示词加上 LC Vision Danbooru Caption 的）。"
+      }
+    },
+    "outputs": {
+      "0": {
+        "tooltip": "每个标签只出现一次的提示词。"
+      },
+      "1": {
+        "tooltip": "被移除的标签，供检查用。"
+      }
+    }
+  },
+  "LCTextRemove": {
+    "description": "用 1–20 个依次查找来删除子串(没有替换值)。只含空白的查找项会被忽略,以免整个 prompt 里的空格被删掉。删除后留下的连续空格会被合并。",
+    "inputs": {
+      "text": {
+        "tooltip": "要转换的源文本。"
+      },
+      "entrycount": {
+        "tooltip": "要显示并应用的查找行数。"
+      },
+      "use_regex": {
+        "tooltip": "把 find 当作正则表达式。"
+      },
+      "count": {
+        "tooltip": "每次查找最多移除的次数。0 = 移除所有匹配。"
+      },
+      "find_1": {
+        "tooltip": "要删除的文本 #1(为空或只有空格则跳过)。"
+      },
+      "find_2": {
+        "tooltip": "要移除的文本 #2（为空或只有空格时跳过）。"
+      },
+      "find_3": {
+        "tooltip": "要移除的文本 #3（为空或只有空格时跳过）。"
+      },
+      "find_4": {
+        "tooltip": "要移除的文本 #4（为空或只有空格时跳过）。"
+      },
+      "find_5": {
+        "tooltip": "要删除的文本 #5(为空或只有空格则跳过)。"
+      },
+      "find_6": {
+        "tooltip": "要移除的文本 #6（为空或只有空格时跳过）。"
+      },
+      "find_7": {
+        "tooltip": "要移除的文本 #7（为空或只有空格时跳过）。"
+      },
+      "find_8": {
+        "tooltip": "要移除的文本 #8（为空或只有空格则跳过）。"
+      },
+      "find_9": {
+        "tooltip": "要移除的文本 #9（为空或只有空格时跳过）。"
+      },
+      "find_10": {
+        "tooltip": "要移除的文本 #10（为空或只有空格时跳过）。"
+      },
+      "find_11": {
+        "tooltip": "要移除的文本 #11（为空或只有空格则跳过）。"
+      },
+      "find_12": {
+        "tooltip": "要移除的文本 #12（为空或只有空格时跳过）。"
+      },
+      "find_13": {
+        "tooltip": "要移除的文本 #13（为空或只有空格则跳过）。"
+      },
+      "find_14": {
+        "tooltip": "要移除的文本 #14（为空或只有空格时跳过）。"
+      },
+      "find_15": {
+        "tooltip": "要移除的文本 #15（为空或只有空格时跳过）。"
+      },
+      "find_16": {
+        "tooltip": "要删除的文本 #16(为空或只有空格则跳过)。"
+      },
+      "find_17": {
+        "tooltip": "要移除的文本 #17（为空或只有空格时跳过）。"
+      },
+      "find_18": {
+        "tooltip": "要移除的文本 #18（为空或只有空格时跳过）。"
+      },
+      "find_19": {
+        "tooltip": "要移除的文本 #19（为空或只有空格则跳过）。"
+      },
+      "find_20": {
+        "tooltip": "要移除的文本 #20（为空或只有空格时跳过）。"
+      }
+    }
+  },
+  "LCIntCompare": {
+    "description": "比较两个整数，输出较大或较小的（用 mode 切换）。",
+    "inputs": {
+      "a": {
+        "tooltip": "第一个整数。"
+      },
+      "b": {
+        "tooltip": "第二个整数。"
+      },
+      "mode": {
+        "tooltip": "返回 a 和 b 中较大或较小的一个。"
+      }
+    }
+  },
+  "LCFloatCompare": {
+    "description": "比较两个 float,输出较大或较小的一个(mode 开关)。",
+    "inputs": {
+      "a": {
+        "tooltip": "第一个浮点数。"
+      },
+      "b": {
+        "tooltip": "第二个浮点数。"
+      },
+      "mode": {
+        "tooltip": "返回 a 和 b 中较大或较小的一个。"
+      }
+    }
+  },
+  "LCSeedJump": {
+    "description": "Seed 跳跃：输入 seed a 和跳跃值 b（1–20）。输出：a、a+b、a+2b、a+3b、a+4b、a+5b。",
+    "inputs": {
+      "seed": {
+        "tooltip": "基础 seed（a）。输出为 a、a+jump、a+2·jump、…"
+      },
+      "jump": {
+        "tooltip": "步长（b）。每个输出在前一个基础上加上此值。"
+      }
+    }
+  },
+  "LCNodeSnapshot": {
+    "description": "抓取另一个节点的 widget 快照。连接 **source**（或目标标题/id）。下拉菜单列出 **widget names**。输出：selected、lines、json。",
+    "inputs": {
+      "widget_name": {
+        "tooltip": "目标上某个参数 widget 的名称(例如 preset, strength)。"
+      },
+      "source": {
+        "tooltip": "接入你想检查的节点的任意输出。优先于 target text。"
+      },
+      "target": {
+        "tooltip": "后备：当 source 未连接时，使用节点标题（需完全一致）或数字 id。"
+      }
+    }
+  },
+  "LCModelInfo": {
+    "description": "仅从文件头读取模型文件自带的信息：保存节点嵌入的 workflow（LoRA、strength、合并）、Kohya 训练信息、卡片字段、GGUF 信息。接入后立即显示在节点上。模型原样通过。",
+    "inputs": {
+      "model": {
+        "tooltip": "任何扩散模型的输出：加载器、LoRA 加载器、合并结果。"
+      }
+    },
+    "outputs": {
+      "0": {
+        "tooltip": "同一个模型，未经改动。"
+      },
+      "1": {
+        "tooltip": "节点上显示的报告。"
+      },
+      "2": {
+        "tooltip": "找到的每个 LoRA:这根线上的以及烘焙进文件的,每行一个。"
+      },
+      "3": {
+        "tooltip": "每个文件的所有 header 字段,JSON 格式(包含内嵌的 workflow)。"
+      }
+    }
+  },
+  "LCNotify": {
+    "description": "节点运行时播放 assets/sounds 中的声音。节点上的 ▶ 可预览所选文件。Mode：always、on empty queue 或 never。",
+    "inputs": {
+      "mode": {
+        "tooltip": "always = 每次运行。on empty queue = 仅当之后队列为空时。never = 静默(▶ 预览仍然可用)。"
+      },
+      "volume": {
+        "tooltip": "播放音量（0–1）。"
+      },
+      "file": {
+        "tooltip": "来自 assets/sounds/ 的声音文件。"
+      },
+      "any": {
+        "tooltip": "可选直通，使节点按你的图顺序排列。"
+      }
+    }
+  },
+  "LCCivitaiStrip": {
+    "description": "CivitAI 🚩🔪：从提示词中移除列表里的词和短语（仅整词匹配），例如 LLM（尤其是 abliterated 模型）有时会给成年人加上的 \"child\" / \"late teens\" 之类的措辞。默认关闭，需手动开启。免责声明：这只是方便使用的过滤器，不是安全系统。它只会移除列表中的原词，无法理解图像或提示词，也会有遗漏。它不会让任何内容变得被允许。你需自行对所创作和发布的内容负责，并遵守 CivitAI 的服务条款和法律。不保证列表完整、最新或足以通过审核。与 CivitAI 无任何关联。",
+    "inputs": {
+      "text": {
+        "tooltip": "要剔除的提示词 / 文本。"
+      },
+      "list_file": {
+        "tooltip": "assets/lists/ 下的列表文件（每行一个词条，可用 # 注释）。"
+      },
+      "enabled": {
+        "tooltip": "免责声明：这只是一个便利性过滤器，不是安全系统。它只会删除列表中完全一致的词，无法理解图像或提示词，也会漏掉内容。它不会让任何内容变得合规。你需要自行对所创作和发布的内容负责，并遵守 CivitAI 的服务条款和法律。不保证列表完整、最新，也不保证足以通过审核。与 CivitAI 无关。Off = 文本原样通过。需要你自己手动开启。"
+      }
+    }
+  },
+  "LC123SaveText": {
+    "description": "把文本字符串写入输出文件夹下的文件。文件名会清理 Windows 非法字符。",
+    "inputs": {
+      "filename_prefix": {
+        "tooltip": "文件名（以及可选的子文件夹）。非法的路径字符会被替换为 _。"
+      }
+    }
+  },
+  "LCBatchImage": {
+    "description": "把 autogrow 插槽里的图片合成一批。接了线但没有信号(静音 / 缺失)的插槽会被忽略。仍然输出图片的 bypass 会被保留。后面的插槽会被缩放到与第一张有效图片相同大小。",
+    "inputs": {
+      "image_01": {
+        "tooltip": "断开、静音或为空时会跳过。尺寸不同的图像会缩放到第一张有效图像的尺寸。"
+      },
+      "image_02": {
+        "tooltip": "断开、静音或为空时会跳过。尺寸不同的图像会缩放到第一张有效图像的尺寸。"
+      },
+      "image_03": {
+        "tooltip": "断开、静音或为空时会跳过。尺寸不同的图像会缩放到第一张有效图像的尺寸。"
+      },
+      "image_04": {
+        "tooltip": "断开、静音或为空时会跳过。尺寸不同的图像会缩放到第一张有效图像的尺寸。"
+      },
+      "image_05": {
+        "tooltip": "断开、静音或为空时会跳过。尺寸不同的图像会缩放到第一张有效图像的尺寸。"
+      },
+      "image_06": {
+        "tooltip": "断开、静音或为空时会跳过。尺寸不同的图像会缩放到第一张有效图像的尺寸。"
+      },
+      "image_07": {
+        "tooltip": "断开、静音或为空时会跳过。尺寸不同的图像会缩放到第一张有效图像的尺寸。"
+      },
+      "image_08": {
+        "tooltip": "断开、静音或为空时会跳过。尺寸不同的图像会缩放到第一张有效图像的尺寸。"
+      },
+      "image_09": {
+        "tooltip": "断开、静音或为空时会跳过。尺寸不同的图像会缩放到第一张有效图像的尺寸。"
+      },
+      "image_10": {
+        "tooltip": "断开、静音或为空时会跳过。尺寸不同的图像会缩放到第一张有效图像的尺寸。"
+      },
+      "image_11": {
+        "tooltip": "断开、静音或为空时会跳过。尺寸不同的图像会缩放到第一张有效图像的尺寸。"
+      },
+      "image_12": {
+        "tooltip": "断开、静音或为空时会跳过。尺寸不同的图像会缩放到第一张有效图像的尺寸。"
+      },
+      "image_13": {
+        "tooltip": "断开、静音或为空时会跳过。尺寸不同的图像会缩放到第一张有效图像的尺寸。"
+      },
+      "image_14": {
+        "tooltip": "断开、静音或为空时会跳过。尺寸不同的图像会缩放到第一张有效图像的尺寸。"
+      },
+      "image_15": {
+        "tooltip": "断开、静音或为空时会跳过。尺寸不同的图像会缩放到第一张有效图像的尺寸。"
+      },
+      "image_16": {
+        "tooltip": "断开、静音或为空时会跳过。尺寸不同的图像会缩放到第一张有效图像的尺寸。"
+      },
+      "image_17": {
+        "tooltip": "断开、静音或为空时会跳过。尺寸不同的图像会缩放到第一张有效图像的尺寸。"
+      },
+      "image_18": {
+        "tooltip": "断开、静音或为空时会跳过。尺寸不同的图像会缩放到第一张有效图像的尺寸。"
+      },
+      "image_19": {
+        "tooltip": "断开、静音或为空时会跳过。尺寸不同的图像会缩放到第一张有效图像的尺寸。"
+      },
+      "image_20": {
+        "tooltip": "断开、静音或为空时会跳过。尺寸不同的图像会缩放到第一张有效图像的尺寸。"
+      }
+    }
+  },
+  "LCImageStitchMulti": {
+    "description": "把 autogrow 插槽里的图片并排或上下拼接。静音或空的插槽会被跳过。match first 通过缩放到第一张图,使边缘对齐。",
+    "inputs": {
+      "direction": {
+        "tooltip": "下一张图放在哪里：right / left = 并排，down / up = 堆叠。"
+      },
+      "match_size": {
+        "tooltip": "match first：所有图像都会（保持形状）缩放到第一张图像的高度（并排）或宽度（堆叠），使边缘对齐。\noff：图像保持各自的尺寸。"
+      },
+      "align": {
+        "tooltip": "尺寸不同时，较小的图像沿接缝的位置：center、start（顶部 / 左侧）或 end。"
+      },
+      "gap": {
+        "tooltip": "图像之间的间距，单位为像素。"
+      },
+      "gap_color": {
+        "tooltip": "间隙以及较小图像周围任何空白处的颜色（hex）。"
+      },
+      "image_01": {
+        "tooltip": "未连接、被静音或为空时跳过。"
+      },
+      "image_02": {
+        "tooltip": "未连接、被静音或为空时跳过。"
+      },
+      "image_03": {
+        "tooltip": "未连接、被静音或为空时跳过。"
+      },
+      "image_04": {
+        "tooltip": "未连接、被静音或为空时跳过。"
+      },
+      "image_05": {
+        "tooltip": "未连接、被静音或为空时跳过。"
+      },
+      "image_06": {
+        "tooltip": "未连接、被静音或为空时跳过。"
+      },
+      "image_07": {
+        "tooltip": "未连接、被静音或为空时跳过。"
+      },
+      "image_08": {
+        "tooltip": "未连接、被静音或为空时跳过。"
+      },
+      "image_09": {
+        "tooltip": "未连接、被静音或为空时跳过。"
+      },
+      "image_10": {
+        "tooltip": "未连接、被静音或为空时跳过。"
+      },
+      "image_11": {
+        "tooltip": "未连接、被静音或为空时跳过。"
+      },
+      "image_12": {
+        "tooltip": "未连接、被静音或为空时跳过。"
+      },
+      "image_13": {
+        "tooltip": "未连接、被静音或为空时跳过。"
+      },
+      "image_14": {
+        "tooltip": "未连接、被静音或为空时跳过。"
+      },
+      "image_15": {
+        "tooltip": "未连接、被静音或为空时跳过。"
+      },
+      "image_16": {
+        "tooltip": "未连接、被静音或为空时跳过。"
+      },
+      "image_17": {
+        "tooltip": "未连接、被静音或为空时跳过。"
+      },
+      "image_18": {
+        "tooltip": "未连接、被静音或为空时跳过。"
+      },
+      "image_19": {
+        "tooltip": "未连接、被静音或为空时跳过。"
+      },
+      "image_20": {
+        "tooltip": "未连接、被静音或为空时跳过。"
+      }
+    }
+  },
+  "LCBatchImageComparer": {
+    "description": "适用于大批量的稳定版图像对比器。使用紧凑的下拉菜单，而不是溢出的数字列表。图像区域的位置和大小保持不变（始终预留占位）。"
+  },
+  "LCImageSplit": {
+    "description": "节点上的 A|B 对比滑动（仅滑块；不能在图像上拖动）。输出是用于保存的烘焙分屏图。",
+    "inputs": {
+      "image_a": {
+        "tooltip": "对比滑动的左侧。"
+      },
+      "image_b": {
+        "tooltip": "擦除对比的右侧。"
+      },
+      "split_position": {
+        "tooltip": "滑动位置 0–1。只能用这个滑块调整 — 拖动图像不会改变它。预览实时更新。"
+      },
+      "show_divider": {
+        "tooltip": "保存/输出图像中切口处的接缝。"
+      },
+      "divider_width": {
+        "tooltip": "切口接缝的宽度,单位像素。0 = 没有接缝。"
+      },
+      "divider_color": {
+        "tooltip": "接缝的颜色（hex）。"
+      }
+    }
+  },
+  "LCLastImageHolder": {
+    "description": "保留最后生成的图像用于前后对比。断开连接后仍保留；clear 清空内存，无需重新运行。",
+    "inputs": {
+      "mode": {
+        "tooltip": "hold previous generation：每次生成都输出上一张图，然后保存当前这张。\nhold until cleared：保存第一张图并冻结，直到你按下 Clear。\nhold until seed change：保留当前 seed 的图（接入 seed 接口），seed 改变时保存新图。在同一个 seed 上调整设置，并与它的第一张图对比。"
+      },
+      "new_image": {
+        "tooltip": "可选。要保存的当前生成结果。即使此输入断开或为空，节点也会保留并显示已保存的图像。"
+      },
+      "seed": {
+        "tooltip": "用于 hold until seed change：接入与采样器相同的 seed。新 seed 会替换已保持的图像。"
+      }
+    }
+  },
+  "LCImageLabel": {
+    "description": "可拖放上传的悬浮图片贴纸。没有标题，没有接口 -- 纯粹是用来给工作流做标注的视觉标签。双击打开设置（大小、边框、圆角、背景）。图片会以小型 webp data URL 的形式嵌入保存的工作流，所以即使原始上传已丢失，分享后依然有效。"
+  },
+  "LCSamplerConfigure": {
+    "description": "两遍 sampler 的全部设置集中在一处：steps、swap step、detailer steps、denoise、两个 CFG、sampler 和 scheduler。",
+    "inputs": {
+      "total_steps": {
+        "tooltip": "完整 schedule 的总采样步数。"
+      },
+      "step_swap": {
+        "tooltip": "第一遍交给第二遍的步数索引（SplitSigmas 的 step）。"
+      },
+      "detailer_steps": {
+        "tooltip": "为 detailer / refiner 阶段保留的步数（0 = 不使用）。"
+      },
+      "denoise": {
+        "tooltip": "构建 sigma 调度时使用的 denoise 强度（1.0 = 完整）。"
+      },
+      "_gap1": {
+        "tooltip": "布局间隔"
+      },
+      "cfg_1": {
+        "tooltip": "第一遍（高 sigma）的 CFG。"
+      },
+      "cfg_2": {
+        "tooltip": "第二遍（低 sigma）的 CFG。"
+      },
+      "_gap2": {
+        "tooltip": "布局间隔"
+      },
+      "sampler_name": {
+        "tooltip": "采样器算法。"
+      },
+      "scheduler": {
+        "tooltip": "噪声调度。"
+      }
+    }
+  },
+  "LCSamplerConfigurePipeOut": {
+    "description": "两遍 sampler 的全部设置集中在一处：steps、swap step、detailer steps、denoise、两个 CFG、sampler 和 scheduler。",
+    "inputs": {
+      "total_steps": {
+        "tooltip": "完整 schedule 的总采样步数。"
+      },
+      "step_swap": {
+        "tooltip": "第一遍交给第二遍的步数索引（SplitSigmas 的 step）。"
+      },
+      "detailer_steps": {
+        "tooltip": "为 detailer / refiner 阶段保留的步数（0 = 不使用）。"
+      },
+      "denoise": {
+        "tooltip": "构建 sigma 调度时使用的 denoise 强度（1.0 = 完整）。"
+      },
+      "_gap1": {
+        "tooltip": "布局间隔"
+      },
+      "cfg_1": {
+        "tooltip": "第一遍（高 sigma）的 CFG。"
+      },
+      "cfg_2": {
+        "tooltip": "第二遍（低 sigma）的 CFG。"
+      },
+      "_gap2": {
+        "tooltip": "布局间隔"
+      },
+      "sampler_name": {
+        "tooltip": "采样器算法。"
+      },
+      "scheduler": {
+        "tooltip": "噪声调度。"
+      },
+      "pipe": {
+        "tooltip": "可选的 LC_PIPE 输入。此节点的采样器键会覆盖同名键;pipe 的其他字段原样通过。"
+      }
+    }
+  },
+  "LCSamplerConfigurePipe": {
+    "description": "把 LC_PIPE 解包为采样器配置接口。Pipe 会继续透传，便于后续 Get/Set 串联。",
+    "inputs": {
+      "pipe": {
+        "tooltip": "来自 LC Sampler Configure (pipe) 或 LC Pipe (in/edit) 的 pipe。"
+      }
+    }
+  },
+  "LCSamplerConfigureSimple": {
+    "description": "把单次采样的设置集中在一处：steps、detailer steps、denoise、CFG、sampler 和 scheduler。",
+    "inputs": {
+      "total_steps": {
+        "tooltip": "总采样步数。"
+      },
+      "detailer_steps": {
+        "tooltip": "为 detailer / refiner 阶段保留的步数（0 = 不使用）。"
+      },
+      "denoise": {
+        "tooltip": "降噪强度（1.0 = 完全）。"
+      },
+      "_gap1": {
+        "tooltip": "布局间隔"
+      },
+      "cfg": {
+        "tooltip": "Classifier-free guidance 强度。"
+      },
+      "_gap2": {
+        "tooltip": "布局间隔"
+      },
+      "sampler_name": {
+        "tooltip": "采样器算法。"
+      },
+      "scheduler": {
+        "tooltip": "噪声调度。"
+      }
+    }
+  },
+  "LCSamplerConfigureSimplePipeOut": {
+    "description": "把单次采样的设置集中在一处：steps、detailer steps、denoise、CFG、sampler 和 scheduler。",
+    "inputs": {
+      "total_steps": {
+        "tooltip": "总采样步数。"
+      },
+      "detailer_steps": {
+        "tooltip": "为 detailer / refiner 阶段保留的步数（0 = 不使用）。"
+      },
+      "denoise": {
+        "tooltip": "降噪强度（1.0 = 完全）。"
+      },
+      "_gap1": {
+        "tooltip": "布局间隔"
+      },
+      "cfg": {
+        "tooltip": "Classifier-free guidance 强度。"
+      },
+      "_gap2": {
+        "tooltip": "布局间隔"
+      },
+      "sampler_name": {
+        "tooltip": "采样器算法。"
+      },
+      "scheduler": {
+        "tooltip": "噪声调度。"
+      },
+      "pipe": {
+        "tooltip": "可选的 LC_PIPE 输入。此节点的采样器键会覆盖；其他键直通。"
+      }
+    }
+  },
+  "LCPipeOut": {
+    "description": "把 pipe 解包回独立的接口。pipe 仍从顶部输出。protect_mask（底部）：pipe detailer 重绘过的区域，用于 LC Skin Upscale / LC Skin Texture 的 protect_mask。",
+    "inputs": {
+      "pipe": {
+        "tooltip": "来自 Pipe In、Pipe Edit 或 KJ Get 的 LC_PIPE。"
+      }
+    }
+  },
+  "LCPipeEdit": {
+    "description": "把你接入的所有东西打包进一个 pipe,这样一根线就能带走全部。接入一个 pipe 时,只改动你连接的部分;其余的一路带过。",
+    "inputs": {
+      "pipe": {
+        "tooltip": "要修改的现有 pipe（可选）。"
+      },
+      "model_1": {
+        "tooltip": "Model 1"
+      },
+      "clip_1": {
+        "tooltip": "Clip 1"
+      },
+      "vae_1": {
+        "tooltip": "VAE 1"
+      },
+      "model_2": {
+        "tooltip": "Model 2"
+      },
+      "clip_2": {
+        "tooltip": "Clip 2"
+      },
+      "vae_2": {
+        "tooltip": "VAE 2"
+      },
+      "image": {
+        "tooltip": "图像"
+      },
+      "mask": {
+        "tooltip": "Mask"
+      },
+      "width": {
+        "tooltip": "Width"
+      },
+      "height": {
+        "tooltip": "高度"
+      },
+      "latent": {
+        "tooltip": "Latent"
+      },
+      "batch": {
+        "tooltip": "Batch"
+      },
+      "positive_prompt": {
+        "tooltip": "正面提示词"
+      },
+      "positive": {
+        "tooltip": "正面条件"
+      },
+      "negative_prompt": {
+        "tooltip": "负面提示词"
+      },
+      "negative": {
+        "tooltip": "Negative conditioning"
+      },
+      "seed": {
+        "tooltip": "Seed"
+      },
+      "total_steps": {
+        "tooltip": "total_steps"
+      },
+      "cfg_1": {
+        "tooltip": "cfg_1"
+      },
+      "denoise": {
+        "tooltip": "denoise"
+      },
+      "step_swap": {
+        "tooltip": "step_swap"
+      },
+      "cfg_2": {
+        "tooltip": "cfg_2"
+      },
+      "sampler_name": {
+        "tooltip": "sampler_name"
+      },
+      "scheduler": {
+        "tooltip": "scheduler"
+      },
+      "detailer_steps": {
+        "tooltip": "detailer_steps"
+      }
+    }
+  },
+  "LCDetailPipeOut": {
+    "description": "从 pipe 中解包 detailer 所需的内容：model、clip、VAE、提示词、seed、CFG、sampler、scheduler 和 detailer steps。pipe 仍从顶部输出。protect_mask（底部）：pipe detailer 重绘过的区域。",
+    "inputs": {
+      "pipe": {
+        "tooltip": "来自 Pipe In/Edit、Aspect、Sampler 或 KJ Get 的 LC_PIPE。"
+      }
+    }
+  },
+  "LCPipeCombine": {
+    "description": "用下方的 pipe 编辑上方的 pipe：edit pipe 携带的内容会覆盖上方 pipe，其余内容保持不变。",
+    "inputs": {
+      "pipe": {
+        "tooltip": "要编辑的 pipe。edit pipe 没设置的内容都会原样通过。"
+      },
+      "edit_pipe": {
+        "tooltip": "其值会覆盖上方 pipe 的值。空插槽会被忽略。"
+      }
+    }
+  },
+  "LCMiniMaxH3Pipe": {
+    "description": "MiniMax H3 所需的一切汇集在一根线上：提示词、参考图、尺寸、长度和帧率（V2 增加 prompt、steps、CFG、seed、sampler 和 scheduler）。接入一个 pipe，只改动你连接的部分。",
+    "inputs": {
+      "pipe": {
+        "tooltip": "要合并的 H3 pipe,或 Aspect Ratio Simplifier / LC Pipe(只复制 width + height)。"
+      },
+      "fl2va_model": {
+        "tooltip": "首尾帧转视频 UNET。"
+      },
+      "fl2va_clip": {
+        "tooltip": "用于 FL2VA 的 CLIP（MiniMaxH3ImageToVideo）。"
+      },
+      "ref2va_model": {
+        "tooltip": "参考生视频 UNET。"
+      },
+      "ref2va_clip": {
+        "tooltip": "用于 REF2VA 的 CLIP（MiniMaxH3ReferenceToVideo）。"
+      },
+      "video_vae": {
+        "tooltip": "视频 VAE（MiniMax vae）。"
+      },
+      "audio_vae": {
+        "tooltip": "Audio VAE (MiniMax audio_vae)。"
+      },
+      "width": {
+        "tooltip": "视频宽度。接入 ARS pipe 会自动填入。"
+      },
+      "height": {
+        "tooltip": "视频高度。"
+      },
+      "length": {
+        "tooltip": "帧数。H3 为 24 fps；124 ≈ 5 秒，244 ≈ 10 秒。"
+      },
+      "frame_rate": {
+        "tooltip": "帧率。MiniMax H3 以 24 训练。"
+      },
+      "ref_image_0": {
+        "tooltip": "ref_image_0"
+      },
+      "ref_image_1": {
+        "tooltip": "ref_image_1"
+      },
+      "ref_image_2": {
+        "tooltip": "ref_image_2"
+      },
+      "ref_image_3": {
+        "tooltip": "ref_image_3"
+      },
+      "ref_image_4": {
+        "tooltip": "ref_image_4"
+      },
+      "ref_image_5": {
+        "tooltip": "ref_image_5"
+      },
+      "ref_image_6": {
+        "tooltip": "ref_image_6"
+      },
+      "ref_image_7": {
+        "tooltip": "ref_image_7"
+      },
+      "ref_image_8": {
+        "tooltip": "ref_image_8"
+      },
+      "ref_video_0": {
+        "tooltip": "ref_video_0"
+      },
+      "ref_video_1": {
+        "tooltip": "ref_video_1"
+      },
+      "ref_video_2": {
+        "tooltip": "ref_video_2"
+      },
+      "ref_video_audio_0": {
+        "tooltip": "ref_video_audio_0"
+      },
+      "ref_video_audio_1": {
+        "tooltip": "ref_video_audio_1"
+      },
+      "ref_video_audio_2": {
+        "tooltip": "ref_video_audio_2"
+      },
+      "ref_audio_0": {
+        "tooltip": "ref_audio_0"
+      },
+      "ref_audio_1": {
+        "tooltip": "ref_audio_1"
+      },
+      "ref_audio_2": {
+        "tooltip": "ref_audio_2"
+      }
+    }
+  },
+  "LCMiniMaxH3PipeOut": {
+    "description": "解包 H3 pipe。ref_image_0 在你的 prompt 里是 <Picture 1>。",
+    "inputs": {
+      "pipe": {
+        "tooltip": "LC MiniMax H3 Pipe（V1 或 V2 -- V2 额外的采样字段在这里会被忽略）。"
+      }
+    }
+  },
+  "LCMiniMaxH3PipeV2": {
+    "description": "MiniMax H3 所需的一切汇集在一根线上：提示词、参考图、尺寸、长度和帧率（V2 增加 prompt、steps、CFG、seed、sampler 和 scheduler）。接入一个 pipe，只改动你连接的部分。",
+    "inputs": {
+      "pipe": {
+        "tooltip": "可接入 H3 Pipe V2 来合并、V1 H3 pipe 来升级（仅参考媒体——采样字段保持未设置，直到通过此节点自己的接口接入），或 Aspect Ratio Simplifier / LC Pipe（仅 width + height）。"
+      },
+      "fl2va_model": {
+        "tooltip": "首尾帧转视频 UNET。"
+      },
+      "fl2va_clip": {
+        "tooltip": "用于 FL2VA 的 CLIP（MiniMaxH3ImageToVideo）。"
+      },
+      "ref2va_model": {
+        "tooltip": "参考生视频 UNET。"
+      },
+      "ref2va_clip": {
+        "tooltip": "用于 REF2VA 的 CLIP（MiniMaxH3ReferenceToVideo）。"
+      },
+      "video_vae": {
+        "tooltip": "视频 VAE（MiniMax vae）。"
+      },
+      "audio_vae": {
+        "tooltip": "Audio VAE (MiniMax audio_vae)。"
+      },
+      "width": {
+        "tooltip": "视频宽度。接入 ARS pipe 会自动填入。"
+      },
+      "height": {
+        "tooltip": "视频高度。"
+      },
+      "length": {
+        "tooltip": "帧数。H3 为 24 fps；124 ≈ 5 秒，244 ≈ 10 秒。"
+      },
+      "frame_rate": {
+        "tooltip": "帧率。MiniMax H3 以 24 训练。"
+      },
+      "prompt": {
+        "tooltip": "正面提示词文本。"
+      },
+      "total_steps": {
+        "tooltip": "采样步数。"
+      },
+      "cfg": {
+        "tooltip": "Classifier-free guidance 强度。"
+      },
+      "seed": {
+        "tooltip": "采样 seed。"
+      },
+      "sampler_name": {
+        "tooltip": "采样器算法。"
+      },
+      "scheduler": {
+        "tooltip": "噪声调度。"
+      },
+      "ref_image_0": {
+        "tooltip": "ref_image_0"
+      },
+      "ref_image_1": {
+        "tooltip": "ref_image_1"
+      },
+      "ref_image_2": {
+        "tooltip": "ref_image_2"
+      },
+      "ref_image_3": {
+        "tooltip": "ref_image_3"
+      },
+      "ref_image_4": {
+        "tooltip": "ref_image_4"
+      },
+      "ref_image_5": {
+        "tooltip": "ref_image_5"
+      },
+      "ref_image_6": {
+        "tooltip": "ref_image_6"
+      },
+      "ref_image_7": {
+        "tooltip": "ref_image_7"
+      },
+      "ref_image_8": {
+        "tooltip": "ref_image_8"
+      },
+      "ref_video_0": {
+        "tooltip": "ref_video_0"
+      },
+      "ref_video_1": {
+        "tooltip": "ref_video_1"
+      },
+      "ref_video_2": {
+        "tooltip": "ref_video_2"
+      },
+      "ref_video_audio_0": {
+        "tooltip": "ref_video_audio_0"
+      },
+      "ref_video_audio_1": {
+        "tooltip": "ref_video_audio_1"
+      },
+      "ref_video_audio_2": {
+        "tooltip": "ref_video_audio_2"
+      },
+      "ref_audio_0": {
+        "tooltip": "ref_audio_0"
+      },
+      "ref_audio_1": {
+        "tooltip": "ref_audio_1"
+      },
+      "ref_audio_2": {
+        "tooltip": "ref_audio_2"
+      }
+    }
+  },
+  "LCMiniMaxH3PipeOutV2": {
+    "description": "解包 H3 pipe。ref_image_0 在你的 prompt 里是 <Picture 1>。",
+    "inputs": {
+      "pipe": {
+        "tooltip": "LC MiniMax H3 Pipe V2（或 V1 LC_H3_PIPE——采样字段回退到默认值）。"
+      }
+    }
+  },
+  "LCGetImage": {
+    "description": "从图像读取分辨率和 batch 大小。输出 megapixels、width、height、resolution（长边像素数）、batch 和宽高比（例如 1.0:1.2）。",
+    "inputs": {
+      "image": {
+        "tooltip": "源图像。"
+      }
+    }
+  },
+  "LCDimensionResize": {
+    "description": "用同一个值对宽和高做加 / 减 / 乘 / 除,然后把两个结果都取整。",
+    "inputs": {
+      "width": {
+        "tooltip": "源宽度，单位像素。"
+      },
+      "height": {
+        "tooltip": "源高度,单位像素。"
+      },
+      "value": {
+        "tooltip": "INT / FLOAT / 数字，同时应用于宽度和高度。"
+      },
+      "operation": {
+        "tooltip": "用 value 对宽和高做同样的运算。"
+      }
+    }
+  },
+  "LCImageMaskResize": {
+    "description": "将图像和/或遮罩缩放到预设或自定义的 W×H。match_aspect_ratio 使用设置中较大的一边并保持输入比例。之后 upscale_by 可以对该尺寸做倍数放大或设定 megapixels。最终尺寸是 divisible_by 的整数倍。",
+    "inputs": {
+      "match_aspect_ratio": {
+        "tooltip": "开：保持传入图像/遮罩的比例。当前 width/height 设置中较大的一个作为长边。关：按预设或自定义 W×H 原样使用。"
+      },
+      "aspect_ratio": {
+        "tooltip": "预设尺寸，或选 custom 使用 custom_width × custom_height。"
+      },
+      "custom_width": {
+        "tooltip": "自定义尺寸的目标宽度。开启 match_aspect_ratio 时，也是尺寸来源（与 height 一起）。"
+      },
+      "custom_height": {
+        "tooltip": "自定义尺寸的目标高度。开启 match_aspect_ratio 时，它（连同 width）也是尺寸的来源。"
+      },
+      "upscale_by": {
+        "tooltip": "none = 使用上面的尺寸。multiplier = 缩放该尺寸。megapixels = 按当前比例设定总像素数。"
+      },
+      "multiplier": {
+        "tooltip": "当 upscale_by 为 multiplier 时的缩放系数。步长 0.25，最大 4.00。"
+      },
+      "megapixels": {
+        "tooltip": "当 upscale_by 为 megapixels 时的目标百万像素。步长 0.01，最大 8.00。"
+      },
+      "upscale_method": {
+        "tooltip": "重采样滤波器。Lanczos 是照片的好默认值。遮罩使用 nearest。nvidia_rtx_vsr = RTX Video Super Resolution（RTX 显卡）：放大更锐利；缩小使用 lanczos。"
+      },
+      "proportion": {
+        "tooltip": "stretch=强制尺寸；resize=缩放至内接；crop=填满并裁剪；total_pixels=匹配像素总量（自定义 W×H）。"
+      },
+      "crop_location": {
+        "tooltip": "proportion 为 crop 时的裁剪锚点。"
+      },
+      "divisible_by": {
+        "tooltip": "最终宽/高会向下取整为此值的倍数，然后图像/蒙版重采样到该尺寸。Z-Image / Flux 用 16；SDXL 用 8。1 = 关闭。"
+      }
+    }
+  },
+  "LCImageToTotalMegapixels": {
+    "description": "将图像缩放到总百万像素数，类似 Scale Image to Total Pixels。同时输出得到的 resolution（长边像素数）和 megapixels。",
+    "inputs": {
+      "image": {
+        "tooltip": "要缩放的图像。"
+      },
+      "upscale_method": {
+        "tooltip": "重采样方法。nvidia_rtx_vsr = RTX Video Super Resolution（RTX 显卡，需要 nvidia-vfx）：放大更锐利；缩小使用 lanczos。"
+      },
+      "megapixels": {
+        "tooltip": "目标尺寸，单位为百万像素（1.0 = 1,000,000 像素，与 LC Get Image 使用的计数相同）。保持宽高比。"
+      },
+      "resolution_steps": {
+        "tooltip": "宽度和高度会取整为该值的倍数（需要的模型用 8、16、32、64）。1 = 关闭。"
+      }
+    }
+  },
+  "LCLightingControlV2": {
+    "description": "根据法线图和深度图为图像重新打光，可用一到两盏灯（spot 或 sun），支持色温，以及真实的硬阴影或软阴影。选择预设，在舞台上拖动灯光，再与原图混合。",
+    "inputs": {
+      "image": {
+        "tooltip": "要重新打光的图像。"
+      },
+      "normal_map": {
+        "tooltip": "同一图像的法线图（LC Normal Map）。"
+      },
+      "depth_map": {
+        "tooltip": "同一张图的深度图(LC Depth Anything V2)。"
+      },
+      "preset": {
+        "tooltip": "一个起始外观。选中后会设置下面的亮部和阴影,之后你可以随意调整。修改任何亮部或阴影的值会把它切换为 custom。"
+      },
+      "blend": {
+        "tooltip": "重打光结果叠加在原图上的程度。0 = 原图，1 = 完全重打光。0.7 到 0.9 效果最好。"
+      },
+      "light1_type": {
+        "tooltip": "spot = 照亮画面一部分的柔和光束。sun = 均匀照亮整个画面的光。"
+      },
+      "light1_x": {
+        "tooltip": "灯光在舞台上的位置：X = 左/右，Y = 下/上，Z = 正面程度（0 为侧面，1 为正对）。可拖动舞台上的手柄，或在此输入。"
+      },
+      "light1_y": {
+        "tooltip": "灯光在舞台上的位置：X = 左/右，Y = 下/上，Z = 正面程度（0 为侧面，1 为正对）。可拖动舞台上的手柄，或在此输入。"
+      },
+      "light1_z": {
+        "tooltip": "光在舞台上的位置:X = 左/右,Y = 下/上,Z = 正面程度(0 侧面,1 正对)。可在舞台上拖动手柄,或在此输入。Z 会改变明暗和光束,不会改变阴影长度。"
+      },
+      "light1_brightness": {
+        "tooltip": "光有多亮。约 1.2 到 1.5 是自然的主光。"
+      },
+      "light1_spread": {
+        "tooltip": "仅 Spot：光束有多宽。小 = 集中的聚光灯，大 = 柔和地泛光照亮整张脸。"
+      },
+      "light1_warmth": {
+        "tooltip": "光的颜色。负值 = 冷蓝,0 = 中性,正值 = 暖橙。"
+      },
+      "light1_color": {
+        "tooltip": "此灯可选的彩色滤光片。与 warmth 配合使用。颜色只会出现在这盏灯照到的地方，所以阴影会回到中性补光。"
+      },
+      "light1_color_amount": {
+        "tooltip": "彩色滤光片的强度。0.3 到 0.6 看起来自然，1 是饱和的舞台灯光。"
+      },
+      "enable_light_2": {
+        "tooltip": "添加第二盏灯（补光或轮廓光）。"
+      },
+      "light2_type": {
+        "tooltip": "spot = 照亮画面一部分的柔和光束。sun = 均匀照亮整个画面的光。"
+      },
+      "light2_x": {
+        "tooltip": "灯光在舞台上的位置：X = 左/右，Y = 下/上，Z = 正面程度（0 为侧面，1 为正对）。可拖动舞台上的手柄，或在此输入。"
+      },
+      "light2_y": {
+        "tooltip": "灯光在舞台上的位置：X = 左/右，Y = 下/上，Z = 正面程度（0 为侧面，1 为正对）。可拖动舞台上的手柄，或在此输入。"
+      },
+      "light2_z": {
+        "tooltip": "光在舞台上的位置:X = 左/右,Y = 下/上,Z = 正面程度(0 侧面,1 正对)。可在舞台上拖动手柄,或在此输入。Z 会改变明暗和光束,不会改变阴影长度。"
+      },
+      "light2_brightness": {
+        "tooltip": "光有多亮。约 1.2 到 1.5 是自然的主光。"
+      },
+      "light2_spread": {
+        "tooltip": "仅 Spot：光束有多宽。小 = 集中的聚光灯，大 = 柔和地泛光照亮整张脸。"
+      },
+      "light2_warmth": {
+        "tooltip": "光的颜色。负值 = 冷蓝,0 = 中性,正值 = 暖橙。"
+      },
+      "light2_color": {
+        "tooltip": "此灯可选的彩色滤光片。与 warmth 配合使用。颜色只会出现在这盏灯照到的地方，所以阴影会回到中性补光。"
+      },
+      "light2_color_amount": {
+        "tooltip": "彩色滤光片的强度。0.3 到 0.6 看起来自然，1 是饱和的舞台灯光。"
+      },
+      "light_wrap": {
+        "tooltip": "柔化脸部和身体上光线转为阴影的过渡。0 = 像硬灯一样的锐利分界线，越高 = 过渡越渐进。"
+      },
+      "fill": {
+        "tooltip": "所有部分（包括阴影侧）都保留的基础光。0 = 漆黑的阴影，0.2 = 自然，0.5 = 平淡。"
+      },
+      "shadows": {
+        "tooltip": "soft = 边缘随着远离物体而变柔。hard = 锐利边缘（太阳、聚光灯）。off = 没有投影，只有明暗。"
+      },
+      "shadow_amount": {
+        "tooltip": "投射阴影有多暗。不会比补光更暗。"
+      },
+      "shadow_blur": {
+        "tooltip": "模糊投影的边缘，soft 和 hard 模式都适用。如果投影看起来像剪出来的，就调高它。"
+      },
+      "background_shadow": {
+        "tooltip": "阴影投射在主体背后背景上的程度。1 = 紧贴身后的墙，0 = 远处的背景，近处没有东西可以接住阴影。已连接 mask 时使用 mask，否则使用深度图。"
+      },
+      "self_shadow": {
+        "tooltip": "需要遮罩。主体对自身投影（鼻子、下巴、头发）的强度，相对于它投在背景上的阴影。"
+      },
+      "relief": {
+        "tooltip": "脸部和场景在 3D 中的深度。越大 = 鼻子、下巴和头发投下的阴影越长越强。"
+      },
+      "advanced": {
+        "tooltip": "显示精细控制项（depth、阴影形状、遮罩选项）。"
+      },
+      "depth_falloff": {
+        "tooltip": "远处获得的光更少。0 = 无衰减。"
+      },
+      "shadow_height": {
+        "tooltip": "仅用于阴影的光源高度。低 = 长而拉伸的阴影，高 = 紧贴物体下方的短阴影。与 Light Z 相互独立。"
+      },
+      "shadow_length": {
+        "tooltip": "阴影能延伸的最远距离（占图像的比例）。"
+      },
+      "shadow_softness": {
+        "tooltip": "仅限柔和阴影：边缘随距物体距离变柔的速度。"
+      },
+      "subject_distance": {
+        "tooltip": "需要蒙版。主体离背景有多远，从而在背景上投下阴影。0 = 紧贴墙面。"
+      },
+      "mask_dome": {
+        "tooltip": "需要遮罩。在主体上叠加一个圆润的形状，以平滑形体明暗。"
+      },
+      "mask": {
+        "tooltip": "主体遮罩（LC Remove Background / LC Person Mask）。可选。"
+      }
+    }
+  },
+  "LCPreviewImage": {
+    "description": "预览图像。如果没有信号传入，它会安静地待着，不报错。",
+    "inputs": {
+      "image": {
+        "tooltip": "要显示的图像。没接或接了空信号都没问题：节点只会等待。"
+      }
+    }
+  },
+  "LCPreviewMask": {
+    "description": "预览遮罩。如果没有信号传入，它会安静地保持全黑，不报错。",
+    "inputs": {
+      "mask": {
+        "tooltip": "要显示的遮罩（白色 = 被遮罩）。不接任何东西或接空信号也可以：节点只会等待。"
+      }
+    }
+  },
+  "LCLabel": {
+    "description": "用于标注工作流的悬浮文字标签。没有标题，没有接口。双击打开设置（文字、字体、大小、颜色、描边、阴影、背景）。拖动上方的圆形手柄旋转，按住 Shift 以 15 度吸附，拖动角点缩放。"
+  },
+  "LCLoraLoader": {
+    "description": "在一个节点里给 model/clip 应用任意数量的 LoRA：每行有启用开关、名称和强度，可拖动排序，Info 按钮会读取 LoRA 自带的触发词。model 和 clip 都是可选的，所以可用于仅 model 或仅 clip 的链路。已禁用或强度为 0 的行会被跳过。",
+    "inputs": {
+      "model": {
+        "tooltip": "要应用已启用 LoRA 的扩散模型。可选：不连接则用于仅 clip 的链路。"
+      },
+      "clip": {
+        "tooltip": "要对其应用已启用 LoRA 的 CLIP。可选:不接则为仅模型链。"
+      },
+      "lora_rows": {
+        "tooltip": "内部使用:行列表(on/lora/strength),由节点自身界面维护。不要手动输入。"
+      }
+    }
+  },
+  "LCLoraLoaderSingle": {
+    "description": "在模型上套用一个 LoRA：即 LC LoRA Loader 的一行（on / off、文件夹、strength、Info），没有添加和移除。适合单独放置的 turbo 或风格 LoRA。仅作用于模型。",
+    "inputs": {
+      "lora_rows": {
+        "tooltip": "内部使用:这一行(on/lora/strength),由节点自身界面维护。"
+      }
+    }
+  },
+  "LCLoraLoaderStack": {
+    "description": "构建 LoRA 列表——每行包含启用、名称、强度，可拖动排序，界面与 LC LoRA Loader 相同——没有输入接口，只有一个 LORA_STACK 输出。将它接入一个或多个 LC Apply LoRA Stack 节点，即可把同一组 LoRA 应用到不同的 model/clip 组合。",
+    "inputs": {
+      "lora_rows": {
+        "tooltip": "内部使用:行列表(on/lora/strength),由节点自身界面维护。不要手动输入。"
+      }
+    }
+  },
+  "LCApplyLoraStack": {
+    "description": "把 LORA_STACK（来自 LC LoRA Loader Stack，或其他包的 LORA_STACK 输出）应用到 model 和/或 clip。开启 bypass 会原样直通两者，不加载、不应用任何内容。",
+    "inputs": {
+      "bypass": {
+        "tooltip": "开启：跳过堆栈中的所有 LoRA，model/clip 原样直通。"
+      },
+      "model": {
+        "tooltip": "可选:不接则为仅 clip 的堆栈。"
+      },
+      "clip": {
+        "tooltip": "可选：不接则为仅模型的 stack。"
+      },
+      "lora_stack": {
+        "tooltip": "来自 LC LoRA Loader Stack，或任何其他包的 LoRA stack 输出。"
+      }
+    }
+  },
+  "LCImageCrop": {
+    "description": "Windows 风格的交互式裁剪：在节点上拖动框和手柄。可选的宽高比锁定（free / original / 常见比例）。x、y、width、height 是相对于源图的百分比。",
+    "inputs": {
+      "image": {
+        "tooltip": "要裁剪的源图像。"
+      },
+      "x": {
+        "tooltip": "裁剪左边缘，占图像宽度的百分比（0–100）。"
+      },
+      "y": {
+        "tooltip": "裁剪上边缘，占图像高度的 %（0–100）。"
+      },
+      "width": {
+        "tooltip": "裁剪宽度，占图像宽度的百分比（0.5–100）。"
+      },
+      "height": {
+        "tooltip": "裁剪高度，占图像高度的百分比（0.5–100）。"
+      },
+      "aspect": {
+        "tooltip": "锁定裁剪宽高比。'original' 与源图一致。"
+      }
+    }
+  },
+  "LCImageGrid": {
+    "description": "把一批图片排成网格(类似 CR Image Grid)。单元格会补边到统一尺寸;可选 gap、outline 和外边框。",
+    "inputs": {
+      "max_columns": {
+        "tooltip": "每行最多图像数。按从左到右、从上到下的顺序填充。"
+      },
+      "gap": {
+        "tooltip": "单元格之间的间距（像素）。"
+      },
+      "cell_pad": {
+        "tooltip": "每个格子内图像周围的内边距（在轮廓之前）。"
+      },
+      "outline_thickness": {
+        "tooltip": "绘制在每个单元格图像周围的轮廓。"
+      },
+      "border_thickness": {
+        "tooltip": "整个网格外围的边框。"
+      },
+      "bg_color": {
+        "tooltip": "背景/空隙填充色（#RRGGBB）。"
+      },
+      "outline_color": {
+        "tooltip": "格子轮廓颜色（#RRGGBB）。"
+      },
+      "border_color": {
+        "tooltip": "外边框颜色 (#RRGGBB)。"
+      }
+    }
+  },
+  "LCImageAdjust": {
+    "description": "基础调色：hue、saturation、brightness、contrast，轻度锐化/柔化。居中的值为中性（0）。节点上有 before/after wipe 预览。",
+    "inputs": {
+      "hue": {
+        "tooltip": "色相偏移（−1..1 ≈ ±180°）"
+      },
+      "saturation": {
+        "tooltip": "饱和度偏移 (−1..1)"
+      },
+      "brightness": {
+        "tooltip": "亮度偏移 (−1..1)"
+      },
+      "contrast": {
+        "tooltip": "对比度偏移 (−1..1)"
+      },
+      "sharpness": {
+        "tooltip": "锐度（−1 柔 … 1 锐）"
+      }
+    }
+  },
+  "LCAutoWhiteBalance": {
+    "description": "自动白平衡校正。选择算法，并用 strength 混合。节点上带预览和前后对比滑动。",
+    "inputs": {
+      "method": {
+        "tooltip": "白平衡算法。"
+      },
+      "minkowski_p": {
+        "tooltip": "Minkowski 范数 p（用于 Gray Edge / Shades of Gray）。"
+      },
+      "strength": {
+        "tooltip": "0 = 原图，1 = 完全校正。"
+      }
+    }
+  },
+  "LCClarity": {
+    "description": "Sharpen Pro：仅对亮度进行 capture sharpening（反卷积）、纹理和清晰度处理。Halo 控制可抑制边缘亮边，平坦区域保持干净。Preset 会自动填入滑块。",
+    "inputs": {
+      "preset": {
+        "tooltip": "起始预设。移动任意滑块都会切换为 Custom。"
+      },
+      "clarity": {
+        "tooltip": "大尺度局部对比（冲击力、纵深）。0 = 关闭。"
+      },
+      "sharpen": {
+        "tooltip": "拍摄锐化。通过反卷积还原画面中测得的模糊，而不是勾勒轮廓，因此放大后的 4K 图像不会过度锐化。0 = 关闭。"
+      },
+      "strength": {
+        "tooltip": "与原图混合。0 = 原图，1 = 完整效果。"
+      },
+      "halo": {
+        "tooltip": "光晕控制。1 = 边缘不会超出相邻像素（没有亮/暗边）。0 = 允许强烈的过冲。"
+      },
+      "skin_protect": {
+        "tooltip": "减少对皮肤的锐化、纹理和清晰度，毛孔不会被挖成坑。眼睛、睫毛和嘴唇仍会被锐化。0 = 关闭（动漫和线稿请用 0）。"
+      },
+      "radius": {
+        "tooltip": "细节大小。低 = 细线和头发。高 = 图像更柔和、结构更宏观。随分辨率缩放。"
+      },
+      "blend_mode": {
+        "tooltip": "clarity 的混合方式。Soft Light 最自然，Overlay 和 Hard Light 更猛。"
+      },
+      "shadow_protect": {
+        "tooltip": "暗部效果更弱(压低阴影噪点)。0 = 完全生效。"
+      },
+      "highlight_protect": {
+        "tooltip": "亮部效果更弱。0 = 完整效果。"
+      },
+      "texture": {
+        "tooltip": "中等尺度的细节：毛孔、织物、毛发、铅笔排线。0 = 关闭。"
+      },
+      "skin_mask": {
+        "tooltip": "可选。skin_protect 所保护的皮肤蒙版(白 = 皮肤),例如 LC Skin Master 的 skin_mask。不接时按颜色查找皮肤,会漏掉一部分皮肤。"
+      }
+    }
+  },
+  "LCLensFX": {
+    "description": "已弃用：请使用 LC Lens Profile、LC Vignette 和 LC Film Grain。已保存的工作流中仍可使用。"
+  },
+  "LCLiftGammaGain": {
+    "description": "Lift / gamma / gain 风格的调色（阴影、中间调、高光）加 offset。节点上带预览和前后对比滑动。"
+  },
+  "LCImageRGB": {
+    "description": "按通道的 RGB 偏移 (−1…1) 加整体 strength。节点上带预览 + wipe。",
+    "inputs": {
+      "r": {
+        "tooltip": "红色通道偏移 (-1..1)"
+      },
+      "g": {
+        "tooltip": "绿色通道偏移（-1..1）"
+      },
+      "b": {
+        "tooltip": "蓝色通道偏移 (-1..1)"
+      }
+    }
+  },
+  "LCFilmGrain": {
+    "description": "胶片颗粒叠加，可调 amount、contrast、scale，以及单色与彩色颗粒。response：classic（中间调）、film（阴影和中间调）或 sensor（手机/数码相机噪点）。节点上带前后对比擦除预览。视频请用 LC Film Grain (Video)。",
+    "inputs": {
+      "grain_size": {
+        "tooltip": "以 1024px 为参考的颗粒半径;随分辨率缩放。"
+      },
+      "color_grain": {
+        "tooltip": "0 = 单色颗粒，1 = 逐通道彩色颗粒"
+      },
+      "look": {
+        "tooltip": "在 LC Depth FX、Bloom、Lens Profile、Vignette、Film Stock 和 Film Grain 上选同一个外观,它们就会匹配。Custom = 你自己的滑块。拖动滑块会切换到 Custom。"
+      },
+      "response": {
+        "tooltip": "颗粒出现的位置。classic：主要在中间调（旧行为）。film：阴影和中间调最强，高光处渐隐，类似底片。sensor：手机/数码相机噪点，随光线增强（散粒噪声），但在阴影中最明显，蓝色通道噪点最多。"
+      }
+    }
+  },
+  "LCFilmGrainVideo": {
+    "description": "视频胶片颗粒：GPU 处理，每次几帧，带进度条。颗粒大小随分辨率而定，所以经过压缩依然保留。",
+    "inputs": {
+      "images": {
+        "tooltip": "剪辑的帧。"
+      },
+      "strength": {
+        "tooltip": "0.15 = 几乎看不出，0.25 = 轻微胶片质感，0.4 = 明显颗粒感。"
+      },
+      "grain_size": {
+        "tooltip": "1024 px 下的颗粒大小；随分辨率缩放。"
+      },
+      "color_grain": {
+        "tooltip": "0 = 单色颗粒，1 = 彩色斑点。"
+      },
+      "response": {
+        "tooltip": "film:阴影和中间调,高光处消失。classic:主要在中间调。sensor:手机 / 数码相机噪点。"
+      },
+      "grain_motion": {
+        "tooltip": "changing：每帧都是新颗粒，像真实胶片。fixed：每帧颗粒相同（运动时看起来像脏屏幕）。"
+      },
+      "frame_offset": {
+        "tooltip": "用于分段制作的视频：这一段的第一帧编号，使颗粒延续而不是重复。"
+      }
+    }
+  },
+  "LCVibrance": {
+    "description": "智能饱和度（vibrance）和可选的普通饱和度；带肤色保护。节点上带前后对比擦除预览。",
+    "inputs": {
+      "vibrance": {
+        "tooltip": "智能饱和度——保护已经饱和的颜色"
+      },
+      "saturation": {
+        "tooltip": "统一饱和度（无保护）"
+      },
+      "protect_skin": {
+        "tooltip": "减弱对肤色色相的影响"
+      }
+    }
+  },
+  "LCVignette": {
+    "description": "边缘变暗或变亮的暗角。节点上带预览和前后对比滑动。",
+    "inputs": {
+      "intensity": {
+        "tooltip": "压暗边缘。负值 = 提亮边缘。0.1 - 0.25 = 真实镜头。1 - 2 且关闭 cos4 = 老照片，直至四角全黑。"
+      },
+      "midpoint": {
+        "tooltip": "变暗从哪里开始。越低 = 越靠近中心。"
+      },
+      "feather": {
+        "tooltip": "边缘有多柔。低 = 硬边椭圆，高 = 长而柔和的渐隐。"
+      },
+      "cos4_falloff": {
+        "tooltip": "开：真实的镜头光线衰减。关：印刷 / 老照片式的暗角，边缘平滑，可一直暗到纯黑。"
+      },
+      "look": {
+        "tooltip": "在 LC Depth FX、Bloom、Lens Profile、Vignette、Film Stock 和 Film Grain 上选同一个外观,它们就会匹配。Custom = 你自己的滑块。拖动滑块会切换到 Custom。"
+      }
+    }
+  },
+  "LCBloom": {
+    "description": "亮部的 Bloom / 辉光。Threshold、radius、intensity。节点上有预览和 wipe。",
+    "inputs": {
+      "intensity": {
+        "tooltip": "辉光有多强。1 = 1.53.15 之前的 0.5。"
+      },
+      "threshold": {
+        "tooltip": "只有比这更亮的部分才会发光。越低 = 画面越多部分发光。"
+      },
+      "smoothing": {
+        "tooltip": "辉光在 threshold 附近渐入的柔和程度。0 = 硬切。"
+      },
+      "radius": {
+        "tooltip": "光晕扩散的范围。随图片尺寸缩放。"
+      },
+      "saturation": {
+        "tooltip": "辉光的颜色。0 = 白色,1 = 光自身的颜色。"
+      },
+      "exposure": {
+        "tooltip": "辉光的亮度,叠加在 intensity 之上。"
+      },
+      "mode": {
+        "tooltip": "Bloom = 亮部发出的光晕。Pro-Mist = 镜头前的柔光滤镜（柔和光晕、对比更温和、黑色依然深邃）。Halation = 胶片在明亮边缘周围产生的红橙色光晕。"
+      },
+      "look": {
+        "tooltip": "在 LC Depth FX、Bloom、Lens Profile、Vignette、Film Stock 和 Film Grain 上选同一个外观,它们就会匹配。Custom = 你自己的滑块。拖动滑块会切换到 Custom。"
+      }
+    }
+  },
+  "LCImageDenoise": {
+    "description": "降噪。smart：测量每张图的噪点，分别清理亮度噪点和颜色噪点，并保留毛孔和毛发。legacy：旧的边缘门控模糊。节点上有 before/after wipe 预览。",
+    "inputs": {
+      "blur_strength": {
+        "tooltip": "高斯模糊强度（sigma）"
+      },
+      "edge_preservation": {
+        "tooltip": "越高保留的边缘/细节越多"
+      },
+      "radius_multiplier": {
+        "tooltip": "模糊核半径的缩放,相对于 blur strength"
+      },
+      "strength": {
+        "tooltip": "原图（0）与降噪结果（1）之间的混合"
+      },
+      "mode": {
+        "tooltip": "smart = 测量每张图的噪点，分别清理亮度噪点和色彩噪点，同时保留毛孔和头发（使用 luma / chroma / keep_detail）。legacy = 旧的边缘门控模糊（使用 blur_strength / edge_preservation / radius_multiplier）。"
+      },
+      "luma": {
+        "tooltip": "smart：亮度噪声（颗粒）的清理力度，相对于图像中测得的噪声。1 = 调好的默认值，0 = 不处理亮度。"
+      },
+      "chroma": {
+        "tooltip": "smart：清除色彩噪点（色斑、彩虹状斑点）的力度。颜色边缘会跟随亮度边缘，因此保持锐利。0 = 不处理颜色。"
+      },
+      "keep_detail": {
+        "tooltip": "smart：在明显高于噪声的位置（毛孔、头发、织物）找回多少原始纹理。平滑区域无论如何都保持干净。"
+      }
+    },
+    "outputs": {
+      "0": {
+        "tooltip": "降噪后的图像。"
+      },
+      "1": {
+        "tooltip": "smart 模式：每张图测得的噪点（亮度和颜色，满值 255）。"
+      }
+    }
+  },
+  "LCColorMatch": {
+    "description": "将颜色匹配到参考图（Oklab 全色匹配，或旧版 AdaIN / mean-std）。可选的 skin_protect 保持面部色相。可选的 mask：白色 = 匹配，黑色 = 保留原图。没有参考图 = 绕过。节点上带预览和对比滑动。",
+    "inputs": {
+      "image": {
+        "tooltip": "要重新着色的图像（内容）"
+      },
+      "method": {
+        "tooltip": "oklab = 在为人眼设计的色彩空间中匹配整个色云（颜色之间的关系，而非逐通道单独匹配）；超出范围的颜色会平滑过渡而不是被裁切。oklab + distribution = 同时匹配色云的形状（独立的颜色分组、阴影与高光中的不同色调）；更慢。adain = 旧版逐通道均值/标准差匹配；mean_std = 同样的方法，但在线性光下进行。"
+      },
+      "strength": {
+        "tooltip": "原图（0）与匹配结果（1）之间的混合"
+      },
+      "reference": {
+        "tooltip": "色彩参考（风格）。若为空，节点会被旁路并原样传出图像。oklab 方法：与图像批次大小相同的参考批次会逐帧匹配；其他批次会合并为一种整体观感（adain / mean_std 只使用第一张参考）。"
+      },
+      "skin_protect": {
+        "tooltip": "匹配后保持原始肤色色相并限制肤色 chroma 的增益(0=关,1=完全)。明度仍跟随匹配。"
+      },
+      "mask": {
+        "tooltip": "白 = 应用匹配。黑 = 保留图像。留空表示整帧（旧图不受影响）。"
+      }
+    }
+  },
+  "LCToneMatch": {
+    "description": "频率色调锁定：reference 保留大范围的光照/色彩，image 保留微细节。可选遮罩（白色 = 锁定，黑色 = 保留 image）。skin_protect 保持参考图的面部色相。与 H3 Detail Tone Lock 作用相同，适用于任意两张图。节点上带预览，并可与参考图擦除对比。",
+    "inputs": {
+      "image": {
+        "tooltip": "细化 / 生成后的图像(Krea2、Klein、Qwen 等)。高频从这里取。"
+      },
+      "reference": {
+        "tooltip": "原图 / H3 静帧。决定尺寸、大范围光照和色彩的依据。"
+      },
+      "tone_match": {
+        "tooltip": "还原源图低频光照/颜色的力度。0 = 关闭，1 = 完全锁定。"
+      },
+      "refinement_strength": {
+        "tooltip": "tone-locked refine 有多少混合到原图之上。越低 = 身份漂移越少。"
+      },
+      "detail_radius": {
+        "tooltip": "用于区分整体色调与精细细节的模糊半径。1–2 MP 约 32。"
+      },
+      "skin_protect": {
+        "tooltip": "在锁定之后保持参考皮肤色相（0 = 关闭）。与 Color Match 的思路相同。"
+      },
+      "split": {
+        "tooltip": "如何把大范围色调与细节分开。guided 遵循图像自身的边缘：当两张图对得上时（同一张图的精修版），硬边缘周围不会出现亮边或暗边。如果精修使边缘移动很大，两者效果差不多。blur 是旧的高斯分离方式。"
+      },
+      "mask": {
+        "tooltip": "白色 = 应用锁定。黑色 = 保持图像原样（用于新头部/被编辑的区域）。"
+      }
+    }
+  },
+  "LCFilmStockBW": {
+    "description": "来自 preset 的黑白胶片质感。Strength 控制效果混合程度。节点上有预览和 wipe。",
+    "inputs": {
+      "look": {
+        "tooltip": "在 LC Depth FX、Bloom、Lens Profile、Vignette、Film Stock 和 Film Grain 上选同一个外观,它们就会匹配。Custom = 你自己的滑块。拖动滑块会切换到 Custom。"
+      }
+    }
+  },
+  "LCFilmStockColor": {
+    "description": "来自预设（toe/shoulder/gamma）的彩色胶片风格。Strength 用于混合。节点上带预览和对比滑动。",
+    "inputs": {
+      "look": {
+        "tooltip": "在 LC Depth FX、Bloom、Lens Profile、Vignette、Film Stock 和 Film Grain 上选同一个外观,它们就会匹配。Custom = 你自己的滑块。拖动滑块会切换到 Custom。"
+      }
+    }
+  },
+  "LCLensProfile": {
+    "description": "应用或校正指定的镜头配置文件（像差特性）。Strength 缩放效果。节点上带前后对比擦除预览。",
+    "inputs": {
+      "mode": {
+        "tooltip": "添加角色或尝试纠正。"
+      },
+      "strength": {
+        "tooltip": "镜头特性的强度。1 = 1.53.15 之前的 0.5。"
+      },
+      "look": {
+        "tooltip": "在 LC Depth FX、Bloom、Lens Profile、Vignette、Film Stock 和 Film Grain 上选同一个外观,它们就会匹配。Custom = 你自己的滑块。拖动滑块会切换到 Custom。"
+      }
+    }
+  },
+  "LCChromaticAberration": {
+    "description": "用于色差的 RGB 通道偏移(每个通道的像素数 + 方向)。节点上带前后对比 wipe 的预览。",
+    "inputs": {
+      "red_shift": {
+        "tooltip": "红色通道偏移，单位像素。"
+      },
+      "red_direction": {
+        "tooltip": "红色偏移轴。"
+      },
+      "green_shift": {
+        "tooltip": "绿色通道的偏移，单位为像素。"
+      },
+      "green_direction": {
+        "tooltip": "绿色偏移轴。"
+      },
+      "blue_shift": {
+        "tooltip": "蓝色通道偏移，单位像素。"
+      },
+      "blue_direction": {
+        "tooltip": "蓝移轴。"
+      }
+    }
+  },
+  "LCImageDesaturate": {
+    "description": "向灰度去饱和（Essentials 风格）。含 factor 和亮度方法。节点上带预览和前后对比滑动。",
+    "inputs": {
+      "factor": {
+        "tooltip": "0 = 全彩，1 = 完全去饱和"
+      },
+      "method": {
+        "tooltip": "灰度的计算方式"
+      }
+    }
+  },
+  "LCRTXSuperResolution": {
+    "description": "NVIDIA RTX Video Super Resolution：放大（最高 4x）、放大干净的素材、降噪或去模糊，适用于图片或视频帧。很快：RTX 显卡上每次 2x 约半秒。需要 NVIDIA RTX 显卡和 nvidia-vfx 包。Strength 用来向普通缩放的结果混合回去。",
+    "inputs": {
+      "image": {
+        "tooltip": "一张图片或一批视频帧。"
+      },
+      "mode": {
+        "tooltip": "upscale:AI 放大,适用于常见的(有压缩的)图片和视频。\nupscale (clean source):用于无损或高码率的素材,不做去伪影处理。\ndenoise:去除噪点和压缩块,尺寸不变。\ndeblur:锐化模糊的画面,尺寸不变。"
+      },
+      "quality": {
+        "tooltip": "LOW 最快，ULTRA 保留最多细节。"
+      },
+      "scale": {
+        "tooltip": "放大模式的宽高倍数。denoise 和 deblur 会忽略。"
+      },
+      "megapixels": {
+        "tooltip": "放大到此尺寸，而不是使用 scale（保持形状，最高 4x）。0 = 使用 scale。"
+      },
+      "strength": {
+        "tooltip": "1 = 完整的 RTX 结果。调低则向输入的普通缩放结果混合。"
+      },
+      "mask": {
+        "tooltip": "随图片一起缩放，所以依然对得上。"
+      }
+    },
+    "outputs": {
+      "0": {
+        "tooltip": "RTX 的结果。"
+      },
+      "1": {
+        "tooltip": "新尺寸下的蒙版(未接入时为空)。"
+      },
+      "2": {
+        "tooltip": "输出宽度。"
+      },
+      "3": {
+        "tooltip": "输出高度。"
+      }
+    }
+  },
+  "LCSkinBeauty": {
+    "description": "LC Skin Beauty (draft) — 在 LAB 中带 mask 感知的冷白皮肤处理，带 preset。保护高光；可选外部 MASK。节点上有 before/after wipe。",
+    "inputs": {
+      "image": {
+        "tooltip": "源图像（可批量）。"
+      },
+      "preset": {
+        "tooltip": "起始预设。在下方移动滑块进行自定义。"
+      },
+      "strength": {
+        "tooltip": "效果的应用程度。0 = 原图，1 = 完整效果，大于 1 = 更强。低于 1 时它会同时缩放滑块和混合，所以下降得比直接混合更快：0.5 大约只有完整效果的四分之一。"
+      },
+      "coolness": {
+        "tooltip": "冷与暖的肤色。0 = 不偏移，1 = 黄色大幅减少 / 更偏冷。"
+      },
+      "brightness": {
+        "tooltip": "皮肤美白/提亮。0 = 无，1 = 强力提亮（高光仍受保护）。"
+      },
+      "rosy": {
+        "tooltip": "红润血色。负值 = 更少红，0 = 中性，越高 = 脸颊/嘴唇附近的皮肤越粉。"
+      },
+      "evenness": {
+        "tooltip": "均匀肤色。0 = 保留差异，1 = 强力局部色彩平均。"
+      },
+      "shadow_lift": {
+        "tooltip": "阴影恢复。0 = 暗部不变，1 = 提亮阴影多于中间调。"
+      },
+      "smooth": {
+        "tooltip": "柔和平滑。0 = 完整纹理，1 = 更柔的皮肤（配合 texture preserve 使用）。"
+      },
+      "texture_preserve": {
+        "tooltip": "保留纹理。0 = 允许 smooth 抹平细节，1 = 保护毛孔/微对比。"
+      },
+      "saturation": {
+        "tooltip": "皮肤饱和度。负值 = 颜色更淡，0 = 不变，正值 = 更浓。"
+      },
+      "highlight_protect": {
+        "tooltip": "高光保护。0 = 亮部皮肤与中间调同样处理，1 = 基本跳过高光。"
+      },
+      "mask_sensitivity": {
+        "tooltip": "遮罩范围。0 = 仅明显的皮肤，1 = 更宽（可能包含更多非皮肤区域）。"
+      },
+      "mask_feather": {
+        "tooltip": "蒙版边缘。0 = 切口更硬，1 = 向非皮肤区域更柔和地羽化。"
+      },
+      "mask": {
+        "tooltip": "可选的外部皮肤蒙版(精度更高)。与 auto 蒙版合并。"
+      },
+      "device": {
+        "tooltip": "皮肤运算在哪里运行。gpu 约快 250 倍,但运行时每百万像素会占用约 150 MB VRAM。auto 仅在有大量空闲 VRAM 时使用 GPU,否则用 CPU(旧行为)。cpu = 完全不占 VRAM。两种方式的结果相同。"
+      }
+    }
+  },
+  "LCSkinUpscale": {
+    "description": "基于皮肤遮罩的 CNN 放大。单一模型、bbox 裁剪、羽化合成，节点上带 before/after 擦除对比。RMBG 仍作为外部 MASK。",
+    "inputs": {
+      "image": {
+        "tooltip": "源图像（可批量）。"
+      },
+      "upscale_model": {
+        "tooltip": "一个 CNN 放大器。1× SkinContrast 用于细节。"
+      },
+      "mode": {
+        "tooltip": "detail 1x = 以原始尺寸贴回。scale = 保持模型的原生倍数。"
+      },
+      "blend": {
+        "tooltip": "放大后的补丁在遮罩下替换原图的力度。"
+      },
+      "mask_source": {
+        "tooltip": "input = 仅用接入的遮罩。chroma = 自动识别皮肤。input+chroma = 取交集（AND）。"
+      },
+      "mask_sensitivity": {
+        "tooltip": "使用 chroma 时自动皮肤的范围。"
+      },
+      "mask_feather": {
+        "tooltip": "合成 matte 的柔化边缘。"
+      },
+      "tile": {
+        "tooltip": "CNN tile 大小。0 = 先尝试整块裁剪，OOM 时缩小。"
+      },
+      "overlap": {
+        "tooltip": "分块重叠，单位像素。"
+      },
+      "transfer": {
+        "tooltip": "detail band = 只取模型的毛孔和皱褶细节(仅亮度,柔和限幅,在边缘以及深阴影 / 亮高光处减弱):不偏色,没有 1 像素颗粒。full paste = 粘贴模型的全部输出(旧行为)。"
+      },
+      "softness": {
+        "tooltip": "仅限 detail band：越高 = 越平滑、细节越柔和。越低 = 越清晰。"
+      },
+      "mask": {
+        "tooltip": "来自 RMBG 等工具的人物/皮肤 matte。保持外部提供。"
+      },
+      "protect_mask": {
+        "tooltip": "可选。保持不动的区域，例如细节重绘器已经重绘过的脸和手（LC VOSR2 Upscale (pipe) 的 'protected' 输出，或 LC Smart Detailer 的遮罩）。避免皮肤细节被重复添加。"
+      }
+    }
+  },
+  "LCSkinTexture": {
+    "description": "为过于平滑的皮肤添加真实的毛孔纹理，来源是一张真实皮肤照片（只取其细微起伏，绝不取颜色）。已有细节的皮肤添加得更少。节点上带 before/after 擦除对比。",
+    "inputs": {
+      "strength": {
+        "tooltip": "添加多少毛孔纹理。0 = 无。"
+      },
+      "pore_size": {
+        "tooltip": "1 = 细毛孔。越高 = 毛孔和褶皱越大（用于特写）。"
+      },
+      "softness": {
+        "tooltip": "越高 = 越柔和、纹理越温和。越低 = 越清晰。"
+      },
+      "seed": {
+        "tooltip": "改变纹理块的排布方式。"
+      },
+      "mask": {
+        "tooltip": "要加纹理的皮肤（白色）。推荐使用 LC Person Mask，搭配 mediapipe、face + body 和 remove_features。不接线则按颜色查找皮肤。"
+      },
+      "reference": {
+        "tooltip": "你自己拍的清晰裸露皮肤特写。未接入：使用内置的 CC0 皮肤照片。"
+      },
+      "protect_mask": {
+        "tooltip": "可选。保持不动的区域，例如细节重绘器已经重绘过的脸和手（LC VOSR2 Upscale (pipe) 的 'protected' 输出，或 LC Smart Detailer 的遮罩）。避免皮肤细节被重复添加。"
+      }
+    }
+  },
+  "LCSkinMaster": {
+    "description": "整条皮肤处理链集于一个节点：去颗粒、毛孔、瑕疵、纹路、雀斑、眼睛、肤色和色彩，全都在同一张识别人脸的皮肤图上各做一次。预设从轻度清理到塑料皮肤还原、风吹日晒和日晒感应有尽有。输出 skin_mask 供其他节点使用。节点上带处理前后对比滑动。",
+    "inputs": {
+      "preset": {
+        "tooltip": "Natural：去颗粒感、均匀瑕疵、略偏冷，保留毛孔和个性。Clean Even Tone、Soft Beauty、Editorial Detail（特写）、Real Skin Restore（塑料皮肤）、Mature Skin（保留年龄感）、Weathered（加深皱纹）、Body Skin、Sun-Kissed（雀斑）。移动滑块会切换到 Custom。"
+      },
+      "strength": {
+        "tooltip": "0 = 原样，1 = 下面所有项全强度。"
+      },
+      "clean": {
+        "tooltip": "去除颗粒感：皮肤上的像素斑点和色彩噪点。毛孔和雀斑会保留。"
+      },
+      "pores": {
+        "tooltip": "皮肤自身的细微纹理：1 = 保持原样，更高 = 更清晰，更低 = 更柔。搭配色素沉着时保持在 1 或更高。"
+      },
+      "add_pores": {
+        "tooltip": "从皮肤照片中取得真实的毛孔起伏，加到没有细节的皮肤上（塑料感 AI 皮肤）。本来就有细节的皮肤得到的更少。"
+      },
+      "pore_size": {
+        "tooltip": "添加的毛孔和雀斑的大小。1 = 按脸部大小调整。"
+      },
+      "even_skin": {
+        "tooltip": "让斑点、色斑和不均匀的区域更均匀。毛孔和脸部形状得以保留。"
+      },
+      "wrinkles": {
+        "tooltip": "低于 0 会柔化褶皱和纹路。高于 0 会把已有的纹路加深成真正的褶皱。"
+      },
+      "even_colour": {
+        "tooltip": "把泛红和色斑拉向皮肤自身的颜色。"
+      },
+      "pigmentation": {
+        "tooltip": "在阳光照到的位置（鼻子、颧骨、额头）生成雀斑，由已有的雀斑延伸而来，颜色一致。"
+      },
+      "eye_detail": {
+        "tooltip": "眉毛和睫毛：更清晰、更深。需要检测到人脸。"
+      },
+      "warmth": {
+        "tooltip": "低于 0 偏冷（缓解 AI 皮肤发橙），高于 0 偏暖。"
+      },
+      "brightness": {
+        "tooltip": "让皮肤更亮或更暗。高光会被减弱。"
+      },
+      "rosy": {
+        "tooltip": "更粉或更不粉。"
+      },
+      "saturation": {
+        "tooltip": "皮肤的色彩多一些或少一些。"
+      },
+      "shadow_lift": {
+        "tooltip": "提亮阴影中的深色皮肤。"
+      },
+      "seed": {
+        "tooltip": "改变添加的毛孔和雀斑。"
+      },
+      "mask": {
+        "tooltip": "要处理的皮肤（白色）。处理身体皮肤时接入 LC Person Mask (face + body)。未接入：会自动找脸，身体皮肤只能部分识别（facexlib，首次运行时约 80 MB 下载到 models/facexlib）。"
+      },
+      "delicate_skin": {
+        "tooltip": "嘴唇和其他细嫩的皮肤会被识别并轻度处理,保留其颜色。"
+      },
+      "skin_match": {
+        "tooltip": "越高找到的皮肤越多(也包括肤色的布料)。"
+      }
+    }
+  },
+  "LCPhoneLook": {
+    "description": "独立的手机风格外观。Style 会填充滑块；大多数控件 0 = 无变化。Strength 与原图混合。不是镜头几何工具。",
+    "inputs": {
+      "style": {
+        "tooltip": "起始预设。拖动滑块会切换为 Custom。控件为 0 = 该阶段无变化。"
+      },
+      "strength": {
+        "tooltip": "0 = 原图，1 = 完整处理效果。"
+      },
+      "seed": {
+        "tooltip": "仅颗粒的 seed。"
+      },
+      "wb_temperature": {
+        "tooltip": "0 = 白平衡不变。负值 = 更冷，正值 = 更暖。"
+      },
+      "wb_tint": {
+        "tooltip": "0 = 无色调。负值 = 偏绿，正值 = 偏洋红。"
+      },
+      "exposure": {
+        "tooltip": "0 = 不改变曝光 (EV)。"
+      },
+      "contrast": {
+        "tooltip": "0 = 不改变对比度。正值增强中间调，负值压平。"
+      },
+      "shadows": {
+        "tooltip": "0 = 不变。只提亮暗部（保持颜色，不泛白雾）。"
+      },
+      "highlights": {
+        "tooltip": "0 = 无变化。柔和压缩高光区域。"
+      },
+      "hdr_local": {
+        "tooltip": "0 = 关闭。柔和的局部色调（打开阴影 / 压制局部对比）。"
+      },
+      "vibrance": {
+        "tooltip": "0 = 不变。正值增强暗淡的颜色；负值则压低。"
+      },
+      "skin_protect": {
+        "tooltip": "限制肤色色相上的 vibrance（仅在 vibrance ≠ 0 时有意义）。"
+      },
+      "shadow_cool": {
+        "tooltip": "0 = 关闭。中阴影里的冷色(蓝)调 — 跳过纯黑。"
+      },
+      "highlight_warm": {
+        "tooltip": "0 = 关闭。高光区的暖色调。"
+      },
+      "texture": {
+        "tooltip": "0 = 不变。精细细节；负值则变柔。"
+      },
+      "clarity": {
+        "tooltip": "0 = 无变化。中等尺度的局部对比度；负值会变柔。"
+      },
+      "vignette": {
+        "tooltip": "0 = 关闭。边角衰减。"
+      },
+      "grain": {
+        "tooltip": "0 = 关闭。手机相机噪点（与 LC Film Grain 的传感器响应相同）：暗部最强，主要是亮度噪点，带一点彩色斑点。"
+      }
+    }
+  },
+  "LCApplyLUT": {
+    "description": "应用 models/luts 中的 .cube 3D LUT。Strength 0–2（1 = 完整 LUT，>1 为过驱动）。常见的创意 LUT 请保持 log 关闭。",
+    "inputs": {
+      "lut_name": {
+        "tooltip": "文件夹：ComfyUI/models/luts/  — 把 .cube 文件放在那里"
+      },
+      "strength": {
+        "tooltip": "0 = 原图，1 = 完整 LUT，>1 会过度放大 LUT 的变化（最高 2×）。大多数调色可尝试 0.7–1.2。"
+      },
+      "log": {
+        "tooltip": "普通照片/sRGB LUT 请关闭（推荐）。仅当 LUT 是为 log/linear 制作时才开启（输入反伽马，输出伽马）。"
+      },
+      "interpolation": {
+        "tooltip": "tetrahedral = 灰色更干净、渐变更平滑，在 GPU 上运行（调色软件使用的方式）。trilinear = 旧方法。"
+      }
+    }
+  },
+  "LCTextOverlay": {
+    "description": "在图像上绘制文字。在预览上拖动来定位；字号/颜色/位置实时更新。支持多行和边距。",
+    "inputs": {
+      "text": {
+        "tooltip": "要绘制的文字（在边缘处留小边距自动换行）"
+      },
+      "font": {
+        "tooltip": "字体族（精选列表 — 更改在排队时生效；实时预览使用匹配的 CSS 名称）"
+      },
+      "font_size": {
+        "tooltip": "字号，单位像素"
+      },
+      "color_r": {
+        "tooltip": "红"
+      },
+      "color_g": {
+        "tooltip": "绿色"
+      },
+      "color_b": {
+        "tooltip": "蓝色"
+      },
+      "x_percent": {
+        "tooltip": "X 位置（距左侧百分比）。在预览上拖动或使用控件。"
+      },
+      "y_percent": {
+        "tooltip": "文字块顶部的 Y 位置（距顶部百分比）。默认靠近底部。可拖动或使用控件。"
+      },
+      "alignment": {
+        "tooltip": "水平对齐：left / center / right。旧版 *-top/center/bottom 值仍可加载，并映射为 left/center/right。"
+      }
+    }
+  },
+  "LCWatermark": {
+    "description": "合成水印图像。拖动以放置；首次运行后，大小和不透明度会实时更新。没有水印输入 = 旁路。",
+    "inputs": {
+      "size_percent": {
+        "tooltip": "水印宽度，占基础宽度的百分比。首次运行后在节点上实时显示。"
+      },
+      "opacity": {
+        "tooltip": "不透明度 0–1。首次运行后在节点上实时生效。"
+      },
+      "x_percent": {
+        "tooltip": "水平中心 %。在预览上拖动来设置。"
+      },
+      "y_percent": {
+        "tooltip": "垂直中心 %。在预览上拖动来设置。"
+      },
+      "margin_percent": {
+        "tooltip": "边缘留白，占图像的百分比（较小，类似 Text Overlay 的 ~6px）。"
+      },
+      "watermark": {
+        "tooltip": "水印（RGB/RGBA）。缺失 = 跳过（直接通过）。"
+      },
+      "watermark_mask": {
+        "tooltip": "水印的透明度。Load Image 会把透明 PNG 拆成 IMAGE + MASK：把它的 MASK 接到这里，logo 的透明部分就保持透明。"
+      }
+    }
+  },
+  "LCPromptToConditioning": {
+    "description": "将文本提示词编码为 CLIP conditioning。字符串仅限接口输入。",
+    "inputs": {
+      "clip": {
+        "tooltip": "来自 checkpoint / CLIP loader 的 CLIP 模型。"
+      },
+      "string": {
+        "tooltip": "提示词文本——可从 Positive/Negative 或其他 STRING 节点接线。"
+      }
+    }
+  },
+  "LCPromptToConditioningZero": {
+    "description": "把文本 prompt 编码为 CLIP conditioning,同时在第二个接口输出一份清零的副本(与 ConditioningZeroOut 相同)。",
+    "inputs": {
+      "clip": {
+        "tooltip": "来自 checkpoint / CLIP loader 的 CLIP 模型。"
+      },
+      "string": {
+        "tooltip": "提示词文本——可从 Positive/Negative 或其他 STRING 节点接线。"
+      }
+    }
+  },
+  "LCSplitSigmaScheduler": {
+    "description": "用于 SamplerCustomAdvanced 的双模型 sigma 拆分。sigmas_high 来自 Model;sigmas_low 来自 2nd model(未设置则用 Model)。step_swap 仅作输入(不会再导出)。",
+    "inputs": {
+      "Model": {
+        "tooltip": "主模型 — 构建高 sigma（第 1 遍）的调度。"
+      },
+      "scheduler": {
+        "tooltip": "两条 sigma 曲线共用的 scheduler 类型。"
+      },
+      "total_steps": {
+        "tooltip": "完整调度的总步数。"
+      },
+      "step_swap": {
+        "tooltip": "交接步数。high = 0..swap，low = swap..end。若 >= 总步数，则忽略拆分，第 1 个 schedule 会一直运行到结束。"
+      },
+      "denoise": {
+        "tooltip": "用于构建完整调度的 denoise 强度(1.0 = 完整)。"
+      },
+      "2nd model": {
+        "tooltip": "可选的第 2 个模型，用于低 sigma（第二遍）schedule。为空时回退到 Model。"
+      }
+    }
+  },
+  "LCBasicScheduler": {
+    "description": "Basic scheduler → SIGMAS。使用完整步数(没有 denoise 参数)。把两个这样的节点接入 LC Split Sigmas (Advanced),即可做双调度器双遍采样。",
+    "inputs": {
+      "model": {
+        "tooltip": "其采样空间决定 sigma 范围的模型。"
+      },
+      "scheduler": {
+        "tooltip": "噪声 schedule 类型（karras、beta、simple 等）。"
+      },
+      "steps": {
+        "tooltip": "采样步数(完整调度,不做 denoise 裁剪)。"
+      }
+    }
+  },
+  "LCSplitSigmasAdvanced": {
+    "description": "在 step_swap 处拆分 sigma 曲线。必填：model_1、sigmas_1、step_swap、denoise。可选：model_2、sigmas_2 — 如果缺少 sigmas_2，则整个调度都使用 sigmas_1。输出：sigmas_high、sigmas_low。",
+    "inputs": {
+      "model_1": {
+        "tooltip": "第一遍的模型（与 sigmas_1 / high pass 配对）。"
+      },
+      "sigmas_1": {
+        "tooltip": "完整的第一遍 schedule（步数在 LC Basic Scheduler 上设置）。"
+      },
+      "step_swap": {
+        "tooltip": "denoise 之后的交接步。如果 >= sigmas_1 的总步数，则忽略 split，sigmas_1 一直运行到结束。"
+      },
+      "denoise": {
+        "tooltip": "分割前应用于曲线的 denoise（1.0 = 完整）。"
+      },
+      "model_2": {
+        "tooltip": "第二遍的模型。可选 — 为空时回退到 model_1。"
+      },
+      "sigmas_2": {
+        "tooltip": "第二遍的 schedule。可选——未接入时回退到 sigmas_1（整个 schedule 沿用第一条曲线）。"
+      }
+    }
+  },
+  "LCPositive": {
+    "description": "提示词文本框。"
+  },
+  "LCNegative": {
+    "description": "负面提示词文本框。"
+  },
+  "LCOptimizer": {
+    "description": "此节点会分析你的机器，加载最适合你显卡的模型、text encoder 和 VAE，并启用在你的显卡上真正有效的加速（Sage、Comfy Kitchen 等）。\n用下方按钮运行报告，或在 LC123 设置中运行。\n缺少文件？选择带 ⬇ 的条目，首次运行时会自动下载。\nFinetune 同样适用。选择你自己的文件，仍会获得加速；如果 text encoder 或 VAE 不匹配，会显示 ⚠️。\n其他任何模型：把 base model 设为 Custom，再选择你自己的文件（以及 text encoder 类型）。加速仍然生效；推荐、估算和检查会显示为不支持。\n⚠️ 不要在 .bat 中加入 --use-sage-attention。它会对所有模型强制启用 Sage，有些模型开启后会出黑图。不加这个参数，让此节点按模型自动开启 Sage。\n当前可用模型：Krea 2、Krea 2 (Raw)、Qwen-Image 2.1、Z-Image Turbo、Flux.2 Klein 9B (Distilled and Base)、Flux 3 Klein (Distilled and Base)、MOSS Image (SFT and Base)、Ideogram 4、Anima、SDXL、Illustrious、Pony、Custom。",
+    "inputs": {
+      "base_model": {
+        "tooltip": "模型家族。决定推荐的文件和检查项。"
+      },
+      "goal": {
+        "tooltip": "Quality = 最接近 bf16。Optimal = 快且几乎一致。Fast = 在效果仍然正确的前提下最快。"
+      },
+      "speed_ups": {
+        "tooltip": "Auto = 来自 System & Model Optimization Report。Manual = 在下方逐项选择。"
+      },
+      "attention": {
+        "tooltip": "Attention 后端。auto = 通过报告测试的最快一个。"
+      },
+      "fp16_accumulation": {
+        "tooltip": "更快的 fp16 运算，质量略有损失。auto = 仅 Fast goal 时启用。"
+      },
+      "step_cache": {
+        "tooltip": "EasyCache：跳过变化很小的步骤。auto = Fast 目标，20 步以上。"
+      },
+      "torch_compile": {
+        "tooltip": "编译模型:第一次运行较慢,之后更快。需要 Triton。"
+      },
+      "qwen21_cache": {
+        "tooltip": "仅限 Qwen-Image 2.1(Qwen Image 2.1 Cache):KV cache 放在哪里以及如何存储。auto = 无损,在 Fast 目标或 16 GB 以下的显卡上使用 int8。int8 将 cache 减半,精度接近 bf16;int4 压到四分之一,但每步误差约翻倍。RAM 对速度影响很小。off = 最慢。"
+      },
+      "clip_type": {
+        "tooltip": "仅限 Custom:文本编码器的加载方式(CLIPLoader 的 type)。auto = 当编码器的结构与某个已知基础模型匹配时据此判断。对其他基础模型以及 checkpoint 自带的编码器无效。"
+      },
+      "spectrum": {
+        "tooltip": "MOSS Image 和 Krea 2：Spectrum 会预测部分步骤而不实际运行，在我们的测试中没有可见变化（MOSS 约 1.7 倍，Krea 2 Turbo 约 1.35 倍，Raw 约 1.6 倍）。内置，无需安装。auto = Optimal 和 Fast 目标；前 20% 的步骤始终会运行（构图在此阶段形成），低于 8 步时不启用。off = 不使用（speed_ups 设为 Auto 时同样有效）。开启时会取代步骤缓存。"
+      }
+    }
+  },
+  "LCOptimizerPipe": {
+    "description": "此节点会分析你的机器，加载最适合你显卡的模型、text encoder 和 VAE，并启用在你的显卡上真正有效的加速（Sage、Comfy Kitchen 等）。\n用下方按钮运行报告，或在 LC123 设置中运行。\n缺少文件？选择带 ⬇ 的条目，首次运行时会自动下载。\nFinetune 同样适用。选择你自己的文件，仍会获得加速；如果 text encoder 或 VAE 不匹配，会显示 ⚠️。\n其他任何模型：把 base model 设为 Custom，再选择你自己的文件（以及 text encoder 类型）。加速仍然生效；推荐、估算和检查会显示为不支持。\n⚠️ 不要在 .bat 中加入 --use-sage-attention。它会对所有模型强制启用 Sage，有些模型开启后会出黑图。不加这个参数，让此节点按模型自动开启 Sage。\n当前可用模型：Krea 2、Krea 2 (Raw)、Qwen-Image 2.1、Z-Image Turbo、Flux.2 Klein 9B (Distilled and Base)、Flux 3 Klein (Distilled and Base)、MOSS Image (SFT and Base)、Ideogram 4、Anima、SDXL、Illustrious、Pony、Custom。",
+    "inputs": {
+      "base_model": {
+        "tooltip": "模型家族。决定推荐的文件和检查项。"
+      },
+      "goal": {
+        "tooltip": "Quality = 最接近 bf16。Optimal = 快且几乎一致。Fast = 在效果仍然正确的前提下最快。"
+      },
+      "speed_ups": {
+        "tooltip": "Auto = 来自 System & Model Optimization Report。Manual = 在下方逐项选择。"
+      },
+      "attention": {
+        "tooltip": "Attention 后端。auto = 通过报告测试的最快一个。"
+      },
+      "fp16_accumulation": {
+        "tooltip": "更快的 fp16 运算，质量略有损失。auto = 仅 Fast goal 时启用。"
+      },
+      "step_cache": {
+        "tooltip": "EasyCache：跳过变化很小的步骤。auto = Fast 目标，20 步以上。"
+      },
+      "torch_compile": {
+        "tooltip": "编译模型:第一次运行较慢,之后更快。需要 Triton。"
+      },
+      "qwen21_cache": {
+        "tooltip": "仅限 Qwen-Image 2.1(Qwen Image 2.1 Cache):KV cache 放在哪里以及如何存储。auto = 无损,在 Fast 目标或 16 GB 以下的显卡上使用 int8。int8 将 cache 减半,精度接近 bf16;int4 压到四分之一,但每步误差约翻倍。RAM 对速度影响很小。off = 最慢。"
+      },
+      "clip_type": {
+        "tooltip": "仅限 Custom:文本编码器的加载方式(CLIPLoader 的 type)。auto = 当编码器的结构与某个已知基础模型匹配时据此判断。对其他基础模型以及 checkpoint 自带的编码器无效。"
+      },
+      "spectrum": {
+        "tooltip": "MOSS Image 和 Krea 2：Spectrum 会预测部分步骤而不实际运行，在我们的测试中没有可见变化（MOSS 约 1.7 倍，Krea 2 Turbo 约 1.35 倍，Raw 约 1.6 倍）。内置，无需安装。auto = Optimal 和 Fast 目标；前 20% 的步骤始终会运行（构图在此阶段形成），低于 8 步时不启用。off = 不使用（speed_ups 设为 Auto 时同样有效）。开启时会取代步骤缓存。"
+      }
+    }
+  },
+  "LCOptimizerVideo": {
+    "description": "此节点会分析你的机器，并加载适合你显卡的模型、文本编码器、视频和音频 VAE 以及 latent upscaler，同时启用在你的显卡上真正有效的加速（Sage、Comfy Kitchen 等）。\n点击下方按钮运行报告，或在 LC123 设置中运行。\n缺少文件？选择带 ⬇ 的条目，首次运行时会自动下载。\n微调模型同样可用。选择你自己的文件，仍会获得加速，如果文本编码器或 VAE 不匹配，还会显示 ⚠️。\n其他任意模型：将基础模型设为 Custom，并选择你自己的文件（以及文本编码器类型）。加速仍然生效；推荐、估算和检查会显示为不支持。\n⚠️ 不要在 .bat 中加入 --use-sage-attention。它会对所有模型强制启用 Sage，部分模型会因此出黑图。去掉它，让此节点按模型分别开启 Sage。\n当前可用模型：MiniMax H3、LTX 2.5、LTX 2.3、Custom。",
+    "inputs": {
+      "base_model": {
+        "tooltip": "模型家族。决定推荐的文件和检查项。"
+      },
+      "goal": {
+        "tooltip": "Quality = 最接近 bf16。Optimal = 快且几乎一致。Fast = 在效果仍然正确的前提下最快。"
+      },
+      "speed_ups": {
+        "tooltip": "Auto = 来自 System & Model Optimization Report。Manual = 在下方逐项选择。"
+      },
+      "attention": {
+        "tooltip": "Attention 后端。auto = 通过报告测试的最快一个。"
+      },
+      "fp16_accumulation": {
+        "tooltip": "更快的 fp16 运算，质量略有损失。auto = 仅 Fast goal 时启用。"
+      },
+      "step_cache": {
+        "tooltip": "EasyCache：跳过变化很小的步骤。auto = Fast 目标，20 步以上。"
+      },
+      "torch_compile": {
+        "tooltip": "编译模型:第一次运行较慢,之后更快。需要 Triton。"
+      },
+      "clip_type": {
+        "tooltip": "仅限 Custom:文本编码器的加载方式(CLIPLoader 的 type)。auto = 当编码器的结构与某个已知基础模型匹配时据此判断。对其他基础模型以及 checkpoint 自带的编码器无效。"
+      },
+      "spectrum": {
+        "tooltip": "仅限 MiniMax H3：xmarre 的 Spectrum（ComfyUI-Spectrum-MiniMax-H3，需另行安装）会预测部分步骤而不实际运行，速度约快 1.3 倍。会根据步数和尺寸判断：超过 12 步或低于 0.9 MP 时不启用，因为在我们的测试中它会影响口型同步。auto = 在 Optimal 和 Fast 目标下使用 FL2VA（Ref2VA 下关闭，因为在我们的测试中它会让参考视频变模糊）。off = 不使用（speed_ups 设为 Auto 时同样有效）。开启时会取代步骤缓存。"
+      },
+      "veda": {
+        "tooltip": "仅限 MiniMax H3：用于低分辨率的 Veda sparse attention（Veda-on-ComfyUI 及其位于 models/veda 的 predictor，需另行安装）。auto = 低于 0.9 MP 时运行（8 GB 显卡上约 1.4 倍，画面相同），高于此值用完整 attention，因为我们的测试中脸会漂移。on = 所有分辨率。off = 不使用（speed_ups 设为 Auto 时同样有效）。"
+      }
+    }
+  },
+  "LCOptimizerVideoPipe": {
+    "description": "此节点会分析你的机器，并加载适合你显卡的模型、文本编码器、视频和音频 VAE 以及 latent upscaler，同时启用在你的显卡上真正有效的加速（Sage、Comfy Kitchen 等）。\n点击下方按钮运行报告，或在 LC123 设置中运行。\n缺少文件？选择带 ⬇ 的条目，首次运行时会自动下载。\n微调模型同样可用。选择你自己的文件，仍会获得加速，如果文本编码器或 VAE 不匹配，还会显示 ⚠️。\n其他任意模型：将基础模型设为 Custom，并选择你自己的文件（以及文本编码器类型）。加速仍然生效；推荐、估算和检查会显示为不支持。\n⚠️ 不要在 .bat 中加入 --use-sage-attention。它会对所有模型强制启用 Sage，部分模型会因此出黑图。去掉它，让此节点按模型分别开启 Sage。\n当前可用模型：MiniMax H3、LTX 2.5、LTX 2.3、Custom。",
+    "inputs": {
+      "base_model": {
+        "tooltip": "模型家族。决定推荐的文件和检查项。"
+      },
+      "goal": {
+        "tooltip": "Quality = 最接近 bf16。Optimal = 快且几乎一致。Fast = 在效果仍然正确的前提下最快。"
+      },
+      "speed_ups": {
+        "tooltip": "Auto = 来自 System & Model Optimization Report。Manual = 在下方逐项选择。"
+      },
+      "attention": {
+        "tooltip": "Attention 后端。auto = 通过报告测试的最快一个。"
+      },
+      "fp16_accumulation": {
+        "tooltip": "更快的 fp16 运算，质量略有损失。auto = 仅 Fast goal 时启用。"
+      },
+      "step_cache": {
+        "tooltip": "EasyCache：跳过变化很小的步骤。auto = Fast 目标，20 步以上。"
+      },
+      "torch_compile": {
+        "tooltip": "编译模型:第一次运行较慢,之后更快。需要 Triton。"
+      },
+      "clip_type": {
+        "tooltip": "仅限 Custom:文本编码器的加载方式(CLIPLoader 的 type)。auto = 当编码器的结构与某个已知基础模型匹配时据此判断。对其他基础模型以及 checkpoint 自带的编码器无效。"
+      },
+      "spectrum": {
+        "tooltip": "仅限 MiniMax H3：xmarre 的 Spectrum（ComfyUI-Spectrum-MiniMax-H3，需另行安装）会预测部分步骤而不实际运行，速度约快 1.3 倍。会根据步数和尺寸判断：超过 12 步或低于 0.9 MP 时不启用，因为在我们的测试中它会影响口型同步。auto = 在 Optimal 和 Fast 目标下使用 FL2VA（Ref2VA 下关闭，因为在我们的测试中它会让参考视频变模糊）。off = 不使用（speed_ups 设为 Auto 时同样有效）。开启时会取代步骤缓存。"
+      },
+      "veda": {
+        "tooltip": "仅限 MiniMax H3：用于低分辨率的 Veda sparse attention（Veda-on-ComfyUI 及其位于 models/veda 的 predictor，需另行安装）。auto = 低于 0.9 MP 时运行（8 GB 显卡上约 1.4 倍，画面相同），高于此值用完整 attention，因为我们的测试中脸会漂移。on = 所有分辨率。off = 不使用（speed_ups 设为 Auto 时同样有效）。"
+      }
+    }
+  },
+  "LCVRAMCacheClear": {
+    "description": "透传*任意*节点，运行时会清理 GPU/模型缓存。放在重负载阶段之间，或放在重负载阶段旁的独立分支上。",
+    "inputs": {
+      "any": {
+        "tooltip": "任意输入——清理缓存后原样传出。"
+      }
+    }
+  },
+  "LCStop": {
+    "description": "带启用开关的队列断点。启用时会停下，直到你从队列/播放控件继续。Bypass/off 时数据直接通过，不会停。",
+    "inputs": {
+      "enable": {
+        "tooltip": "ON：在此停止（mxStop 行为）。OFF：直接通过，不停止。"
+      }
+    }
+  },
+  "LCAdvancedFolder": {
+    "description": "为 Image Saver Simple 类节点拆分出 filename + path 输出。可选路径前缀和时间戳格式。",
+    "inputs": {
+      "folder": {
+        "tooltip": "保存器输出路径下的根文件夹 / 子文件夹。%model %seed %sampler 这类标记由 LC Save Image 根据其元数据填入（缺失则丢弃）。"
+      },
+      "prefix": {
+        "tooltip": "同时用于路径段和文件名。%model %seed %sampler 这类标记由 LC Save Image 根据其元数据填入（缺失则丢弃）。"
+      },
+      "suffix": {
+        "tooltip": "文件名后缀（可选）。"
+      },
+      "timestamp": {
+        "tooltip": "时间戳格式。选 none 则不加。"
+      },
+      "path_separator": {
+        "tooltip": "路径分隔符样式。auto 使用操作系统默认值。"
+      },
+      "include_prefix_in_path": {
+        "tooltip": "ON：路径 = folder\\prefix_timestamp\\。OFF：路径 = folder\\"
+      }
+    }
+  },
+  "LCEasyFolder": {
+    "description": "为原生 Save Image 构建 filename_prefix。必要时会创建文件夹。",
+    "inputs": {
+      "folder": {
+        "tooltip": "Comfy output 目录下的基础文件夹。分隔符会自动追加。%model %seed %sampler 等标记会由 LC Save Image 根据其 metadata 填入（缺失则丢弃）。"
+      },
+      "prefix": {
+        "tooltip": "文件名前缀。%model %seed %sampler 之类的 token 由 LC Save Image 根据其 metadata 填入(缺失则丢弃)。"
+      },
+      "suffix": {
+        "tooltip": "文件名后缀（可选）。"
+      },
+      "timestamp": {
+        "tooltip": "附加在名称后的时间戳格式。选 none 则不加。"
+      },
+      "path_separator": {
+        "tooltip": "路径分隔符样式。auto 使用操作系统默认值。"
+      }
+    }
+  },
+  "LCSaveImage": {
+    "description": "保存图像并附带 Comfy workflow metadata。接入 LC Save Metadata 可获得 CivitAI 参数。filename + path 控件；推荐 PNG。",
+    "inputs": {
+      "images": {
+        "tooltip": "要保存的批次。每一帧是一个文件。"
+      },
+      "filename": {
+        "tooltip": "文件名主干。如果你愿意，仍可接入 Easy Folder 作为合并的前缀。%model %seed %steps %cfg %sampler %scheduler %denoise %width %height 会从 metadata 接口填入；缺失的会被丢弃。"
+      },
+      "path": {
+        "tooltip": "Comfy output 下的子文件夹。空 = output 根目录。分隔符会被规范化。%model 之类的名称 token 在这里同样可用。"
+      },
+      "format": {
+        "tooltip": "PNG 保留工作流和 CivitAI 文本块。JPEG/WebP 只带一条简短注释。"
+      },
+      "quality": {
+        "tooltip": "JPEG / WebP 质量。PNG 忽略此项。"
+      },
+      "embed_workflow": {
+        "tooltip": "把 Comfy 提示词 + 工作流 JSON 写入 PNG。"
+      },
+      "embed_civitai": {
+        "tooltip": "根据 metadata 接口写入 A1111 风格的参数。"
+      },
+      "hash_resources": {
+        "tooltip": "图中 checkpoint、UNET、CLIP、VAE、LoRA 的 SHA-256 AutoV2。CivitAI 通过这些哈希而不是名称来列出资源。"
+      },
+      "metadata": {
+        "tooltip": "来自 LC Save Metadata。提示词、seed、模型、CivitAI AIR/URL。"
+      },
+      "filename_prefix": {
+        "tooltip": "可选的组合前缀（Easy Folder）。当 filename 保持默认且此项已接线时使用。"
+      }
+    }
+  },
+  "LCSaveImageMetadata": {
+    "description": "保存 LC Save Image 的 metadata。可选的 LC_PIPE 输入（无 pipe 输出）。模型为一个逗号分隔的字符串。civitai_air 接受一个或多个 AIR 或 URL，以逗号分隔。",
+    "inputs": {
+      "pipe": {
+        "tooltip": "输入 LC_PIPE。填充提示词、seed、steps、CFG、sampler、scheduler、尺寸、denoise。控件的值优先。"
+      },
+      "positive": {
+        "tooltip": "覆盖 pipe 的正面提示词。"
+      },
+      "negative": {
+        "tooltip": "覆盖 pipe 的负面提示词。"
+      },
+      "seed_value": {
+        "tooltip": "Seed。-1 = 有 pipe seed 时使用 pipe seed。普通 INT，没有 control-after-generate。"
+      },
+      "steps": {
+        "tooltip": "0 = 使用 pipe 的 total_steps。"
+      },
+      "cfg": {
+        "tooltip": "0 = 使用 pipe 的 cfg_1。"
+      },
+      "sampler": {
+        "tooltip": "空 = 使用 pipe 的 sampler_name。"
+      },
+      "scheduler": {
+        "tooltip": "空 = 使用 pipe 的 scheduler。"
+      },
+      "models": {
+        "tooltip": "Checkpoint 名称。Model 1 和 Model 2 在同一字段，用逗号分隔。"
+      },
+      "civitai_air": {
+        "tooltip": "CivitAI AIR 或模型 URL。可填多个，用逗号分隔（例如模型页和你的工作流页）。不做哈希查找。填写后可链接到你在 CivitAI 上的工作流/模型。代价：CivitAI 会把图像标记为“站内生成”。留空则图像显示为外部生成器（模型和 LoRA 仍通过哈希匹配）。"
+      },
+      "width": {
+        "tooltip": "0 = LC Save Image 实际保存的图像宽度（无论是否放大）。填其他数字则写入该数字。"
+      },
+      "height": {
+        "tooltip": "0 = LC Save Image 实际保存的图像高度（无论是否放大）。其他数字则改写为该值。"
+      },
+      "denoise": {
+        "tooltip": "0 = 若已设置则使用 pipe 的 denoise。"
+      },
+      "extra_params": {
+        "tooltip": "追加到 parameters 行（LoRA、hash、备注）。"
+      }
+    }
+  },
+  "LCAnyEmptyBool": {
+    "description": "自动增长的 any_* 接口。只计算已接线的接口。只要有任一已接入的来源为空、被静音或被绕过，就为 True。",
+    "inputs": {
+      "any_01": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_02": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_03": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_04": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_05": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_06": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_07": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_08": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_09": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_10": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_11": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_12": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_13": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_14": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_15": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_16": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_17": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_18": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_19": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_20": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      }
+    }
+  },
+  "LCAnyEmptyInt": {
+    "description": "与 Any Empty Bool 相同的多接口空值检测。返回 empty / not_empty 整数。",
+    "inputs": {
+      "empty": {
+        "tooltip": "当任何已接入的来源为空 / 被静音 / 被绕过时返回。"
+      },
+      "not_empty": {
+        "tooltip": "当每个接入的来源都有实时值时返回。"
+      },
+      "any_01": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_02": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_03": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_04": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_05": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_06": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_07": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_08": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_09": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_10": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_11": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_12": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_13": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_14": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_15": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_16": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_17": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_18": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_19": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_20": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      }
+    }
+  },
+  "LCAnyEmptyFloat": {
+    "description": "与 Any Empty Int 相同的多接口判空测试。返回 empty / not_empty 浮点数（2 位小数）。",
+    "inputs": {
+      "empty": {
+        "tooltip": "当任何已接入的来源为空 / 被静音 / 被绕过时返回。"
+      },
+      "not_empty": {
+        "tooltip": "当每个接入的来源都有实时值时返回。"
+      },
+      "any_01": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_02": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_03": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_04": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_05": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_06": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_07": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_08": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_09": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_10": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_11": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_12": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_13": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_14": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_15": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_16": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_17": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_18": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_19": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      },
+      "any_20": {
+        "tooltip": "任意类型。未接入的槽位会被忽略。"
+      }
+    }
+  },
+  "LCIntSplit": {
+    "description": "将 total 拆分为 a + b。split_point 是 0–1 的比例（0.5 = 一半）。a + b 始终等于 total。",
+    "inputs": {
+      "total": {
+        "tooltip": "要拆分的整体数值（steps、frames、像素等）。"
+      },
+      "split_point": {
+        "tooltip": "占总数的比例。0 = 全给 b，1 = 全给 a，0.5 = 各一半。"
+      }
+    }
+  },
+  "LCSigmaResample": {
+    "description": "把 sigma 曲线重采样到新的步数网格上。sampler 会真正按新的步数运行。起始和结束 sigma 保持不变。new_steps = round(old_steps * multiplier) + adder。请放在拆分后的某一段（high 或 low）上，不要放在拆分器之前。",
+    "inputs": {
+      "multiplier": {
+        "tooltip": "先乘以当前步数。"
+      },
+      "adder": {
+        "tooltip": "然后加上（或减去）这么多步。"
+      }
+    }
+  },
+  "LCChangeStepCount": {
+    "description": "把 sigma 曲线重采样到新的步数网格上。sampler 会真正按新的步数运行。起始和结束 sigma 保持不变。new_steps = round(old_steps * multiplier) + adder。请放在拆分后的某一段（high 或 low）上，不要放在拆分器之前。",
+    "inputs": {
+      "multiplier": {
+        "tooltip": "先乘以当前步数。"
+      },
+      "adder": {
+        "tooltip": "然后加上（或减去）这么多步。"
+      }
+    }
+  },
+  "LCSigmaCurve": {
+    "description": "交互式 sigma 列表。没有 MODEL，sigma_max 是虚拟的顶部值。total_steps 可以转换为输入。内置名称会重新生成；Custom 保留逗号分隔列表的手工曲线。Descending = 仅下降。Save 会写入 user/LC123/sigma_curves/<name>.json。预设 from_input 会在运行后读取可选的 sigmas。Custom 不会在下次排队时被重新生成。",
+    "inputs": {
+      "preset": {
+        "tooltip": "from_input = 可选的 sigmas 接口（运行之后）。已命名的预设会重建。Custom 保留你的逗号列表 / 图上的手绘形状。"
+      },
+      "total_steps": {
+        "tooltip": "步数。转为输入后可从 Sampler Configure / pipe 接入。选择命名 preset 会重建曲线；Custom 会对当前曲线重新采样。"
+      },
+      "sigma_max": {
+        "tooltip": "假的 top。Flow 模型(Krea / Flux / WAN)用 1.0。SDXL 约 14.6。"
+      },
+      "sigma_min": {
+        "tooltip": "内置预设在追加最后的 0 之前的下限。"
+      },
+      "edit_mode": {
+        "tooltip": "smooth = 拖动一个节点并混合相邻节点。spike = 只移动一个节点。"
+      },
+      "smooth_radius": {
+        "tooltip": "smooth 模式的邻域窗口（0 = 类似 spike）。"
+      },
+      "descending": {
+        "tooltip": "让列表持续下降(不回升)。不是直线。"
+      },
+      "curve": {
+        "tooltip": "逗号分隔列表。preset 为 Custom 时以此为准。图表位于此行下方。"
+      },
+      "save_name": {
+        "tooltip": "user/LC123/sigma_curves/ 下的文件名（无扩展名）。"
+      },
+      "save_curve": {
+        "tooltip": "运行时，把 save_name.json 写入 user/LC123/sigma_curves/。"
+      },
+      "sigmas": {
+        "tooltip": "传入的曲线。当 preset 为 from_input 时使用。图形在首次排队后更新。"
+      }
+    }
+  },
+  "LCSigmas": {
+    "description": "单遍和双遍采样共用的一个调度器:调度预设(base、beta、flowmatch、hyperbolic、gaussian、你保存的曲线),可在图上拖动来弯曲曲线;切换到第二个模型的 step swap、图生图 denoise、第二遍的做法(continue 或 renoise),以及每一遍的噪声和采样器。",
+    "inputs": {
+      "model": {
+        "tooltip": "第一遍的 model。它的噪声范围和 sigma shift 决定调度。"
+      },
+      "sampler": {
+        "tooltip": "两遍都使用的采样器(sampler 输出)。安装 RES4LYF 后也会列出它的采样器,并可接入 ClownSampler Selector。图下方那行显示对你的模型测试效果最好的选择。"
+      },
+      "sigma_curve_presets": {
+        "tooltip": "各步骤遵循的曲线，从噪声到干净。\nbase = 普通调度器（base_scheduler）。\nbeta = 使用你自己设定的 alpha 和 beta 的 beta 曲线。\nflowmatch = FlowMatch Euler Discrete 曲线。\nhyperbolic = 经 sinh / cosh / tanh 弯曲的 base 曲线。\ngaussian = 经钟形曲线弯曲的 base 曲线。\nsaved: = 你保存的曲线。拖动图上的点可以弯曲其中任何一种。"
+      },
+      "base_scheduler": {
+        "tooltip": "base、hyperbolic 和 gaussian 之下的 scheduler（sigma_curve_presets）。Flow 模型（Krea 2、Z-Image、Flux 2）：beta、beta57 和 simple 是安全的；karras、kl_optimal 和 linear_quadratic 会烧坏画面。"
+      },
+      "steps": {
+        "tooltip": "总步数，两遍合计。"
+      },
+      "step_swap": {
+        "tooltip": "第二个模型（model_2）接手的步数。0 = 仅一遍。"
+      },
+      "denoise": {
+        "tooltip": "输入图像被重绘的程度。1 = 从零生成新图（文生图）。"
+      },
+      "denoise_steps": {
+        "tooltip": "full schedule = denoise 覆盖整个运行;第二遍只是接着走。at step swap = denoise 只覆盖第一遍;第二遍自行细化。"
+      },
+      "low_pass": {
+        "tooltip": "第二遍在步数切换处做什么。continue noise schedule = 接着剩余的噪声完成任务（两个采样器共用一条噪声计划）。renoise = 第一遍先完成画面，然后重新加噪到切换点的噪声水平，让第二遍有东西可精修，类似 detailer。"
+      },
+      "scheduler_shape_2": {
+        "tooltip": "第二遍的曲线。same as first = 上面的调度，包含曲线编辑。"
+      },
+      "first_pass_resample": {
+        "tooltip": "沿同一路径用更多（或更少）的步数走完第一遍；起点和终点保持不变。1 = 关闭。1.15 = 第一遍多 15% 的步数。"
+      },
+      "sigma_shift": {
+        "tooltip": "在不改变步数的情况下弯曲调度。越高 = 在构图（噪声起点）上花的步数越多，越低 = 在细节上花得越多。use model default = 模型训练时的设置。by image size = Flux 的规则（需要 image_size_latent）。custom = custom_shift。SDXL 类模型没有 shift。flowmatch 和 saved 曲线会忽略它。"
+      },
+      "custom_shift": {
+        "tooltip": "模型自己的 shift 数值。Krea 2 / Flux：0.5 用于小图，1.15 = Krea 2 Turbo 的默认值，2+ = 强烈偏重构图。"
+      },
+      "beta_alpha": {
+        "tooltip": "beta：越高 = 噪声较大的起始阶段步数越多。"
+      },
+      "beta_beta": {
+        "tooltip": "beta：越高 = 干净端（细节）的步数越多。"
+      },
+      "flowmatch_shift": {
+        "tooltip": "flowmatch：曲线的 shift（flowmatch_dynamic 关闭时使用）。"
+      },
+      "flowmatch_dynamic": {
+        "tooltip": "flowmatch：动态 shifting（如 V23.2）或固定的 flowmatch_shift。"
+      },
+      "flowmatch_terminal": {
+        "tooltip": "flowmatch:拉伸曲线,使最后一步落在这里。0 = 关闭。"
+      },
+      "hyperbolic_function": {
+        "tooltip": "hyperbolic:用来弯曲基础曲线的函数。"
+      },
+      "hyperbolic_scale": {
+        "tooltip": "hyperbolic：函数使其弯曲的力度。"
+      },
+      "gaussian_mean": {
+        "tooltip": "gaussian：钟形曲线所在的位置（一个噪声水平）。"
+      },
+      "gaussian_std": {
+        "tooltip": "gaussian：钟形曲线的宽度。"
+      },
+      "gaussian_operation": {
+        "tooltip": "gaussian：钟形曲线如何弯折基础曲线。"
+      },
+      "edit_mode": {
+        "tooltip": "在图上拖动点时:smooth 会带动相邻的点,spike 只移动那一个点。"
+      },
+      "smooth_radius": {
+        "tooltip": "smooth：该点周围有多少步一起参与。"
+      },
+      "curve_edit": {
+        "tooltip": "你的曲线编辑（通过在图上拖动设置）。"
+      },
+      "seed": {
+        "tooltip": "noise_high 的 seed(noise_low 使用 seed + 1)。"
+      },
+      "model_2": {
+        "tooltip": "第二遍所用的模型（如果不同，例如不带 ControlNet 的）。使用自己的 schedule，保持对齐。"
+      },
+      "image_size_latent": {
+        "tooltip": "仅用于 sigma_shift = by image size：空 latent，使 shift 可以跟随图像尺寸。"
+      }
+    },
+    "outputs": {
+      "0": {
+        "tooltip": "第一遍（或唯一一遍）。"
+      },
+      "1": {
+        "tooltip": "第二遍，从步骤切换处开始。"
+      },
+      "2": {
+        "tooltip": "第一个采样器的噪声。"
+      },
+      "3": {
+        "tooltip": "第二个采样器的噪声(延续调度时为 none)。"
+      },
+      "4": {
+        "tooltip": "用文字描述 schedule 的作用。"
+      },
+      "5": {
+        "tooltip": "完整的第一模型调度，不拆分。"
+      },
+      "6": {
+        "tooltip": "所选的 sampler，供 SamplerCustomAdvanced 使用。"
+      }
+    }
+  },
+  "LCDetailDaemon": {
+    "description": "在部分步骤窗口内，告诉模型噪声比实际略少，从而增加精细细节。缩放和窗口与原版 Detail Daemon 相同，另外加入 keep structure 模式，且不含 CFG 运算。\n请放在 low pass 采样器上。细节在最后几步生成。",
+    "inputs": {
+      "sampler": {
+        "tooltip": "来自 KSamplerSelect、LC Sigmas 或 ClownSampler（任意 SAMPLER）。"
+      },
+      "amount": {
+        "tooltip": "细节强度。与原版 Detail Daemon 的刻度相同：0.25 = 在峰值处告诉模型少 2.5% 的噪声。负值 = 更平滑。不会乘以 CFG。\n请接在 low pass 采样器上。细节是在最后几步生成的；接在 high pass 上会改动构图。\nKrea 2 / Krealism：只看 0.5 到 1.0，start 0.15，end 0.85，peak 0，exponent 0。classic 和 keep structure 作用更强：start 取更低值。16 步以上请调低。自带加噪的采样器（dpmpp_2m_sde、euler_ancestral、er_sde、res_* / 带 eta 的 ClownSampler）：请调低，否则可能留下斑点。"
+      },
+      "start": {
+        "tooltip": "开始生效的步：0 = 第一步，1 = 最后一步。早期步骤决定褶皱和布料。"
+      },
+      "end": {
+        "tooltip": "结束的步数。别动最后几步,否则图像里可能残留噪声。"
+      },
+      "peak": {
+        "tooltip": "在窗口内哪个位置最强（原版的偏置）：0 = 正好在开头、噪点多的步骤上，此时它在塑造画面（效果最好）；越高 = 越靠后，锐化越温和。"
+      },
+      "exponent": {
+        "tooltip": "渐变曲线：0 = 平坦，整个范围内强度全满（效果最好）；1 = 平滑的凸起；大于 1 = 更窄。"
+      },
+      "mode": {
+        "tooltip": "look only = 模型看到的噪声更少，但其输出会按真实噪声重新缩放：清晰，且不会大幅重排。classic = 原版 Detail Daemon（细节更多，小物体会有位移）。keep structure = 与 classic 相同，但只保留变化中的精细部分，因此布局保持不变（窗口内每步调用两次模型）。"
+      },
+      "sigmas": {
+        "tooltip": "只绘制图表。接入它所连接的采样器的 sigmas(低遍用 sigmas_low)。窗口始终跟随该采样器自己的步数。"
+      }
+    }
+  },
+  "LCDetailDaemonModel": {
+    "description": "用于普通 KSampler 的 Detail Daemon：与采样器版本相同，以模型补丁的形式提供。可与其他模型补丁叠加使用。",
+    "inputs": {
+      "model": {
+        "tooltip": "进入你的 KSampler 的模型。"
+      },
+      "amount": {
+        "tooltip": "细节强度。与原版 Detail Daemon 的刻度相同：0.25 = 在峰值处告诉模型少 2.5% 的噪声。负值 = 更平滑。不会乘以 CFG。\n请接在 low pass 采样器上。细节是在最后几步生成的；接在 high pass 上会改动构图。\nKrea 2 / Krealism：只看 0.5 到 1.0，start 0.15，end 0.85，peak 0，exponent 0。classic 和 keep structure 作用更强：start 取更低值。16 步以上请调低。自带加噪的采样器（dpmpp_2m_sde、euler_ancestral、er_sde、res_* / 带 eta 的 ClownSampler）：请调低，否则可能留下斑点。"
+      },
+      "start": {
+        "tooltip": "开始生效的步：0 = 第一步，1 = 最后一步。早期步骤决定褶皱和布料。"
+      },
+      "end": {
+        "tooltip": "结束的步数。别动最后几步,否则图像里可能残留噪声。"
+      },
+      "peak": {
+        "tooltip": "在窗口内哪个位置最强（原版的偏置）：0 = 正好在开头、噪点多的步骤上，此时它在塑造画面（效果最好）；越高 = 越靠后，锐化越温和。"
+      },
+      "exponent": {
+        "tooltip": "渐变曲线：0 = 平坦，整个范围内强度全满（效果最好）；1 = 平滑的凸起；大于 1 = 更窄。"
+      },
+      "mode": {
+        "tooltip": "look only = 模型看到的噪声更少，但其输出会按真实噪声重新缩放：清晰，且不会大幅重排。classic = 原版 Detail Daemon（细节更多，小物体会有位移）。keep structure = 与 classic 相同，但只保留变化中的精细部分，因此布局保持不变（窗口内每步调用两次模型）。"
+      },
+      "sigmas": {
+        "tooltip": "只绘制图表。接入它所连接的采样器的 sigmas(低遍用 sigmas_low)。窗口始终跟随该采样器自己的步数。"
+      }
+    }
+  },
+  "LCSpeedBoost": {
+    "description": "BETA。只接到高通道（high pass）采样器上。它让画面从一半尺寸开始，在中途放大到完整尺寸：速度约快 2 倍，画质不变。构图遵循模型的训练尺寸，所以开启后同一个 seed 的取景会不同。\n把 LC Detail Daemon 接到低通道（low pass）上，细节在最后几步生成。\n加速从噪声开始的通道（denoise 0.9 及以上）。放大和图生图通道照常运行：它们的构图来自你的图像。\n适用于 Krea 2、Z-Image、Flux.2 Klein、Qwen-Image、Wan，以及 SDXL / Pony / Illustrious（约 1.4 倍）。在 Flux 3 Klein 上 auto 会提前放大（约 1.2 倍），让文字和小脸保持干净。在 MOSS Image 上于噪声 0.85 处放大（约 1.6 倍，配合 8 步 LoRA 为 2.4 倍）。遇到局部重绘遮罩和 MOSS 布局框时会自动关闭（控制台会说明原因）。在 Qwen-Image 2.1 上 auto 保持关闭：线稿、文字和平涂色块在一半尺寸下会出问题。照片请手动设置 grow_at_step。\n基于 SPEED（Xiao、Chao、Yariv 和 Wetzstein，2026）。",
+    "inputs": {
+      "sampler": {
+        "tooltip": "仅限 high pass 采样器。来自 LC Sigmas、KSamplerSelect 或 LC Detail Daemon。"
+      },
+      "auto": {
+        "tooltip": "根据本次运行自身的 schedule 选择 grow 步数（约快 2 倍，质量相同）。"
+      },
+      "grow_at_step": {
+        "tooltip": "auto 关闭时使用。画面放大到完整尺寸的步数,计法与 step_swap 相同。0 = 每一步都用完整尺寸。"
+      }
+    }
+  },
+  "LCSpeedBoostKSampler": {
+    "description": "BETA。内置 LC Speed Boost 的 KSampler:处理时间约减半,VRAM 不变,细节不变。直接替换原来的 KSampler 即可。布局在较低分辨率下确定,因此开启后同一个 seed 的构图会稍微更紧凑。\nstart_at_step、end_at_step 和 return_with_leftover_noise 的用法与 KSampler (Advanced) 相同:提前停止并保留噪声,再交给常规或 ClownShark 采样器完成。\n安装 RES4LYF 后,采样器列表中会出现 ClownShark (RES4LYF) 采样器。把 ClownSampler 接到 sampler 可使用它自己的设置。\n适用于 Krea 2、Z-Image、Flux.2 Klein、Qwen-Image、Wan,以及 SDXL / Pony / Illustrious(这些约 1.4 倍)。在 Flux 3 Klein 上 auto 会提前放大(约 1.2 倍),让文字和小脸保持干净。在 MOSS Image 上于噪声 0.85 处放大(约 1.6 倍,配合 8-step LoRA 为 2.4 倍)。图生图(denoise 低于 0.9)、inpaint 蒙版和 MOSS layout boxes 时,其采样方式与普通 KSampler 相同。在 Qwen-Image 2.1 上 auto 保持关闭:线稿、文字和纯色块在其一半尺寸下会出问题。照片请手动设置 grow_at_step。\n基于 SPEED(Xiao、Chao、Yariv 和 Wetzstein,2026)。",
+    "inputs": {
+      "model": {
+        "tooltip": "用于对输入 latent 去噪的模型。"
+      },
+      "positive": {
+        "tooltip": "你想在图像中看到什么。"
+      },
+      "negative": {
+        "tooltip": "你希望从图像中得到什么。"
+      },
+      "latent_image": {
+        "tooltip": "要降噪的 latent。"
+      },
+      "speed_boost": {
+        "tooltip": "auto = Speed Boost 根据调度选择切换步骤（约快 2 倍，质量相同）。grow_at_step = 在下方自行设置。"
+      },
+      "grow_at_step": {
+        "tooltip": "speed_boost 在 grow_at_step 上开启时使用：切换到完整分辨率的步骤。0 = 普通 KSampler。"
+      },
+      "_gap1": {
+        "tooltip": "布局间隔"
+      },
+      "seed": {
+        "tooltip": "用于生成噪声的随机 seed。"
+      },
+      "steps": {
+        "tooltip": "步数。"
+      },
+      "cfg": {
+        "tooltip": "对 prompt 的遵循程度。"
+      },
+      "sampler_name": {
+        "tooltip": "采样算法。安装了 RES4LYF 时，也会列出 ClownShark（RES4LYF）采样器，并且可以接入 ClownSampler Selector。"
+      },
+      "scheduler": {
+        "tooltip": "噪声在各步中被去除的方式。"
+      },
+      "denoise": {
+        "tooltip": "1 = 全新的图。更低 = image to image（低于 0.9 时 Speed Boost 会退让）。"
+      },
+      "_gap2": {
+        "tooltip": "布局间隔"
+      },
+      "start_at_step": {
+        "tooltip": "从步骤中途开始，类似 KSampler (Advanced)。大于 0 时，Speed Boost 会让开（画面已经过了布局步骤）。"
+      },
+      "end_at_step": {
+        "tooltip": "在这一步停止。把剩下的交给另一个采样器，并开启 return_with_leftover_noise。"
+      },
+      "return_with_leftover_noise": {
+        "tooltip": "enable = 在 end_at_step 处停止并保留剩余噪声，交给常规采样器或 ClownShark 采样器完成（add_noise 关闭，start_at_step = 此处的 end_at_step）。"
+      },
+      "sampler": {
+        "tooltip": "可选。带有自身设置（如 eta）的 ClownSampler（或任何 SAMPLER）。会取代 sampler_name。"
+      },
+      "positive_half": {
+        "tooltip": "可选，用于半尺寸步骤的 positive。Speed Boost 对 MOSS Image 无效。"
+      }
+    }
+  },
+  "LCControlPanel": {
+    "description": "一个包含滑块和开关的面板，每项都有各自的输出。每行末尾的齿轮用来设置类型（number 或 boolean）、名称、min、max、step 和小数位数（0 = INT，否则为 FLOAT）。把新行接到 number 或 boolean 输入上，会复制该输入的名称、范围和值。双击数字可直接输入。"
+  },
+  "LCTimer": {
+    "description": "为每次运行计时，并拿最近一次与之前 5 次比较评分：更快为绿色，更慢为红色。节点上列出最近 10 次运行，最新的在前，并随工作流一起保存。中止的运行和完全命中缓存的运行不计入。右键可清除历史。"
+  },
+  "LCSamplerScheduler": {
+    "description": "只需选一次 sampler 和 scheduler,接到每个 KSampler,让它们一起变化。"
+  },
+  "LCImagePass": {
+    "description": "让图像直通。enable 关闭时，下一个节点在该输入上什么也看不到，会在没有它的情况下运行。仅用于可选输入：必需的图像输入会报错。"
+  },
+  "LCMaskPass": {
+    "description": "让遮罩直接通过。关闭 enable 后，下一个节点看不到遮罩，会在没有遮罩的情况下运行（Skin Beauty 使用它自己的皮肤遮罩，Color / Tone Match 使用整帧）。用它来代替绕过或静音生成遮罩的节点。"
+  },
+  "LCBypassRelay": {
+    "description": "把节点接到左侧。把 OPT_CONNECTION 接到 LC Bypasser 或 LC Mute。当 hub 关闭此节点时,左侧每个节点都会得到相同的静音/绕过。"
+  },
+  "LCDirectionalBlur": {
+    "description": "运动式方向模糊 -- 每个像素沿同一个角度/长度向量拖出拖影。在节点上拖动箭头来设置（角度取自箭头方向，长度取自拖动距离），也可以直接输入精确数值。长度为 0 或 strength 为 0 则无效果。`taps` 和 `edge` 与 WAS Node Suite 的 Image Directional Blur 一致 -- taps 越少，越呈阶梯式多重曝光效果而非平滑拖影，`edge` 决定模糊越过图像边界时读取什么。节点上带预览和对比滑动。",
+    "inputs": {
+      "angle": {
+        "tooltip": "模糊方向，单位度，屏幕坐标约定：0 = 右，90 = 下。"
+      },
+      "distance": {
+        "tooltip": "模糊长度，单位像素。0 = 不模糊。"
+      },
+      "strength": {
+        "tooltip": "向模糊结果混合。模糊本身是沿其长度的全强度硬拖影，如果太强，请调低这个值，而不是调距离。"
+      },
+      "taps": {
+        "tooltip": "沿路径平均的采样数（WAS Node Suite 的 `taps`）。较低（2-8）会呈现明显分级的多重曝光鬼影，而不是平滑的拖尾，这本身就是一种效果，不只是质量旋钮。较高（64+）即使距离很长也很平滑。"
+      },
+      "edge": {
+        "tooltip": "模糊在图像边界之外读取什么。'hold the edge' 把边缘像素向外重复。'mirror' 把图像向内折回（此节点原有的唯一行为）。'empty' 在边缘之外读取黑色，拖影延伸出去时会让边缘变暗。"
+      }
+    }
+  },
+  "LCDepthFX": {
+    "description": "基于深度的相机效果：大气雾霾、光线包裹，以及带真实散景的景深。接入 LC Depth Anything 的深度图。可选择预设或自行设置滑块。节点上带前后对比擦除预览。",
+    "inputs": {
+      "depth_map": {
+        "tooltip": "同一张图的深度图(LC Depth Anything)。任一方向都可以。"
+      },
+      "look": {
+        "tooltip": "在 LC Depth FX、Bloom、Lens Profile、Vignette、Film Stock 和 Film Grain 上选同一个外观,它们就会匹配。Custom = 你自己的滑块。拖动滑块会切换到 Custom。"
+      },
+      "haze": {
+        "tooltip": "空气有多浓。远处区域向雾色渐变。0 = 关闭。人像用 0.06 - 0.16，仅宽广风景才用更大值。"
+      },
+      "haze_distance": {
+        "tooltip": "雾霾从哪里开始，沿背景测量：0 = 紧贴主体后方，越高 = 只在其最远处。"
+      },
+      "haze_warmth": {
+        "tooltip": "雾的颜色取自图像自身的距离。此项让它偏冷 (-) 或偏暖 (+)。"
+      },
+      "light_wrap": {
+        "tooltip": "明亮的背景光溢到主体边缘上。消除抠图贴纸感。0 = 关闭。"
+      },
+      "dof_blur": {
+        "tooltip": "景深。离焦点越远越模糊。0 = 关闭。随分辨率缩放。"
+      },
+      "focus_range": {
+        "tooltip": "对焦点周围有多深的范围保持清晰。低 = 极薄(像 f/1.4),高 = 很深(像 f/8)。"
+      },
+      "bokeh": {
+        "tooltip": "明亮的失焦光点变成发光圆盘。0 = 普通模糊。"
+      },
+      "auto_focus": {
+        "tooltip": "聚焦画面中间的主体。Off = 使用 focus_depth。"
+      },
+      "focus_depth": {
+        "tooltip": "auto_focus 关闭时使用。0 = 最近，1 = 最远。"
+      },
+      "depth_direction": {
+        "tooltip": "除非效果落在图像的错误位置,否则保持 Auto。"
+      },
+      "focus_mask": {
+        "tooltip": "可选。对焦落在此遮罩覆盖的位置（来自 LC MaskMaker 的人脸或人物遮罩）。接入后优先于 auto_focus。"
+      }
+    }
+  },
+  "LCPhoneFilters": {
+    "description": "37 个手机 app 风格的预设(与 WAS Node Suite 的 Image Style Filter 同一套)。选一个外观,调节 strength,拖动节点上的 wipe 来对比。",
+    "inputs": {
+      "preset": {
+        "tooltip": "与 WAS Node Suite 的 Image Style Filter 相同的 37 种风格 -- 1977、Aden、Brooklyn、Xpro2 等等。"
+      },
+      "strength": {
+        "tooltip": "向调色结果混合。1 = 完整效果，0 = 原图。"
+      }
+    }
+  },
+  "LCImageRefPipeIn": {
+    "description": "把最多 16 张参考图打包到一根线上。填满最后一个插槽时会出现新的插槽。",
+    "inputs": {
+      "images": {
+        "tooltip": "参考图像。空的或被静音的槽位按空处理。"
+      }
+    }
+  },
+  "LCImageRefPipeOut": {
+    "description": "解包你的参考图像。输入的 image_3 就是输出的 image_3。"
+  },
+  "LCImageBatchFromFolder": {
+    "description": "按字母顺序将文件夹中的图片作为一个批次加载（img2 排在 img10 之前）。支持：png、jpg、jpeg、webp、bmp、tif、tiff、gif（取第一帧）。start_index + max_images 用于选取文件夹中的一个窗口。count = 已加载的图片数，total_found = 文件夹中的图片数。",
+    "inputs": {
+      "folder_path": {
+        "tooltip": "完整路径，或 ComfyUI/input 内的文件夹名。随意粘贴即可：带不带引号、用 / 或 \\ 都行。"
+      },
+      "start_index": {
+        "tooltip": "先跳过这么多张图像（0 = 从第一张开始）。"
+      },
+      "max_images": {
+        "tooltip": "最多加载这么多个。0 = 全部。内存不足时调低它。"
+      },
+      "size_mode": {
+        "tooltip": "尺寸与第一张不同的图像：裁剪填满、用黑色填充，或拉伸。"
+      }
+    }
+  },
+  "LCShowAny": {
+    "description": "在节点上显示任意值，并原样传递同一个值，类型不变。INT 仍是 INT，sampler 名称仍是 sampler 名称，因此可以放在连线中间。",
+    "inputs": {
+      "any": {
+        "tooltip": "任意类型。数字、文本、下拉值和布尔值按原样显示。图像、遮罩和 latent 显示其尺寸。"
+      }
+    }
+  },
+  "LCWildcard": {
+    "description": "从 assets/wildcards/*.txt 中随机取一行。可将文本接入任何 STRING / prompt / Join Strings。",
+    "inputs": {
+      "wildcard": {
+        "tooltip": "assets/wildcards/ 下的列表文件。随机选取一行。"
+      },
+      "base_seed": {
+        "tooltip": "基础 seed。seed_mode 决定 fixed / randomize / increment / decrement。"
+      },
+      "seed_mode": {
+        "tooltip": "fixed：重复使用 base_seed。randomize / increment / decrement：每次运行都变（完整队列或仅此节点）。"
+      }
+    }
+  },
+  "LCSeed": {
+    "description": "实用 seed。输入固定数字，或使用节点上的选项：'Randomize Each Time'、'New Fixed Random'、手动输入，或从该节点最近实际用过的 10 个 seed 中选一个。",
+    "inputs": {
+      "base_seed": {
+        "tooltip": "数字 = 该固定 seed，每次运行都重复使用。-1 = 每次运行都生成新的随机数。请使用节点自带的按钮，而不要手动输入 -1：'Randomize Each Time' 会将其设为 -1，'New Fixed Random' 会立即生成一个数并作为真正的固定 seed 写入此处。刻意限制在 2**64 以下——见模块 docstring。"
+      }
+    }
+  },
+  "LCReferenceLatent": {
+    "description": "给 conditioning 附加最多 8 个参考 latent(Klein index 方式)。串联多个时,参考会叠加。所有 latent 输入均为可选:如果都无效,则直接透传 conditioning。",
+    "inputs": {
+      "conditioning": {
+        "tooltip": "要附加参考 latent 的文本条件。"
+      },
+      "latent_1": {
+        "tooltip": "可选的参考 latent 1。未连接或无效的槽位会被忽略。"
+      },
+      "latent_2": {
+        "tooltip": "可选的参考 latent 2。未连接或无效的插槽会被忽略。"
+      },
+      "latent_3": {
+        "tooltip": "可选的参考 latent 3。未连接或无效的插槽会被忽略。"
+      },
+      "latent_4": {
+        "tooltip": "可选的参考 latent 4。未连接或无效的槽位会被忽略。"
+      },
+      "latent_5": {
+        "tooltip": "可选的参考 latent 5。未连接或无效的槽位会被忽略。"
+      },
+      "latent_6": {
+        "tooltip": "可选的参考 latent 6。未连接或无效的槽位会被忽略。"
+      },
+      "latent_7": {
+        "tooltip": "可选的参考 latent 7。未连接或无效的槽位会被忽略。"
+      },
+      "latent_8": {
+        "tooltip": "可选的参考 latent 8。未连接或无效的插槽会被忽略。"
+      }
+    }
+  },
+  "LCDenoise": {
+    "description": "latent 噪声注入，noise_std = 1 - denoise。请接入与采样器相同的 denoise 值。",
+    "inputs": {
+      "samples": {
+        "tooltip": "要注入噪声的 latent。"
+      },
+      "denoise": {
+        "tooltip": "降噪量。实际使用的噪声强度为 (1 - denoise)。1.0 = 无噪声；0.0 = noise_std 1.0。"
+      }
+    }
+  },
+  "LCRelight": {
+    "description": "已弃用：请使用 LC Lighting Control V2 🔦。在已保存的工作流中仍可使用。",
+    "inputs": {
+      "normal_map": {
+        "tooltip": "法线贴图（RGB）。与图像取景一致。"
+      },
+      "depth_map": {
+        "tooltip": "深度图。主体取景与图像相同。"
+      },
+      "ambient_light": {
+        "tooltip": "阴影下限。0 = 纯主光。"
+      },
+      "depth_scale": {
+        "tooltip": "远处的像素在光束内衰减（0 = 无深度衰减）。"
+      },
+      "light1_x": {
+        "tooltip": "+X = 从画面右侧开始。"
+      },
+      "light1_y": {
+        "tooltip": "+Y = 从上方。"
+      },
+      "light1_z": {
+        "tooltip": "0 = 侧面,1 = 正面。负值被忽略。"
+      },
+      "light1_size": {
+        "tooltip": "光锥宽度:小 = 聚光,大 = 泛光。"
+      },
+      "mask": {
+        "tooltip": "可选的主体蒙版。mask_enabled 时启用虚拟穹顶法线。"
+      }
+    }
+  },
+  "LCLight": {
+    "description": "显示布尔值的指示灯：true 一种颜色，false 一种颜色（或无）。颜色在齿轮图标后面设置。",
+    "inputs": {
+      "value": {
+        "tooltip": "要显示的布尔值。"
+      }
+    }
+  },
+  "LCNaturalLook": {
+    "description": "去除 AI 感：压低刺眼的颜色和橙色皮肤，柔化高光，减弱油亮光泽并提升细微纹理，同时保留原有的黑点、对比度和亮度。节点上有 before/after wipe。",
+    "inputs": {
+      "strength": {
+        "tooltip": "去除多少 AI 感。大多数渲染用 0.6 - 1.2（1 = 1.53.15 之前的 0.5）。"
+      },
+      "skin": {
+        "tooltip": "在 strength 之外，控制多少橙色/塑料感皮肤会被平复，以及多少平坦皮肤不参与精细纹理提升。0 = 皮肤不受影响，与其余部分一样被锐化（在 LC Skin Master 之后请用 0）。"
+      },
+      "seed": {
+        "tooltip": "淡颗粒的 seed。"
+      }
+    }
+  }
+}
