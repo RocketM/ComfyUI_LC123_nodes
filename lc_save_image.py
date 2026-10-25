@@ -42,6 +42,8 @@ def _tensor_to_pil(image) -> Image.Image:
     pixels = np.clip(arr.astype(np.float32) * 255.0, 0, 255).astype(np.uint8)
     if pixels.shape[-1] == 1:
         return Image.fromarray(pixels[..., 0], mode="L")
+    if pixels.shape[-1] == 2:  # grey + alpha
+        return Image.fromarray(pixels, mode="LA")
     if pixels.shape[-1] == 3:
         return Image.fromarray(pixels, mode="RGB")
     return Image.fromarray(pixels, mode="RGBA")
@@ -602,6 +604,14 @@ class LCSaveImage:
         quality = int(max(1, min(100, quality)))
 
         meta = _as_meta(metadata)
+        batch = images
+        if hasattr(batch, "cpu"):
+            batch = batch.detach().cpu()
+        n = int(batch.shape[0]) if hasattr(batch, "shape") else len(batch)
+        if n == 0:
+            return {"ui": {"images": []}, "result": (images, "")}
+        first = _tensor_to_pil(batch[0])
+
         unresolved = []
         scope = _image_ancestors(prompt or {}, unique_id, execution_list, unresolved)
         scoped_prompt = {k: v for k, v in (prompt or {}).items() if scope is not None and str(k) in scope}
@@ -615,21 +625,21 @@ class LCSaveImage:
         if embed_civitai:
             resources = civitai_resources_payload(_txt(meta.get('civitai_air')))
             resources.extend(lora_resources_payload(lora_metadata, resolved_loras))
-        prefix = _fill_tokens(_txt(filename_prefix), meta)
-        stem = _fill_tokens(_txt(filename), meta) or "LC123"
-        folder = _fill_tokens(_txt(path), meta)
+        # Name tokens follow the original generation dimensions, like parameters.
+        # Missing or incomplete dimensions fall back to the actual saved image.
+        token_meta = dict(meta)
+        token_width, token_height = int(meta.get("width") or 0), int(meta.get("height") or 0)
+        token_meta["width"], token_meta["height"] = ((token_width, token_height)
+                                                    if token_width > 0 and token_height > 0 else first.size)
+        prefix = _fill_tokens(_txt(filename_prefix), token_meta)
+        stem = _fill_tokens(_txt(filename), token_meta) or "LC123"
+        folder = _fill_tokens(_txt(path), token_meta)
         if prefix and (not _txt(filename) or filename == "LC123"):
             combined = prefix
         else:
             combined = _join_path(folder, stem) if folder else stem
 
         output_dir = folder_paths.get_output_directory()
-        batch = images
-        if hasattr(batch, "cpu"):
-            batch = batch.detach().cpu()
-        n = int(batch.shape[0]) if hasattr(batch, "shape") else len(batch)
-
-        first = _tensor_to_pil(batch[0])
         full_dir, file_stem, _core_counter, subfolder, _pfx = folder_paths.get_save_image_path(
             combined or "LC123", output_dir, first.size[0], first.size[1]
         )
@@ -711,7 +721,7 @@ class LCSaveImage:
                     info.add_text("hashes", json.dumps(buckets["hashes_json"]))
                 save_kwargs["pnginfo"] = info
             else:
-                if pil.mode == "RGBA":
+                if pil.mode in ("RGBA", "LA"):
                     pil = pil.convert("RGB")
                 save_kwargs["quality"] = quality
                 if fmt == "webp":

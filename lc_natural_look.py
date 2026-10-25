@@ -90,7 +90,7 @@ def natural_look(img, strength, skin_amount, seed):
     fine = x - _blur(x, 1)
     detail = _blur(_luma(fine).square(), 3).clamp_min(0).sqrt() / _blur(_luma(x), 6).clamp_min(0.03)
     flat = 1 - _smoothstep(0.02, 0.04, detail)
-    x = x + fine * 0.32 * k * (1 - skin * flat)
+    x = x + fine * 0.32 * k * (1 - skin * flat * min(1.0, float(skin_amount)))  # skin 0 = sharpened like the rest
 
     # 5) give the punch back: black point, contrast and brightness of the original
     l = _luma(x)
@@ -116,10 +116,13 @@ class LCNaturalLook(PreviewImage):
         return {
             "required": {
                 "image": ("IMAGE",),
-                "strength": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.05,
-                                       "tooltip": "How much of the AI look is taken out. 0.3 - 0.6 for most renders."}),
-                "skin": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 2.0, "step": 0.05,
-                                   "tooltip": "How much orange / plastic skin is calmed, on top of strength. 0 = skin untouched."}),
+                "strength": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 2.0, "step": 0.01,
+                                       "tooltip": "How much of the AI look is taken out. 0.6 - 1.2 for most renders "
+                                                  "(1 = what 0.5 was before 1.53.15)."}),
+                "skin": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 2.0, "step": 0.01,
+                                   "tooltip": "How much orange / plastic skin is calmed, and how much flat skin is left out of the "
+                                              "fine-texture lift, on top of strength. 0 = skin untouched and sharpened like the "
+                                              "rest (use 0 after LC Skin Master)."}),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 0xFFFFFFFF,
                                  "tooltip": "Seed for the faint grain."}),
             },
@@ -135,7 +138,8 @@ class LCNaturalLook(PreviewImage):
         "fine texture lifted, with the original black point, contrast and brightness kept. Before/after wipe on the node."
     )
 
-    def run(self, image, strength=0.5, skin=1.0, seed=0):
+    def run(self, image, strength=1.0, skin=1.0, seed=0):
+        strength = float(strength) * 0.5  # doubled scale (old 0.5 = 1.0)
         if strength <= 0:
             return _preview(self, image, image)
         out = natural_look(image.cpu(), strength, skin, seed)

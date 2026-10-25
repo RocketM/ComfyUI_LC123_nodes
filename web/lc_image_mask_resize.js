@@ -69,7 +69,7 @@ function showWidget(w, enabled) {
   if (w.inputEl) w.inputEl.disabled = !enabled;
 }
 
-function applyUpscaleBy(node) {
+function applyUpscaleBy(node, growOnly = false) {
   const modeW = widgetByName(node, "upscale_by");
   const mulW = widgetByName(node, "multiplier");
   const mpW = widgetByName(node, "megapixels");
@@ -102,7 +102,9 @@ function applyUpscaleBy(node) {
       const w = node._lcUserSized
         ? node.size?.[0] || DEFAULT_W
         : Math.max(DEFAULT_W, node.size?.[0] || DEFAULT_W);
-      node.setSize?.([w, sz[1]]);
+      // on load (growOnly) a node the user made taller keeps its saved height; a mode switch fits the content
+      const h = growOnly ? Math.max(sz[1], node.size?.[1] || 0) : sz[1];
+      node.setSize?.([w, h]);
     }
   }
   node.setDirtyCanvas?.(true, true);
@@ -191,6 +193,6 @@ app.registerExtension({
     if (node.comfyClass !== TYPE && node.type !== TYPE) return;
     hook(node);
     paint(node);
-    applyUpscaleBy(node);
+    applyUpscaleBy(node, true);
   },
 });

@@ -152,7 +152,7 @@ def _merged(key, old, new):
         return new if b is not None else old
     if a.shape != b.shape:
         return new
-    return {"tag": new["tag"], "mask": torch.maximum(a, b)}
+    return {"tag": new["tag"], "mask": torch.maximum(a, b.to(a.device))}
 
 
 class LCPipeIn:

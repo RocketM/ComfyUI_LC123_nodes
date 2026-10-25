@@ -20,12 +20,12 @@ except Exception:  # pragma: no cover
 
 
 def _samples(latent: Any):
-    """Return a 4-D latent tensor or None if the slot is empty / invalid."""
+    """Return a 4-D (image) or 5-D (video-style, e.g. Qwen / Wan) latent tensor, or None if the slot is empty / invalid."""
     if latent is None:
         return None
     if isinstance(latent, dict):
         latent = latent.get("samples")
-    if torch is not None and torch.is_tensor(latent) and getattr(latent, "ndim", 0) == 4:
+    if torch is not None and torch.is_tensor(latent) and getattr(latent, "ndim", 0) in (4, 5):
         return latent
     return None
 

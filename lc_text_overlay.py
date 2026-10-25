@@ -220,6 +220,7 @@ def _fit_text_to_box(draw, paragraphs, font_fn, requested_size, max_w, max_h, mi
     renders at min_size rather than failing -- still may clip a hair, but nowhere near as far as the
     unshrunk text would have.
     """
+    min_size = max(1, min(min_size, int(requested_size)))  # the widget allows 1-7 px: honour a size below the floor
     requested_size = max(min_size, int(requested_size))
 
     def fits(res):

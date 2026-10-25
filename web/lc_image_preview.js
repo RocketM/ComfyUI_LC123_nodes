@@ -335,6 +335,7 @@ const ZOOM_RESET_SCALE = 0.5; // fallback when LC Performance settings are not l
 
 // previews in their 100% view; while there is one, a slow check ends it once its node is off screen
 const ZOOMED = new Set();
+const ZOOM_OUT_RESET = 0.7; // canvas zoomed out to 70% of its zoom at the click = back to the fitted picture
 let zoomTimer = null;
 function watchZoomed() {
   if (zoomTimer || !ZOOMED.size) return;
@@ -444,7 +445,7 @@ class LCPreviewCompare {
     }
     const k = old / mag; // the shown area grows by this
     const vw = (v.sw * k) / v.iw, vh = (v.sh * k) / v.ih;
-    this.zoom = { u: pu - fx * vw + vw / 2, v: pv - fy * vh + vh / 2, mag };
+    this.zoom = { u: pu - fx * vw + vw / 2, v: pv - fy * vh + vh / 2, mag, ds0: this.zoom.ds0 };
     app.canvas?.setDirty?.(true, true);
     return true;
   }
@@ -525,7 +526,7 @@ class LCPreviewCompare {
         const r = fitRect(img, b.x, b.y, b.w, b.h);
         if (pos[0] >= r.x && pos[0] <= r.x + r.w && pos[1] >= r.y && pos[1] <= r.y + r.h) {
           const fit = ((app.canvas?.ds?.scale || 1) * r.w) / img.naturalWidth; // screen pixels per picture pixel now
-          self.zoom = { u: (pos[0] - r.x) / r.w, v: (pos[1] - r.y) / r.h, mag: Math.max(1, fit) };
+          self.zoom = { u: (pos[0] - r.x) / r.w, v: (pos[1] - r.y) / r.h, mag: Math.max(1, fit), ds0: app.canvas?.ds?.scale || 1 };
           ZOOMED.add(self);
           watchZoomed();
           hookWheel();
@@ -661,7 +662,8 @@ class LCPreviewCompare {
 
     const ds = app.canvas?.ds?.scale || 1;
     const lost = window.LC123Perf?.tooSmall ? window.LC123Perf.tooSmall(w, h) : ds < ZOOM_RESET_SCALE;
-    if (this.zoom && lost) this.unzoom(); // canvas zoomed out to where the preview is no longer drawn
+    // canvas zoomed out to where the preview is no longer drawn, or well out from where it was clicked (big previews)
+    if (this.zoom && (lost || ds < (this.zoom.ds0 || ds) * ZOOM_OUT_RESET)) this.unzoom();
     if (this.zoom && imgA) {
       // 100% (one picture pixel per screen pixel) times the wheel's magnification, centred on the clicked spot
       const { iw, ih, sw, sh, dw, dh, dx, dy, u0, v0 } = this._view();
@@ -1161,6 +1163,10 @@ class LCWatermarkPreview {
 
     const origDown = node.onMouseDown;
     node.onMouseDown = function (e, pos, canvas) {
+      // Only primary button
+      if (e && e.button != null && e.button !== 0) {
+        return origDown ? origDown.apply(this, arguments) : false;
+      }
       const { ox, oy, sw, sh } = self._imageRect();
       if (
         pos[0] >= ox &&

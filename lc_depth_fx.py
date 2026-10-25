@@ -144,21 +144,21 @@ class LCDepthFX(PreviewImage):
                 "image": ("IMAGE",),
                 "depth_map": ("IMAGE", {"tooltip": "Depth map of the same image (LC Depth Anything). Either direction works."}),
                 "look": _look_input("Natural"),
-                "haze": ("FLOAT", {"default": 0.04, "min": 0.0, "max": 1.0, "step": 0.01,
+                "haze": ("FLOAT", {"default": 0.08, "min": 0.0, "max": 2.0, "step": 0.01,
                                    "tooltip": "How thick the air is. Distant areas fade toward the haze color. 0 = off. "
-                                              "0.03 - 0.08 for people, more only for wide landscapes."}),
+                                              "0.06 - 0.16 for people, more only for wide landscapes."}),
                 "haze_distance": ("FLOAT", {"default": 0.50, "min": 0.0, "max": 0.95, "step": 0.01,
                                             "tooltip": "Where the haze starts, measured across the background: 0 = right behind "
                                                        "the subject, higher = only its farthest part."}),
                 "haze_warmth": ("FLOAT", {"default": 0.0, "min": -1.0, "max": 1.0, "step": 0.05,
                                           "tooltip": "The haze color comes from the image's own distance. This nudges it cooler (-) or warmer (+)."}),
-                "light_wrap": ("FLOAT", {"default": 0.10, "min": 0.0, "max": 1.0, "step": 0.01,
+                "light_wrap": ("FLOAT", {"default": 0.20, "min": 0.0, "max": 2.0, "step": 0.01,
                                          "tooltip": "Bright background light bleeding over the subject's edges. Kills the cut-out sticker look. 0 = off."}),
-                "dof_blur": ("FLOAT", {"default": 0.10, "min": 0.0, "max": 1.0, "step": 0.01,
+                "dof_blur": ("FLOAT", {"default": 0.20, "min": 0.0, "max": 2.0, "step": 0.01,
                                        "tooltip": "Depth of field. How blurry things get away from the focus. 0 = off. Scales with resolution."}),
                 "focus_range": ("FLOAT", {"default": 0.15, "min": 0.0, "max": 0.8, "step": 0.01,
                                           "tooltip": "How much depth stays sharp around the focus. Low = razor thin (like f/1.4), high = deep (like f/8)."}),
-                "bokeh": ("FLOAT", {"default": 0.2, "min": 0.0, "max": 1.0, "step": 0.01,
+                "bokeh": ("FLOAT", {"default": 0.4, "min": 0.0, "max": 2.0, "step": 0.01,
                                     "tooltip": "Bright out-of-focus lights turn into glowing discs. 0 = plain blur."}),
                 "auto_focus": ("BOOLEAN", {"default": True,
                                            "tooltip": "Focus on the main subject in the middle of the frame. Off = use focus_depth."}),
@@ -183,9 +183,11 @@ class LCDepthFX(PreviewImage):
         "Wire a depth map from LC Depth Anything. Pick a look or set the sliders. On-node preview with before/after wipe."
     )
 
-    def run(self, image, depth_map, look="Natural", haze=0.15, haze_distance=0.4, haze_warmth=0.0, light_wrap=0.10,
-            dof_blur=0.10, focus_range=0.15, bokeh=0.2, auto_focus=True, focus_depth=0.2, depth_direction="Auto",
+    def run(self, image, depth_map, look="Natural", haze=0.08, haze_distance=0.4, haze_warmth=0.0, light_wrap=0.20,
+            dof_blur=0.20, focus_range=0.15, bokeh=0.4, auto_focus=True, focus_depth=0.2, depth_direction="Auto",
             focus_mask=None):
+        # LC 1.53.15: these four read on a doubled scale (old 0.5 = 1.0), so the usual settings are not crammed at the bottom
+        haze, light_wrap, dof_blur, bokeh = haze * 0.5, light_wrap * 0.5, dof_blur * 0.5, bokeh * 0.5
         src = image
         if haze <= 0 and light_wrap <= 0 and dof_blur <= 0 and bokeh <= 0:
             return _preview(self, src, src)
@@ -257,7 +259,7 @@ class LCDepthFX(PreviewImage):
         # focus: the nearer part of the frame's middle (the subject), or the manual depth
         if focus_mask is not None:
             m = focus_mask.to(dev).float()
-            m = m if m.dim() == 3 else m[..., 0]
+            m = m[None] if m.dim() == 2 else (m if m.dim() == 3 else m[..., 0])  # [H,W] / [B,H,W] / [B,H,W,1]
             m = F.interpolate(m[:, None], size=(h, w), mode="bilinear", align_corners=False)
             if m.shape[0] != b:
                 m = m[:1].expand(b, -1, -1, -1)

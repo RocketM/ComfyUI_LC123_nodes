@@ -29,7 +29,7 @@ function originOf(node) {
   const inp = (node.inputs || []).find((i) => i && i.name === "value") || node.inputs?.[0];
   if (!inp || inp.link == null) return null;
   const g = node.graph ?? app.graph; // the node's own graph, so it also works inside a subgraph
-  const link = g?.links?.[inp.link];
+  const link = g?.getLink?.(inp.link) ?? (g?.links?.get ? g.links.get(inp.link) : g?.links?.[inp.link]); // links are a Map in newer frontends
   if (!link) return null;
   return g.getNodeById?.(link.origin_id) || null;
 }

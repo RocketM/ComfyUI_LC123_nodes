@@ -17,7 +17,7 @@ function slotName(i) {
 function typeOf(node, inp) {
   if (!inp?.link) return null;
   const g = node.graph ?? app.graph; // the node's own graph, so it also works inside a subgraph
-  const link = g?.links?.[inp.link];
+  const link = g?.getLink?.(inp.link) ?? (g?.links?.get ? g.links.get(inp.link) : g?.links?.[inp.link]); // links are a Map in newer frontends
   if (!link) return null;
   const origin = g.getNodeById?.(link.origin_id);
   return origin?.outputs?.[link.origin_slot]?.type || null;
@@ -77,6 +77,8 @@ function syncSlots(node, { forceFit = false } = {}) {
     if (inp?.name && !inp.name.startsWith("any_")) preserved.push(inp);
   }
 
+  // every any_ wire gone: the switch takes any type again (same as LC Any Switch's refreshTypeLock)
+  if (!(node.inputs || []).some((inp) => inp?.name?.startsWith("any_") && inp.link != null)) node._lcLockedType = null;
   const locked = node._lcLockedType || "*";
   const slots = [];
   for (let i = 1; i <= count; i++) {

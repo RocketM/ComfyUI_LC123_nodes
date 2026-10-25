@@ -47,6 +47,12 @@ def _parse_cube(path: str):
                     f"{os.path.basename(path)} is a 1D LUT (LUT_1D_SIZE). LC Apply LUT only reads 3D .cube LUTs "
                     "(LUT_3D_SIZE)."
                 )
+            if up.startswith("LUT_3D_INPUT_RANGE"):
+                # Resolve's form of DOMAIN_MIN / DOMAIN_MAX: one low / high value for all three channels
+                parts = line.split()
+                domain_min = np.full(3, float(parts[1]), dtype=np.float64)
+                domain_max = np.full(3, float(parts[2]), dtype=np.float64)
+                continue
             if up.startswith("TITLE") or up.startswith("LUT_1D") or up.startswith("LUT_3D_INPUT"):
                 continue
             if up.startswith("LUT_3D_SIZE"):
@@ -69,7 +75,9 @@ def _parse_cube(path: str):
     if size is None:
         n = len(data)
         size = int(round(n ** (1.0 / 3.0)))
-    table = np.asarray(data, dtype=np.float32)
+    if size < 2:
+        raise ValueError(f"LUT {path}: LUT_3D_SIZE {size} is too small (needs at least 2)")
+    table =np.asarray(data, dtype=np.float32)
     expected = size * size * size
     if table.shape[0] < expected:
         raise ValueError(f"LUT {path}: expected {expected} entries, got {table.shape[0]}")
@@ -300,10 +308,8 @@ class LCApplyLUT(PreviewImage):
             if log:
                 im = np.power(np.clip(im, 0.0, None), 1.0 / 2.2)
 
-            # Map 0..1 into domain, then back to 0..1 lattice coords for sampling
-            # (identity when domain is 0..1)
-            im_dom = im * dom + dmin
-            im_01 = (im_dom - dmin) / dom
+            # Pixel value -> 0..1 lattice coords inside the LUT's domain (identity when domain is 0..1)
+            im_01 = (im - dmin) / dom
             im_01 = np.clip(im_01, 0.0, 1.0)
 
             mapped = _tetrahedral_lut(im_01, table) if interpolation == "tetrahedral" else _trilinear_lut(im_01, table)

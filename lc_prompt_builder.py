@@ -243,7 +243,8 @@ class LCSubject:
     CATEGORY = "LC123/prompt"
 
     def build(self, description, pose, action, outfit, position_horizontal, position_vertical, position_depth):
-        parts = [_nz(description)]
+        # ";" separates subjects in LC Subject Array and the Assembler: one inside a description would split it in two
+        parts = [_nz(description).replace(";", ",")]
         if not _noneish(pose):
             parts.append(f"pose: {pose}")
         if not _noneish(action):
@@ -445,6 +446,8 @@ def _palette_from_image(image: torch.Tensor, num_colors: int = 4) -> List[str]:
         arr = arr[0]
     if arr.shape[-1] > 4:
         arr = arr[..., :3]
+    if arr.shape[-1] < 3:  # grey or grey + alpha: repeat the grey to RGB
+        arr = np.repeat(arr[..., :1], 3, axis=-1)
     pixels = arr.reshape(-1, arr.shape[-1]).astype(np.float32)
     n = pixels.shape[0]
     if n > 4000:

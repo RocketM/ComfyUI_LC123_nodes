@@ -108,7 +108,7 @@ class LCImageCrop(PreviewImage):
 
         result = {"ui": {}, "result": (cropped,)}
         try:
-            saved = self.save_images(image, filename_prefix="lc_crop_src")
+            saved = self.save_images(image[:1], filename_prefix="lc_crop_src")  # the crop box only shows the first frame
             result["ui"]["lc_preview"] = saved["ui"]["images"]
             result["ui"]["src_size"] = [{"width": int(w), "height": int(h)}]
             # the cropped result, first frame only: Nodes 2.0 shows it (the classic crop box ignores it)

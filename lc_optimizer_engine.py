@@ -1131,7 +1131,7 @@ def plan_speedups(profile_id, goal, manual=None):
     rows = []
 
     # attention: the fastest one that ran AND matched standard attention in the report
-    want = manual.get("attention", "auto")
+    want = (manual.get("attention") or "auto")
     if want == "auto":
         pick = next((k for k, tk in (("sage", "sageattention"), ("flash", "flash_attn")) if (t.get(tk) or {}).get("ok") and k in reg), None)
         if pick:
@@ -1154,32 +1154,33 @@ def plan_speedups(profile_id, goal, manual=None):
     elif sysp:
         rows.append({"key": "kitchen", "label": "Comfy Kitchen", "state": "na", "value": None, "why": "not installed: see Recommended to install in the report"})
 
-    want = manual.get("fp16_accumulation", "auto")
+    want = (manual.get("fp16_accumulation") or "auto")
     fp16_ok = (t.get("matmul_fp16") or {}).get("ok")
     on = want == "on" or (want == "auto" and goal == "Fast" and fp16_ok)
     rows.append({"key": "fp16_accumulation", "label": "fp16 accumulation", "state": "on" if on else "off", "value": bool(on),
                  "why": "set by hand" if want != "auto" else ("Fast goal" if on else "Fast goal only (small quality cost)")})
 
-    want = manual.get("step_cache", "auto")
+    want = (manual.get("step_cache") or "auto")
     on = want == "on" or (want == "auto" and goal == "Fast" and steps >= 20)
     why = "set by hand" if want != "auto" else ("Fast goal, skips near-duplicate steps" if on else
                                                  ("Fast goal only" if steps >= 20 else f"not worth it at {steps} steps"))
     rows.append({"key": "step_cache", "label": "Step cache (EasyCache)", "state": "on" if on else "off", "value": bool(on), "why": why})
 
     if profile_id in VEDA_PROFILES:
-        want = manual.get("veda", "auto")
+        want = (manual.get("veda") or "auto")
         if not _veda_installed():
             rows.append({"key": "veda", "label": "Veda (sparse attention, low res)", "state": "na", "value": None,
                          "why": f"not installed: Veda-on-ComfyUI + {VEDA_PREDICTOR} in models/veda"})
         else:
-            on = want == "on" or (want == "auto" and goal != "Quality")
+            # Auto keeps Sage: on the 2026-10-22 bank Veda was 8% slower than Sage at 960x544 and drifted the framing
+            on = want == "on"
             why = ("set by hand: every resolution" if want == "on" else "set by hand") if want != "auto" else (
-                f"under {VEDA_MAX_MP} MP only: about 1.4x on an 8 GB card, same look" if on else "Optimal and Fast goals only")
+                "Auto keeps Sage attention. Set to on to try it under the MP limit")
             rows.append({"key": "veda", "label": "Veda (sparse attention, low res)", "state": "on" if on else "off",
                          "value": want == "on", "why": why})
 
     if profile_id in SPECTRUM_PROFILES:
-        want = manual.get("spectrum", "auto")
+        want = (manual.get("spectrum") or "auto")
         if not _spectrum_installed():
             rows.append({"key": "spectrum", "label": "Spectrum (step forecast)", "state": "na", "value": None,
                          "why": "not installed: ComfyUI-Spectrum-MiniMax-H3 by xmarre (Manager or GitHub)"})
@@ -1193,7 +1194,7 @@ def plan_speedups(profile_id, goal, manual=None):
             rows.append({"key": "spectrum", "label": "Spectrum (step forecast)", "state": "on" if on else "off", "value": bool(on), "why": why})
 
     if profile_id in IMAGE_SPECTRUM_PROFILES:
-        want = manual.get("spectrum", "auto")
+        want = (manual.get("spectrum") or "auto")
         on = want == "on" or (want == "auto" and goal != "Quality")
         every = 2 if profile_id in IMAGE_SPECTRUM_EVERY_2ND else IMAGE_SPECTRUM_INTERVAL.get(goal, 2)
         why = "set by hand" if want != "auto" else (

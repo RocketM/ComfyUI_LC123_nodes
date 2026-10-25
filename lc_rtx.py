@@ -57,8 +57,9 @@ def rtx_resize(samples: torch.Tensor, width: int, height: int, quality: str = "U
         if strict:
             raise RuntimeError("[LC RTX] RTX Video Super Resolution isn't available here (needs nvidia-vfx on an RTX card).")
         return comfy.utils.common_upscale(samples, width, height, "lanczos", "disabled")
-    # RTX VSR wants sizes in steps of 8: run it at the nearest multiple of 8, then snap to the exact size
-    ow, oh = max(8, round(width / 8) * 8), max(8, round(height / 8) * 8)
+    # RTX VSR wants sizes in steps of 8: run it at the next multiple of 8 up, then snap to the exact size
+    # (rounding down could land below the source: scale 1.0 on a 1001 px image asked for 1000)
+    ow, oh = max(8, -(-width // 8) * 8), max(8, -(-height // 8) * 8)
     same = quality.startswith(("DENOISE", "DEBLUR"))
     if same:
         # same-size modes: output must equal input, and a width off the 8-grid comes back row-skewed,

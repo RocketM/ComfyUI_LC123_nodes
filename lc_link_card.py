@@ -46,8 +46,10 @@ def _public_host(host):
         return False
     for info in infos:
         ip = ipaddress.ip_address(info[4][0].split("%")[0])
-        if (ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_multicast or ip.is_reserved
-                or ip.is_unspecified or getattr(ip, "is_site_local", False)):
+        if getattr(ip, "ipv4_mapped", None):  # ::ffff:127.0.0.1 is checked as 127.0.0.1
+            ip = ip.ipv4_mapped
+        if (not ip.is_global or ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_multicast
+                or ip.is_reserved or ip.is_unspecified or getattr(ip, "is_site_local", False)):
             return False
     return True
 

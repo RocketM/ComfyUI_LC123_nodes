@@ -26,6 +26,8 @@ import folder_paths
 import comfy.sd
 import comfy.utils
 
+from .lc_lora_loader import _moved_lora
+
 STACK_NODE_NAME = "LCLoraLoaderStack"
 APPLY_NODE_NAME = "LCApplyLoraStack"
 
@@ -137,6 +139,11 @@ class LCApplyLoraStack:
             if not name or name in ("None", "NONE") or (strength_model == 0 and strength_clip == 0):
                 continue
             path = folder_paths.get_full_path("loras", name)
+            if not path:
+                moved = _moved_lora(name)
+                if moved:
+                    print(f"[LC LoRA Loader Stack] {name} moved: using {moved} (pick it again to save the new place)")
+                    path = folder_paths.get_full_path("loras", moved)
             if not path:
                 # a saved stack can outlive the file it points at (renamed/deleted lora) -- skip it rather
                 # than failing the whole graph, same as LC LoRA Loader

@@ -1118,7 +1118,9 @@ def _pro_mist(image, intensity, threshold, smoothing, radius, saturation, exposu
     glow = gl + (glow - gl) * saturation
     diffuse = blur(lin, 0.01 * base * radius)
     lin = torch.lerp(lin, diffuse, min(0.5, 0.12 * intensity))
-    out = _shoulder(lin + glow * intensity * exposure * 0.6)
+    # keep blacks: the glow falls off in the shadows (a Black Pro-Mist keeps them deep) instead of veiling them
+    room = torch.clamp(_luma(blur(lin, 0.004 * base)) / 0.18, 0, 1) ** 1.5
+    out = _shoulder(lin + glow * intensity * exposure * 0.6 * room)
     return _srgb(out).clamp(0, 1).permute(0, 2, 3, 1).to(image.dtype)
 
 
@@ -1144,16 +1146,22 @@ class LCBloom(PreviewImage):
         return {
             "required": {
                 "image": ("IMAGE",),
-                "intensity": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 4.0, "step": 0.05}),
-                "threshold": ("FLOAT", {"default": 0.65, "min": 0.0, "max": 1.0, "step": 0.01}),
-                "smoothing": ("FLOAT", {"default": 0.3, "min": 0.0, "max": 1.0, "step": 0.01}),
-                "radius": ("FLOAT", {"default": 1.0, "min": 0.1, "max": 5.0, "step": 0.1}),
-                "saturation": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 2.0, "step": 0.05}),
-                "exposure": ("FLOAT", {"default": 1.0, "min": 0.1, "max": 4.0, "step": 0.05}),
+                "intensity": ("FLOAT", {"default": 2.0, "min": 0.0, "max": 8.0, "step": 0.01,
+                                        "tooltip": "How strong the glow is. 1 = what 0.5 was before 1.53.15."}),
+                "threshold": ("FLOAT", {"default": 0.65, "min": 0.0, "max": 1.0, "step": 0.01,
+                                        "tooltip": "Only what is brighter than this glows. Lower = more of the picture glows."}),
+                "smoothing": ("FLOAT", {"default": 0.3, "min": 0.0, "max": 1.0, "step": 0.01,
+                                        "tooltip": "How gently the glow fades in around the threshold. 0 = a hard cut."}),
+                "radius": ("FLOAT", {"default": 1.0, "min": 0.1, "max": 5.0, "step": 0.1,
+                                     "tooltip": "How far the glow spreads. Scales with the picture size."}),
+                "saturation": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 2.0, "step": 0.05,
+                                         "tooltip": "Colour of the glow. 0 = white, 1 = the light's own colour."}),
+                "exposure": ("FLOAT", {"default": 1.0, "min": 0.1, "max": 4.0, "step": 0.05,
+                                       "tooltip": "Brightness of the glow, on top of intensity."}),
                 "mode": (["Bloom", "Pro-Mist", "Halation"], {
                     "default": "Bloom",
                     "tooltip": "Bloom = glow from bright areas. Pro-Mist = a diffusion filter in front of the lens "
-                               "(soft glow, gentler contrast). Halation = the red-orange glow film gets around bright edges.",
+                               "(soft glow, gentler contrast, blacks kept deep). Halation = the red-orange glow film gets around bright edges.",
                 }),
             },
             "optional": {
@@ -1171,6 +1179,7 @@ class LCBloom(PreviewImage):
     )
 
     def run(self, image, intensity, threshold, smoothing, radius, saturation, exposure, mode="Bloom", look="Custom"):
+        intensity = float(intensity) * 0.5  # doubled scale (old 0.5 = 1.0), so the usual settings are not crammed at the bottom
         if mode in ("Pro-Mist", "Halation") and intensity > 0:
             fx = _pro_mist if mode == "Pro-Mist" else _halation
             return _preview(self, fx(image, intensity, threshold, smoothing, radius, saturation, exposure), image)
@@ -1655,7 +1664,9 @@ class LCToneMatch(PreviewImage):
         if refined.shape[0] == 1 and source.shape[0] > 1:
             refined = refined.expand(source.shape[0], -1, -1, -1)
         elif source.shape[0] != refined.shape[0]:
-            refined = refined[:1].expand(source.shape[0], -1, -1, -1)
+            # more references than images: keep every image, the last image covers the extra references
+            extra = refined[-1:].expand(source.shape[0] - refined.shape[0], -1, -1, -1)
+            refined = torch.cat([refined, extra], dim=0)
         if source.shape[-2:] != refined.shape[-2:]:
             refined = F.interpolate(refined, size=source.shape[-2:], mode="bicubic", align_corners=False)
 
@@ -1876,7 +1887,8 @@ class LCLensProfile(PreviewImage):
                 "mode": (["Add Aberrations", "Correct Aberrations"], {"default": "Add Aberrations", "tooltip": "Add character or try to correct it."}),
             },
             "optional": {
-                "strength": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 2.0, "step": 0.1}),
+                "strength": ("FLOAT", {"default": 2.0, "min": 0.0, "max": 4.0, "step": 0.01,
+                                       "tooltip": "How much lens character. 1 = what 0.5 was before 1.53.15."}),
                 "look": _look_input(),
             },
         }
@@ -1890,7 +1902,8 @@ class LCLensProfile(PreviewImage):
         "Apply or correct a named lens profile (aberrations character). Strength scales the effect. On-node preview with before/after wipe."
     )
 
-    def run(self, image, lens, mode, strength=1.0, look="Custom"):
+    def run(self, image, lens, mode, strength=2.0, look="Custom"):
+        strength = float(strength) * 0.5  # doubled scale (old 0.5 = 1.0)
         if strength < 0.01:
             return _preview(self, image, image)
         p = _LENS_PROFILES[lens]
@@ -1943,7 +1956,8 @@ class LCLensProfile(PreviewImage):
             out = torch.empty_like(img)
             for c in range(3):
                 ch = img[..., c].unsqueeze(0).unsqueeze(0)
-                sampled = F.grid_sample(ch, grids[c], mode="bilinear", padding_mode="reflection", align_corners=True)
+                # bicubic: the sub-pixel shifts of distortion / fringing blurred fine detail 14% with bilinear
+                sampled = F.grid_sample(ch, grids[c], mode="bicubic", padding_mode="reflection", align_corners=True)
                 out[..., c] = sampled.squeeze()
             if vig_mul is not None:
                 out = out * vig_mul

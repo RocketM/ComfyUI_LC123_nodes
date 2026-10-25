@@ -228,6 +228,7 @@ app.registerExtension({
 
       const self = this;
       const saved = [this.size?.[0], this.size?.[1]];
+      this._lcUserResized = false; // set by onResize when the user drags the corner while the images load
       // latest run wins: a slower earlier load never replaces a newer preview
       const token = (self._lcLoadToken = (self._lcLoadToken || 0) + 1);
       (async () => {
@@ -249,6 +250,7 @@ app.registerExtension({
         // Do not change size after load — only restore if Comfy blew it up
         killNativePreview(self);
         if (
+          !self._lcUserResized &&
           saved[0] &&
           saved[1] &&
           self.size &&
@@ -265,6 +267,7 @@ app.registerExtension({
 
     const origResize = nodeType.prototype.onResize;
     nodeType.prototype.onResize = function (size) {
+      if (app.canvas?.resizing_node === this) this._lcUserResized = true; // a resize by hand is never undone
       if (size) {
         if (size[0] < MIN_W) size[0] = MIN_W;
         if (size[1] < 120) size[1] = 120;
@@ -380,6 +383,7 @@ app.registerExtension({
 
     const origDown = nodeType.prototype.onMouseDown;
     nodeType.prototype.onMouseDown = function (e, pos) {
+      if (e && e.button != null && e.button !== 0) return origDown?.apply(this, arguments); // primary button only
       if (this._lcHitKnob(pos)) {
         this._lc.dragging = true;
         const d = this._lc.draw;

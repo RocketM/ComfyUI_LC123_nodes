@@ -197,6 +197,7 @@ function makeStrengthControl(node, index) {
   const onUp = () => {
     window.removeEventListener("pointermove", onMove);
     window.removeEventListener("pointerup", onUp);
+    window.removeEventListener("pointercancel", onUp);
     dragging = false;
     if (moved) {
       commit(dragValue);
@@ -211,6 +212,7 @@ function makeStrengthControl(node, index) {
     dragValue = getValue();
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp); // a cancelled press (touch, alt-tab) ends the scrub too
   });
   valueEl.addEventListener("click", (e) => {
     e.stopPropagation();
@@ -801,6 +803,7 @@ function makeRow(node, row, index, rows, dragState) {
   // listeners so a fast drag never loses the pointer even if it briefly leaves the row
   handle.addEventListener("pointerdown", (e) => {
     e.preventDefault();
+    e.stopPropagation(); // the canvas must not start dragging the node as well
     const host = node.__lcFace.rowsHost;
     const rowEls = () => Array.from(host.children);
     handle.style.cursor = "grabbing";
@@ -826,6 +829,7 @@ function makeRow(node, row, index, rows, dragState) {
     const up = () => {
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
       handle.style.cursor = "grab";
       el.style.opacity = "1";
       // read the final DOM order back into the row array and commit it
@@ -836,6 +840,7 @@ function makeRow(node, row, index, rows, dragState) {
     };
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
   });
 
   return el;
@@ -922,8 +927,11 @@ app.registerExtension({
     // LC LoRA Loader Stack node
     window.addEventListener("lc123-perf-changed", () => {
       try {
-        for (const n of app.graph?._nodes || []) {
-          if (NODES.has(n.comfyClass || n.type)) renderRows(n);
+        const root = app.rootGraph || app.graph;
+        for (const g of [root, ...(root?.subgraphs?.values?.() || [])]) { // loaders inside subgraphs too
+          for (const n of g?._nodes || []) {
+            if (NODES.has(n.comfyClass || n.type)) renderRows(n);
+          }
         }
       } catch (_) {}
     });

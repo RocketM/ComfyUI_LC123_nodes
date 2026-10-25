@@ -236,7 +236,7 @@ PRESETS: Dict[str, dict] = {
     },
 }
 
-PRESET_NAMES = list(PRESETS.keys())
+PRESET_NAMES = list(PRESETS.keys()) + ["Custom"]  # Custom = your own sliders (moving one switches to it)
 
 
 def _srgb_to_lin(x):
@@ -480,7 +480,7 @@ class LCPhoneLook(PreviewImage):
                     PRESET_NAMES,
                     {
                         "default": "Standard",
-                        "tooltip": "Starting preset. Customize below by moving the sliders. 0 on a control = no change from that stage.",
+                        "tooltip": "Starting preset. Moving a slider switches to Custom. 0 on a control = no change from that stage.",
                     },
                 ),
                 "strength": (

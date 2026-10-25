@@ -38,16 +38,28 @@ const BY_CODE = Object.fromEntries(LANGS.map((l) => [l[0], l]));
 const ICON = { source: "✏️", ok: "✅", stale: "⚠️", missing: "❌" };
 
 let translator = null; // null = unknown yet, false = not installed, object = status
+let translatorAt = 0;
+let translatorAsk = null; // one request shared by every note that loads at the same time
 async function translatorStatus() {
-  if (translator !== null) return translator;
-  try {
-    const r = await api.fetchApi("/lc_vision/translate/status");
-    translator = r.ok ? await r.json() : false;
-    if (translator && !translator.available) translator = false;
-  } catch (_) {
-    translator = false;
+  if (translator) return translator;
+  // "not available" is asked again after a minute (a model downloaded meanwhile), not cached for the session
+  if (translator === false && Date.now() - translatorAt < 60000) return false;
+  if (!translatorAsk) {
+    translatorAsk = (async () => {
+      try {
+        const r = await api.fetchApi("/lc_vision/translate/status");
+        translator = r.ok ? await r.json() : false;
+        if (translator && !translator.available) translator = false;
+      } catch (_) {
+        translator = false;
+      }
+      translatorAt = Date.now();
+      return translator;
+    })().finally(() => {
+      translatorAsk = null;
+    });
   }
-  return translator;
+  return translatorAsk;
 }
 
 function hash(s) {
@@ -322,7 +334,10 @@ async function visionTask(node, task) {
     if (!r.ok || j.error) throw new Error(j.error || r.statusText);
     if (task === "spelling" && j.text === src) return toast("success", "No spelling mistakes found.");
     setSource(node, j.text);
-    if (task === "spelling" && j.title) d.titles[d.source] = j.title;
+    if (task === "spelling" && j.title) {
+      d.titles[d.source] = j.title;
+      setShownTitle(node, titleFor(node, node._lcShown || d.source)); // show the corrected title now, not on the next refresh
+    }
     toast("success", task === "write" ? "Draft written. Check it, then edit away. Undo is in the right-click menu." : "Spelling fixed. Undo is in the right-click menu.");
   } catch (e) {
     toast("error", `${task === "write" ? "Writing" : "Spell check"} failed: ${e.message}`, 7000);
@@ -422,7 +437,10 @@ app.registerExtension({
       onChange: () => {
         // only switch notes that actually have the new language; leave the rest alone
         const want = readerLang();
-        for (const n of app.graph?._nodes || []) if (n.type === TYPE && data(n).texts[want]) show(n, want);
+        const root = app.rootGraph || app.graph;
+        const subs = root?.subgraphs || root?._subgraphs; // notes inside subgraphs switch too
+        const graphs = [root, ...(subs ? (subs.values ? [...subs.values()] : Object.values(subs)) : [])];
+        for (const g of graphs) for (const n of g?._nodes || g?.nodes || []) if (n.type === TYPE && data(n).texts[want]) show(n, want);
       },
     },
     {
@@ -526,6 +544,18 @@ app.registerExtension({
         setTimeout(() => show(this, pickLang(this)), 0);
       }
 
+      // a deleted note takes its card layer and <style> rule with it
+      onRemoved() {
+        super.onRemoved?.(...arguments);
+        const el = this._lcText?.element;
+        const st = el ? classicState.get(el) : null;
+        if (st) {
+          st.layer.remove();
+          st.style.remove();
+          classicState.delete(el);
+        }
+      }
+
       // renames go through onTitleEdited so each language keeps its own title
       get title() {
         return BASE_TITLE.get.call(this);
@@ -553,8 +583,10 @@ app.registerExtension({
                 syncFromEditor(this);
                 const cur = this._lcShown || d.source;
                 const text = d.texts[cur]?.text ?? d.texts[d.source].text;
+                const title = d.titles[cur] || d.titles[d.source]; // a custom title stays with the note
                 d.source = item.lang;
                 d.texts[item.lang] = { text };
+                if (title) d.titles[item.lang] = title;
                 show(this, item.lang);
               },
             },

@@ -387,13 +387,15 @@ function setup(node) {
   const prevExec = node.onExecuted;
   node.onExecuted = function (msg) {
     prevExec?.apply(this, arguments);
+    let swapped = false;
     try {
       const swap = JSON.parse(msg?.lc_optimizer_swap?.[0] || "{}");
+      swapped = Object.keys(swap).length > 0;
       for (const [wn, v] of Object.entries(swap)) { const w = wByName(this, wn); if (w) w.value = v; }
       if (msg?.lc_optimizer?.[0]) this._lcOptPlan = JSON.parse(msg.lc_optimizer[0]);
     } catch (e) { /* keep the last plan */ }
     renderFace(this);
-    if (Object.keys(JSON.parse(msg?.lc_optimizer_swap?.[0] || "{}")).length) this._lcOptRefresh();
+    if (swapped) this._lcOptRefresh(); // parsed once, inside the try: bad JSON no longer throws here
   };
   if (!node.size || node.size[0] < DEFAULT_W) node.setSize([DEFAULT_W, node.size?.[1] || 300]);
   applyManual(node);
@@ -406,7 +408,9 @@ function setup(node) {
 // once it has started, ComfyUI's cancel button stops it (the engine checks it between chunks and deletes the part).
 function pendingDownloads() {
   const out = [];
-  for (const n of app.graph?._nodes || []) {
+  const root = app.rootGraph || app.graph;
+  const graphs = [root, ...(root?.subgraphs?.values?.() || [])]; // Optimizers inside subgraphs download too
+  for (const n of graphs.flatMap((g) => g?._nodes || [])) {
     if (!TYPES[n.comfyClass] || n.mode === 2 || n.mode === 4) continue; // muted or bypassed: it won't run
     for (const f of n._lcOptPlan?.files || []) if (f.state === "download") out.push({ file: baseName(f.label), gb: f.gb });
   }

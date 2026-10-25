@@ -84,6 +84,32 @@ class LCLoraMetadataTests(unittest.TestCase):
         self.assertNotEqual(result[1]['type'], 'checkpoint')
         self.assertEqual(hashes.civitai_resources_payload(''), [])
 
+    def test_empty_save_does_not_collect_resources_or_touch_output(self):
+        images = np.empty((0, 16, 24, 3), dtype=np.float32)
+        with patch.object(save, 'collect_lora_metadata') as collect, patch.object(folders, 'get_output_directory', create=True) as output:
+            result = save.LCSaveImage().save(images)
+        self.assertEqual(result['ui'], {'images': []})
+        self.assertIs(result['result'][0], images)
+        self.assertEqual(result['result'][1], '')
+        collect.assert_not_called()
+        output.assert_not_called()
+
+    def test_size_filename_tokens_keep_original_and_fall_back_together(self):
+        for dims, expected in [((1024, 1536), '1024x1536'), ((0, 0), '24x16'), ((1024, 0), '24x16')]:
+            with self.subTest(dims=dims), tempfile.TemporaryDirectory() as tmp:
+                with patch.object(folders, 'get_output_directory', return_value=tmp, create=True), patch.object(folders, 'get_save_image_path', return_value=(tmp, 'test', 1, '', ''), create=True) as path:
+                    save.LCSaveImage().save(np.zeros((1, 16, 24, 3)), metadata={'width': dims[0], 'height': dims[1]}, filename='%width%x%height%', hash_resources=False)
+                self.assertEqual(path.call_args.args[0], expected)
+
+    def test_grey_alpha_images_save_to_png_and_jpeg(self):
+        for fmt, mode in [('png', 'LA'), ('jpeg', 'RGB')]:
+            with self.subTest(fmt=fmt), tempfile.TemporaryDirectory() as tmp:
+                with patch.object(folders, 'get_output_directory', return_value=tmp, create=True), patch.object(folders, 'get_save_image_path', return_value=(tmp, 'test', 1, '', ''), create=True):
+                    save.LCSaveImage().save(np.ones((1, 16, 24, 2)), format=fmt, hash_resources=False)
+                with Image.open(next(Path(tmp).glob('test_*'))) as image:
+                    self.assertEqual(image.mode, mode)
+                    self.assertEqual(image.size, (24, 16))
+
     def test_original_size_and_missing_size_fallback(self):
         for sw, sh, expected in [(1024, 1536, '1024x1536'), (0, 0, '24x16'), (24, 0, '24x16')]:
             with self.subTest(source=(sw, sh)), tempfile.TemporaryDirectory() as tmp:
