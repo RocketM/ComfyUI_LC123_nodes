@@ -1308,6 +1308,9 @@ def plan(profile_id, goal, picks, manual=None):
     if sysp:
         g = (sysp.get("gpus") or [{}])[0]
         out["report"] = {"when": sysp.get("when"), "gpu": g.get("name"), "vram_gb": g.get("vram_gb")}
+        if g.get("vram_gb") and g["vram_gb"] <= 8.5:  # token bench 2026-10-25: every 250 prompt tokens ~ +7% per image on any card
+            out["hints"].append(("💡", f"Your {round(g['vram_gb'])} GB card is better suited for prompts of 250 - 500 tokens (a 2B or 4B vision "
+                                       "model for captions). Every 250 tokens adds about 7% to each image. Go longer for the images that matter."))
     elif custom:
         out["hints"].append(("💡⚠️", "No report yet: run the System & Model Optimization Report so the speed-ups suit this machine."))
     else:
