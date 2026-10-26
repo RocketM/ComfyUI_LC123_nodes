@@ -1,0 +1,79 @@
+{
+  "settings": {
+    "LC123_Align_Enabled": {
+      "tooltip": "打开或关闭整个 Align 工具，包括顶部工具栏里的 logo 按钮。开启后，logo 按钮（浅灰 = 开，深灰 = 关）可为当前工作流打开 Align，并随工作流一起保存。"
+    },
+    "LC123_Align_Rulers": {
+      "tooltip": "Align 开启时，在顶部和左侧边缘显示标尺。左键 = 节点线，右键 = 组线，再次点击标记可删除，拖动标记可移动。"
+    },
+    "LC123_Align_RevealDistance": {
+      "tooltip": "标尺线平时不可见，直到光标或你拖动的东西靠近到这个距离（屏幕像素）。越靠近越清晰。"
+    },
+    "LC123_Align_SnapItems": {
+      "tooltip": "同时吸附到其他节点和组的边缘与中心（这些不显示线）。关 = 只吸附到你的标尺线。吸附距离使用 ComfyUI 的“Snap to grid”大小（Lite Graph > Canvas）。"
+    },
+    "LC123_Performance_HalfRes": {
+      "tooltip": "节点上的 FX 预览按图像框一半的尺寸绘制。输出端口仍为全分辨率。"
+    },
+    "LC123_Performance_ClampEdge": {
+      "tooltip": "把节点上的 FX 预览纹理缩小到下方的 Max edge。"
+    },
+    "LC123_Performance_MaxEdge": {
+      "tooltip": "在开启 Clamp longest side 时使用。"
+    },
+    "LC123_Performance_SkipCollapsed": {
+      "tooltip": "折叠的 FX 节点不绘制节点上的图像。"
+    },
+    "LC123_Performance_HidePreviews": {
+      "tooltip": "隐藏所有 LC 图像 FX 的节点预览。Compare / Split / Overlay 不受影响。"
+    },
+    "LC123_Performance_RecentColors": {
+      "tooltip": "在右键 Colors 菜单里显示你最近使用的 8 个自定义颜色（如果没装 Custom Scripts，会加一个 Custom 取色器）。"
+    },
+    "LC123_Performance_SkinBeautyFullPreview": {
+      "tooltip": "LC Skin Beauty 保持全质量的节点预览（不减半分辨率、不限制尺寸）。"
+    },
+    "LC123_Performance_LoraInfoButton": {
+      "tooltip": "在 LC LoRA Loader 的每一行显示 ℹ 信息按钮。从 LoRA 文件自身的元数据读取触发词，不联网。关闭可让行更简洁。"
+    },
+    "LC123_Performance_PreviewMinSize": {
+      "tooltip": "缩小视图后，当节点上的图像预览在屏幕上小于这个尺寸时就不再绘制，和节点文字的处理方式一样。越小的预览越先关闭。0 = 始终绘制。"
+    },
+    "LC123_Connections_FX": {
+      "tooltip": "拖动连线时，所有能连接的端口都会以各自的颜色发光。靠近时光环会向外扩散并变亮。"
+    },
+    "LC123_Connections_FXReach": {
+      "tooltip": "光标需要靠近到多少屏幕像素，端口才开始出现光环。"
+    },
+    "LC123_Connections_FXZoomGlow": {
+      "tooltip": "缩小视图时，所有可连接端口额外变亮的程度。0 = 与 100% 缩放时相同。"
+    },
+    "LC123_Optimization_PackUsage": {
+      "tooltip": "扫描你的 ComfyUI workflows 文件夹，读取每个已保存的工作流（包括子图），看看实际用到了哪些已安装的节点包。列出没有任何工作流使用的包、只有一两个工作流使用的包，以及工作流需要但没有任何已安装包提供的节点。只读：不会修改或卸载任何东西。"
+    },
+    "LC123_Optimization_FastCancel": {
+      "tooltip": "点 Cancel 后在一步之内就停止，而不是等整步跑完（大模型、USDU、视频）。每个模型块都会检查 Cancel 按钮。适用于所有采样器，无需连线。"
+    },
+    "LC123_Optimization_FreeTextEncoder": {
+      "tooltip": "采样开始时，仍在显存里的大文本编码器（1 GB 以上）会被移到内存，让扩散模型独占整张显卡。对 H3 和 Krea 2 效果最明显。换新提示词时，编码器一两秒内就从内存重新载入。"
+    },
+    "LC123_Optimization_Report": {
+      "tooltip": "自动平移画布几秒钟，测量每个已安装节点包的绘制和运行耗时，扫描它们的文件，并按影响从大到小列出拖慢画布的原因。不会修改任何东西。"
+    },
+    "LC123_Optimization_SystemCheck": {
+      "tooltip": "测试这台机器（显卡、内存、硬盘，以及哪些加速在这里真正有效：小型 GPU 实测，约 10 秒），然后告诉你哪些模型文件适合它：该找什么、该避开什么，以及已测试基础模型的具体推荐和下载链接。缺少 Sage、Triton 或 Comfy Kitchen？会给出匹配你显卡的版本链接。不会修改或安装任何东西。"
+    },
+    "LC123_Notes_RequiresVision": {
+      "tooltip": "Note language 和 Translate all notes 使用 LC Vision 模型来翻译。笔记和链接卡片不需要它也能用。"
+    },
+    "LC123_Notes_Language": {
+      "tooltip": "LC Note 打开时使用的语言。没有该语言翻译的笔记会显示原文。"
+    },
+    "LC123_Notes_LinkCards": {
+      "tooltip": "LC Note 里只有 @[card](https://…) 的一行会把网页显示成卡片：图片、网站、标题和简介。@[card: 你的说明](https://…) 可以加上自己的说明。普通链接保持普通。ComfyUI 会读取每张卡片的网页一次来获取标题和图片，图片从该网站加载。关 = 卡片显示为普通链接。"
+    },
+    "LC123_Notes_TranslateAll": {
+      "tooltip": "把当前工作流里的每个 LC Note（包括子图）依次翻译成上面的 Note language，然后用该语言显示。已是该语言或已有最新翻译的笔记会跳过。需要安装 LC Vision。只处理 LC Note，其他笔记不动。关闭设置窗口后仍会继续（底部的小条显示进度）。之后保存工作流以保留翻译。"
+    }
+  }
+}

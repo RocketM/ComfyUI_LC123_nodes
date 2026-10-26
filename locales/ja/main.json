@@ -1,0 +1,79 @@
+{
+  "settings": {
+    "LC123_Performance_HalfRes": {
+      "tooltip": "ノード上のFXプレビューを画像ボックスの半分のサイズで描画します。出力ソケットはフル解像度のままです。"
+    },
+    "LC123_Performance_ClampEdge": {
+      "tooltip": "ノード上のFXプレビューのテクスチャを Max edge（下）まで縮小します。"
+    },
+    "LC123_Performance_MaxEdge": {
+      "tooltip": "Clamp longest side がオンのときに使われます。"
+    },
+    "LC123_Performance_SkipCollapsed": {
+      "tooltip": "折りたたまれたFXノードのノード上の画像描画をスキップします。"
+    },
+    "LC123_Performance_HidePreviews": {
+      "tooltip": "LCの画像FXのノード上プレビューをすべて非表示にします。Compare / Split / Overlay は変わりません。"
+    },
+    "LC123_Performance_RecentColors": {
+      "tooltip": "右クリックの Colors メニューに、最後に使ったカスタムカラー8色を表示します（Custom Scripts が未インストールの場合は Custom ピッカーも追加されます）。"
+    },
+    "LC123_Performance_SkinBeautyFullPreview": {
+      "tooltip": "LC Skin Beauty のノード上プレビューをフル品質で保ちます（半分の解像度にも制限にもなりません）。"
+    },
+    "LC123_Performance_LoraInfoButton": {
+      "tooltip": "LC LoRA Loader の各行に ℹ 情報ボタンを表示します。トリガーワードは LoRA ファイル自体のメタデータから読み取り、ネットワーク通信は行いません。オフにすると行がすっきりします。"
+    },
+    "LC123_Performance_PreviewMinSize": {
+      "tooltip": "ズームアウトして、ノード上の画像プレビューが画面上でこのサイズより小さく描画されるようになると、ノードのテキストと同じようにプレビューがオフになります。小さいプレビューから先にオフになります。0 = 常に描画します。"
+    },
+    "LC123_Connections_FX": {
+      "tooltip": "ワイヤーをドラッグしている間、接続可能なソケットがすべてソケットの色で光ります。近づくとリングが広がって明るくなります。"
+    },
+    "LC123_Connections_FXReach": {
+      "tooltip": "ソケットにリングが出始めるまでに、カーソルがどれだけ近づく必要があるか（画面ピクセル）。"
+    },
+    "LC123_Connections_FXZoomGlow": {
+      "tooltip": "ズームアウト時に、有効なソケットすべてをどれだけ明るく光らせるか。0 = ズーム100%のときと同じです。"
+    },
+    "LC123_Align_Enabled": {
+      "tooltip": "上部ツールバーのロゴボタンを含め、Align ツール全体をオン/オフします。オンの間は、ロゴボタン（明るいグレー = オン、暗いグレー = オフ）で開いているワークフローの Align を切り替えられ、その状態はワークフローとともに保存されます。"
+    },
+    "LC123_Align_Rulers": {
+      "tooltip": "Align がオンの間、上端と左端にルーラーを表示します。左クリック = Node line、右クリック = Group line、マーカーをもう一度クリックすると削除、マーカーをドラッグすると移動します。"
+    },
+    "LC123_Align_RevealDistance": {
+      "tooltip": "カーソルまたはドラッグ中のものがこの距離（画面ピクセル）まで近づくまで、ルーラーのラインは見えません。近づくにつれて徐々に表示されます。"
+    },
+    "LC123_Align_SnapItems": {
+      "tooltip": "ほかのノードやグループの端と中心にもスナップします（これらにはラインは表示されません）。オフ = ルーラーのラインにのみスナップします。スナップ距離は ComfyUI の Snap to grid のサイズ（Lite Graph > Canvas）です。"
+    },
+    "LC123_Optimization_SystemCheck": {
+      "tooltip": "このマシン（グラフィックカード、メモリ、ドライブ、そしてここで実際に効くスピードアップ：約10秒の小さなライブGPUテスト）をテストし、合うモデルファイルを案内します。探すべきもの、避けるべきもの、テスト済みベースモデルのダウンロードリンク付きの具体的なおすすめが表示されます。Sage、Triton、Comfy Kitchen がない場合は、お使いのカードに合うビルドへのリンクを表示します。変更やインストールは一切行いません。"
+    },
+    "LC123_Optimization_PackUsage": {
+      "tooltip": "ComfyUI の workflows フォルダをスキャンし、保存済みのワークフロー（サブグラフを含む）をすべて読み込んで、インストール済みのノードパックのうち実際に使われているものを調べます。どのワークフローも使っていないパック、1～2個しか使っていないパック、そしてワークフローが必要としているのにインストール済みのどのパックにも含まれていないノードを一覧表示します。読み取り専用：変更もアンインストールも行いません。"
+    },
+    "LC123_Optimization_FastCancel": {
+      "tooltip": "Cancel を押すと、ステップ全体の完了を待たずに、ステップの何分の一かで実行を停止します（重いモデル、USDU、動画）。すべてのモデルブロックが Cancel ボタンを確認します。どのサンプラーでも動作し、配線は不要です。"
+    },
+    "LC123_Optimization_FreeTextEncoder": {
+      "tooltip": "サンプリング開始時に、VRAM に残っている大きなテキストエンコーダー（1 GB以上）をRAMに移し、diffusion model がカード全体を使えるようにします。H3 と Krea 2 で最も効果的です。新しいプロンプトでは、エンコーダーがRAMから1～2秒で再読み込みされます。"
+    },
+    "LC123_Optimization_Report": {
+      "tooltip": "キャンバスを数秒間自動でパンし、インストール済みの各パックの描画と実行にかかる時間を計測し、そのファイルをスキャンして、キャンバスを重くしているものを重い順に一覧表示します。変更は行いません。"
+    },
+    "LC123_Notes_RequiresVision": {
+      "tooltip": "Note language と Translate all notes は、翻訳に LC Vision モデルを使用します。ノートとリンクカードは、これがなくても動作します。"
+    },
+    "LC123_Notes_Language": {
+      "tooltip": "LC Notes を開くときの言語。その言語の翻訳がないノートは、元のテキストを表示します。"
+    },
+    "LC123_Notes_LinkCards": {
+      "tooltip": "LC Note 内で @[card](https://…) だけの行は、ページをカード（画像、サイト、タイトル、説明）として表示します。@[card: your caption](https://…) で独自のキャプションを追加できます。通常のリンクはそのままです。ComfyUI は各カードのページを一度読み込んでタイトルと画像を取得し、画像はそのサイトから読み込まれます。Off = カードを通常のリンクとして表示します。"
+    },
+    "LC123_Notes_TranslateAll": {
+      "tooltip": "開いているワークフロー内のすべての LC Note（サブグラフも含む）を、上の Note language に順番に翻訳し、その言語で表示します。すでにその言語のノートや、最新の翻訳があるノートはスキップされます。LC Vision のインストールが必要です。対象は LC Notes のみで、ほかのノートには触れません。設定を閉じても続行されます（下部のピルに進行状況が表示されます）。保存するには、あとでワークフローを保存してください。"
+    }
+  }
+}

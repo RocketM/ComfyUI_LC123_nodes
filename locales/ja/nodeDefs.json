@@ -1,0 +1,3767 @@
+{
+  "AspectRatioSimplifier": {
+    "description": "画像とマスクを希望のサイズにリサイズします。画像から：形を保ったまま、長い辺が max_resolution になるように拡大・縮小します。または、プリセット/カスタムサイズを選びます。\nクロップ、ストレッチ、パッド、フィットが可能で、同じサイズの空の latent も出力します。",
+    "inputs": {
+      "max_resolution": {
+        "tooltip": "出力の長い辺。画像/マスクから：画像は長い辺がこの値になるように拡大・縮小されます。プリセット/カスタムサイズから：これより大きいサイズはこの値に縮小されます。0 = サイズをそのままにします。"
+      },
+      "resolution_source": {
+        "tooltip": "オフ:画像/マスクのアスペクト比のまま、長辺が max_resolution になるようにスケールします(拡大も縮小も)。オン:プリセットまたはカスタムの幅 x 高さ。"
+      },
+      "aspect_ratio": {
+        "tooltip": "custom/preset ソース使用時のプリセット比率。"
+      },
+      "custom_width": {
+        "tooltip": "custom サイズの目標 width。"
+      },
+      "custom_height": {
+        "tooltip": "カスタムサイズの目標の高さ。"
+      },
+      "swap_dimensions": {
+        "tooltip": "size を選択した後に、幅と高さを入れ替えます。"
+      },
+      "upscale_method": {
+        "tooltip": "リサンプリングフィルター。写真には Lanczos が良いデフォルトです。nvidia_rtx_vsr = RTX Video Super Resolution（RTX カード、nvidia-vfx が必要）：よりシャープでクリーンな拡大。縮小には lanczos が使われます。"
+      },
+      "proportion": {
+        "tooltip": "stretch=サイズに強制; resize=内側に収める; crop=埋めてクロップ; pad=収めてレターボックス; total_pixels=総画素数に合わせる。"
+      },
+      "crop_location": {
+        "tooltip": "proportion が crop のときのクロップ基準位置。"
+      },
+      "pad_color": {
+        "tooltip": "pad モード用の RGB。0-255 または 0-1。"
+      },
+      "divisible_by": {
+        "tooltip": "この倍数に幅/高さを丸めます(latent では 8 が一般的です)。"
+      },
+      "batch_size": {
+        "tooltip": "空の latent バッチ。画像/マスクのバッチは入力のものが保持されます。"
+      }
+    }
+  },
+  "LCAspectRatioPipeOut": {
+    "description": "画像とマスクを希望のサイズにリサイズします。画像から：形を保ったまま、長い辺が max_resolution になるように拡大・縮小します。または、プリセット/カスタムサイズを選びます。\nクロップ、ストレッチ、パッド、フィットが可能で、同じサイズの空の latent も出力します。",
+    "inputs": {
+      "max_resolution": {
+        "tooltip": "出力の長い辺。画像/マスクから：画像は長い辺がこの値になるように拡大・縮小されます。プリセット/カスタムサイズから：これより大きいサイズはこの値に縮小されます。0 = サイズをそのままにします。"
+      },
+      "resolution_source": {
+        "tooltip": "オフ:画像/マスクのアスペクト比のまま、長辺が max_resolution になるようにスケールします(拡大も縮小も)。オン:プリセットまたはカスタムの幅 x 高さ。"
+      },
+      "aspect_ratio": {
+        "tooltip": "custom/preset ソース使用時のプリセット比率。"
+      },
+      "custom_width": {
+        "tooltip": "custom サイズの目標 width。"
+      },
+      "custom_height": {
+        "tooltip": "カスタムサイズの目標の高さ。"
+      },
+      "swap_dimensions": {
+        "tooltip": "size を選択した後に、幅と高さを入れ替えます。"
+      },
+      "upscale_method": {
+        "tooltip": "リサンプリングフィルター。写真には Lanczos が良いデフォルトです。nvidia_rtx_vsr = RTX Video Super Resolution（RTX カード、nvidia-vfx が必要）：よりシャープでクリーンな拡大。縮小には lanczos が使われます。"
+      },
+      "proportion": {
+        "tooltip": "stretch=サイズに強制; resize=内側に収める; crop=埋めてクロップ; pad=収めてレターボックス; total_pixels=総画素数に合わせる。"
+      },
+      "crop_location": {
+        "tooltip": "proportion が crop のときのクロップ基準位置。"
+      },
+      "pad_color": {
+        "tooltip": "pad モード用の RGB。0-255 または 0-1。"
+      },
+      "divisible_by": {
+        "tooltip": "この倍数に幅/高さを丸めます(latent では 8 が一般的です)。"
+      },
+      "batch_size": {
+        "tooltip": "空の latent バッチ。画像/マスクのバッチは入力のものが保持されます。"
+      }
+    }
+  },
+  "LCAspectRatioPipe": {
+    "description": "パイプから image、mask、size、latent、batch を取り出します。パイプは上から出力され続けます。",
+    "inputs": {
+      "pipe": {
+        "tooltip": "LC Aspect Ratio Simplifier 📐(Pipe) または LC Pipe からの pipe。"
+      }
+    }
+  },
+  "LCAspectRatioPipeIn": {
+    "description": "image、mask、size、latent、batch をパイプにまとめます。既存のパイプに対しては、接続したものだけを変更します。",
+    "inputs": {
+      "pipe": {
+        "tooltip": "編集する既存の LC_PIPE (任意)。他のキーはすべてそのまま通過します。"
+      },
+      "image": {
+        "tooltip": "image。接続するとパイプの image を上書きします。"
+      },
+      "mask": {
+        "tooltip": "mask。つなぐと pipe の mask を上書きします。"
+      },
+      "width": {
+        "tooltip": "width。つなぐと pipe の width を上書きします。"
+      },
+      "height": {
+        "tooltip": "height。接続するとパイプの height を上書きします。"
+      },
+      "latent": {
+        "tooltip": "latent。接続するとパイプの latent を上書きします。"
+      },
+      "batch": {
+        "tooltip": "batch。つなぐと pipe の batch を上書きします。"
+      },
+      "resolution": {
+        "tooltip": "resolution。つなぐと pipe の resolution を上書きします。"
+      }
+    }
+  },
+  "LCSlider": {
+    "description": "ノード上のスライダー表示です。Min / max / step / 小数桁数は Settings で設定します。INT または FLOAT を出力します。Nodes 2.0 でも動作します。"
+  },
+  "LCSizePad": {
+    "description": "幅 x 高さの2Dスライダーです:フレームの角をドラッグし、モデルのプリセット(MiniMax H3、Krea 2、SDXL、LTX、Klein 9B、Wan 2.2)とアスペクト比を選びます。サイズはモデルのステップに合わせて丸められ、メガピクセルの上限内に収まります。",
+    "inputs": {
+      "model": {
+        "tooltip": "サイズをこのモデルが求める値(ステップとサイズ)に合わせ、メガピクセルの上限でドラッグを止めます。Custom:8刻みで、実質的な上限なし。"
+      },
+      "aspect": {
+        "tooltip": "ドラッグ中、フレームをこの形に固定します。free: 任意の形。"
+      },
+      "megapixels": {
+        "tooltip": "現在の形でのサイズです。変更するとフレームがリサイズされ、ドラッグすると更新されます。モデルの上限を超えることはありません。"
+      }
+    },
+    "outputs": {
+      "0": {
+        "tooltip": "モデル向けに調整された width。"
+      },
+      "1": {
+        "tooltip": "モデル向けに調整された height。"
+      },
+      "2": {
+        "tooltip": "例：1344 x 768 · 1.03 MP · Krea 2"
+      }
+    }
+  },
+  "LCBoundingBoxes": {
+    "description": "画像上にボックスを描きます:何もない場所をドラッグして新しいボックス、ボックスをドラッグして移動、角をドラッグしてリサイズします。各ボックスには名前、説明、そして何をするか(new、change、move(2つ目のボックスをドラッグ)、remove)を設定します。クラシックキャンバスでも Nodes 2.0 でも動作します。",
+    "inputs": {
+      "size": {
+        "tooltip": "use image size: 接続した画像がキャンバスを決めます (width / height は画像がないときのみ使用)。custom: 常に width / height が優先され、画像は引き伸ばして合わせます。"
+      },
+      "width": {
+        "tooltip": "キャンバスの幅：size が custom の場合、または画像が接続されていない場合。"
+      },
+      "height": {
+        "tooltip": "キャンバスの高さ：size が custom の場合、または画像が接続されていない場合。"
+      },
+      "boxes": {
+        "tooltip": "キャンバスに描かれたボックスです(ノードが保持します)。"
+      },
+      "block": {
+        "tooltip": "if_empty: ボックスが描かれていない場合、このノード以降のすべてが止まるので、ボックスを描いてからもう一度キューに入れます (新しい画像のときに便利)。never: 常に通過します。"
+      },
+      "keep_boxes": {
+        "tooltip": "held: ボックスは実行を重ねても残ります。reset_after_run: この実行ではボックスを使い、その後キャンバスがクリアされるので、次の画像は空の状態から始まります。"
+      },
+      "image": {
+        "tooltip": "描画対象の画像。そのサイズがボックスのグリッドを決めます。edit の場合は ref_image_0 です。"
+      },
+      "bboxes": {
+        "tooltip": "別の LC Bounding Boxes（チェーン。例：パネルごとに1つ）、Create Bounding Boxes、またはレイアウトJSONからのボックス。ここに表示され（薄く表示。描いた場所で編集してください）、最初に出力され、そのあとにここで描いたボックスが続きます。"
+      }
+    },
+    "outputs": {
+      "0": {
+        "tooltip": "ボックスを描き込んだ画像。"
+      },
+      "1": {
+        "tooltip": "ピクセルボックス (Create Bounding Boxes と同じ)。"
+      },
+      "2": {
+        "tooltip": "名前、説明、何をするかが付いたボックスで、LC Flux 3 Layout Prompt(または FLUX.3 Layout Prompt)用です。"
+      }
+    }
+  },
+  "LCFlux3LayoutPrompt": {
+    "description": "モデルが学習された形式で、BFL の element table として、ボックスを FLUX 3 のプロンプトに追加します。",
+    "inputs": {
+      "prompt": {
+        "tooltip": "キャプション（新しい画像）または指示（編集）。ボックス 1、ボックス 2 は <1>、<2> と書くか、ボックスの id 自体（<earring_1>）を使います。すべてのボックスをそれぞれ一度ずつ名前で指定してください。"
+      },
+      "elements": {
+        "tooltip": "LC Bounding Boxes(または Create Bounding Boxes)のボックスです。"
+      },
+      "table": {
+        "tooltip": "auto:ボックスが何かを変更、移動、削除した場合は edit テーブル、それ以外は layout テーブルを使います。"
+      },
+      "keep_rest": {
+        "tooltip": "Edits: BFL の、それ以外はすべて同一のまま、という締めの文で終わらせます。"
+      }
+    }
+  },
+  "LCFlux3ReferenceLatent": {
+    "description": "1つのノードでの FLUX 3 の参照：ポジティブとネガティブに最大4枚の画像、モデルが求めるネガティブ、サンプリングする latent（最初に接続した画像のサイズ、または独自のサイズ）。画像なし = 通常の text to image。",
+    "inputs": {
+      "positive": {
+        "tooltip": "エンコード済みのプロンプトです。"
+      },
+      "model": {
+        "tooltip": "ネガティブが接続されていないときに設定します:distilled = ゼロ化したプロンプト、Base = 空のプロンプト(clip が必要)。"
+      },
+      "reference_size": {
+        "tooltip": "各リファレンス画像は、このメガピクセル数にスケールされます(縦横比を保持)。BFL はリファレンスを元のサイズのままにします:ディテールは増えますが、遅くなります。"
+      },
+      "width": {
+        "tooltip": "結果のサイズです。0 = 最初に接続された画像のサイズ(なければ 1024)。"
+      },
+      "height": {
+        "tooltip": "0 = 最初に接続された画像のサイズ。"
+      },
+      "image_1": {
+        "tooltip": "プロンプト内の <ref_image_0>。"
+      },
+      "image_2": {
+        "tooltip": "<ref_image_1>。"
+      },
+      "image_3": {
+        "tooltip": "<ref_image_2>。"
+      },
+      "image_4": {
+        "tooltip": "<ref_image_3>。"
+      },
+      "negative": {
+        "tooltip": "自作のネガティブ。空 = モデルに応じて設定。"
+      },
+      "clip": {
+        "tooltip": "ネガティブなしの Base のみ:空のプロンプトをエンコードします。"
+      }
+    }
+  },
+  "LCMOSSLayoutPrompt": {
+    "description": "ボックスから MOSS Image のレイアウトプロンプトを作成します。各ボックスは、描いた位置にある、独自のキャプションとパレットを持つオブジェクト、キャラクター、またはテキストブロックになります。",
+    "inputs": {
+      "prompt": {
+        "tooltip": "ベースプロンプトです:シーンと、ボックスに入っていない人物(ボックス内のキャラクターは、そのボックス内だけで記述されます)。このノードの出力を LC Vision Prompt Enhancer の prompt_text に接続すると、ボックスはそのまま保たれます。このノードをバイパスすると、ベースプロンプトがそのまま通ります。空:モデルが設定を選びます。"
+      },
+      "elements": {
+        "tooltip": "LC Bounding Boxes(または Create Bounding Boxes)のボックスです。背景を先に、前景を最後に描いてください。"
+      },
+      "canvas": {
+        "tooltip": "single = 1枚の画像。multi_panel = コマ割りや分割画面。collage = ムードボードやステッカーシート。"
+      },
+      "width": {
+        "tooltip": "0 = ボックスのキャンバス(通常はこれ)。画像サイズを上書きしたいとき、たとえばこのノードがアップスケールの後ろにある場合にだけ設定してください。latent と一致させないと、ボックスの位置がずれます。"
+      },
+      "height": {
+        "tooltip": "0 = ボックスのキャンバス。画像サイズを上書きしたい場合（アップスケール後など）にのみ設定してください。"
+      }
+    },
+    "outputs": {
+      "0": {
+        "tooltip": "レイアウトプロンプト:ポジティブプロンプトの text に接続してください。"
+      },
+      "1": {
+        "tooltip": "ボックスを配置したときの幅です:latent に使ってください。"
+      },
+      "2": {
+        "tooltip": "ボックスを配置したときの高さです。"
+      },
+      "3": {
+        "tooltip": "入力された内容と、修正すべき点。"
+      }
+    }
+  },
+  "LCDynamicOverlay": {
+    "description": "画像 B を A に重ねます。A が解像度を決め、B はフィットするようにスケールされます。一度実行すれば、再生成せずにノード上で opacity を調整できます。"
+  },
+  "LCAnySwitch": {
+    "description": "複数の入力のうち、最初に接続されたものを選びます。最初のワイヤーでタイプがロックされます。Use Everywhere の自動配線をブロックします。動的に 2〜20 個の入力。"
+  },
+  "LCIndexSwitch": {
+    "description": "index の位置の入力をそのまま通します。接続された他のスロットは無視され、出力の長さも変わりません。LC Custom Combo から接続するには、index ウィジェットを入力に変換してください。",
+    "inputs": {
+      "index": {
+        "tooltip": "0始まりのスロット。右クリック → Convert Widget to Input で INDEX をここに接続できます。"
+      }
+    }
+  },
+  "LCCustomCombo": {
+    "description": "オプションスロット + 選択 → STRING + INDEX。OPT_CONNECTION → パネル。"
+  },
+  "LCCustomComboPanel": {
+    "description": "LC Custom Combo の選択リモコン。"
+  },
+  "LCComboSelector": {
+    "description": "変換済みの combo 入力につなぐと、別のノードの combo オプション (scheduler、sampler など) を反映するドロップダウンです。"
+  },
+  "LCInvertBoolean": {
+    "description": "LC Boolean と同じ複数タイプの変換を行い、その結果を反転します。true/false をノード上に表示します。",
+    "inputs": {
+      "value": {
+        "tooltip": "BOOLEAN、INT、FLOAT、または number。ゼロ以外 / True → true、それ以外は false にし、その後反転します。"
+      }
+    }
+  },
+  "LCIsBypassedOrMuted": {
+    "description": "`value` につないだノードが現在バイパスまたはミュートされていれば true、そうでなければ false を返します。ノードの表示からグラフを直接読み取るので、先にキューに入れる必要はありません。LC Boolean / LC Invert Boolean と同じ仕様です。true/false がノード上に表示されます。",
+    "inputs": {
+      "is_bypassed_or_muted": {
+        "tooltip": "内部用: このノード自身の表示によってリアルタイムに同期されます。手で設定するものではありません。"
+      },
+      "value": {
+        "tooltip": "監視したいノードから何でもつないでください。型は関係なく、ワイヤーがどのノードから来ているかだけが重要です。"
+      }
+    }
+  },
+  "LCBoolean": {
+    "description": "ブール値、int、float をきれいな true/false に変換し、ノード上に表示します。",
+    "inputs": {
+      "value": {
+        "tooltip": "BOOLEAN、INT、FLOAT、または数値 → true/false に変換されます(反転なし)。"
+      }
+    }
+  },
+  "LCBooleanSwitch": {
+    "description": "ブール値スイッチ:state が on_true か on_false(任意のタイプ)を選びます。選ばれたブランチだけが実行されます。on_true / on_false ソケットの名前を変更すると、スイッチの2つの状態がその名前になります。",
+    "inputs": {
+      "state": {
+        "tooltip": "True → on_true、False → on_false。\n💡 on_true または on_false ソケットの名前を変更する(右クリック > Rename Slot)と、このスイッチにその名前が表示されます(例:Upscale / Skip)。名前を変更しない場合は、接続先ノードのタイトルが表示されます。"
+      },
+      "on_true": {
+        "tooltip": "state が true のときに通過します。このソケット名を変えると、スイッチの true 状態の名前も変わります。"
+      },
+      "on_false": {
+        "tooltip": "state が false のときにそのまま渡されます。このソケットの名前を変更すると、スイッチの false 状態の名前が変わります。"
+      }
+    }
+  },
+  "LCBooleanFlip": {
+    "description": "ブール値の反転:ウィジェットが False → 出力は True、ウィジェットが True → 出力は False。",
+    "inputs": {
+      "boolean": {
+        "tooltip": "出力時に反転: off→True、on→False。"
+      }
+    }
+  },
+  "LCBooleanValue": {
+    "description": "Boolean ウィジェットのソース (primitive スタイル)。",
+    "inputs": {
+      "value": {
+        "tooltip": "出力する boolean 値。"
+      }
+    }
+  },
+  "LCSubject": {
+    "inputs": {
+      "description": {
+        "tooltip": "被写体が誰/何か(見た目、年齢、雰囲気)。自由入力のテキスト。"
+      },
+      "pose": {
+        "tooltip": "体のポーズ。none を選ぶと説明だけに頼ります。"
+      },
+      "action": {
+        "tooltip": "何をしているか。none はこの行を省きます。"
+      },
+      "outfit": {
+        "tooltip": "服装のプリセット（Female/… または Male/…）。none = 服装をテキストで記述します。"
+      },
+      "position_horizontal": {
+        "tooltip": "フレーム内での左 / 中央 / 右の配置。"
+      },
+      "position_vertical": {
+        "tooltip": "フレーム内の上 / 中央 / 下の配置です。"
+      },
+      "position_depth": {
+        "tooltip": "前景 / 中景 / 背景の奥行き。"
+      }
+    }
+  },
+  "LCSubjectArray": {
+    "description": "複数の被写体出力を1行にまとめます。",
+    "inputs": {
+      "subject_01": {
+        "tooltip": "被写体プロンプトのスロット 1。スキップするには未接続のままにします。"
+      },
+      "subject_02": {
+        "tooltip": "被写体プロンプトのスロット 2。スキップするには未接続のままにします。"
+      },
+      "subject_03": {
+        "tooltip": "被写体プロンプトのスロット 3。スキップするには未接続のままにします。"
+      },
+      "subject_04": {
+        "tooltip": "被写体プロンプトのスロット 4。スキップするには未接続のままにします。"
+      },
+      "subject_05": {
+        "tooltip": "被写体プロンプトのスロット 5。スキップするには未接続のままにします。"
+      },
+      "subject_06": {
+        "tooltip": "被写体プロンプトのスロット 6。スキップするには未接続のままにします。"
+      },
+      "subject_07": {
+        "tooltip": "被写体プロンプトのスロット 7。スキップするには未接続のままにします。"
+      },
+      "subject_08": {
+        "tooltip": "被写体プロンプトのスロット 8。スキップするには未接続のままにします。"
+      }
+    }
+  },
+  "LCCamera": {
+    "description": "カメラのフレーミングと被写界深度。距離のプリセットにはレンズの特性が含まれ、生の mm / f値は使いません。",
+    "inputs": {
+      "prompt": {
+        "tooltip": "追加のカメラメモ。フレーミングのプリセットには自然なレンズ表現が含まれます。"
+      },
+      "angle": {
+        "tooltip": "被写体に対するカメラの高さと傾き。"
+      },
+      "distance": {
+        "tooltip": "被写体がフレームにどれだけ入っているか（クローズアップ → 全身）。レンズの特性も含みます。"
+      },
+      "depth_of_field": {
+        "tooltip": "背景ぼかし vs 全体シャープ (絞りの簡易的な代用)。"
+      }
+    }
+  },
+  "LCLighting": {
+    "inputs": {
+      "prompt": {
+        "tooltip": "プリセット以外の追加のライティングメモ。"
+      },
+      "lighting": {
+        "tooltip": "全体の光の質とムード（ソフト、ハード、ゴールデンアワー、ネオンなど）。"
+      },
+      "light_direction": {
+        "tooltip": "被写体に対するキーライトの位置。"
+      }
+    }
+  },
+  "LCStyleSelector": {
+    "inputs": {
+      "prompt": {
+        "tooltip": "追加のスタイルメモ（フィルムストック、アートディレクションなど）。"
+      },
+      "style_category": {
+        "tooltip": "大まかなスタイルのファミリー（photo、editorial、anime など）。"
+      },
+      "style_preset": {
+        "tooltip": "このファミリー用の詳細なスタイル表現です。"
+      },
+      "quality_level": {
+        "tooltip": "仕上がりをどれだけ洗練させるか（standard → editorial/hero）。"
+      }
+    }
+  },
+  "LCSceneBuilder": {
+    "inputs": {
+      "scene_preset": {
+        "tooltip": "詳細な環境プリセット（シーンの説明を埋めます）。"
+      },
+      "description": {
+        "tooltip": "プリセットを上書きまたは拡張します。空 = プリセットのテキストのみを使います。"
+      },
+      "time_of_day": {
+        "tooltip": "いつか。none = 時間を含めません。"
+      },
+      "weather": {
+        "tooltip": "空 / 天気。none = 天気を含めない。"
+      },
+      "environment_details": {
+        "tooltip": "プリセットに含まれない小道具、建築、雰囲気。"
+      }
+    }
+  },
+  "LCColorPalette": {
+    "inputs": {
+      "mode": {
+        "tooltip": "preset = 組み込みパレット。from_image = 入力画像からサンプリング。"
+      },
+      "preset": {
+        "tooltip": "mode が preset のときの名前付きパレット。"
+      },
+      "num_colors": {
+        "tooltip": "使用またはサンプリングする色の数(4–6)。"
+      },
+      "image": {
+        "tooltip": "mode が from_image のときのソース画像。"
+      }
+    }
+  },
+  "LCPromptAssembler": {
+    "inputs": {
+      "pretty_print": {
+        "tooltip": "オン:インデント付きの JSON、オフ:コンパクトな JSON。"
+      },
+      "remove_empty": {
+        "tooltip": "空のセクションをスキップし、空のソケットで空行が残らないようにします。"
+      },
+      "include_scene_bboxes": {
+        "tooltip": "オンの場合、JSON にシーンの家具/ランドマークのボックスも含まれます。オフ (既定) では被写体の bbox のみで、主な領域指定の用途です。"
+      },
+      "subjects": {
+        "tooltip": "🗒️LC Subject または Subject Array から。"
+      },
+      "scene": {
+        "tooltip": "🗒️LC Scene Builder から。"
+      },
+      "camera": {
+        "tooltip": "🗒️LC Camera から。"
+      },
+      "lighting": {
+        "tooltip": "🗒️LC Lighting から。"
+      },
+      "style": {
+        "tooltip": "🗒️LC Style Selector から。"
+      },
+      "palette": {
+        "tooltip": "🎨LC Color Palette から (テキスト出力)。"
+      },
+      "mood": {
+        "tooltip": "任意のムード行(自由入力)。"
+      },
+      "background": {
+        "tooltip": "任意の背景に関する追加メモ。"
+      },
+      "composition": {
+        "tooltip": "任意の構図メモ（三分割法など）。"
+      },
+      "extra": {
+        "tooltip": "末尾に追加するその他の内容。"
+      },
+      "margin": {
+        "tooltip": "すべての bbox をフレームの端から内側に寄せます（0–0.25）。デフォルト 0.05 = 5%。"
+      }
+    }
+  },
+  "LCJoinStrings": {
+    "description": "複数の文字列を区切り文字でつなぎます。Null/空の入力はスキップされます。区切り文字: \\n = 改行、\\n\\n = 空行。",
+    "inputs": {
+      "inputcount": {
+        "tooltip": "表示して結合する文字列入力の数です。"
+      },
+      "delimiter": {
+        "tooltip": "空でない部分の間に入れます。改行は \\n、空行は \\n\\n、タブは \\t を使います。"
+      }
+    }
+  },
+  "LCShowText": {
+    "description": "ノード上に文字列を表示します（ShowText 風）。改行は保持され、JSON は整形されます。STRING はそのまま出力されます。"
+  },
+  "LCWidgetToString": {
+    "description": "別のノードのウィジェットを STRING として読み取ります (KJ WidgetToString)。any_input なし、id 0、タイトル空 → 休止状態で、空文字列を返します。",
+    "inputs": {
+      "id": {
+        "tooltip": "対象ノードの id。0 = 未使用（any_input または title を使用）。"
+      },
+      "widget_name": {
+        "tooltip": "ウィジェット名、またはカンマ区切りのリスト。"
+      },
+      "return_all": {
+        "tooltip": "対象のすべてのウィジェットを name: value の形で出力します。"
+      },
+      "any_input": {
+        "tooltip": "読み取りたいノードに接続します。接続されるまで休止する動作に必要です。id と title が空の場合にも使われます。"
+      },
+      "node_title": {
+        "tooltip": "手動で編集したノードタイトルに一致させます。"
+      },
+      "allowed_float_decimals": {
+        "tooltip": "float の小数桁数。"
+      }
+    }
+  },
+  "LCTextReplace": {
+    "description": "1〜20組の連続した検索/置換ペアによるテキスト置換です。entrycount を上げると行が増え、下げると減ります。空の検索エントリーはスキップされます。regex は任意です。",
+    "inputs": {
+      "text": {
+        "tooltip": "変換する元のテキスト。"
+      },
+      "entrycount": {
+        "tooltip": "表示して適用する find/replace のペアの数。"
+      },
+      "use_regex": {
+        "tooltip": "find を正規表現として扱います。"
+      },
+      "count": {
+        "tooltip": "ペアごとの最大置換回数。0 = すべて置換。"
+      },
+      "find_1": {
+        "tooltip": "検索文字列 #1 (空の場合はスキップ)。"
+      },
+      "replace_1": {
+        "tooltip": "find #1 の置換。"
+      },
+      "find_2": {
+        "tooltip": "検索文字列 #2 (空の場合はスキップ)。"
+      },
+      "replace_2": {
+        "tooltip": "find #2 の置換。"
+      },
+      "find_3": {
+        "tooltip": "検索文字列 #3(空の場合はスキップ)。"
+      },
+      "replace_3": {
+        "tooltip": "find #3 の置換文字列です。"
+      },
+      "find_4": {
+        "tooltip": "検索文字列 #4(空の場合はスキップ)。"
+      },
+      "replace_4": {
+        "tooltip": "find #4 の置換文字列です。"
+      },
+      "find_5": {
+        "tooltip": "検索文字列 #5（空の場合はスキップ）。"
+      },
+      "replace_5": {
+        "tooltip": "検索 #5 の置換後の文字列。"
+      },
+      "find_6": {
+        "tooltip": "検索文字列 #6（空の場合はスキップ）。"
+      },
+      "replace_6": {
+        "tooltip": "検索 #6 の置換後の文字列。"
+      },
+      "find_7": {
+        "tooltip": "検索文字列 #7 (空の場合はスキップ)。"
+      },
+      "replace_7": {
+        "tooltip": "find #7 の置換。"
+      },
+      "find_8": {
+        "tooltip": "検索文字列 #8 (空の場合はスキップ)。"
+      },
+      "replace_8": {
+        "tooltip": "find #8 の置換。"
+      },
+      "find_9": {
+        "tooltip": "検索文字列 #9(空の場合はスキップ)。"
+      },
+      "replace_9": {
+        "tooltip": "find #9 の置換文字列です。"
+      },
+      "find_10": {
+        "tooltip": "検索文字列 #10(空の場合はスキップ)。"
+      },
+      "replace_10": {
+        "tooltip": "検索 #10 の置換後の文字列。"
+      },
+      "find_11": {
+        "tooltip": "検索文字列 #11（空の場合はスキップ）。"
+      },
+      "replace_11": {
+        "tooltip": "検索 #11 の置換後の文字列。"
+      },
+      "find_12": {
+        "tooltip": "検索文字列 #12（空の場合はスキップ）。"
+      },
+      "replace_12": {
+        "tooltip": "find #12 の置換。"
+      },
+      "find_13": {
+        "tooltip": "検索文字列 #13 (空の場合はスキップ)。"
+      },
+      "replace_13": {
+        "tooltip": "find #13 の置換文字列です。"
+      },
+      "find_14": {
+        "tooltip": "検索文字列 #14 (空の場合はスキップ)。"
+      },
+      "replace_14": {
+        "tooltip": "find #14 の置換文字列です。"
+      },
+      "find_15": {
+        "tooltip": "検索文字列 #15(空の場合はスキップ)。"
+      },
+      "replace_15": {
+        "tooltip": "検索 #15 の置換後の文字列。"
+      },
+      "find_16": {
+        "tooltip": "検索文字列 #16(空の場合はスキップ)。"
+      },
+      "replace_16": {
+        "tooltip": "検索 #16 の置換後の文字列。"
+      },
+      "find_17": {
+        "tooltip": "検索文字列 #17（空の場合はスキップ）。"
+      },
+      "replace_17": {
+        "tooltip": "find #17 の置換。"
+      },
+      "find_18": {
+        "tooltip": "検索文字列 #18（空の場合はスキップ）。"
+      },
+      "replace_18": {
+        "tooltip": "find #18 の置換。"
+      },
+      "find_19": {
+        "tooltip": "検索文字列 #19 (空の場合はスキップ)。"
+      },
+      "replace_19": {
+        "tooltip": "find #19 の置換文字列です。"
+      },
+      "find_20": {
+        "tooltip": "検索文字列 #20 (空の場合はスキップ)。"
+      },
+      "replace_20": {
+        "tooltip": "find #20 の置換文字列です。"
+      }
+    }
+  },
+  "LCDuplicateTags": {
+    "description": "重複したタグを取り除き、重みが二重にならないようにします。大文字小文字、アンダースコア、重みを無視して照合します(long_hair = (long hair:1.2))。文、空行の区切り、BREAK はそのまま通過します。2つ目のプロンプトを任意で指定すると、2つのプロンプトを結合してまとめて整理します。",
+    "inputs": {
+      "keep": {
+        "tooltip": "重複したタグのうち、どれを残すか。first: 書かれた順の最初のもの。strongest: 最も強く重み付けされたもの。最初のものがあった位置に置かれます。"
+      },
+      "text": {
+        "tooltip": "整えるプロンプトです。上流でどちらの入力もバイパスできるよう、任意になっています。"
+      },
+      "text_2": {
+        "tooltip": "任意の2つ目のプロンプトで、text の後ろに追加され、まとめて整理されます(例:自分のプロンプトと LC Vision Danbooru Caption のもの)。"
+      }
+    },
+    "outputs": {
+      "0": {
+        "tooltip": "すべてのタグを1回ずつにしたプロンプト。"
+      },
+      "1": {
+        "tooltip": "取り除かれたタグ。確認用。"
+      }
+    }
+  },
+  "LCTextRemove": {
+    "description": "1〜20個の連続した find で部分文字列を削除します (置換値なし)。空白だけの find は無視されるので、プロンプト全体から空白が取り除かれることはありません。削除後に残った連続スペースは1つにまとめられます。",
+    "inputs": {
+      "text": {
+        "tooltip": "変換する元のテキスト。"
+      },
+      "entrycount": {
+        "tooltip": "表示して適用する検索行の数。"
+      },
+      "use_regex": {
+        "tooltip": "find を正規表現として扱います。"
+      },
+      "count": {
+        "tooltip": "検索ごとの最大削除数。0 = 一致するものすべてを削除します。"
+      },
+      "find_1": {
+        "tooltip": "削除するテキスト #1 (空または空白のみの場合はスキップ)。"
+      },
+      "find_2": {
+        "tooltip": "削除するテキスト #2 (空または空白のみの場合はスキップ)。"
+      },
+      "find_3": {
+        "tooltip": "削除するテキスト #3（空または空白のみの場合はスキップ）。"
+      },
+      "find_4": {
+        "tooltip": "削除するテキスト #4（空または空白のみの場合はスキップ）。"
+      },
+      "find_5": {
+        "tooltip": "削除するテキスト #5 (空または空白のみの場合はスキップ)。"
+      },
+      "find_6": {
+        "tooltip": "削除するテキスト #6 (空または空白のみの場合はスキップ)。"
+      },
+      "find_7": {
+        "tooltip": "削除するテキスト #7(空または空白のみの場合はスキップされます)。"
+      },
+      "find_8": {
+        "tooltip": "削除するテキスト #8(空または空白のみの場合はスキップされます)。"
+      },
+      "find_9": {
+        "tooltip": "削除するテキスト #9（空または空白のみの場合はスキップ）。"
+      },
+      "find_10": {
+        "tooltip": "削除するテキスト #10(空または空白のみの場合はスキップされます)。"
+      },
+      "find_11": {
+        "tooltip": "削除するテキスト #11(空または空白のみの場合はスキップされます)。"
+      },
+      "find_12": {
+        "tooltip": "削除するテキスト #12(空または空白のみの場合はスキップされます)。"
+      },
+      "find_13": {
+        "tooltip": "削除するテキスト #13(空または空白のみの場合はスキップされます)。"
+      },
+      "find_14": {
+        "tooltip": "削除するテキスト #14（空または空白のみの場合はスキップ）。"
+      },
+      "find_15": {
+        "tooltip": "削除するテキスト #15（空または空白のみの場合はスキップ）。"
+      },
+      "find_16": {
+        "tooltip": "削除するテキスト #16 (空または空白のみの場合はスキップ)。"
+      },
+      "find_17": {
+        "tooltip": "削除するテキスト #17 (空または空白のみの場合はスキップ)。"
+      },
+      "find_18": {
+        "tooltip": "削除するテキスト #18(空または空白のみの場合はスキップされます)。"
+      },
+      "find_19": {
+        "tooltip": "削除するテキスト #19(空または空白のみの場合はスキップされます)。"
+      },
+      "find_20": {
+        "tooltip": "削除するテキスト #20（空または空白のみの場合はスキップ）。"
+      }
+    }
+  },
+  "LCIntCompare": {
+    "description": "2つの整数を比較し、大きい方または小さい方を出力します（mode で切り替え）。",
+    "inputs": {
+      "a": {
+        "tooltip": "1つ目の整数。"
+      },
+      "b": {
+        "tooltip": "2つ目の整数。"
+      },
+      "mode": {
+        "tooltip": "a と b の大きいほう、または小さいほうを返します。"
+      }
+    }
+  },
+  "LCFloatCompare": {
+    "description": "2つの float を比較し、大きいほうか小さいほうを出力します (mode スイッチ)。",
+    "inputs": {
+      "a": {
+        "tooltip": "1つ目の浮動小数点数。"
+      },
+      "b": {
+        "tooltip": "2つ目の浮動小数点数。"
+      },
+      "mode": {
+        "tooltip": "a と b の大きいほう、または小さいほうを返します。"
+      }
+    }
+  },
+  "LCSeedJump": {
+    "description": "Seed ジャンプ：入力 seed a とジャンプ b（1–20）。出力：a、a+b、a+2b、a+3b、a+4b、a+5b。",
+    "inputs": {
+      "seed": {
+        "tooltip": "ベース seed（a）。出力は a、a+jump、a+2·jump、…"
+      },
+      "jump": {
+        "tooltip": "ステップ幅（b）。各出力は前の出力にこの値を加えたものです。"
+      }
+    }
+  },
+  "LCNodeSnapshot": {
+    "description": "別のノードのウィジェットのスナップショットを取ります。**source**（またはターゲットのタイトル/id）を接続します。ドロップダウンに**ウィジェット名**が一覧表示されます。出力：selected、lines、json。",
+    "inputs": {
+      "widget_name": {
+        "tooltip": "対象ノードのパラメータウィジェット名 (例: preset, strength)。"
+      },
+      "source": {
+        "tooltip": "調べたいノードの出力を何でもつないでください。target text より優先されます。"
+      },
+      "target": {
+        "tooltip": "フォールバック：source が接続されていない場合の、ノードのタイトル（完全一致）または数値 id。"
+      }
+    }
+  },
+  "LCModelInfo": {
+    "description": "モデルファイルが自分自身について記録している内容を、ヘッダーのみから読み取ります: 保存ノードが埋め込んだワークフロー (LoRA、strength、マージ)、Kohya の学習情報、カードのフィールド、GGUF 情報。つなぐとすぐノード上に表示されます。モデルはそのまま通過します。",
+    "inputs": {
+      "model": {
+        "tooltip": "任意の diffusion model の出力：ローダー、LoRA ローダー、マージなど。"
+      }
+    },
+    "outputs": {
+      "0": {
+        "tooltip": "同じモデルで、変更なしです。"
+      },
+      "1": {
+        "tooltip": "ノードに表示されるレポートです。"
+      },
+      "2": {
+        "tooltip": "見つかったすべての LoRA: このワイヤー上のものとファイルに焼き込まれたもの、1行に1つ。"
+      },
+      "3": {
+        "tooltip": "すべてのファイルの全ヘッダーフィールドを JSON で出力します (埋め込みワークフローも含む)。"
+      }
+    }
+  },
+  "LCNotify": {
+    "description": "ノードの実行時に assets/sounds の音を鳴らします。ノード上の ▶ で選択したファイルをプレビューできます。Mode: always, on empty queue, never。",
+    "inputs": {
+      "mode": {
+        "tooltip": "always = 毎回実行。on empty queue = 実行後にキューが空のときだけ。never = 無音 (▶ プレビューは引き続き使用可)。"
+      },
+      "volume": {
+        "tooltip": "再生音量 (0–1)。"
+      },
+      "file": {
+        "tooltip": "assets/sounds/ のサウンドファイル。"
+      },
+      "any": {
+        "tooltip": "任意のパススルー。ノードをグラフ上の順序に置くために使います。"
+      }
+    }
+  },
+  "LCCivitaiStrip": {
+    "description": "CivitAI 🚩🔪: プロンプトから、リストにある単語やフレーズ（単語全体のみ）を削除します。たとえば、LLM（特に abliterated モデル）が大人に付け足してしまうことがある \"child\" / \"late teens\" といった表現などです。オンにするまでオフです。免責事項: これは便利なフィルターであり、安全システムではありません。リストにある単語と完全に一致するものを削除するだけで、画像やプロンプトの内容は理解できず、見逃すこともあります。コンテンツが許可されるようになるわけではありません。作成・投稿するものと、CivitAI の利用規約および法律の遵守については、すべて自己責任です。リストが完全・最新であること、承認に十分であることは保証されません。CivitAI とは無関係です。",
+    "inputs": {
+      "text": {
+        "tooltip": "取り除くプロンプト / テキスト。"
+      },
+      "list_file": {
+        "tooltip": "assets/lists/ 配下のリストファイル (1行に1語、# コメント可)。"
+      },
+      "enabled": {
+        "tooltip": "免責事項：これは便利なフィルターであり、安全システムではありません。リストにある単語と完全に一致するものを削除するだけで、画像やプロンプトの内容は理解できず、見逃すこともあります。コンテンツが許可されるようになるわけではありません。作成・投稿するものと、CivitAI の利用規約および法律の遵守については、すべて自己責任です。リストが完全・最新であること、承認に十分であることは保証されません。CivitAI とは無関係です。Off = テキストはそのまま変更されずに通ります。自分でオンにする必要があります。"
+      }
+    }
+  },
+  "LC123SaveText": {
+    "description": "テキスト文字列を output フォルダ内のファイルに書き込みます。ファイル名は Windows で使えない文字がサニタイズされます。",
+    "inputs": {
+      "filename_prefix": {
+        "tooltip": "ファイル名(と任意のサブフォルダー)。パスに使えない文字は _ に置き換えられます。"
+      }
+    }
+  },
+  "LCBatchImage": {
+    "description": "autogrow スロットから画像をバッチにします。信号のない (ミュート/欠落の) 接続ソケットは無視されます。画像を出力するバイパスは残されます。後のスロットは最初の有効な画像のサイズにリサイズされます。",
+    "inputs": {
+      "image_01": {
+        "tooltip": "未接続、ミュート、または空の場合はスキップされます。サイズが異なる場合は、最初の有効な画像に合わせてリサイズされます。"
+      },
+      "image_02": {
+        "tooltip": "未接続、ミュート、または空の場合はスキップされます。サイズが異なる場合は、最初の有効な画像に合わせてリサイズされます。"
+      },
+      "image_03": {
+        "tooltip": "未接続、ミュート、または空の場合はスキップされます。サイズが異なる場合は、最初の有効な画像に合わせてリサイズされます。"
+      },
+      "image_04": {
+        "tooltip": "未接続、ミュート、または空の場合はスキップされます。サイズが異なる場合は、最初の有効な画像に合わせてリサイズされます。"
+      },
+      "image_05": {
+        "tooltip": "未接続、ミュート、または空の場合はスキップされます。サイズが異なる場合は、最初の有効な画像に合わせてリサイズされます。"
+      },
+      "image_06": {
+        "tooltip": "未接続、ミュート、または空の場合はスキップされます。サイズが異なる場合は、最初の有効な画像に合わせてリサイズされます。"
+      },
+      "image_07": {
+        "tooltip": "未接続、ミュート、または空の場合はスキップされます。サイズが異なる場合は、最初の有効な画像に合わせてリサイズされます。"
+      },
+      "image_08": {
+        "tooltip": "未接続、ミュート、または空の場合はスキップされます。サイズが異なる場合は、最初の有効な画像に合わせてリサイズされます。"
+      },
+      "image_09": {
+        "tooltip": "未接続、ミュート、または空の場合はスキップされます。サイズが異なる場合は、最初の有効な画像に合わせてリサイズされます。"
+      },
+      "image_10": {
+        "tooltip": "未接続、ミュート、または空の場合はスキップされます。サイズが異なる場合は、最初の有効な画像に合わせてリサイズされます。"
+      },
+      "image_11": {
+        "tooltip": "未接続、ミュート、または空の場合はスキップされます。サイズが異なる場合は、最初の有効な画像に合わせてリサイズされます。"
+      },
+      "image_12": {
+        "tooltip": "未接続、ミュート、または空の場合はスキップされます。サイズが異なる場合は、最初の有効な画像に合わせてリサイズされます。"
+      },
+      "image_13": {
+        "tooltip": "未接続、ミュート、または空の場合はスキップされます。サイズが異なる場合は、最初の有効な画像に合わせてリサイズされます。"
+      },
+      "image_14": {
+        "tooltip": "未接続、ミュート、または空の場合はスキップされます。サイズが異なる場合は、最初の有効な画像に合わせてリサイズされます。"
+      },
+      "image_15": {
+        "tooltip": "未接続、ミュート、または空の場合はスキップされます。サイズが異なる場合は、最初の有効な画像に合わせてリサイズされます。"
+      },
+      "image_16": {
+        "tooltip": "未接続、ミュート、または空の場合はスキップされます。サイズが異なる場合は、最初の有効な画像に合わせてリサイズされます。"
+      },
+      "image_17": {
+        "tooltip": "未接続、ミュート、または空の場合はスキップされます。サイズが異なる場合は、最初の有効な画像に合わせてリサイズされます。"
+      },
+      "image_18": {
+        "tooltip": "未接続、ミュート、または空の場合はスキップされます。サイズが異なる場合は、最初の有効な画像に合わせてリサイズされます。"
+      },
+      "image_19": {
+        "tooltip": "未接続、ミュート、または空の場合はスキップされます。サイズが異なる場合は、最初の有効な画像に合わせてリサイズされます。"
+      },
+      "image_20": {
+        "tooltip": "未接続、ミュート、または空の場合はスキップされます。サイズが異なる場合は、最初の有効な画像に合わせてリサイズされます。"
+      }
+    }
+  },
+  "LCImageStitchMulti": {
+    "description": "autogrow スロットから画像を横または縦に並べて連結します。ミュートされたスロットや空のスロットはスキップされます。match first は最初の画像に合わせてスケールし、辺をそろえます。",
+    "inputs": {
+      "direction": {
+        "tooltip": "次の画像を置く位置: right / left = 横に並べる、down / up = 縦に積む。"
+      },
+      "match_size": {
+        "tooltip": "match first:すべての画像が(縦横比を保ったまま)最初の画像の高さ(横並び)または幅(縦積み)に合わせてスケールされ、エッジが揃います。\noff:画像は元のサイズのままです。"
+      },
+      "align": {
+        "tooltip": "サイズが違うときに、小さいほうの画像を継ぎ目に沿ってどこに置くか: center, start (上 / 左), end。"
+      },
+      "gap": {
+        "tooltip": "画像間の間隔(ピクセル)。"
+      },
+      "gap_color": {
+        "tooltip": "隙間と、小さい画像の周囲の空きスペースの色 (hex)。"
+      },
+      "image_01": {
+        "tooltip": "未接続、ミュート、または空の場合はスキップされます。"
+      },
+      "image_02": {
+        "tooltip": "未接続、ミュート、または空の場合はスキップされます。"
+      },
+      "image_03": {
+        "tooltip": "未接続、ミュート、または空の場合はスキップされます。"
+      },
+      "image_04": {
+        "tooltip": "未接続、ミュート、または空の場合はスキップされます。"
+      },
+      "image_05": {
+        "tooltip": "未接続、ミュート、または空の場合はスキップされます。"
+      },
+      "image_06": {
+        "tooltip": "未接続、ミュート、または空の場合はスキップされます。"
+      },
+      "image_07": {
+        "tooltip": "未接続、ミュート、または空の場合はスキップされます。"
+      },
+      "image_08": {
+        "tooltip": "未接続、ミュート、または空の場合はスキップされます。"
+      },
+      "image_09": {
+        "tooltip": "未接続、ミュート、または空の場合はスキップされます。"
+      },
+      "image_10": {
+        "tooltip": "未接続、ミュート、または空の場合はスキップされます。"
+      },
+      "image_11": {
+        "tooltip": "未接続、ミュート、または空の場合はスキップされます。"
+      },
+      "image_12": {
+        "tooltip": "未接続、ミュート、または空の場合はスキップされます。"
+      },
+      "image_13": {
+        "tooltip": "未接続、ミュート、または空の場合はスキップされます。"
+      },
+      "image_14": {
+        "tooltip": "未接続、ミュート、または空の場合はスキップされます。"
+      },
+      "image_15": {
+        "tooltip": "未接続、ミュート、または空の場合はスキップされます。"
+      },
+      "image_16": {
+        "tooltip": "未接続、ミュート、または空の場合はスキップされます。"
+      },
+      "image_17": {
+        "tooltip": "未接続、ミュート、または空の場合はスキップされます。"
+      },
+      "image_18": {
+        "tooltip": "未接続、ミュート、または空の場合はスキップされます。"
+      },
+      "image_19": {
+        "tooltip": "未接続、ミュート、または空の場合はスキップされます。"
+      },
+      "image_20": {
+        "tooltip": "未接続、ミュート、または空の場合はスキップされます。"
+      }
+    }
+  },
+  "LCBatchImageComparer": {
+    "description": "大量のバッチ向けの Stable Image Comparer です。あふれる数値リストの代わりに、コンパクトなドロップダウンを使います。画像エリアの位置とサイズは固定されます(プレースホルダーが常に確保されます)。"
+  },
+  "LCImageSplit": {
+    "description": "ノード上の A|B ワイプ(スライダー専用。画像上でのドラッグは不可)。出力は保存用に焼き込まれた分割画像です。",
+    "inputs": {
+      "image_a": {
+        "tooltip": "ワイプの左側です。"
+      },
+      "image_b": {
+        "tooltip": "ワイプの右側。"
+      },
+      "split_position": {
+        "tooltip": "ワイプ位置 0-1。このスライダーでのみ調整します — 画像をドラッグしても変わりません。プレビューはリアルタイムに更新されます。"
+      },
+      "show_divider": {
+        "tooltip": "保存/出力画像のカット部分にある継ぎ目です。"
+      },
+      "divider_width": {
+        "tooltip": "カットの継ぎ目の幅 (ピクセル)。0 = 継ぎ目なし。"
+      },
+      "divider_color": {
+        "tooltip": "継ぎ目の色(hex)。"
+      }
+    }
+  },
+  "LCLastImageHolder": {
+    "description": "最後に生成された画像を、ビフォー/アフター用に保持します。接続を切っても残ります。clear は再実行せずにメモリを空にします。",
+    "inputs": {
+      "mode": {
+        "tooltip": "hold previous generation: 毎回の生成で前の画像を出力し、その後に現在の画像を保存します。\nhold until cleared: 最初の画像を保存し、Clear を押すまで固定します。\nhold until seed change: 現在のシードの画像を保持し (seed ソケットをつなぎます)、シードが変わると新しい画像を保存します。1つのシードで設定を調整し、その最初の画像と比較できます。"
+      },
+      "new_image": {
+        "tooltip": "任意。保存する現在の生成結果。この入力が接続されていない、または空の場合でも、ノードは保持している画像を保持・表示し続けます。"
+      },
+      "seed": {
+        "tooltip": "hold until seed change 用：サンプラーが使っているのと同じ seed を接続してください。新しい seed で保持中の画像が置き換わります。"
+      }
+    }
+  },
+  "LCImageLabel": {
+    "description": "ドラッグ&ドロップでアップロードできる、浮遊する画像ステッカーです。タイトルもソケットもなく、ワークフローに注釈を付けるための見た目だけのラベルです。ダブルクリックで設定(サイズ、枠線、角丸、背景)が開きます。画像は小さな webp の data URL として保存済みワークフローに埋め込まれるため、元のアップロードがなくなっても共有できます。"
+  },
+  "LCSamplerConfigure": {
+    "description": "2パスのサンプラー設定をすべて1か所に: steps、swap step、detailer steps、denoise、両方の CFG、sampler、scheduler。",
+    "inputs": {
+      "total_steps": {
+        "tooltip": "スケジュール全体の合計サンプリング steps。"
+      },
+      "step_swap": {
+        "tooltip": "1回目のパスから2回目のパスに切り替えるステップのインデックスです(SplitSigmas のステップ)。"
+      },
+      "detailer_steps": {
+        "tooltip": "ディテーラー/リファイナーのステージ用に確保するステップ数（0 = 未使用）。"
+      },
+      "denoise": {
+        "tooltip": "sigma スケジュールの作成時に使う denoise の強さです(1.0 = フル)。"
+      },
+      "_gap1": {
+        "tooltip": "レイアウト用スペーサー"
+      },
+      "cfg_1": {
+        "tooltip": "第1（高 sigma）パスの CFG。"
+      },
+      "cfg_2": {
+        "tooltip": "第2 (低 sigma) パスの CFG。"
+      },
+      "_gap2": {
+        "tooltip": "レイアウト用スペーサー"
+      },
+      "sampler_name": {
+        "tooltip": "サンプラーのアルゴリズム。"
+      },
+      "scheduler": {
+        "tooltip": "ノイズスケジュール。"
+      }
+    }
+  },
+  "LCSamplerConfigurePipeOut": {
+    "description": "2パスのサンプラー設定をすべて1か所に: steps、swap step、detailer steps、denoise、両方の CFG、sampler、scheduler。",
+    "inputs": {
+      "total_steps": {
+        "tooltip": "スケジュール全体の合計サンプリング steps。"
+      },
+      "step_swap": {
+        "tooltip": "1回目のパスから2回目のパスに切り替えるステップのインデックスです(SplitSigmas のステップ)。"
+      },
+      "detailer_steps": {
+        "tooltip": "ディテーラー/リファイナーのステージ用に確保するステップ数（0 = 未使用）。"
+      },
+      "denoise": {
+        "tooltip": "sigma スケジュールの作成時に使う denoise の強さです(1.0 = フル)。"
+      },
+      "_gap1": {
+        "tooltip": "レイアウト用スペーサー"
+      },
+      "cfg_1": {
+        "tooltip": "第1（高 sigma）パスの CFG。"
+      },
+      "cfg_2": {
+        "tooltip": "第2 (低 sigma) パスの CFG。"
+      },
+      "_gap2": {
+        "tooltip": "レイアウト用スペーサー"
+      },
+      "sampler_name": {
+        "tooltip": "サンプラーのアルゴリズム。"
+      },
+      "scheduler": {
+        "tooltip": "ノイズスケジュール。"
+      },
+      "pipe": {
+        "tooltip": "任意の LC_PIPE 入力。このノードのサンプラーキーが同名のキーを上書きし、他の pipe フィールドはそのまま通過します。"
+      }
+    }
+  },
+  "LCSamplerConfigurePipe": {
+    "description": "LC_PIPE をサンプラー設定用のソケットに展開します。パイプはそのまま通過するので、さらに Get/Set でつなげられます。",
+    "inputs": {
+      "pipe": {
+        "tooltip": "LC Sampler Configure (pipe) または LC Pipe (in/edit) からの pipe。"
+      }
+    }
+  },
+  "LCSamplerConfigureSimple": {
+    "description": "1パス分のサンプラー設定をまとめたもの：steps、detailer steps、denoise、CFG、sampler、scheduler。",
+    "inputs": {
+      "total_steps": {
+        "tooltip": "サンプリングの総ステップ数。"
+      },
+      "detailer_steps": {
+        "tooltip": "ディテーラー/リファイナーのステージ用に確保するステップ数（0 = 未使用）。"
+      },
+      "denoise": {
+        "tooltip": "Denoise の強さ（1.0 = フル）。"
+      },
+      "_gap1": {
+        "tooltip": "レイアウト用スペーサー"
+      },
+      "cfg": {
+        "tooltip": "Classifier-free guidance のスケール。"
+      },
+      "_gap2": {
+        "tooltip": "レイアウト用スペーサー"
+      },
+      "sampler_name": {
+        "tooltip": "サンプラーのアルゴリズム。"
+      },
+      "scheduler": {
+        "tooltip": "ノイズスケジュール。"
+      }
+    }
+  },
+  "LCSamplerConfigureSimplePipeOut": {
+    "description": "1パス分のサンプラー設定をまとめたもの：steps、detailer steps、denoise、CFG、sampler、scheduler。",
+    "inputs": {
+      "total_steps": {
+        "tooltip": "サンプリングの総ステップ数。"
+      },
+      "detailer_steps": {
+        "tooltip": "ディテーラー/リファイナーのステージ用に確保するステップ数（0 = 未使用）。"
+      },
+      "denoise": {
+        "tooltip": "Denoise の強さ（1.0 = フル）。"
+      },
+      "_gap1": {
+        "tooltip": "レイアウト用スペーサー"
+      },
+      "cfg": {
+        "tooltip": "Classifier-free guidance のスケール。"
+      },
+      "_gap2": {
+        "tooltip": "レイアウト用スペーサー"
+      },
+      "sampler_name": {
+        "tooltip": "サンプラーのアルゴリズム。"
+      },
+      "scheduler": {
+        "tooltip": "ノイズスケジュール。"
+      },
+      "pipe": {
+        "tooltip": "任意の LC_PIPE 入力。このノードのサンプラーのキーは上書きされ、他のキーはそのまま通過します。"
+      }
+    }
+  },
+  "LCPipeOut": {
+    "description": "パイプを個別のソケットに展開し直します。パイプは上から出力され続けます。protect_mask（下）: パイプのディテーラーが描き直した領域。LC Skin Upscale / LC Skin Texture の protect_mask 用です。",
+    "inputs": {
+      "pipe": {
+        "tooltip": "Pipe In、Pipe Edit、または KJ Get からの LC_PIPE。"
+      }
+    }
+  },
+  "LCPipeEdit": {
+    "description": "つないだものを1つの pipe にまとめ、1本のワイヤーですべてを運びます。pipe をつなぐと、接続したものだけが変更され、それ以外はそのまま通過します。",
+    "inputs": {
+      "pipe": {
+        "tooltip": "変更する既存のパイプ(任意)。"
+      },
+      "model_1": {
+        "tooltip": "Model 1"
+      },
+      "clip_1": {
+        "tooltip": "Clip 1"
+      },
+      "vae_1": {
+        "tooltip": "VAE 1"
+      },
+      "model_2": {
+        "tooltip": "Model 2"
+      },
+      "clip_2": {
+        "tooltip": "Clip 2"
+      },
+      "vae_2": {
+        "tooltip": "VAE 2"
+      },
+      "image": {
+        "tooltip": "画像"
+      },
+      "mask": {
+        "tooltip": "Mask"
+      },
+      "width": {
+        "tooltip": "Width"
+      },
+      "height": {
+        "tooltip": "Height"
+      },
+      "latent": {
+        "tooltip": "Latent"
+      },
+      "batch": {
+        "tooltip": "Batch"
+      },
+      "positive_prompt": {
+        "tooltip": "ポジティブプロンプト"
+      },
+      "positive": {
+        "tooltip": "ポジティブ conditioning"
+      },
+      "negative_prompt": {
+        "tooltip": "ネガティブプロンプト"
+      },
+      "negative": {
+        "tooltip": "ネガティブ conditioning"
+      },
+      "seed": {
+        "tooltip": "Seed"
+      },
+      "total_steps": {
+        "tooltip": "total_steps"
+      },
+      "cfg_1": {
+        "tooltip": "cfg_1"
+      },
+      "denoise": {
+        "tooltip": "denoise"
+      },
+      "step_swap": {
+        "tooltip": "step_swap"
+      },
+      "cfg_2": {
+        "tooltip": "cfg_2"
+      },
+      "sampler_name": {
+        "tooltip": "sampler_name"
+      },
+      "scheduler": {
+        "tooltip": "scheduler"
+      },
+      "detailer_steps": {
+        "tooltip": "detailer_steps"
+      }
+    }
+  },
+  "LCDetailPipeOut": {
+    "description": "パイプから、ディテーラーに必要なものを取り出します：model、clip、VAE、プロンプト、seed、CFG、sampler、scheduler、ディテーラーの steps。パイプは上から出力され続けます。protect_mask（下）: パイプのディテーラーが描き直した領域。",
+    "inputs": {
+      "pipe": {
+        "tooltip": "Pipe In/Edit、Aspect、Sampler、または KJ Get からの LC_PIPE。"
+      }
+    }
+  },
+  "LCPipeCombine": {
+    "description": "上のパイプを下のパイプで編集します:edit パイプが持つものは上のパイプを上書きし、それ以外はそのまま引き継がれます。",
+    "inputs": {
+      "pipe": {
+        "tooltip": "編集する pipe。edit pipe で設定されないものはすべてそのまま通過します。"
+      },
+      "edit_pipe": {
+        "tooltip": "その値が上のパイプの値を上書きします。空のスロットは無視されます。"
+      }
+    }
+  },
+  "LCMiniMaxH3Pipe": {
+    "description": "MiniMax H3 に必要なものを1本のワイヤーにまとめます:プロンプト、リファレンス画像、サイズ、長さ、フレームレート(V2 では prompt、steps、CFG、seed、sampler、scheduler も加わります)。pipe を接続すると、接続したものだけが変更されます。",
+    "inputs": {
+      "pipe": {
+        "tooltip": "マージする H3 pipe、または Aspect Ratio Simplifier / LC Pipe (width と height のみコピー)。"
+      },
+      "fl2va_model": {
+        "tooltip": "First-last-frame to video の UNET。"
+      },
+      "fl2va_clip": {
+        "tooltip": "FL2VA（MiniMaxH3ImageToVideo）用の CLIP。"
+      },
+      "ref2va_model": {
+        "tooltip": "Reference-to-video 用の UNET。"
+      },
+      "ref2va_clip": {
+        "tooltip": "REF2VA（MiniMaxH3ReferenceToVideo）用の CLIP。"
+      },
+      "video_vae": {
+        "tooltip": "動画 VAE（MiniMax vae）。"
+      },
+      "audio_vae": {
+        "tooltip": "Audio VAE (MiniMax audio_vae)。"
+      },
+      "width": {
+        "tooltip": "動画の幅。ARS pipe がオンの pipe がこれを埋めます。"
+      },
+      "height": {
+        "tooltip": "動画の高さ。"
+      },
+      "length": {
+        "tooltip": "フレーム数。H3 は 24 fps で、124 ≈ 5秒、244 ≈ 10秒です。"
+      },
+      "frame_rate": {
+        "tooltip": "フレームレート。MiniMax H3 は 24 で学習されています。"
+      },
+      "ref_image_0": {
+        "tooltip": "ref_image_0"
+      },
+      "ref_image_1": {
+        "tooltip": "ref_image_1"
+      },
+      "ref_image_2": {
+        "tooltip": "ref_image_2"
+      },
+      "ref_image_3": {
+        "tooltip": "ref_image_3"
+      },
+      "ref_image_4": {
+        "tooltip": "ref_image_4"
+      },
+      "ref_image_5": {
+        "tooltip": "ref_image_5"
+      },
+      "ref_image_6": {
+        "tooltip": "ref_image_6"
+      },
+      "ref_image_7": {
+        "tooltip": "ref_image_7"
+      },
+      "ref_image_8": {
+        "tooltip": "ref_image_8"
+      },
+      "ref_video_0": {
+        "tooltip": "ref_video_0"
+      },
+      "ref_video_1": {
+        "tooltip": "ref_video_1"
+      },
+      "ref_video_2": {
+        "tooltip": "ref_video_2"
+      },
+      "ref_video_audio_0": {
+        "tooltip": "ref_video_audio_0"
+      },
+      "ref_video_audio_1": {
+        "tooltip": "ref_video_audio_1"
+      },
+      "ref_video_audio_2": {
+        "tooltip": "ref_video_audio_2"
+      },
+      "ref_audio_0": {
+        "tooltip": "ref_audio_0"
+      },
+      "ref_audio_1": {
+        "tooltip": "ref_audio_1"
+      },
+      "ref_audio_2": {
+        "tooltip": "ref_audio_2"
+      }
+    }
+  },
+  "LCMiniMaxH3PipeOut": {
+    "description": "H3 pipe を展開します。ref_image_0 はプロンプト内の <Picture 1> です。",
+    "inputs": {
+      "pipe": {
+        "tooltip": "LC MiniMax H3 Pipe(V1 または V2 — V2 の追加のサンプリング項目はここでは無視されます)。"
+      }
+    }
+  },
+  "LCMiniMaxH3PipeV2": {
+    "description": "MiniMax H3 に必要なものを1本のワイヤーにまとめます:プロンプト、リファレンス画像、サイズ、長さ、フレームレート(V2 では prompt、steps、CFG、seed、sampler、scheduler も加わります)。pipe を接続すると、接続したものだけが変更されます。",
+    "inputs": {
+      "pipe": {
+        "tooltip": "マージする H3 Pipe V2、アップグレードする V1 の H3 pipe (参照メディアのみ。サンプリングのフィールドは、このノード自身のソケットでつなぐまで未設定)、または Aspect Ratio Simplifier / LC Pipe (width + height のみ)。"
+      },
+      "fl2va_model": {
+        "tooltip": "First-last-frame to video の UNET。"
+      },
+      "fl2va_clip": {
+        "tooltip": "FL2VA（MiniMaxH3ImageToVideo）用の CLIP。"
+      },
+      "ref2va_model": {
+        "tooltip": "Reference-to-video 用の UNET。"
+      },
+      "ref2va_clip": {
+        "tooltip": "REF2VA（MiniMaxH3ReferenceToVideo）用の CLIP。"
+      },
+      "video_vae": {
+        "tooltip": "動画 VAE（MiniMax vae）。"
+      },
+      "audio_vae": {
+        "tooltip": "Audio VAE (MiniMax audio_vae)。"
+      },
+      "width": {
+        "tooltip": "動画の幅。ARS pipe がオンの pipe がこれを埋めます。"
+      },
+      "height": {
+        "tooltip": "動画の高さ。"
+      },
+      "length": {
+        "tooltip": "フレーム数。H3 は 24 fps で、124 ≈ 5秒、244 ≈ 10秒です。"
+      },
+      "frame_rate": {
+        "tooltip": "フレームレート。MiniMax H3 は 24 で学習されています。"
+      },
+      "prompt": {
+        "tooltip": "ポジティブプロンプトのテキスト。"
+      },
+      "total_steps": {
+        "tooltip": "サンプリングのステップ数。"
+      },
+      "cfg": {
+        "tooltip": "Classifier-free guidance のスケール。"
+      },
+      "seed": {
+        "tooltip": "サンプリング seed。"
+      },
+      "sampler_name": {
+        "tooltip": "サンプラーのアルゴリズム。"
+      },
+      "scheduler": {
+        "tooltip": "ノイズスケジュール。"
+      },
+      "ref_image_0": {
+        "tooltip": "ref_image_0"
+      },
+      "ref_image_1": {
+        "tooltip": "ref_image_1"
+      },
+      "ref_image_2": {
+        "tooltip": "ref_image_2"
+      },
+      "ref_image_3": {
+        "tooltip": "ref_image_3"
+      },
+      "ref_image_4": {
+        "tooltip": "ref_image_4"
+      },
+      "ref_image_5": {
+        "tooltip": "ref_image_5"
+      },
+      "ref_image_6": {
+        "tooltip": "ref_image_6"
+      },
+      "ref_image_7": {
+        "tooltip": "ref_image_7"
+      },
+      "ref_image_8": {
+        "tooltip": "ref_image_8"
+      },
+      "ref_video_0": {
+        "tooltip": "ref_video_0"
+      },
+      "ref_video_1": {
+        "tooltip": "ref_video_1"
+      },
+      "ref_video_2": {
+        "tooltip": "ref_video_2"
+      },
+      "ref_video_audio_0": {
+        "tooltip": "ref_video_audio_0"
+      },
+      "ref_video_audio_1": {
+        "tooltip": "ref_video_audio_1"
+      },
+      "ref_video_audio_2": {
+        "tooltip": "ref_video_audio_2"
+      },
+      "ref_audio_0": {
+        "tooltip": "ref_audio_0"
+      },
+      "ref_audio_1": {
+        "tooltip": "ref_audio_1"
+      },
+      "ref_audio_2": {
+        "tooltip": "ref_audio_2"
+      }
+    }
+  },
+  "LCMiniMaxH3PipeOutV2": {
+    "description": "H3 pipe を展開します。ref_image_0 はプロンプト内の <Picture 1> です。",
+    "inputs": {
+      "pipe": {
+        "tooltip": "LC MiniMax H3 Pipe V2 (または V1 の LC_H3_PIPE。サンプリングのフィールドは既定値にフォールバック)。"
+      }
+    }
+  },
+  "LCGetImage": {
+    "description": "画像から解像度とバッチサイズを読み取ります。メガピクセル、width、height、resolution(長辺のピクセル数)、batch、アスペクト比(例:1.0:1.2)を出力します。",
+    "inputs": {
+      "image": {
+        "tooltip": "元の画像。"
+      }
+    }
+  },
+  "LCDimensionResize": {
+    "description": "width と height に1つの値で加算 / 減算 / 乗算 / 除算を適用し、両方の結果を整数に丸めます。",
+    "inputs": {
+      "width": {
+        "tooltip": "元の幅（ピクセル）。"
+      },
+      "height": {
+        "tooltip": "元の height (ピクセル)。"
+      },
+      "value": {
+        "tooltip": "INT / FLOAT / 数値を、幅と高さの両方に適用します。"
+      },
+      "operation": {
+        "tooltip": "value を使って width と height に同じ演算を適用します。"
+      }
+    }
+  },
+  "LCImageMaskResize": {
+    "description": "画像やマスクを、プリセットまたはカスタムの W×H にリサイズします。match_aspect_ratio は大きいほうの設定側を使い、入力の比率を保ちます。upscale_by はそのサイズに倍率を掛けるか、メガピクセルを設定できます。最終サイズは divisible_by の倍数になります。",
+    "inputs": {
+      "match_aspect_ratio": {
+        "tooltip": "オン:入力された画像/マスクの比率を保ちます。現在の幅/高さの設定のうち大きいほうが長辺になります。オフ:プリセットまたはカスタムの W×H をそのまま使います。"
+      },
+      "aspect_ratio": {
+        "tooltip": "プリセットのサイズ、または custom で custom_width × custom_height を使用。"
+      },
+      "custom_width": {
+        "tooltip": "custom サイズの目標 width。match_aspect_ratio がオンのときは (height と合わせて) サイズの基準にもなります。"
+      },
+      "custom_height": {
+        "tooltip": "custom サイズの目標の高さです。match_aspect_ratio がオンのときは(width とともに)サイズの基準にもなります。"
+      },
+      "upscale_by": {
+        "tooltip": "none = 上のサイズを使用。multiplier = そのサイズを拡大縮小。megapixels = 現在の比率で総ピクセル数を設定。"
+      },
+      "multiplier": {
+        "tooltip": "upscale_by が multiplier のときの倍率です。0.25 刻み、最大 4.00。"
+      },
+      "megapixels": {
+        "tooltip": "upscale_by が megapixels のときの目標メガピクセルです。0.01 刻み、最大 8.00。"
+      },
+      "upscale_method": {
+        "tooltip": "リサンプリングフィルターです。写真には Lanczos が無難なデフォルトです。マスクには nearest が使われます。nvidia_rtx_vsr = RTX Video Super Resolution(RTX カード):拡大がよりシャープになります。縮小には lanczos が使われます。"
+      },
+      "proportion": {
+        "tooltip": "stretch=サイズに強制; resize=内側に収める; crop=埋めてクロップ; total_pixels=総画素数に合わせる (custom W×H)。"
+      },
+      "crop_location": {
+        "tooltip": "proportion が crop のときのクロップ基準位置。"
+      },
+      "divisible_by": {
+        "tooltip": "最終的な幅/高さをこの値の倍数に切り下げ、その後、画像/マスクをそのサイズにリサンプリングします。Z-Image / Flux では 16、SDXL では 8。1 = オフ。"
+      }
+    }
+  },
+  "LCImageToTotalMegapixels": {
+    "description": "Scale Image to Total Pixels のように、画像を総メガピクセル数にスケールします。結果の resolution(長辺のピクセル数)とメガピクセルも出力します。",
+    "inputs": {
+      "image": {
+        "tooltip": "スケールする画像です。"
+      },
+      "upscale_method": {
+        "tooltip": "リサンプリング方法です。nvidia_rtx_vsr = RTX Video Super Resolution(RTX カード、nvidia-vfx が必要):拡大がよりシャープになります。縮小には lanczos が使われます。"
+      },
+      "megapixels": {
+        "tooltip": "メガピクセル単位の目標サイズ（1.0 = 1,000,000ピクセル。LC Get Image が使うのと同じ数え方）。アスペクト比は維持されます。"
+      },
+      "resolution_steps": {
+        "tooltip": "この倍数に幅と高さを丸めます(必要なモデル向けに 8、16、32、64)。1 = オフ。"
+      }
+    }
+  },
+  "LCLightingControlV2": {
+    "description": "ノーマルマップと深度マップから、1つまたは2つのライト（スポットまたはサン）、色温度、本物のハード/ソフトなキャストシャドウで画像をリライトします。プリセットを選び、ステージ上でライトをドラッグして、元の画像に重ねてブレンドします。",
+    "inputs": {
+      "image": {
+        "tooltip": "リライトする画像。"
+      },
+      "normal_map": {
+        "tooltip": "同じ画像のノーマルマップ(LC Normal Map)。"
+      },
+      "depth_map": {
+        "tooltip": "同じ画像の深度マップ (LC Depth Anything V2)。"
+      },
+      "preset": {
+        "tooltip": "出発点となる look です。選ぶと下のライトとシャドウが設定され、その後は自由に調整できます。ライトやシャドウの値を編集すると custom に切り替わります。"
+      },
+      "blend": {
+        "tooltip": "リライト結果を元の画像にどれだけ混ぜるかです。0 = 元の画像、1 = 完全にリライト。0.7〜0.9 が最も良く見えます。"
+      },
+      "light1_type": {
+        "tooltip": "spot = フレームの一部を照らすやわらかいビーム。sun = フレーム全体を均一に照らす光。"
+      },
+      "light1_x": {
+        "tooltip": "ステージ上のライトの位置：X = 左/右、Y = 下/上、Z = 正面度（0 は真横、1 は真正面）。ステージ上のハンドルをドラッグするか、ここに入力します。"
+      },
+      "light1_y": {
+        "tooltip": "ステージ上のライトの位置：X = 左/右、Y = 下/上、Z = 正面度（0 は真横、1 は真正面）。ステージ上のハンドルをドラッグするか、ここに入力します。"
+      },
+      "light1_z": {
+        "tooltip": "ステージ上のライトの位置です。X = 左右、Y = 上下、Z = 正面度 (0 は真横、1 は真正面)。ステージ上のハンドルをドラッグするか、ここに入力してください。Z は陰影とビームを変えます。影の長さは変わりません。"
+      },
+      "light1_brightness": {
+        "tooltip": "ライトの明るさ。1.2〜1.5 程度が自然なキーライトです。"
+      },
+      "light1_spread": {
+        "tooltip": "Spot のみ: ビームの広さ。小さい = 絞ったスポットライト、大きい = 顔全体にやわらかく広がるフラッド。"
+      },
+      "light1_warmth": {
+        "tooltip": "ライトの色。マイナス = 冷たい青、0 = ニュートラル、プラス = 暖かいオレンジ。"
+      },
+      "light1_color": {
+        "tooltip": "このライトに付ける色付きジェル(任意)です。warmth と併せて機能します。色はこのライトが届く場所にしか表れず、影はニュートラルなフィルに戻ります。"
+      },
+      "light1_color_amount": {
+        "tooltip": "色付きジェルの強さ。0.3 から 0.6 で自然に見え、1 は彩度の高いステージライトです。"
+      },
+      "enable_light_2": {
+        "tooltip": "2つ目のライト（フィルまたはリム）を追加します。"
+      },
+      "light2_type": {
+        "tooltip": "spot = フレームの一部を照らすやわらかいビーム。sun = フレーム全体を均一に照らす光。"
+      },
+      "light2_x": {
+        "tooltip": "ステージ上のライトの位置：X = 左/右、Y = 下/上、Z = 正面度（0 は真横、1 は真正面）。ステージ上のハンドルをドラッグするか、ここに入力します。"
+      },
+      "light2_y": {
+        "tooltip": "ステージ上のライトの位置：X = 左/右、Y = 下/上、Z = 正面度（0 は真横、1 は真正面）。ステージ上のハンドルをドラッグするか、ここに入力します。"
+      },
+      "light2_z": {
+        "tooltip": "ステージ上のライトの位置です。X = 左右、Y = 上下、Z = 正面度 (0 は真横、1 は真正面)。ステージ上のハンドルをドラッグするか、ここに入力してください。Z は陰影とビームを変えます。影の長さは変わりません。"
+      },
+      "light2_brightness": {
+        "tooltip": "ライトの明るさ。1.2〜1.5 程度が自然なキーライトです。"
+      },
+      "light2_spread": {
+        "tooltip": "Spot のみ: ビームの広さ。小さい = 絞ったスポットライト、大きい = 顔全体にやわらかく広がるフラッド。"
+      },
+      "light2_warmth": {
+        "tooltip": "ライトの色。マイナス = 冷たい青、0 = ニュートラル、プラス = 暖かいオレンジ。"
+      },
+      "light2_color": {
+        "tooltip": "このライトに付ける色付きジェル(任意)です。warmth と併せて機能します。色はこのライトが届く場所にしか表れず、影はニュートラルなフィルに戻ります。"
+      },
+      "light2_color_amount": {
+        "tooltip": "色付きジェルの強さ。0.3 から 0.6 で自然に見え、1 は彩度の高いステージライトです。"
+      },
+      "light_wrap": {
+        "tooltip": "顔と体で光が影に変わる部分を柔らかくします。0 = 硬いランプのようなくっきりした線、高いほど徐々に移り変わります。"
+      },
+      "fill": {
+        "tooltip": "影の側を含め、すべてが保つベースの光。0 = 真っ黒な影、0.2 = 自然、0.5 = フラット。"
+      },
+      "shadows": {
+        "tooltip": "soft = 影のエッジが物体から離れるほど柔らかくなります。hard = くっきりしたエッジ(太陽、スポットライト)。off = キャストシャドウなし、陰影のみ。"
+      },
+      "shadow_amount": {
+        "tooltip": "落ち影がどれだけ暗くなるか。フィルライトより暗くはなりません。"
+      },
+      "shadow_blur": {
+        "tooltip": "キャストシャドウのエッジをぼかします(soft と hard の両モード)。影が切り抜いたように見える場合は上げてください。"
+      },
+      "background_shadow": {
+        "tooltip": "被写体の背後の背景に影がどれだけ落ちるか。1 = すぐ後ろに壁がある、0 = 影が届く近さに何もない遠い背景。マスクが接続されていればそれを、なければ深度マップを使います。"
+      },
+      "self_shadow": {
+        "tooltip": "マスクが必要です。被写体が背景に落とす影と比べて、被写体自身（鼻、顎、髪）にどれだけ強く影が落ちるか。"
+      },
+      "relief": {
+        "tooltip": "顔とシーンの3D的な奥行きです。大きいほど、鼻、あご、髪から長く強い影が出ます。"
+      },
+      "advanced": {
+        "tooltip": "細かいコントロール(depth、シャドウの形状、マスクオプション)を表示します。"
+      },
+      "depth_falloff": {
+        "tooltip": "遠い領域ほど光が弱くなります。0 = 減衰なし。"
+      },
+      "shadow_height": {
+        "tooltip": "影のみのための光の高さ。低い = 長く伸びた影、高い = ものの真下にできる短い影。Light Z とは別です。"
+      },
+      "shadow_length": {
+        "tooltip": "影が届く最大距離です(画像に対する割合)。"
+      },
+      "shadow_softness": {
+        "tooltip": "ソフトシャドウのみ: 物体からの距離に応じてエッジがどれだけ速くぼけるか。"
+      },
+      "subject_distance": {
+        "tooltip": "マスクが必要です。被写体が背景のどれだけ手前に立っているか、つまり背景に影を落とす度合い。0 = 壁にぴったり張り付いた状態。"
+      },
+      "mask_dome": {
+        "tooltip": "マスクが必要です。被写体の上に丸みのある形をブレンドして、形状の陰影をなめらかにします。"
+      },
+      "mask": {
+        "tooltip": "被写体マスク(LC Remove Background / LC Person Mask)。任意。"
+      }
+    }
+  },
+  "LCPreviewImage": {
+    "description": "画像をプレビューします。信号が来ない場合は、エラーを出さずに静かに待機します。",
+    "inputs": {
+      "image": {
+        "tooltip": "表示する画像。何もつないでいない場合や null 信号でも問題なく、ノードは待機するだけです。"
+      }
+    }
+  },
+  "LCPreviewMask": {
+    "description": "マスクをプレビューします。信号が来ない場合は、エラーを出さずに黒のまま静かに待機します。",
+    "inputs": {
+      "mask": {
+        "tooltip": "表示するマスク(白 = マスク領域)。何も接続されていない、または null の信号でも問題ありません:ノードは待機するだけです。"
+      }
+    }
+  },
+  "LCLabel": {
+    "description": "ワークフローに注釈を付けるための浮遊テキストラベルです。タイトルもソケットもありません。ダブルクリックで設定(テキスト、フォント、サイズ、色、アウトライン、影、背景)が開きます。上の丸いハンドルをドラッグすると回転し、Shift を押しながらだと15度刻みでスナップします。角をドラッグすると拡大縮小します。"
+  },
+  "LCLoraLoader": {
+    "description": "1つのノードから、model/clip に任意の数の LoRA を適用します。行ごとに enable、名前、strength があり、ドラッグで並べ替えられ、Info ボタンで LoRA 自身のトリガーワードを読み取れます。model と clip はどちらも任意なので、model のみ、または clip のみのチェーンにも使えます。無効な行や strength が 0 の行はスキップされます。",
+    "inputs": {
+      "model": {
+        "tooltip": "有効な LoRA を適用する diffusion モデルです。任意:未接続にすると clip のみのチェーンになります。"
+      },
+      "clip": {
+        "tooltip": "有効な LoRA を適用する CLIP。任意: 未接続にするとモデルのみのチェーンになります。"
+      },
+      "lora_rows": {
+        "tooltip": "内部用: 行リスト (on/lora/strength)。ノード自身の表示が管理します。手入力は想定されていません。"
+      }
+    }
+  },
+  "LCLoraLoaderSingle": {
+    "description": "モデルに対する LoRA を1つ:LC LoRA Loader の行(on / off、フォルダー、strength、Info)から追加/削除を除いたものです。単独の位置に置く turbo LoRA やスタイル LoRA 用です。モデルのみ。",
+    "inputs": {
+      "lora_rows": {
+        "tooltip": "内部用: 1行 (on/lora/strength)。ノード自身の表示が管理します。"
+      }
+    }
+  },
+  "LCLoraLoaderStack": {
+    "description": "LoRA リストを作成します：行ごとに enable、名前、strength があり、ドラッグで並べ替えられ、LC LoRA Loader と同じ見た目です。入力ソケットはなく、LORA_STACK を出力するだけです。1つまたは複数の LC Apply LoRA Stack ノードに接続すると、同じ LoRA のセットを異なる model/clip のペアに適用できます。",
+    "inputs": {
+      "lora_rows": {
+        "tooltip": "内部用: 行リスト (on/lora/strength)。ノード自身の表示が管理します。手入力は想定されていません。"
+      }
+    }
+  },
+  "LCApplyLoraStack": {
+    "description": "LORA_STACK（LC LoRA Loader Stack、または他のパックの LORA_STACK 出力から）を model および/または clip に適用します。bypass をオンにすると、両方がそのまま変更されずに通過します。何も読み込まれず、何も適用されません。",
+    "inputs": {
+      "bypass": {
+        "tooltip": "On: スタック内のすべての LoRA をスキップし、model/clip をそのまま通します。"
+      },
+      "model": {
+        "tooltip": "任意: clip のみのスタックの場合は未接続にします。"
+      },
+      "clip": {
+        "tooltip": "任意: モデルのみのスタックの場合は未接続にします。"
+      },
+      "lora_stack": {
+        "tooltip": "LC LoRA Loader Stack、または他のパックの LoRA スタック出力から。"
+      }
+    }
+  },
+  "LCImageCrop": {
+    "description": "Windows 風のインタラクティブなクロップ:ノード上でボックスとハンドルをドラッグします。アスペクト比のロック(free / original / 一般的な比率)も任意で使えます。x、y、width、height は元画像に対する%です。",
+    "inputs": {
+      "image": {
+        "tooltip": "クロップする元の画像。"
+      },
+      "x": {
+        "tooltip": "左端のクロップ。画像の幅に対する % (0–100)。"
+      },
+      "y": {
+        "tooltip": "上端のクロップ(画像の高さに対する%、0–100)。"
+      },
+      "width": {
+        "tooltip": "クロップ幅。画像の幅に対する %（0.5–100）。"
+      },
+      "height": {
+        "tooltip": "クロップの高さ(画像の高さに対する%、0.5–100)。"
+      },
+      "aspect": {
+        "tooltip": "クロップのアスペクト比をロックします。'original' は元の画像に合わせます。"
+      }
+    }
+  },
+  "LCImageGrid": {
+    "description": "画像のバッチをグリッドに並べます (CR Image Grid 風)。セルは共通のサイズにパディングされます。gap、outline、外枠は任意です。",
+    "inputs": {
+      "max_columns": {
+        "tooltip": "1行あたりの最大画像数。行は左→右、上→下の順に埋められます。"
+      },
+      "gap": {
+        "tooltip": "セル間の間隔(ピクセル)。"
+      },
+      "cell_pad": {
+        "tooltip": "各セルの中の画像の周囲のパディング（アウトラインの前）。"
+      },
+      "outline_thickness": {
+        "tooltip": "各セル画像の周りに描くアウトラインです。"
+      },
+      "border_thickness": {
+        "tooltip": "グリッド全体の外側の枠です。"
+      },
+      "bg_color": {
+        "tooltip": "背景/隙間を埋める色（#RRGGBB）。"
+      },
+      "outline_color": {
+        "tooltip": "セルのアウトラインの色（#RRGGBB）。"
+      },
+      "border_color": {
+        "tooltip": "外枠の色 (#RRGGBB)。"
+      }
+    }
+  },
+  "LCImageAdjust": {
+    "description": "基本的なカラーグレード: 色相、彩度、明るさ、コントラスト、軽いシャープ/ソフト。中央の値がニュートラル (0) です。ノード上でビフォー/アフターのワイプによるプレビューができます。",
+    "inputs": {
+      "hue": {
+        "tooltip": "色相シフト（−1..1 ≈ ±180°）"
+      },
+      "saturation": {
+        "tooltip": "彩度のオフセット（−1..1）"
+      },
+      "brightness": {
+        "tooltip": "明るさのオフセット (−1..1)"
+      },
+      "contrast": {
+        "tooltip": "コントラストのオフセット(−1..1)"
+      },
+      "sharpness": {
+        "tooltip": "シャープネス (−1 ソフト … 1 シャープ)"
+      }
+    }
+  },
+  "LCAutoWhiteBalance": {
+    "description": "自動ホワイトバランス補正です。アルゴリズムを選び、strength でブレンドします。ノード上でビフォー/アフターのワイプ付きプレビューができます。",
+    "inputs": {
+      "method": {
+        "tooltip": "ホワイトバランスのアルゴリズム。"
+      },
+      "minkowski_p": {
+        "tooltip": "ミンコフスキーノルム p（Gray Edge / Shades of Gray で使用）。"
+      },
+      "strength": {
+        "tooltip": "0 = 元の画像、1 = 完全に補正。"
+      }
+    }
+  },
+  "LCClarity": {
+    "description": "Sharpen Pro: 輝度のみに対する、キャプチャシャープ (デコンボリューション)、テクスチャ、クラリティ。ハロー制御で縁取りを防ぎ、平らな部分はきれいなままです。プリセットがスライダーを設定します。",
+    "inputs": {
+      "preset": {
+        "tooltip": "開始時のプリセット。スライダーを動かすと Custom に切り替わります。"
+      },
+      "clarity": {
+        "tooltip": "大きなスケールの局所コントラスト(パンチ、奥行き)。0 = オフ。"
+      },
+      "sharpen": {
+        "tooltip": "キャプチャシャープニング。輪郭を描くのではなく、画像で測定されたぼけを元に戻す（デコンボリューション）ので、アップスケールした4K画像でもシャープにしすぎません。0 = オフ。"
+      },
+      "strength": {
+        "tooltip": "元画像とのミックス。0 = 元画像、1 = フル効果。"
+      },
+      "halo": {
+        "tooltip": "ハローの制御。1 = エッジが隣接部分を超えて行き過ぎない(明るい/暗いふちなし)。0 = パンチのあるオーバーシュートを許可します。"
+      },
+      "skin_protect": {
+        "tooltip": "肌へのシャープ、テクスチャ、クラリティを弱め、毛穴が穴のように掘られることもなくなります。目、まつ毛、唇は引き続きシャープになります。0 = オフ (アニメや線画では 0 にしてください)。"
+      },
+      "radius": {
+        "tooltip": "ディテールのサイズ。低い = 細い線や髪。高い = より柔らかい画像と広い構造。解像度に応じてスケールします。"
+      },
+      "blend_mode": {
+        "tooltip": "クラリティのブレンド方法。Soft Light が最も自然で、Overlay と Hard Light はより強く効きます。"
+      },
+      "shadow_protect": {
+        "tooltip": "暗い部分での効果を弱めます (シャドウのノイズを抑える)。0 = フル効果。"
+      },
+      "highlight_protect": {
+        "tooltip": "明るい領域では効果が弱くなります。0 = フル効果。"
+      },
+      "texture": {
+        "tooltip": "中程度のディテール:毛穴、布地、毛皮、鉛筆のハッチング。0 = オフ。"
+      },
+      "skin_mask": {
+        "tooltip": "任意。skin_protect が対象とする肌のマスク (白 = 肌)。例: LC Skin Master の skin_mask。未接続の場合は色から肌を検出しますが、一部の肌を見逃します。"
+      }
+    }
+  },
+  "LCLensFX": {
+    "description": "非推奨：LC Lens Profile、LC Vignette、LC Film Grain を使ってください。保存済みのワークフローでは引き続き動作します。"
+  },
+  "LCLiftGammaGain": {
+    "description": "lift / gamma / gain 方式のグレーディング(シャドウ、中間調、ハイライト)に offset を加えたものです。ノード上でビフォー/アフターのワイプ付きプレビューができます。"
+  },
+  "LCImageRGB": {
+    "description": "チャンネルごとの RGB オフセット (−1…1) と全体の strength。ノード上でプレビューとワイプ。",
+    "inputs": {
+      "r": {
+        "tooltip": "赤チャンネルのオフセット(-1..1)"
+      },
+      "g": {
+        "tooltip": "緑チャンネルのオフセット (-1..1)"
+      },
+      "b": {
+        "tooltip": "青チャンネルのオフセット（-1..1）"
+      }
+    }
+  },
+  "LCFilmGrain": {
+    "description": "amount、contrast、scale、モノクロ/カラー粒子を調整できるフィルムグレインのオーバーレイです。response: classic（中間調）、film（シャドウと中間調）、sensor（スマートフォン/デジタルカメラのノイズ）。ノード上でBefore/Afterのワイプ付きプレビューができます。動画には LC Film Grain (Video) を使ってください。",
+    "inputs": {
+      "grain_size": {
+        "tooltip": "1024px 基準でのグレイン半径。解像度に応じてスケールします。"
+      },
+      "color_grain": {
+        "tooltip": "0 = モノクロのグレイン、1 = チャンネルごとのクロマグレイン"
+      },
+      "look": {
+        "tooltip": "LC Depth FX、Bloom、Lens Profile、Vignette、Film Stock、Film Grain で同じ look を選ぶと、見た目が揃います。Custom = 自分のスライダー。スライダーを動かすと Custom に切り替わります。"
+      },
+      "response": {
+        "tooltip": "グレインが現れる場所。classic: 主に中間調（従来の動作）。film: シャドウと中間調で最も強く、ハイライトでは消えていきます。ネガフィルムのようです。sensor: スマートフォン/デジタルカメラのノイズ。光とともに増え（ショットノイズ）ますが、シャドウで最も強く見え、青が最もノイズの多いチャンネルです。"
+      }
+    }
+  },
+  "LCFilmGrainVideo": {
+    "description": "動画用のフィルムグレインです:GPU で数フレームずつ処理し、プログレスバーを表示します。グレインは解像度に合わせたサイズなので、圧縮しても残ります。",
+    "inputs": {
+      "images": {
+        "tooltip": "クリップのフレーム。"
+      },
+      "strength": {
+        "tooltip": "0.15 = ほとんど気にならない、0.25 = 軽いフィルムの質感、0.4 = はっきりざらつく。"
+      },
+      "grain_size": {
+        "tooltip": "1024 px でのグレインサイズ。解像度に応じてスケールします。"
+      },
+      "color_grain": {
+        "tooltip": "0 = モノクロのグレイン、1 = カラーの斑点。"
+      },
+      "response": {
+        "tooltip": "film: シャドウとミッドトーン、ハイライトでは消える。classic: 主にミッドトーン。sensor: スマホ / デジカメのノイズ。"
+      },
+      "grain_motion": {
+        "tooltip": "changing:本物のフィルムのように、フレームごとに新しいグレイン。fixed:すべてのフレームで同じグレイン(動きがあると汚れた画面に見えます)。"
+      },
+      "frame_offset": {
+        "tooltip": "パーツに分けて作る動画用：このパートの最初のフレーム番号。グレインが繰り返されず、続きから始まります。"
+      }
+    }
+  },
+  "LCVibrance": {
+    "description": "スマート彩度（vibrance）と任意の通常の彩度、肌色の保護。ノード上でBefore/Afterのワイプ付きプレビューができます。",
+    "inputs": {
+      "vibrance": {
+        "tooltip": "スマート彩度 — すでに彩度の高い色を保護します"
+      },
+      "saturation": {
+        "tooltip": "均一な彩度（保護なし）"
+      },
+      "protect_skin": {
+        "tooltip": "肌色の色相への効果を弱める"
+      }
+    }
+  },
+  "LCVignette": {
+    "description": "エッジを暗く、または明るくするビネットです。ノード上でビフォー/アフターのワイプ付きプレビューができます。",
+    "inputs": {
+      "intensity": {
+        "tooltip": "エッジを暗くします。負の値 = エッジを明るくします。0.1 - 0.25 = 本物のレンズ。cos4 オフで 1 - 2 = 古い写真、隅は真っ黒になります。"
+      },
+      "midpoint": {
+        "tooltip": "暗くなり始める位置。低いほど中央に近づきます。"
+      },
+      "feather": {
+        "tooltip": "エッジのやわらかさ。低い = ハードな楕円、高い = 長くなだらかなフェード。"
+      },
+      "cos4_falloff": {
+        "tooltip": "オン:実際のレンズの周辺減光。オフ:プリントや古い写真のようなビネットで、エッジが滑らかで、真っ黒まで落とせます。"
+      },
+      "look": {
+        "tooltip": "LC Depth FX、Bloom、Lens Profile、Vignette、Film Stock、Film Grain で同じ look を選ぶと、見た目が揃います。Custom = 自分のスライダー。スライダーを動かすと Custom に切り替わります。"
+      }
+    }
+  },
+  "LCBloom": {
+    "description": "明るい部分からのブルーム / グロー。threshold、radius、intensity。ノード上でプレビューとワイプ。",
+    "inputs": {
+      "intensity": {
+        "tooltip": "光のにじみの強さ。1 = 1.53.15 より前の 0.5 に相当します。"
+      },
+      "threshold": {
+        "tooltip": "これより明るい部分だけが光ります。低い = 画像のより多くの部分が光ります。"
+      },
+      "smoothing": {
+        "tooltip": "しきい値の周辺で、光のにじみがどれだけなだらかに現れるかです。0 = ハードカット。"
+      },
+      "radius": {
+        "tooltip": "光のにじみがどこまで広がるか。画像サイズに応じてスケールします。"
+      },
+      "saturation": {
+        "tooltip": "グローの色。0 = 白、1 = ライト自身の色。"
+      },
+      "exposure": {
+        "tooltip": "グローの明るさ (intensity に上乗せ)。"
+      },
+      "mode": {
+        "tooltip": "Bloom = 明るい部分から広がる光のにじみ。Pro-Mist = レンズの前に付けるディフュージョンフィルター(柔らかい光のにじみ、穏やかなコントラスト、黒は深いまま)。Halation = フィルムで明るいエッジの周りに出る赤橙色のにじみ。"
+      },
+      "look": {
+        "tooltip": "LC Depth FX、Bloom、Lens Profile、Vignette、Film Stock、Film Grain で同じ look を選ぶと、見た目が揃います。Custom = 自分のスライダー。スライダーを動かすと Custom に切り替わります。"
+      }
+    }
+  },
+  "LCImageDenoise": {
+    "description": "Denoise。smart: 各画像のノイズを測定し、明るさのノイズと色のノイズを別々に除去して、毛穴や髪は残します。legacy: 従来のエッジゲート付きブラー。ノード上でビフォー/アフターのワイプによるプレビューができます。",
+    "inputs": {
+      "blur_strength": {
+        "tooltip": "ガウスぼかしの強さ (sigma)"
+      },
+      "edge_preservation": {
+        "tooltip": "高いほど、エッジやディテールを多く残します"
+      },
+      "radius_multiplier": {
+        "tooltip": "ぼかし強度に対するカーネル半径のスケール"
+      },
+      "strength": {
+        "tooltip": "元（0）とノイズ除去後（1）のブレンド"
+      },
+      "mode": {
+        "tooltip": "smart = 各画像のノイズを測定し、輝度ノイズと色ノイズを別々に除去して、毛穴や髪を残します（luma / chroma / keep_detail を使用）。legacy = 従来のエッジゲート付きブラー（blur_strength / edge_preservation / radius_multiplier を使用）。"
+      },
+      "luma": {
+        "tooltip": "smart:画像で測定したノイズに対して、輝度ノイズ(グレイン)をどれだけ強く除去するかです。1 = チューニング済みのデフォルト、0 = 輝度には手を加えません。"
+      },
+      "chroma": {
+        "tooltip": "smart: 色ノイズ（ムラ、虹色の斑点）をどれだけ強く除去するか。色のエッジは明るさのエッジに従うため、シャープなままです。0 = 色には手を加えません。"
+      },
+      "keep_detail": {
+        "tooltip": "smart:ノイズよりはっきり上にある部分(毛穴、髪、布地)で、元のテクスチャがどれだけ戻るかです。なめらかな部分は、どちらの場合もクリーンなままです。"
+      }
+    },
+    "outputs": {
+      "0": {
+        "tooltip": "ノイズ除去後の画像。"
+      },
+      "1": {
+        "tooltip": "smart モード：各画像で測定されたノイズ（明るさと色、255 を基準）。"
+      }
+    }
+  },
+  "LCColorMatch": {
+    "description": "色をリファレンスに合わせます(Oklab のフルカラーマッチ、または従来の AdaIN / mean-std)。skin_protect(任意)は顔の色相を保ちます。mask(任意):白 = マッチさせる、黒 = 画像を保つ。リファレンスなし = バイパス。ノード上にプレビューとワイプがあります。",
+    "inputs": {
+      "image": {
+        "tooltip": "色を変える画像（コンテンツ）"
+      },
+      "method": {
+        "tooltip": "oklab = 人間の目に合わせて作られた色空間で、色の分布全体(各チャンネル単独ではなく、色同士の関係)を合わせます。範囲外の色はクリップされず、なだらかに落ちます。oklab + distribution = 分布の形(別々の色のグループ、シャドウとハイライトでの色味の違い)も合わせます。やや低速です。adain = 従来のチャンネルごとの平均/標準偏差マッチ。mean_std = 同じことをリニア光で行います。"
+      },
+      "strength": {
+        "tooltip": "元（0）とマッチ後（1）のブレンド"
+      },
+      "reference": {
+        "tooltip": "色の参照（スタイル）。空の場合、ノードはバイパスされ、画像がそのまま通ります。oklab メソッド：画像バッチと同じサイズの参照バッチならフレームごとに対応し、それ以外のバッチは1つのルックにまとめられます（adain / mean_std は最初の参照のみ使用）。"
+      },
+      "skin_protect": {
+        "tooltip": "マッチング後も元の肌の色相を保ち、肌のクロマ増加を抑えます (0=オフ、1=最大)。明度はマッチングに従います。"
+      },
+      "mask": {
+        "tooltip": "白 = マッチを適用。黒 = 画像をそのまま保持。空にするとフレーム全体（古いグラフは変更なし）。"
+      }
+    }
+  },
+  "LCToneMatch": {
+    "description": "周波数トーンロック：reference は大まかな照明/色を保ち、image は微細なディテールを保ちます。任意のマスク（白 = ロック、黒 = 画像を保持）。skin_protect は参照の顔の色相を保ちます。H3 Detail Tone Lock と同じ役割で、任意の2枚の画像に使えます。ノード上のプレビュー + 参照とのワイプ。",
+    "inputs": {
+      "image": {
+        "tooltip": "リファイン / 生成された画像 (Krea2, Klein, Qwen など)。高周波成分はここから取られます。"
+      },
+      "reference": {
+        "tooltip": "Original / H3 still。サイズ、全体の照明、色の基準になります。"
+      },
+      "tone_match": {
+        "tooltip": "元の低周波の照明/色をどれだけ強く復元するかです。0 = オフ、1 = 完全ロック。"
+      },
+      "refinement_strength": {
+        "tooltip": "トーンロックされたリファインを元画像にどれだけ重ねるか。低いほど人物のずれが少なくなります。"
+      },
+      "detail_radius": {
+        "tooltip": "大まかなトーンと細部を分けるブラー半径。1–2 MP では約 32。"
+      },
+      "skin_protect": {
+        "tooltip": "ロック後に、リファレンスの肌の色相を保ちます(0 = オフ)。Color Match と同じ考え方です。"
+      },
+      "split": {
+        "tooltip": "大まかなトーンとディテールの分け方です。guided は画像自身のエッジに従います。2枚の画像が揃っている場合(同じ画像の補正版など)、はっきりしたエッジに沿った明るい/暗いふちが出ません。リファイナーがエッジを大きく動かした場合は、両者はほぼ同程度になります。blur は従来のガウス分割です。"
+      },
+      "mask": {
+        "tooltip": "白 = ロックを適用。黒 = 画像をそのまま保持(新しい頭部や編集した領域に使います)。"
+      }
+    }
+  },
+  "LCFilmStockBW": {
+    "description": "プリセットによる白黒フィルムストックの look。strength で効果をブレンドします。ノード上でプレビューとワイプ。",
+    "inputs": {
+      "look": {
+        "tooltip": "LC Depth FX、Bloom、Lens Profile、Vignette、Film Stock、Film Grain で同じ look を選ぶと、見た目が揃います。Custom = 自分のスライダー。スライダーを動かすと Custom に切り替わります。"
+      }
+    }
+  },
+  "LCFilmStockColor": {
+    "description": "プリセット(toe/shoulder/gamma)によるカラーフィルムの質感です。strength でブレンドします。ノード上にプレビューとワイプがあります。",
+    "inputs": {
+      "look": {
+        "tooltip": "LC Depth FX、Bloom、Lens Profile、Vignette、Film Stock、Film Grain で同じ look を選ぶと、見た目が揃います。Custom = 自分のスライダー。スライダーを動かすと Custom に切り替わります。"
+      }
+    }
+  },
+  "LCLensProfile": {
+    "description": "名前付きのレンズプロファイル（収差の特性）を適用または補正します。Strength で効果の強さを調整します。ノード上でBefore/Afterのワイプ付きプレビューができます。",
+    "inputs": {
+      "mode": {
+        "tooltip": "キャラクターを追加するか、補正を試みます。"
+      },
+      "strength": {
+        "tooltip": "レンズ特性の強さ。1 = 1.53.15 より前の 0.5 に相当します。"
+      },
+      "look": {
+        "tooltip": "LC Depth FX、Bloom、Lens Profile、Vignette、Film Stock、Film Grain で同じ look を選ぶと、見た目が揃います。Custom = 自分のスライダー。スライダーを動かすと Custom に切り替わります。"
+      }
+    }
+  },
+  "LCChromaticAberration": {
+    "description": "色収差のための RGB チャンネルシフト (チャンネルごとのピクセル数と方向)。ノード上でビフォー/アフターのワイプによるプレビューができます。",
+    "inputs": {
+      "red_shift": {
+        "tooltip": "赤チャンネルのシフト(ピクセル)。"
+      },
+      "red_direction": {
+        "tooltip": "赤のシフト軸。"
+      },
+      "green_shift": {
+        "tooltip": "緑チャンネルのシフト(ピクセル)。"
+      },
+      "green_direction": {
+        "tooltip": "緑のシフト軸。"
+      },
+      "blue_shift": {
+        "tooltip": "青チャンネルのシフト(ピクセル)。"
+      },
+      "blue_direction": {
+        "tooltip": "青シフトの軸。"
+      }
+    }
+  },
+  "LCImageDesaturate": {
+    "description": "グレースケールに向けて彩度を下げます(Essentials 風)。factor と輝度の方式。ノード上でビフォー/アフターのワイプ付きプレビューができます。",
+    "inputs": {
+      "factor": {
+        "tooltip": "0 = フルカラー、1 = 完全に彩度を落とす"
+      },
+      "method": {
+        "tooltip": "グレースケールの計算方法"
+      }
+    }
+  },
+  "LCRTXSuperResolution": {
+    "description": "NVIDIA RTX Video Super Resolution: 画像や動画フレームを、アップスケール (最大4倍)、クリーンなソースのアップスケール、denoise、deblur します。高速で、RTX カードなら2倍で約0.5秒です。NVIDIA RTX カードと nvidia-vfx パッケージが必要です。strength は通常のリサイズへのブレンド量です。",
+    "inputs": {
+      "image": {
+        "tooltip": "画像、または動画フレームのバッチ。"
+      },
+      "mode": {
+        "tooltip": "upscale: 一般的な (圧縮された) 画像・動画向けの AI アップスケール。\nupscale (clean source): ロスレスや高ビットレートのソース向け。アーティファクト除去は行いません。\ndenoise: ノイズと圧縮ブロックを除去します。サイズは変わりません。\ndeblur: ぼやけた画像をシャープにします。サイズは変わりません。"
+      },
+      "quality": {
+        "tooltip": "LOW が最速、ULTRA が最もディテールを保ちます。"
+      },
+      "scale": {
+        "tooltip": "アップスケールモードの幅と高さの倍率。denoise と deblur では無視されます。"
+      },
+      "megapixels": {
+        "tooltip": "scale の代わりに、このサイズにアップスケールします (比率は維持、最大4倍)。0 = scale を使用。"
+      },
+      "strength": {
+        "tooltip": "1 = RTX の結果そのまま。下げると、入力の単純なリサイズ結果にブレンドされます。"
+      },
+      "mask": {
+        "tooltip": "画像と一緒にリサイズされるので、位置がずれません。"
+      }
+    },
+    "outputs": {
+      "0": {
+        "tooltip": "RTX の結果。"
+      },
+      "1": {
+        "tooltip": "新しいサイズのマスク (未接続の場合は空)。"
+      },
+      "2": {
+        "tooltip": "出力 width。"
+      },
+      "3": {
+        "tooltip": "出力 height。"
+      }
+    }
+  },
+  "LCSkinBeauty": {
+    "description": "LC Skin Beauty (draft) — マスク対応の、LAB での涼しく明るい肌補正とプリセット。ハイライトを保護し、外部 MASK は任意。ノード上でビフォー/アフターのワイプができます。",
+    "inputs": {
+      "image": {
+        "tooltip": "元の画像(バッチ可)。"
+      },
+      "preset": {
+        "tooltip": "開始プリセットです。スライダーを動かして下でカスタマイズできます。"
+      },
+      "strength": {
+        "tooltip": "エフェクトをどれだけ適用するか。0 = 元の画像、1 = フル、1より上 = より強く。1未満ではスライダーとブレンドの両方にスケールがかかるため、単純なミックスより速く下がります：0.5 でフル効果のおよそ4分の1になります。"
+      },
+      "coolness": {
+        "tooltip": "肌の寒色と暖色。0 = シフトなし、1 = 黄みがかなり減り、より冷たくなります。"
+      },
+      "brightness": {
+        "tooltip": "肌の美白 / 明るさ。0 = なし、1 = 強く持ち上げ (ハイライトは引き続き保護)。"
+      },
+      "rosy": {
+        "tooltip": "頬の赤み。負の値 = 赤みを減らす、0 = ニュートラル、高い = 頬や唇まわりの肌がよりピンクになります。"
+      },
+      "evenness": {
+        "tooltip": "均一な肌のトーン。0 = ばらつきを残す、1 = 局所的に色を強く平均化します。"
+      },
+      "shadow_lift": {
+        "tooltip": "シャドウの回復。0 = 暗部は変化なし、1 = 中間調よりもシャドウを多く持ち上げます。"
+      },
+      "smooth": {
+        "tooltip": "ソフトな平滑化。0 = テクスチャそのまま、1 = より柔らかい肌（texture preserve と併用）。"
+      },
+      "texture_preserve": {
+        "tooltip": "テクスチャの保持。0 = smooth がディテールを平らにするのを許可、1 = 毛穴/マイクロコントラストを保護します。"
+      },
+      "saturation": {
+        "tooltip": "肌の彩度。マイナス = 色を抑える、0 = 変更なし、プラス = より豊かに。"
+      },
+      "highlight_protect": {
+        "tooltip": "ハイライトの保護。0 = 明るい肌を中間調と同じに扱う、1 = ほとんどハイライトをスキップ。"
+      },
+      "mask_sensitivity": {
+        "tooltip": "マスクの届く範囲。0 = 明らかな肌のみ、1 = より広く（肌以外が多く含まれる場合があります）。"
+      },
+      "mask_feather": {
+        "tooltip": "マスクのエッジ。0 = よりくっきり切り、1 = 肌以外へより柔らかくぼかします。"
+      },
+      "mask": {
+        "tooltip": "任意の外部スキンマスク (高精度)。自動マスクと組み合わせます。"
+      },
+      "device": {
+        "tooltip": "スキン計算を実行する場所です。gpu は約250倍高速ですが、実行中は100万画素あたり約 150 MB の VRAM を借ります。auto は空き VRAM が十分にあるときだけ GPU を使い、そうでなければ CPU を使います (従来の動作)。cpu = VRAM には一切触れません。どちらでも結果は同じです。"
+      }
+    }
+  },
+  "LCSkinUpscale": {
+    "description": "肌マスク付きの CNN アップスケール。1つのモデル、bbox クロップ、フェザー合成、ノード上のBefore/Afterワイプ。RMBG は外部の MASK のままです。",
+    "inputs": {
+      "image": {
+        "tooltip": "元の画像(バッチ可)。"
+      },
+      "upscale_model": {
+        "tooltip": "CNN アップスケーラー1つ。ディテールには 1× SkinContrast。"
+      },
+      "mode": {
+        "tooltip": "detail 1x = 元のサイズで貼り戻します。scale = モデル本来の倍率を維持します。"
+      },
+      "blend": {
+        "tooltip": "マスクの下で、アップスケールしたパッチが元の画像をどれだけ強く置き換えるかです。"
+      },
+      "mask_source": {
+        "tooltip": "input = 接続したマスクのみ。chroma = 自動の肌検出。input+chroma = AND。"
+      },
+      "mask_sensitivity": {
+        "tooltip": "chroma 使用時の自動スキンの範囲です。"
+      },
+      "mask_feather": {
+        "tooltip": "合成マットのソフトなエッジ。"
+      },
+      "tile": {
+        "tooltip": "CNN のタイルサイズ。0 = まずクロップ全体を試し、OOM なら縮小。"
+      },
+      "overlap": {
+        "tooltip": "タイルのオーバーラップ（ピクセル）。"
+      },
+      "transfer": {
+        "tooltip": "detail band = モデルの毛穴やシワのディテールだけを取り込みます (明るさのみ、やわらかく上限をかけ、エッジや深い影・明るいハイライトでは弱める)。色のずれや1ピクセルのざらつきはありません。full paste = モデルの出力全体を貼り付けます (従来の動作)。"
+      },
+      "softness": {
+        "tooltip": "detail band のみ:高いほど、なめらかで穏やかなディテール。低いほどくっきりします。"
+      },
+      "mask": {
+        "tooltip": "RMBG などによる人物/肌のマット。外部のままにします。"
+      },
+      "protect_mask": {
+        "tooltip": "任意。そのままにする領域です。たとえば、ディテーラーがすでに描き直した顔や手(LC VOSR2 Upscale (pipe) の 'protected' 出力、または LC Smart Detailer のマスク)。肌のディテールが二重に加わるのを防ぎます。"
+      }
+    }
+  },
+  "LCSkinTexture": {
+    "description": "滑らかになりすぎた肌に、本物の肌写真（その細かい凹凸のみ。色は使いません）から本物の毛穴テクスチャを加えます。すでにディテールのある肌には弱くかかります。ノード上でBefore/Afterのワイプができます。",
+    "inputs": {
+      "strength": {
+        "tooltip": "どれだけ毛穴のテクスチャを加えるか。0 = なし。"
+      },
+      "pore_size": {
+        "tooltip": "1 = 細かい毛穴。高いほど大きな毛穴やシワになります(クローズアップ向け)。"
+      },
+      "softness": {
+        "tooltip": "高いほど柔らかく穏やかなテクスチャ、低いほどくっきりします。"
+      },
+      "seed": {
+        "tooltip": "テクスチャパッチの配置を変更します。"
+      },
+      "mask": {
+        "tooltip": "テクスチャを付ける肌（白）。mediapipe を使った LC Person Mask で、face + body と remove_features を指定するのが理想的です。未接続の場合：肌は色で検出されます。"
+      },
+      "reference": {
+        "tooltip": "自分で撮った、素肌のシャープなクローズアップ。未接続の場合は同梱の CC0 の肌写真を使います。"
+      },
+      "protect_mask": {
+        "tooltip": "任意。そのままにする領域です。たとえば、ディテーラーがすでに描き直した顔や手(LC VOSR2 Upscale (pipe) の 'protected' 出力、または LC Smart Detailer のマスク)。肌のディテールが二重に加わるのを防ぎます。"
+      }
+    }
+  },
+  "LCSkinMaster": {
+    "description": "スキン処理の全工程を1つのノードにまとめました。ざらつき除去、毛穴、シミ、シワ、そばかす、目、肌のトーンと色を、顔を認識する1枚のスキンマップに対して、それぞれ1回ずつ処理します。軽いクリーンアップから、プラスチック肌の復元、ウェザード、サンキスドまでのプリセットがあります。他のノード用に skin_mask を出力します。ノード上でビフォー/アフターのワイプができます。",
+    "inputs": {
+      "preset": {
+        "tooltip": "Natural: ざらつきを除き、シミやムラを整え、わずかに冷たくし、毛穴と個性は残します。ほかに Clean Even Tone、Soft Beauty、Editorial Detail (クローズアップ)、Real Skin Restore (プラスチックのような肌)、Mature Skin (年齢感を維持)、Weathered (シワを深く)、Body Skin、Sun-Kissed (そばかす)。スライダーを動かすと Custom に切り替わります。"
+      },
+      "strength": {
+        "tooltip": "0 = 元のまま、1 = 以下がすべてフル適用。"
+      },
+      "clean": {
+        "tooltip": "ざらつきを除去：肌のピクセルの斑点と色ノイズ。毛穴とそばかすは残ります。"
+      },
+      "pores": {
+        "tooltip": "肌自身の細かいテクスチャ: 1 = そのまま、高い = くっきり、低い = やわらかく。pigmentation と併用するときは 1 以上にしてください。"
+      },
+      "add_pores": {
+        "tooltip": "肌写真から得た本物の毛穴の凹凸を、それがない肌（プラスチックのようなAI肌）に適用します。すでにディテールのある肌には弱くかかります。"
+      },
+      "pore_size": {
+        "tooltip": "追加される毛穴とそばかすのサイズ。1 = 顔に合わせたサイズ。"
+      },
+      "even_skin": {
+        "tooltip": "斑点、まだら、ムラのあるパッチを均します。毛穴と顔の形は保たれます。"
+      },
+      "wrinkles": {
+        "tooltip": "0 未満でシワや線が和らぎます。0 超ではすでにある線が深まり、本物のシワになります。"
+      },
+      "even_colour": {
+        "tooltip": "赤みや色むらを、肌本来の色に近づけます。"
+      },
+      "pigmentation": {
+        "tooltip": "日が当たる場所(鼻、頬骨、額)のそばかすを、すでにあるものから、その色に合わせて増やします。"
+      },
+      "eye_detail": {
+        "tooltip": "眉とまつ毛:よりくっきり、より深くします。顔が必要です。"
+      },
+      "warmth": {
+        "tooltip": "0 より下は寒色寄り（オレンジがかったAI肌を抑える）、0 より上は暖色寄り。"
+      },
+      "brightness": {
+        "tooltip": "肌を明るくまたは暗くします。ハイライトは弱められます。"
+      },
+      "rosy": {
+        "tooltip": "ピンクを強く、または弱く。"
+      },
+      "saturation": {
+        "tooltip": "肌の色味の多さ、少なさ。"
+      },
+      "shadow_lift": {
+        "tooltip": "影の中の暗い肌を明るく開きます。"
+      },
+      "seed": {
+        "tooltip": "追加される毛穴とそばかすを変化させます。"
+      },
+      "mask": {
+        "tooltip": "処理対象の肌 (白)。体の肌には LC Person Mask (顔 + 体) をつないでください。未接続の場合は顔は自動で検出されますが、体の肌は一部しか検出されません (facexlib、初回実行時に約 80 MB が models/facexlib にダウンロードされます)。"
+      },
+      "delicate_skin": {
+        "tooltip": "唇などデリケートな肌を検出して控えめに処理し、色は保ちます。"
+      },
+      "skin_match": {
+        "tooltip": "高いほど多くの肌を検出します (肌色の布も増えます)。"
+      }
+    }
+  },
+  "LCPhoneLook": {
+    "description": "単体で使えるスマートフォン風のルックです。Style でスライダーが設定され、ほとんどのコントロールは 0 = 変化なしです。Strength は元の画像とのブレンドです。レンズの幾何補正ツールではありません。",
+    "inputs": {
+      "style": {
+        "tooltip": "開始時のプリセット。スライダーを動かすと Custom に切り替わります。コントロールの 0 = そのステージからの変化なし。"
+      },
+      "strength": {
+        "tooltip": "0 = 元の画像、1 = 処理後の見た目そのまま。"
+      },
+      "seed": {
+        "tooltip": "グレインのシードのみ。"
+      },
+      "wb_temperature": {
+        "tooltip": "0 = ホワイトバランスの変化なし。負の値 = より寒色、正の値 = より暖色。"
+      },
+      "wb_tint": {
+        "tooltip": "0 = 色かぶりなし。負の値 = グリーン、正の値 = マゼンタ。"
+      },
+      "exposure": {
+        "tooltip": "0 = 露出の変化なし(EV)。"
+      },
+      "contrast": {
+        "tooltip": "0 = コントラスト変化なし。正の値で中間調が引き締まり、負の値で平坦になります。"
+      },
+      "shadows": {
+        "tooltip": "0 = 変化なし。暗部だけを持ち上げます(色は保たれ、白っぽい霞は出ません)。"
+      },
+      "highlights": {
+        "tooltip": "0 = 変化なし。明るい領域をやわらかく圧縮します。"
+      },
+      "hdr_local": {
+        "tooltip": "0 = オフ。穏やかな局所トーン(シャドウを開き、局所コントラストを抑えます)。"
+      },
+      "vibrance": {
+        "tooltip": "0 = 変化なし。正の値でくすんだ色を強め、負の値で下げます。"
+      },
+      "skin_protect": {
+        "tooltip": "肌色に対する vibrance を制限します（vibrance ≠ 0 のときのみ有効）。"
+      },
+      "shadow_cool": {
+        "tooltip": "0 = オフ。中間シャドウに冷たい (青い) 色味を加えます。純黒は対象外。"
+      },
+      "highlight_warm": {
+        "tooltip": "0 = オフ。ハイライトの暖色ティント。"
+      },
+      "texture": {
+        "tooltip": "0 = 変化なし。細かいディテール。負の値で柔らかくなります。"
+      },
+      "clarity": {
+        "tooltip": "0 = 変更なし。中域のローカルコントラスト。マイナスでやわらかくなります。"
+      },
+      "vignette": {
+        "tooltip": "0 = オフ。角の減衰。"
+      },
+      "grain": {
+        "tooltip": "0 = オフ。スマホカメラのノイズ (LC Film Grain の sensor response と同じ): シャドウで最も強く、主に明るさのノイズで、色のざらつきが少し混じります。"
+      }
+    }
+  },
+  "LCApplyLUT": {
+    "description": "models/luts から .cube 3D LUT を適用します。Strength は 0–2（1 = LUT をフル適用、>1 は過剰適用）。一般的なクリエイティブ用 LUT では log をオフのままにしてください。",
+    "inputs": {
+      "lut_name": {
+        "tooltip": "フォルダー:ComfyUI/models/luts/ — .cube ファイルをここに置いてください"
+      },
+      "strength": {
+        "tooltip": "0 = 元の画像、1 = LUT をフル適用、1 超は LUT の変化を強調します(最大 2×)。ほとんどのグレードでは 0.7–1.2 を試してください。"
+      },
+      "log": {
+        "tooltip": "通常の写真/sRGB LUT ではオフ（推奨）。LUT が log/linear 用に作られている場合（逆ガンマで入力し、ガンマで出力）のみオンにします。"
+      },
+      "interpolation": {
+        "tooltip": "tetrahedral = よりきれいなグレーと滑らかなグラデーション、GPU で実行（グレーディングアプリが使う方式）。trilinear = 従来の方式。"
+      }
+    }
+  },
+  "LCTextOverlay": {
+    "description": "画像にテキストを描きます。プレビュー上でドラッグして配置し、フォントサイズ/色/位置はリアルタイムで更新されます。複数行対応で、エッジのマージンがあります。",
+    "inputs": {
+      "text": {
+        "tooltip": "描画するテキスト (小さなマージンを取って端で折り返し)"
+      },
+      "font": {
+        "tooltip": "フォントファミリー(厳選リスト — 変更はキュー時に反映されます。ライブプレビューは対応する CSS 名を使います)"
+      },
+      "font_size": {
+        "tooltip": "フォントサイズ(ピクセル)"
+      },
+      "color_r": {
+        "tooltip": "Red"
+      },
+      "color_g": {
+        "tooltip": "緑"
+      },
+      "color_b": {
+        "tooltip": "青"
+      },
+      "x_percent": {
+        "tooltip": "X 位置 (左からの %)。プレビュー上でドラッグするか、ウィジェットを使います。"
+      },
+      "y_percent": {
+        "tooltip": "テキストブロックの上端の Y (上からの %)。既定は下寄り。ドラッグまたはウィジェットで設定します。"
+      },
+      "alignment": {
+        "tooltip": "水平方向の配置：left / center / right。従来の *-top/center/bottom の値も読み込まれ、left/center/right に対応付けられます。"
+      }
+    }
+  },
+  "LCWatermark": {
+    "description": "ウォーターマーク画像を合成します。ドラッグで配置し、サイズと不透明度は最初の実行後にライブで更新されます。ウォーターマーク入力なし = バイパス。",
+    "inputs": {
+      "size_percent": {
+        "tooltip": "ウォーターマークの幅(ベースの幅に対する%)。最初の実行後にノード上でライブ反映されます。"
+      },
+      "opacity": {
+        "tooltip": "不透明度 0–1。最初の実行後にノード上でライブ更新されます。"
+      },
+      "x_percent": {
+        "tooltip": "水平方向の中心(%)。プレビュー上でドラッグして設定します。"
+      },
+      "y_percent": {
+        "tooltip": "縦方向の中心 %。プレビュー上でドラッグして設定します。"
+      },
+      "margin_percent": {
+        "tooltip": "画像に対する % でのエッジのパディング（小さめ、Text Overlay の約 6px に近い値）。"
+      },
+      "watermark": {
+        "tooltip": "ウォーターマーク (RGB/RGBA)。なし = バイパス (そのまま通過)。"
+      },
+      "watermark_mask": {
+        "tooltip": "ウォーターマークの透明度です。Load Image は透過 PNG を IMAGE + MASK に分けます。その MASK をここに接続すると、ロゴの透明な部分は透明なままになります。"
+      }
+    }
+  },
+  "LCPromptToConditioning": {
+    "description": "テキストプロンプトを CLIP conditioning にエンコードします。文字列はソケット専用です。",
+    "inputs": {
+      "clip": {
+        "tooltip": "チェックポイント / CLIP ローダーからの CLIP モデル。"
+      },
+      "string": {
+        "tooltip": "プロンプトテキスト — Positive/Negative または他の STRING ノードから接続します。"
+      }
+    }
+  },
+  "LCPromptToConditioningZero": {
+    "description": "テキストプロンプトを CLIP conditioning にエンコードし、2番目のソケットにゼロ化したコピー (ConditioningZeroOut と同じ) も出力します。",
+    "inputs": {
+      "clip": {
+        "tooltip": "チェックポイント / CLIP ローダーからの CLIP モデル。"
+      },
+      "string": {
+        "tooltip": "プロンプトテキスト — Positive/Negative または他の STRING ノードから接続します。"
+      }
+    }
+  },
+  "LCSplitSigmaScheduler": {
+    "description": "SamplerCustomAdvanced 用のデュアルモデル sigma 分割。sigmas_high は Model から、sigmas_low は 2nd model から (未設定なら Model から)。step_swap は入力専用です (再出力されません)。",
+    "inputs": {
+      "Model": {
+        "tooltip": "プライマリーモデル — high-sigma(1回目のパス)のスケジュールを作ります。"
+      },
+      "scheduler": {
+        "tooltip": "両方の sigma カーブのスケジューラータイプ。"
+      },
+      "total_steps": {
+        "tooltip": "フルスケジュールの総ステップ数。"
+      },
+      "step_swap": {
+        "tooltip": "受け渡しステップ。high = 0..swap、low = swap..end。合計ステップ数以上の場合、分割は無視され、第1スケジュールが最後まで実行されます。"
+      },
+      "denoise": {
+        "tooltip": "フルスケジュールを組むための denoise の強さ (1.0 = フル)。"
+      },
+      "2nd model": {
+        "tooltip": "任意。低 sigma（第2パス）のスケジュール用の2つ目のモデル。空の場合は Model にフォールバックします。"
+      }
+    }
+  },
+  "LCBasicScheduler": {
+    "description": "Basic scheduler → SIGMAS。ステップ数をそのまま使います (denoise パラメータなし)。これを2つ LC Split Sigmas (Advanced) に入れると、デュアルスケジューラーのデュアルパスになります。",
+    "inputs": {
+      "model": {
+        "tooltip": "サンプリング空間が sigma の範囲を決めるモデル。"
+      },
+      "scheduler": {
+        "tooltip": "ノイズスケジュールのタイプ（karras、beta、simple など）。"
+      },
+      "steps": {
+        "tooltip": "サンプリングのステップ数 (フルスケジュール、denoise による短縮なし)。"
+      }
+    }
+  },
+  "LCSplitSigmasAdvanced": {
+    "description": "sigma カーブを step_swap で分割します。必須:model_1、sigmas_1、step_swap、denoise。任意:model_2、sigmas_2 — sigmas_2 がない場合は、スケジュール全体で sigmas_1 が使われます。出力:sigmas_high、sigmas_low。",
+    "inputs": {
+      "model_1": {
+        "tooltip": "1回目のパス用モデル(sigmas_1 / high pass と組み合わせます)。"
+      },
+      "sigmas_1": {
+        "tooltip": "第1パスのフルスケジュール (steps は LC Basic Scheduler で設定)。"
+      },
+      "step_swap": {
+        "tooltip": "denoise 後の引き継ぎステップ。sigmas_1 の総ステップ数以上の場合、分割は無視され、sigmas_1 が最後まで実行されます。"
+      },
+      "denoise": {
+        "tooltip": "分割前のカーブに適用する denoise（1.0 = フル）。"
+      },
+      "model_2": {
+        "tooltip": "2回目のパス用モデル。任意 — 空の場合は model_1 を使います。"
+      },
+      "sigmas_2": {
+        "tooltip": "第2パスのスケジュール。任意: 未接続なら sigmas_1 にフォールバック (最初のカーブのスケジュール全体)。"
+      }
+    }
+  },
+  "LCPositive": {
+    "description": "プロンプトのテキストボックス。"
+  },
+  "LCNegative": {
+    "description": "ネガティブプロンプトのテキストボックス。"
+  },
+  "LCOptimizer": {
+    "description": "このノードはお使いのマシンを分析し、あなたのカードに合ったモデル、テキストエンコーダー、VAE を読み込みます。実際に効くスピードアップ (Sage、Comfy Kitchen など) も適用されます。\n下のボタン、または LC123 の設定からレポートを実行してください。\nファイルが足りない場合は ⬇ の付いた項目を選ぶと、初回実行時にダウンロードされます。\nファインチューンにも対応しています。自分のファイルを選んでもスピードアップは適用され、テキストエンコーダーや VAE が合わない場合は ⚠️ が表示されます。\nその他のモデル: base model を Custom にして、自分のファイル (とテキストエンコーダーの type) を選んでください。スピードアップは引き続き適用されますが、推奨、見積もり、チェックは非対応と表示されます。\n⚠️ .bat に --use-sage-attention を入れないでください。すべてのモデルで Sage が強制され、モデルによっては黒い画像になります。入れずに、このノードにモデルごとの Sage のオンオフを任せてください。\n現在対応しているモデル: Krea 2, Krea 2 (Raw), Qwen-Image 2.1, Z-Image Turbo, Flux.2 Klein 9B (Distilled and Base), Flux 3 Klein (Distilled and Base), MOSS Image (SFT and Base), Ideogram 4, Anima, SDXL, Illustrious, Pony, Custom。",
+    "inputs": {
+      "base_model": {
+        "tooltip": "モデルファミリー。推奨ファイルとチェックを選びます。"
+      },
+      "goal": {
+        "tooltip": "Quality = bf16 に最も近い。Optimal = 高速でほぼ同一。Fast = 見た目が問題ない範囲で最速。"
+      },
+      "speed_ups": {
+        "tooltip": "Auto = System & Model Optimization Report に従います。Manual = 下の各項目を個別に選択します。"
+      },
+      "attention": {
+        "tooltip": "アテンションのバックエンド。auto = レポートのテストに合格した中で最速のもの。"
+      },
+      "fp16_accumulation": {
+        "tooltip": "品質をわずかに犠牲にした、より高速な fp16 演算。auto = Fast ゴールのときのみ。"
+      },
+      "step_cache": {
+        "tooltip": "EasyCache: ほとんど変化しないステップをスキップします。auto = Fast ゴール、20ステップ以上。"
+      },
+      "torch_compile": {
+        "tooltip": "モデルをコンパイルします。初回は遅く、以降は速くなります。Triton が必要です。"
+      },
+      "qwen21_cache": {
+        "tooltip": "Qwen-Image 2.1 専用 (Qwen Image 2.1 Cache): KV キャッシュの置き場所と保存方法です。auto = 無劣化。Fast goal または 16 GB 未満のカードでは int8。int8 はキャッシュを半分にし、精度は bf16 並み。int4 は4分の1になりますが、ステップごとの誤差がほぼ倍になります。RAM に置いても速度への影響は小さいです。off = 最も遅くなります。"
+      },
+      "clip_type": {
+        "tooltip": "Custom のみ: テキストエンコーダーの読み込み方です (CLIPLoader の type)。auto = エンコーダーの形状が既知のベースモデルの1つと一致する場合に、そこから判定します。他のベースモデルやチェックポイント内蔵のエンコーダーでは無視されます。"
+      },
+      "spectrum": {
+        "tooltip": "MOSS Image と Krea 2: Spectrum が一部のステップを実行する代わりに予測します。テストでは見た目の変化はありませんでした（MOSS 約1.7倍、Krea 2 Turbo 約1.35倍、Raw 約1.6倍）。組み込み済みで、インストール不要です。auto = Optimal と Fast のゴール。最初の20%のステップ（レイアウトが形成される部分）は常に実行され、8ステップ未満の実行では動作しません。off = オプトアウト（speed_ups が Auto でも有効）。オンの場合、ステップキャッシュの代わりになります。"
+      }
+    }
+  },
+  "LCOptimizerPipe": {
+    "description": "このノードはお使いのマシンを分析し、あなたのカードに合ったモデル、テキストエンコーダー、VAE を読み込みます。実際に効くスピードアップ (Sage、Comfy Kitchen など) も適用されます。\n下のボタン、または LC123 の設定からレポートを実行してください。\nファイルが足りない場合は ⬇ の付いた項目を選ぶと、初回実行時にダウンロードされます。\nファインチューンにも対応しています。自分のファイルを選んでもスピードアップは適用され、テキストエンコーダーや VAE が合わない場合は ⚠️ が表示されます。\nその他のモデル: base model を Custom にして、自分のファイル (とテキストエンコーダーの type) を選んでください。スピードアップは引き続き適用されますが、推奨、見積もり、チェックは非対応と表示されます。\n⚠️ .bat に --use-sage-attention を入れないでください。すべてのモデルで Sage が強制され、モデルによっては黒い画像になります。入れずに、このノードにモデルごとの Sage のオンオフを任せてください。\n現在対応しているモデル: Krea 2, Krea 2 (Raw), Qwen-Image 2.1, Z-Image Turbo, Flux.2 Klein 9B (Distilled and Base), Flux 3 Klein (Distilled and Base), MOSS Image (SFT and Base), Ideogram 4, Anima, SDXL, Illustrious, Pony, Custom。",
+    "inputs": {
+      "base_model": {
+        "tooltip": "モデルファミリー。推奨ファイルとチェックを選びます。"
+      },
+      "goal": {
+        "tooltip": "Quality = bf16 に最も近い。Optimal = 高速でほぼ同一。Fast = 見た目が問題ない範囲で最速。"
+      },
+      "speed_ups": {
+        "tooltip": "Auto = System & Model Optimization Report に従います。Manual = 下の各項目を個別に選択します。"
+      },
+      "attention": {
+        "tooltip": "アテンションのバックエンド。auto = レポートのテストに合格した中で最速のもの。"
+      },
+      "fp16_accumulation": {
+        "tooltip": "品質をわずかに犠牲にした、より高速な fp16 演算。auto = Fast ゴールのときのみ。"
+      },
+      "step_cache": {
+        "tooltip": "EasyCache: ほとんど変化しないステップをスキップします。auto = Fast ゴール、20ステップ以上。"
+      },
+      "torch_compile": {
+        "tooltip": "モデルをコンパイルします。初回は遅く、以降は速くなります。Triton が必要です。"
+      },
+      "qwen21_cache": {
+        "tooltip": "Qwen-Image 2.1 専用 (Qwen Image 2.1 Cache): KV キャッシュの置き場所と保存方法です。auto = 無劣化。Fast goal または 16 GB 未満のカードでは int8。int8 はキャッシュを半分にし、精度は bf16 並み。int4 は4分の1になりますが、ステップごとの誤差がほぼ倍になります。RAM に置いても速度への影響は小さいです。off = 最も遅くなります。"
+      },
+      "clip_type": {
+        "tooltip": "Custom のみ: テキストエンコーダーの読み込み方です (CLIPLoader の type)。auto = エンコーダーの形状が既知のベースモデルの1つと一致する場合に、そこから判定します。他のベースモデルやチェックポイント内蔵のエンコーダーでは無視されます。"
+      },
+      "spectrum": {
+        "tooltip": "MOSS Image と Krea 2: Spectrum が一部のステップを実行する代わりに予測します。テストでは見た目の変化はありませんでした（MOSS 約1.7倍、Krea 2 Turbo 約1.35倍、Raw 約1.6倍）。組み込み済みで、インストール不要です。auto = Optimal と Fast のゴール。最初の20%のステップ（レイアウトが形成される部分）は常に実行され、8ステップ未満の実行では動作しません。off = オプトアウト（speed_ups が Auto でも有効）。オンの場合、ステップキャッシュの代わりになります。"
+      }
+    }
+  },
+  "LCOptimizerVideo": {
+    "description": "このノードはお使いのマシンを分析し、あなたのカードに合ったモデル、テキストエンコーダー、動画/音声 VAE、latent アップスケーラーを読み込みます。実際に効果のある高速化(Sage、Comfy Kitchen など)も適用されます。\nレポートは下のボタン、または LC123 の設定から実行してください。\nファイルが足りない場合は ⬇ のエントリーを選ぶと、初回実行時にダウンロードされます。\nファインチューンにも対応しています。自分のファイルを選んでも高速化は適用され、テキストエンコーダーや VAE が合わない場合は ⚠️ が表示されます。\nその他のモデル:ベースモデルを Custom にして、自分のファイル(とテキストエンコーダーのタイプ)を選んでください。高速化は引き続き適用され、推奨、見積もり、チェックは非対応と表示されます。\n⚠️ .bat に --use-sage-attention を入れないでください。すべてのモデルで Sage が強制され、モデルによっては黒い画像になります。入れずに、このノードにモデルごとに Sage をオンにさせてください。\n現在対応しているモデル:MiniMax H3、LTX 2.5、LTX 2.3、Custom。",
+    "inputs": {
+      "base_model": {
+        "tooltip": "モデルファミリー。推奨ファイルとチェックを選びます。"
+      },
+      "goal": {
+        "tooltip": "Quality = bf16 に最も近い。Optimal = 高速でほぼ同一。Fast = 見た目が問題ない範囲で最速。"
+      },
+      "speed_ups": {
+        "tooltip": "Auto = System & Model Optimization Report に従います。Manual = 下の各項目を個別に選択します。"
+      },
+      "attention": {
+        "tooltip": "アテンションのバックエンド。auto = レポートのテストに合格した中で最速のもの。"
+      },
+      "fp16_accumulation": {
+        "tooltip": "品質をわずかに犠牲にした、より高速な fp16 演算。auto = Fast ゴールのときのみ。"
+      },
+      "step_cache": {
+        "tooltip": "EasyCache: ほとんど変化しないステップをスキップします。auto = Fast ゴール、20ステップ以上。"
+      },
+      "torch_compile": {
+        "tooltip": "モデルをコンパイルします。初回は遅く、以降は速くなります。Triton が必要です。"
+      },
+      "clip_type": {
+        "tooltip": "Custom のみ: テキストエンコーダーの読み込み方です (CLIPLoader の type)。auto = エンコーダーの形状が既知のベースモデルの1つと一致する場合に、そこから判定します。他のベースモデルやチェックポイント内蔵のエンコーダーでは無視されます。"
+      },
+      "spectrum": {
+        "tooltip": "MiniMax H3 のみ：xmarre の Spectrum（ComfyUI-Spectrum-MiniMax-H3、別途インストール）が、一部のステップを実行する代わりに予測し、約1.3倍高速になります。ステップ数とサイズを考慮します：12ステップを超える実行や0.9 MP未満の実行では動作しません（テストでリップシンクが悪化したため）。auto = Optimal と Fast のゴールでの FL2VA（Ref2VA ではオフ。テストで参照動画がにじんだため）。off = オプトアウト（speed_ups が Auto でも有効）。オンの場合、ステップキャッシュの代わりになります。"
+      },
+      "veda": {
+        "tooltip": "MiniMax H3 専用: 低解像度向けの Veda スパースアテンション (Veda-on-ComfyUI と models/veda 内の predictor。別途インストール)。auto = 0.9 MP 未満で動作 (8 GB カードで約1.4倍、見た目は同じ)、それ以上ではフルアテンション (テストで顔がずれたため)。on = すべての解像度で動作。off = 使用しない (speed_ups が Auto でも有効)。"
+      }
+    }
+  },
+  "LCOptimizerVideoPipe": {
+    "description": "このノードはお使いのマシンを分析し、あなたのカードに合ったモデル、テキストエンコーダー、動画/音声 VAE、latent アップスケーラーを読み込みます。実際に効果のある高速化(Sage、Comfy Kitchen など)も適用されます。\nレポートは下のボタン、または LC123 の設定から実行してください。\nファイルが足りない場合は ⬇ のエントリーを選ぶと、初回実行時にダウンロードされます。\nファインチューンにも対応しています。自分のファイルを選んでも高速化は適用され、テキストエンコーダーや VAE が合わない場合は ⚠️ が表示されます。\nその他のモデル:ベースモデルを Custom にして、自分のファイル(とテキストエンコーダーのタイプ)を選んでください。高速化は引き続き適用され、推奨、見積もり、チェックは非対応と表示されます。\n⚠️ .bat に --use-sage-attention を入れないでください。すべてのモデルで Sage が強制され、モデルによっては黒い画像になります。入れずに、このノードにモデルごとに Sage をオンにさせてください。\n現在対応しているモデル:MiniMax H3、LTX 2.5、LTX 2.3、Custom。",
+    "inputs": {
+      "base_model": {
+        "tooltip": "モデルファミリー。推奨ファイルとチェックを選びます。"
+      },
+      "goal": {
+        "tooltip": "Quality = bf16 に最も近い。Optimal = 高速でほぼ同一。Fast = 見た目が問題ない範囲で最速。"
+      },
+      "speed_ups": {
+        "tooltip": "Auto = System & Model Optimization Report に従います。Manual = 下の各項目を個別に選択します。"
+      },
+      "attention": {
+        "tooltip": "アテンションのバックエンド。auto = レポートのテストに合格した中で最速のもの。"
+      },
+      "fp16_accumulation": {
+        "tooltip": "品質をわずかに犠牲にした、より高速な fp16 演算。auto = Fast ゴールのときのみ。"
+      },
+      "step_cache": {
+        "tooltip": "EasyCache: ほとんど変化しないステップをスキップします。auto = Fast ゴール、20ステップ以上。"
+      },
+      "torch_compile": {
+        "tooltip": "モデルをコンパイルします。初回は遅く、以降は速くなります。Triton が必要です。"
+      },
+      "clip_type": {
+        "tooltip": "Custom のみ: テキストエンコーダーの読み込み方です (CLIPLoader の type)。auto = エンコーダーの形状が既知のベースモデルの1つと一致する場合に、そこから判定します。他のベースモデルやチェックポイント内蔵のエンコーダーでは無視されます。"
+      },
+      "spectrum": {
+        "tooltip": "MiniMax H3 のみ：xmarre の Spectrum（ComfyUI-Spectrum-MiniMax-H3、別途インストール）が、一部のステップを実行する代わりに予測し、約1.3倍高速になります。ステップ数とサイズを考慮します：12ステップを超える実行や0.9 MP未満の実行では動作しません（テストでリップシンクが悪化したため）。auto = Optimal と Fast のゴールでの FL2VA（Ref2VA ではオフ。テストで参照動画がにじんだため）。off = オプトアウト（speed_ups が Auto でも有効）。オンの場合、ステップキャッシュの代わりになります。"
+      },
+      "veda": {
+        "tooltip": "MiniMax H3 専用: 低解像度向けの Veda スパースアテンション (Veda-on-ComfyUI と models/veda 内の predictor。別途インストール)。auto = 0.9 MP 未満で動作 (8 GB カードで約1.4倍、見た目は同じ)、それ以上ではフルアテンション (テストで顔がずれたため)。on = すべての解像度で動作。off = 使用しない (speed_ups が Auto でも有効)。"
+      }
+    }
+  },
+  "LCVRAMCacheClear": {
+    "description": "実行時に GPU/モデルのキャッシュをクリアする、*任意の*ノードのパススルー。重い処理の間、または重い処理から分岐した専用ブランチに置いてください。",
+    "inputs": {
+      "any": {
+        "tooltip": "任意の入力 — キャッシュクリア後に変更なしでそのまま通します。"
+      }
+    }
+  },
+  "LCStop": {
+    "description": "有効/無効スイッチ付きのキューのブレークポイント。有効にすると、キュー/再生コントロールから続行するまで止まります。バイパス/オフの場合は止まらずデータを通します。",
+    "inputs": {
+      "enable": {
+        "tooltip": "ON: ここで停止（mxStop の動作）。OFF: 停止せずに通過。"
+      }
+    }
+  },
+  "LCAdvancedFolder": {
+    "description": "Image Saver Simple 系ノード向けに、filename と path の出力を分けます。パス内のプレフィックスとタイムスタンプ形式は任意です。",
+    "inputs": {
+      "folder": {
+        "tooltip": "保存先パスの下にあるルートフォルダー / サブフォルダーです。%model %seed %sampler などのトークンは、LC Save Image がメタデータから埋めます(ない場合は省略されます)。"
+      },
+      "prefix": {
+        "tooltip": "パスのセグメントとファイル名の両方で使われます。%model %seed %sampler などのトークンは、LC Save Image がメタデータから埋めます(ない場合は省略されます)。"
+      },
+      "suffix": {
+        "tooltip": "ファイル名のサフィックス（任意）。"
+      },
+      "timestamp": {
+        "tooltip": "タイムスタンプの形式。none を選ぶと付けません。"
+      },
+      "path_separator": {
+        "tooltip": "パス区切りのスタイル。auto は OS のデフォルトを使います。"
+      },
+      "include_prefix_in_path": {
+        "tooltip": "ON: パス = folder\\prefix_timestamp\\。OFF: パス = folder\\"
+      }
+    }
+  },
+  "LCEasyFolder": {
+    "description": "標準の Save Image 用の filename_prefix を作成します。必要に応じてフォルダーも作成します。",
+    "inputs": {
+      "folder": {
+        "tooltip": "Comfy の出力ディレクトリ内のベースフォルダーです。区切り文字は自動で付きます。%model %seed %sampler などのトークンは、LC Save Image がメタデータから埋めます(ない場合は省略されます)。"
+      },
+      "prefix": {
+        "tooltip": "ファイル名のプレフィックスです。%model、%seed、%sampler などのトークンは、LC Save Image がメタデータから埋めます (なければ削除されます)。"
+      },
+      "suffix": {
+        "tooltip": "ファイル名のサフィックス（任意）。"
+      },
+      "timestamp": {
+        "tooltip": "名前の後ろに付けるタイムスタンプの形式。none を選ぶと付けません。"
+      },
+      "path_separator": {
+        "tooltip": "パス区切りのスタイル。auto は OS のデフォルトを使います。"
+      }
+    }
+  },
+  "LCSaveImage": {
+    "description": "Comfy のワークフローメタデータ付きで画像を保存します。CivitAI のパラメータには LC Save Metadata をつなぎます。filename + path ウィジェット。PNG を推奨。",
+    "inputs": {
+      "images": {
+        "tooltip": "保存するバッチ。各フレームが1つのファイルになります。"
+      },
+      "filename": {
+        "tooltip": "ファイル名の語幹です。1つにまとめたプレフィックスが好みなら、Easy Folder を接続することもできます。%model %seed %steps %cfg %sampler %scheduler %denoise %width %height は metadata ソケットから埋められ、ないものは省略されます。"
+      },
+      "path": {
+        "tooltip": "Comfy output 配下のサブフォルダーです。空 = output のルート。区切り文字は正規化されます。%model などの名前トークンもここで使えます。"
+      },
+      "format": {
+        "tooltip": "PNG はワークフローと CivitAI のテキストチャンクを保持します。JPEG/WebP は短いコメントのみです。"
+      },
+      "quality": {
+        "tooltip": "JPEG / WebP の品質。PNG では無視されます。"
+      },
+      "embed_workflow": {
+        "tooltip": "Comfy のプロンプトとワークフローのJSONを PNG に書き込みます。"
+      },
+      "embed_civitai": {
+        "tooltip": "metadata ソケットから A1111 形式のパラメーターを書き込みます。"
+      },
+      "hash_resources": {
+        "tooltip": "グラフ内にあるチェックポイント、UNET、CLIP、VAE、LoRA の SHA-256 AutoV2。CivitAI は名前ではなく、このハッシュからリソースを一覧表示します。"
+      },
+      "metadata": {
+        "tooltip": "LC Save Metadata から。プロンプト、seed、モデル、CivitAI の AIR/URL。"
+      },
+      "filename_prefix": {
+        "tooltip": "任意の結合済みプレフィックス（Easy Folder）。filename がデフォルトのままで、これが接続されている場合に使われます。"
+      }
+    }
+  },
+  "LCSaveImageMetadata": {
+    "description": "LC Save Image 用のメタデータを保存します。LC_PIPE の入力は任意です(pipe の出力はありません)。モデルはカンマ区切りの1つの文字列です。civitai_air は1つ以上の AIR または URL を、カンマ区切りで受け取ります。",
+    "inputs": {
+      "pipe": {
+        "tooltip": "LC_PIPE 入力。プロンプト、seed、steps、CFG、sampler、scheduler、size、denoise を埋めます。ウィジェットの値が優先されます。"
+      },
+      "positive": {
+        "tooltip": "パイプのポジティブプロンプトを上書きします。"
+      },
+      "negative": {
+        "tooltip": "パイプのネガティブプロンプトを上書きします。"
+      },
+      "seed_value": {
+        "tooltip": "Seed。-1 = パイプの seed があればそれを使用。通常の INT で、control-after-generate はありません。"
+      },
+      "steps": {
+        "tooltip": "0 = pipe の total_steps を使います。"
+      },
+      "cfg": {
+        "tooltip": "0 = pipe の cfg_1 を使います。"
+      },
+      "sampler": {
+        "tooltip": "空 = pipe の sampler_name を使用。"
+      },
+      "scheduler": {
+        "tooltip": "空 = pipe の scheduler を使用。"
+      },
+      "models": {
+        "tooltip": "チェックポイント名。Model 1 と Model 2 を1つのフィールドにカンマ区切りで入力します。"
+      },
+      "civitai_air": {
+        "tooltip": "CivitAI の AIR またはモデルURL。カンマ区切りで複数指定できます（例：モデルとワークフローのページ）。ハッシュ照合は行いません。CivitAI 上のワークフロー/モデルにリンクするには入力してください。トレードオフ：入力すると CivitAI が画像に \"made on-site\" とラベルを付けます。空にすると、画像は外部ジェネレーターのものとして扱われます（モデルと LoRA は引き続きハッシュで照合されます）。"
+      },
+      "width": {
+        "tooltip": "0 = LC Save Image が実際に保存する画像の幅(アップスケールの有無を問わず)。それ以外の数値を指定すると、その値が代わりに書き込まれます。"
+      },
+      "height": {
+        "tooltip": "0 = LC Save Image が実際に保存する画像の height (アップスケールの有無を問わず)。それ以外の数値は代わりにその値が書き込まれます。"
+      },
+      "denoise": {
+        "tooltip": "0 = 設定されていればパイプの denoise を使用。"
+      },
+      "extra_params": {
+        "tooltip": "parameters の行の末尾に追加されます (LoRA、ハッシュ、メモ)。"
+      }
+    }
+  },
+  "LCAnyEmptyBool": {
+    "description": "any_* ソケットを自動で増やします。接続されたワイヤーだけが数えられます。接続されたソースのいずれかが空、ミュート、バイパスなら True。",
+    "inputs": {
+      "any_01": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_02": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_03": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_04": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_05": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_06": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_07": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_08": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_09": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_10": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_11": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_12": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_13": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_14": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_15": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_16": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_17": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_18": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_19": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_20": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      }
+    }
+  },
+  "LCAnyEmptyInt": {
+    "description": "Any Empty Bool と同じマルチソケットの空判定です。empty / not_empty の整数を返します。",
+    "inputs": {
+      "empty": {
+        "tooltip": "接続されたソースのいずれかが空 / ミュート / バイパスのときに返されます。"
+      },
+      "not_empty": {
+        "tooltip": "接続されたすべてのソースに有効な値があるときに返されます。"
+      },
+      "any_01": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_02": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_03": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_04": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_05": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_06": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_07": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_08": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_09": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_10": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_11": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_12": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_13": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_14": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_15": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_16": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_17": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_18": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_19": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_20": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      }
+    }
+  },
+  "LCAnyEmptyFloat": {
+    "description": "Any Empty Int と同じマルチソケットの空判定です。empty / not_empty の float（小数点以下2桁）を返します。",
+    "inputs": {
+      "empty": {
+        "tooltip": "接続されたソースのいずれかが空 / ミュート / バイパスのときに返されます。"
+      },
+      "not_empty": {
+        "tooltip": "接続されたすべてのソースに有効な値があるときに返されます。"
+      },
+      "any_01": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_02": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_03": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_04": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_05": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_06": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_07": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_08": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_09": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_10": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_11": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_12": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_13": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_14": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_15": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_16": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_17": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_18": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_19": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      },
+      "any_20": {
+        "tooltip": "任意の型。未接続のスロットは無視されます。"
+      }
+    }
+  },
+  "LCIntSplit": {
+    "description": "total を a + b に分割します。split_point は 0–1 の割合です（0.5 = 半分）。a + b は常に total と等しくなります。",
+    "inputs": {
+      "total": {
+        "tooltip": "分割する値の全体（steps、frames、ピクセルなど）。"
+      },
+      "split_point": {
+        "tooltip": "total に対する割合。0 = すべて b、1 = すべて a、0.5 = 半々。"
+      }
+    }
+  },
+  "LCSigmaResample": {
+    "description": "sigma カーブを新しいステップグリッドにリサンプルします。サンプラーは実際に新しいステップ数で動きます。開始と終了の sigma は変わりません。new_steps = round(old_steps * multiplier) + adder。splitter の前ではなく、分割後のスライス (high または low) に置いてください。",
+    "inputs": {
+      "multiplier": {
+        "tooltip": "先に現在のステップ数に掛けます。"
+      },
+      "adder": {
+        "tooltip": "その後、この数のステップを加算（または減算）します。"
+      }
+    }
+  },
+  "LCChangeStepCount": {
+    "description": "sigma カーブを新しいステップグリッドにリサンプルします。サンプラーは実際に新しいステップ数で動きます。開始と終了の sigma は変わりません。new_steps = round(old_steps * multiplier) + adder。splitter の前ではなく、分割後のスライス (high または low) に置いてください。",
+    "inputs": {
+      "multiplier": {
+        "tooltip": "先に現在のステップ数に掛けます。"
+      },
+      "adder": {
+        "tooltip": "その後、この数のステップを加算（または減算）します。"
+      }
+    }
+  },
+  "LCSigmaCurve": {
+    "description": "インタラクティブな sigma リストです。MODEL はなく、sigma_max は仮の上限です。total_steps は入力に変換できます。組み込みの名前は再構築され、Custom はカンマ区切りの調整を保持します。Descending = 下降のみ。Save は user/LC123/sigma_curves/<name>.json に書き込みます。プリセット from_input は、実行後に任意の sigmas を読み込みます。Custom は次のキュー時に再構築されません。",
+    "inputs": {
+      "preset": {
+        "tooltip": "from_input = 任意の sigmas ソケット(実行後)。名前付きプリセットは再構築されます。Custom はカンマ区切りのリスト/グラフの調整を保持します。"
+      },
+      "total_steps": {
+        "tooltip": "ステップ数。入力に変換すると Sampler Configure / pipe からつなげます。名前付きプリセットは再構築され、Custom は現在のカーブをリサンプルします。"
+      },
+      "sigma_max": {
+        "tooltip": "見かけ上の top。Flow モデル (Krea / Flux / WAN) は 1.0。SDXL は約 14.6。"
+      },
+      "sigma_min": {
+        "tooltip": "組み込みプリセットで、最後の 0 が追加される前の下限値です。"
+      },
+      "edit_mode": {
+        "tooltip": "smooth = 1つのノットをドラッグすると隣も馴染ませます。spike = 1つのノットだけ動かします。"
+      },
+      "smooth_radius": {
+        "tooltip": "smooth モードの隣接ウィンドウ(0 = spike のように)。"
+      },
+      "descending": {
+        "tooltip": "リストを下降させ続けます (上昇なし)。直線ではありません。"
+      },
+      "curve": {
+        "tooltip": "カンマ区切りのリスト。preset が Custom のときの基準です。グラフはこの行の下にあります。"
+      },
+      "save_name": {
+        "tooltip": "user/LC123/sigma_curves/ 内のファイル名(拡張子なし)。"
+      },
+      "save_curve": {
+        "tooltip": "実行時に save_name.json を user/LC123/sigma_curves/ に書き込みます。"
+      },
+      "sigmas": {
+        "tooltip": "入力されるカーブです。preset が from_input のときに使われます。グラフは最初のキューの後に更新されます。"
+      }
+    }
+  },
+  "LCSigmas": {
+    "description": "1パス・2パス共通の1つのスケジューラーです。スケジュールのプリセット (base, beta, flowmatch, hyperbolic, gaussian、保存した自作カーブ) をグラフ上でドラッグして曲げられます。第2モデルへの step swap、image-to-image の denoise、第2パスの動作 (continue または renoise)、各パスのノイズとサンプラーも設定します。",
+    "inputs": {
+      "model": {
+        "tooltip": "第1パスのモデル。そのノイズ範囲と sigma shift がスケジュールを決めます。"
+      },
+      "sampler": {
+        "tooltip": "両パスで使うサンプラーです (sampler 出力)。RES4LYF がインストールされていれば、そのサンプラーも一覧に表示され、ClownSampler Selector もつなげられます。グラフの下の行に、お使いのモデルで最も良かった設定が表示されます。"
+      },
+      "sigma_curve_presets": {
+        "tooltip": "ステップが沿うカーブで、ノイズの多い状態からクリーンな状態へ向かいます。\nbase = 通常のスケジューラー(base_scheduler)。\nbeta = 独自の alpha と beta を使う beta カーブ。\nflowmatch = FlowMatch Euler Discrete カーブ。\nhyperbolic = base カーブを sinh / cosh / tanh で曲げたもの。\ngaussian = base カーブをベルカーブで曲げたもの。\nsaved: = 保存したカーブ。グラフ上の点をドラッグすると、どのカーブでも曲げられます。"
+      },
+      "base_scheduler": {
+        "tooltip": "base、hyperbolic、gaussian の下にあるスケジューラー (sigma_curve_presets)。Flow モデル (Krea 2, Z-Image, Flux 2): beta、beta57、simple は安全で、karras、kl_optimal、linear_quadratic は焼けます。"
+      },
+      "steps": {
+        "tooltip": "合計 steps。両方のパスの合計。"
+      },
+      "step_swap": {
+        "tooltip": "2つ目のモデル(model_2)に切り替わるステップです。0 = 1パスのみ。"
+      },
+      "denoise": {
+        "tooltip": "入力画像をどれだけ描き直すか。1 = ゼロから新しい画像を作る（text to image）。"
+      },
+      "denoise_steps": {
+        "tooltip": "full schedule = denoise がスケジュール全体にかかり、第2パスはそのまま続きます。at step swap = denoise は第1パスだけにかかり、第2パスは単独で仕上げます。"
+      },
+      "low_pass": {
+        "tooltip": "ステップの切り替え時に第2パスが行うこと。continue noise schedule = 残りのノイズを引き継いで仕上げます（2つのサンプラーにまたがる1つのスケジュール）。renoise = 第1パスが画像を仕上げ、その後、切り替え地点のレベルまで新しいノイズが戻されるので、第2パスはディテーラーのように、整える対象を得ます。"
+      },
+      "scheduler_shape_2": {
+        "tooltip": "2回目のパスのカーブです。same as first = 上のスケジュールで、カーブの編集も含みます。"
+      },
+      "first_pass_resample": {
+        "tooltip": "同じ経路をより多く（または少なく）のステップで第1パスを進みます。開始位置と終了位置は変わりません。1 = オフ。1.15 = 第1パスのステップが15%増えます。"
+      },
+      "sigma_shift": {
+        "tooltip": "ステップ数を変えずにスケジュールを曲げます。高いほど構図(ノイズの多い序盤)に多くのステップを使い、低いほどディテールに多く使います。use model default = モデルが学習した値。by image size = Flux のルール(image_size_latent が必要)。custom = custom_shift。SDXL系モデルには shift がありません。flowmatch と saved のカーブでは無視されます。"
+      },
+      "custom_shift": {
+        "tooltip": "モデル自身の shift 値です。Krea 2 / Flux:0.5 は小さな画像向け、1.15 = Krea 2 Turbo のデフォルト、2 以上は構図をかなり重視します。"
+      },
+      "beta_alpha": {
+        "tooltip": "beta: 高いほどノイズの多い序盤のステップが増えます。"
+      },
+      "beta_beta": {
+        "tooltip": "beta:高いほど、クリーンな側(ディテール)に多くのステップを使います。"
+      },
+      "flowmatch_shift": {
+        "tooltip": "flowmatch: カーブの shift（flowmatch_dynamic がオフのときに使用）。"
+      },
+      "flowmatch_dynamic": {
+        "tooltip": "flowmatch:動的 shift(V23.2 と同様)、または固定の flowmatch_shift。"
+      },
+      "flowmatch_terminal": {
+        "tooltip": "flowmatch: 最後のステップがここに着地するようにカーブを引き伸ばします。0 = オフ。"
+      },
+      "hyperbolic_function": {
+        "tooltip": "hyperbolic: ベースカーブを曲げる関数。"
+      },
+      "hyperbolic_scale": {
+        "tooltip": "hyperbolic: 関数がどれだけ強く曲げるか。"
+      },
+      "gaussian_mean": {
+        "tooltip": "gaussian:ベルカーブの位置(ノイズレベル)です。"
+      },
+      "gaussian_std": {
+        "tooltip": "gaussian:ベルカーブの幅です。"
+      },
+      "gaussian_operation": {
+        "tooltip": "gaussian: ベルカーブがベースカーブをどう曲げるか。"
+      },
+      "edit_mode": {
+        "tooltip": "グラフ上の点をドラッグしたときの動作: smooth は隣の点も引っ張り、spike はその点だけを動かします。"
+      },
+      "smooth_radius": {
+        "tooltip": "smooth: 点の周囲の何ステップ分が一緒に動くか。"
+      },
+      "curve_edit": {
+        "tooltip": "カーブの編集内容（グラフ上でドラッグして設定）。"
+      },
+      "seed": {
+        "tooltip": "noise_high のシード (noise_low は seed + 1 を使用)。"
+      },
+      "model_2": {
+        "tooltip": "異なる場合の第2パスのモデル（例：ControlNet なし）。独自のスケジュールが揃えられます。"
+      },
+      "image_size_latent": {
+        "tooltip": "sigma_shift = by image size のときのみ：空の latent。シフトが画像サイズに追従できるようにします。"
+      }
+    },
+    "outputs": {
+      "0": {
+        "tooltip": "第1パス (または唯一のパス)。"
+      },
+      "1": {
+        "tooltip": "step swap 以降の2回目のパス。"
+      },
+      "2": {
+        "tooltip": "最初のサンプラー用のノイズ。"
+      },
+      "3": {
+        "tooltip": "第2サンプラー用のノイズ (スケジュールを継続する場合は none)。"
+      },
+      "4": {
+        "tooltip": "スケジュールの動作を言葉で説明します。"
+      },
+      "5": {
+        "tooltip": "第1モデルのスケジュール全体（分割なし）。"
+      },
+      "6": {
+        "tooltip": "選択されたサンプラー (SamplerCustomAdvanced 用)。"
+      }
+    }
+  },
+  "LCDetailDaemon": {
+    "description": "ステップの一部の区間で、実際より少しノイズが少ないとモデルに伝えることで、細かいディテールを加えます。スケールと区間は元の Detail Daemon と同じで、keep structure モードが加わり、CFG の計算はありません。\nlow pass サンプラーに置いてください。ディテールは最後のステップで作られます。",
+    "inputs": {
+      "sampler": {
+        "tooltip": "KSamplerSelect、LC Sigmas、または ClownSampler(任意の SAMPLER)から。"
+      },
+      "amount": {
+        "tooltip": "ディテールの量。元の Detail Daemon と同じスケールです：0.25 = ピーク時にモデルへ伝えるノイズが2.5%少なくなります。負の値 = より滑らか。CFG は掛けられません。\nlow pass のサンプラーに付けてください。ディテールは最後のステップで作られ、high pass ではレイアウトが動いてしまいます。\nKrea 2 / Krealism: look は 0.5 から 1.0 のみ、start 0.15、end 0.85、peak 0、exponent 0。classic と keep structure は効きが強いので、start を低めに。16ステップ以上では弱めに。独自にノイズを加えるサンプラー（dpmpp_2m_sde、euler_ancestral、er_sde、res_* / eta 付きの ClownSampler）：下げないと、斑点が残ることがあります。"
+      },
+      "start": {
+        "tooltip": "開始するステップ: 0 = 最初のステップ、1 = 最後。序盤のステップが、シワや布の形を決めます。"
+      },
+      "end": {
+        "tooltip": "終了するステップ。最後のステップには手を付けないでください。画像にノイズが残ることがあります。"
+      },
+      "peak": {
+        "tooltip": "ウィンドウ内でどこが最も強いか (元の実装のバイアス): 0 = 開始直後のノイズの多いステップで、形を決める位置 (最も効果的)。高くすると後ろ寄りになり、穏やかなシャープになります。"
+      },
+      "exponent": {
+        "tooltip": "ランプのカーブ：0 = 平坦で、ウィンドウ全体で全強度（最も効果的）、1 = なめらかな山形、1より上 = より狭くなります。"
+      },
+      "mode": {
+        "tooltip": "look only = モデルが見るノイズは減りますが、その出力は本来のノイズに合わせて再スケールされます:大きな組み替えなしで、くっきりします。classic = 元の Detail Daemon(ディテールが増え、細部が動きます)。keep structure = classic ですが、変化のうち細かい部分だけを残すので、レイアウトは保たれます(ウィンドウ内ではステップごとにモデルを2回呼びます)。"
+      },
+      "sigmas": {
+        "tooltip": "グラフの描画のみ。このノードが供給するサンプラーの sigmas をつないでください (低パスには sigmas_low)。ウィンドウは常にそのサンプラー自身のステップに従います。"
+      }
+    }
+  },
+  "LCDetailDaemonModel": {
+    "description": "通常の KSampler 用の Detail Daemon：サンプラー版と同じものを、モデルパッチとして提供します。他のモデルパッチと重ねて使えます。",
+    "inputs": {
+      "model": {
+        "tooltip": "KSampler に入るモデル。"
+      },
+      "amount": {
+        "tooltip": "ディテールの量。元の Detail Daemon と同じスケールです：0.25 = ピーク時にモデルへ伝えるノイズが2.5%少なくなります。負の値 = より滑らか。CFG は掛けられません。\nlow pass のサンプラーに付けてください。ディテールは最後のステップで作られ、high pass ではレイアウトが動いてしまいます。\nKrea 2 / Krealism: look は 0.5 から 1.0 のみ、start 0.15、end 0.85、peak 0、exponent 0。classic と keep structure は効きが強いので、start を低めに。16ステップ以上では弱めに。独自にノイズを加えるサンプラー（dpmpp_2m_sde、euler_ancestral、er_sde、res_* / eta 付きの ClownSampler）：下げないと、斑点が残ることがあります。"
+      },
+      "start": {
+        "tooltip": "開始するステップ: 0 = 最初のステップ、1 = 最後。序盤のステップが、シワや布の形を決めます。"
+      },
+      "end": {
+        "tooltip": "終了するステップ。最後のステップには手を付けないでください。画像にノイズが残ることがあります。"
+      },
+      "peak": {
+        "tooltip": "ウィンドウ内でどこが最も強いか (元の実装のバイアス): 0 = 開始直後のノイズの多いステップで、形を決める位置 (最も効果的)。高くすると後ろ寄りになり、穏やかなシャープになります。"
+      },
+      "exponent": {
+        "tooltip": "ランプのカーブ：0 = 平坦で、ウィンドウ全体で全強度（最も効果的）、1 = なめらかな山形、1より上 = より狭くなります。"
+      },
+      "mode": {
+        "tooltip": "look only = モデルが見るノイズは減りますが、その出力は本来のノイズに合わせて再スケールされます:大きな組み替えなしで、くっきりします。classic = 元の Detail Daemon(ディテールが増え、細部が動きます)。keep structure = classic ですが、変化のうち細かい部分だけを残すので、レイアウトは保たれます(ウィンドウ内ではステップごとにモデルを2回呼びます)。"
+      },
+      "sigmas": {
+        "tooltip": "グラフの描画のみ。このノードが供給するサンプラーの sigmas をつないでください (低パスには sigmas_low)。ウィンドウは常にそのサンプラー自身のステップに従います。"
+      }
+    }
+  },
+  "LCSpeedBoost": {
+    "description": "BETA。high pass サンプラーにだけ接続してください。画像を半分のサイズから始め、途中でフルサイズまで拡大します。約2倍高速で、品質は同じです。レイアウトはモデルが学習したサイズに従うため、オンにすると同じ seed でも構図が変わります。\nLC Detail Daemon は low pass に置いてください。ディテールは最後のステップで作られます。\nノイズから始まるパス(denoise 0.9 以上)を高速化します。アップスケールと image to image のパスは通常どおり動作します。レイアウトは入力画像から決まるためです。\nKrea 2、Z-Image、Flux.2 Klein、Qwen-Image、Wan、SDXL / Pony / Illustrious で動作します(SDXL系では約1.4倍)。Flux 3 Klein では auto が早めに拡大し(約1.2倍)、文字や小さな顔をきれいに保ちます。MOSS Image ではノイズ 0.85 で拡大します(約1.6倍、8ステップ LoRA 併用で2.4倍)。インペイントマスクと MOSS のレイアウトボックスでは自動的にオフになります(理由はコンソールに表示されます)。Qwen-Image 2.1 では auto はオフのままです。線画、文字、ベタ塗りは半分のサイズだと崩れるためです。写真では grow_at_step を手動で設定してください。\nSPEED(Xiao、Chao、Yariv、Wetzstein、2026)に基づいています。",
+    "inputs": {
+      "sampler": {
+        "tooltip": "high pass サンプラーのみ。LC Sigmas、KSamplerSelect、または LC Detail Daemon から。"
+      },
+      "auto": {
+        "tooltip": "実行自身のスケジュールから grow ステップを選びます（約2倍高速、品質は同じ）。"
+      },
+      "grow_at_step": {
+        "tooltip": "auto がオフのときに使用します。画像がフルサイズに拡大されるステップで、step_swap と同じ数え方です。0 = すべてのステップをフルサイズで。"
+      }
+    }
+  },
+  "LCSpeedBoostKSampler": {
+    "description": "BETA。LC Speed Boost を内蔵した KSampler です。処理時間は約半分、VRAM は同じ、ディテールも同じです。KSampler の代わりにそのまま置いてください。レイアウトは低い解像度で決まるため、オンにするとシードの構図が少し寄り気味になります。\nstart_at_step、end_at_step、return_with_leftover_noise は KSampler (Advanced) と同じ動作です。ノイズを残したまま途中で止めて、通常のサンプラーや ClownShark サンプラーに仕上げを任せられます。\nRES4LYF がインストールされていれば、ClownShark (RES4LYF) のサンプラーがサンプラー一覧に表示されます。ClownSampler を sampler につなぐと、その設定が使われます。\nKrea 2、Z-Image、Flux.2 Klein、Qwen-Image、Wan、SDXL / Pony / Illustrious に対応しています (SDXL 系では約1.4倍)。Flux 3 Klein では auto が早い段階で拡大し (約1.2倍)、文字や小さな顔をきれいに保ちます。MOSS Image ではノイズ 0.85 で拡大します (約1.6倍、8-step LoRA 併用で2.4倍)。image to image (denoise が 0.9 未満)、インペイントマスク、MOSS のレイアウトボックスでは通常の KSampler と同じようにサンプリングします。Qwen-Image 2.1 では auto はオフのままです。線画、文字、ベタ塗りは半分のサイズで崩れるためです。写真では grow_at_step を手動で設定してください。\nSPEED (Xiao, Chao, Yariv and Wetzstein, 2026) に基づいています。",
+    "inputs": {
+      "model": {
+        "tooltip": "入力 latent のデノイズに使うモデルです。"
+      },
+      "positive": {
+        "tooltip": "画像に入れたいもの。"
+      },
+      "negative": {
+        "tooltip": "画像から得たいもの。"
+      },
+      "latent_image": {
+        "tooltip": "denoise する latent。"
+      },
+      "speed_boost": {
+        "tooltip": "auto = Speed Boost がスケジュールから切り替えステップを選びます(約2倍高速で、品質は同じ)。grow_at_step = 下で自分で設定します。"
+      },
+      "grow_at_step": {
+        "tooltip": "speed_boost が grow_at_step のときに使われます：フル解像度に切り替わるステップ。0 = 通常の KSampler。"
+      },
+      "_gap1": {
+        "tooltip": "レイアウト用スペーサー"
+      },
+      "seed": {
+        "tooltip": "ノイズの生成に使われるランダム seed。"
+      },
+      "steps": {
+        "tooltip": "ステップ数。"
+      },
+      "cfg": {
+        "tooltip": "プロンプトにどれだけ忠実に従うか。"
+      },
+      "sampler_name": {
+        "tooltip": "サンプリングアルゴリズムです。RES4LYF がインストールされていると ClownShark (RES4LYF) のサンプラーも表示され、ClownSampler Selector も接続できます。"
+      },
+      "scheduler": {
+        "tooltip": "steps を通じてノイズをどう除去するか。"
+      },
+      "denoise": {
+        "tooltip": "1 = 新規の画像。低い = image to image (0.9 未満では Speed Boost は身を引きます)。"
+      },
+      "_gap2": {
+        "tooltip": "レイアウト用スペーサー"
+      },
+      "start_at_step": {
+        "tooltip": "KSampler (Advanced) のように、steps の途中から開始します。0 より大きいと、Speed Boost は身を引きます（画像はすでにレイアウトのステップを過ぎているため）。"
+      },
+      "end_at_step": {
+        "tooltip": "このステップで停止します。残りは、return_with_leftover_noise をオンにした別のサンプラーに渡します。"
+      },
+      "return_with_leftover_noise": {
+        "tooltip": "enable = ノイズを残したまま end_at_step で停止し、通常の、または ClownShark のサンプラーに仕上げを任せます（add_noise オフ、start_at_step = この end_at_step）。"
+      },
+      "sampler": {
+        "tooltip": "任意。eta など独自の設定を持つ ClownSampler（または任意の SAMPLER）。sampler_name の代わりになります。"
+      },
+      "positive_half": {
+        "tooltip": "半分のサイズのステップ用の任意の positive。Speed Boost は MOSS Image では動作しません。"
+      }
+    }
+  },
+  "LCControlPanel": {
+    "description": "スライダーとスイッチをまとめた1つのパネルで、それぞれに専用の出力があります。行の末尾の歯車で、type (number または boolean)、name、min、max、step、小数桁数 (0 = INT、それ以外は FLOAT) を設定します。新しい行を number または boolean の入力につなぐと、その入力の name、範囲、値がコピーされます。数値をダブルクリックすると直接入力できます。"
+  },
+  "LCTimer": {
+    "description": "すべての実行の時間を計測し、直近の実行を、その前の5回と比較して評価します：速ければ緑、遅ければ赤。直近10回の実行がノード上に新しい順で一覧表示され、ワークフローとともに保存されます。停止した実行と、完全にキャッシュされた実行は除外されます。右クリックで履歴をクリアします。"
+  },
+  "LCSamplerScheduler": {
+    "description": "サンプラーとスケジューラーを一度選んですべての KSampler につなげば、まとめて変更できます。"
+  },
+  "LCImagePass": {
+    "description": "画像をそのまま通します。enable をオフにすると、次のノードはその入力に何も受け取らず、その入力なしで実行されます。任意の入力にのみ使ってください：必須の画像入力に使うとエラーになります。"
+  },
+  "LCMaskPass": {
+    "description": "マスクをそのまま通します。enable をオフにすると、次のノードはマスクを受け取らず、マスクなしで動作します(Skin Beauty は独自のスキンマスクを使い、Color / Tone Match はフレーム全体を使います)。マスクを作るノードをバイパスやミュートする代わりに使ってください。"
+  },
+  "LCBypassRelay": {
+    "description": "左側にノードをつなぎます。OPT_CONNECTION を LC Bypasser または LC Mute につなぎます。ハブがこのノードをオフにすると、左側のすべてのノードが同じくミュート/バイパスされます。"
+  },
+  "LCDirectionalBlur": {
+    "description": "モーションブラー方式の方向性ブラー — すべてのピクセルが1つの角度/長さのベクトルに沿ってにじみます。ノード上の矢印をドラッグして設定するか(角度は矢印の向き、長さはドラッグした距離で決まります)、正確な値を入力してください。長さが 0 または strength が 0 の場合は何もしません。`taps` と `edge` は WAS Node Suite の Image Directional Blur と同じ動作です。taps を減らすと、滑らかな筋ではなく段階的な多重露光のような見た目になり、`edge` は画像の外側の境界をどう読み取るかを選びます。ノード上にプレビューとワイプがあります。",
+    "inputs": {
+      "angle": {
+        "tooltip": "ブラーの方向 (度)、画面の規約: 0 = 右、90 = 下。"
+      },
+      "distance": {
+        "tooltip": "ブラーの長さ (ピクセル)。0 = ブラーなし。"
+      },
+      "strength": {
+        "tooltip": "ぼかした結果に向けてブレンドします。ぼかし自体は、その長さにわたるハードでフル強度のにじみです — 強すぎる場合は、距離ではなくこちらを下げてください。"
+      },
+      "taps": {
+        "tooltip": "経路に沿って平均されるサンプル数（WAS Node Suite の `taps`）。低い値（2-8）では、滑らかな軌跡ではなく、段差のある多重露光のゴーストとして見えます。単なる品質のつまみではなく、それ自体が一つの効果です。高い値（64以上）では、長い距離でも滑らかになります。"
+      },
+      "edge": {
+        "tooltip": "ぼかしが画像の境界の外側で何を読むか。'hold the edge' は境界のピクセルを外側に繰り返します。'mirror' は画像を折り返します (このノード本来の唯一の動作)。'empty' は境界の外を黒として読むため、にじみが境界から外れるにつれて端が暗くなります。"
+      }
+    }
+  },
+  "LCDepthFX": {
+    "description": "深度に基づくカメラエフェクト：大気のもや、ライトラップ、本物のボケを伴う被写界深度。LC Depth Anything の深度マップを接続します。ルックを選ぶか、スライダーで設定します。ノード上でBefore/Afterのワイプ付きプレビューができます。",
+    "inputs": {
+      "depth_map": {
+        "tooltip": "同じ画像の深度マップ (LC Depth Anything)。どちらの向きでも使えます。"
+      },
+      "look": {
+        "tooltip": "LC Depth FX、Bloom、Lens Profile、Vignette、Film Stock、Film Grain で同じ look を選ぶと、見た目が揃います。Custom = 自分のスライダー。スライダーを動かすと Custom に切り替わります。"
+      },
+      "haze": {
+        "tooltip": "空気の厚さです。遠くの領域は霞の色に向かって薄れます。0 = オフ。人物には 0.06 - 0.16、広い風景にだけそれ以上を使います。"
+      },
+      "haze_distance": {
+        "tooltip": "もやが始まる位置を背景全体で測ったもの：0 = 被写体のすぐ後ろ、高いほど最も遠い部分のみ。"
+      },
+      "haze_warmth": {
+        "tooltip": "もやの色は画像自身の距離から決まります。これで寒色 (-) か暖色 (+) に寄せます。"
+      },
+      "light_wrap": {
+        "tooltip": "明るい背景の光が被写体のエッジにこぼれます。切り抜きシールのような見た目をなくします。0 = オフ。"
+      },
+      "dof_blur": {
+        "tooltip": "被写界深度。ピントから離れるほどどれだけぼけるかです。0 = オフ。解像度に応じてスケールします。"
+      },
+      "focus_range": {
+        "tooltip": "ピントの周囲でどれだけの奥行きがシャープに残るか。低い = 極薄 (f/1.4 のよう)、高い = 深い (f/8 のよう)。"
+      },
+      "bokeh": {
+        "tooltip": "明るいピントの外れた光が、光る円盤になります。0 = 通常のぼかし。"
+      },
+      "auto_focus": {
+        "tooltip": "フレーム中央の主要な被写体にフォーカスします。オフ = focus_depth を使います。"
+      },
+      "focus_depth": {
+        "tooltip": "auto_focus がオフのときに使われます。0 = 最も近い、1 = 最も遠い。"
+      },
+      "depth_direction": {
+        "tooltip": "効果が画像の違う部分にかかる場合を除き、Auto のままにしてください。"
+      },
+      "focus_mask": {
+        "tooltip": "任意。このマスクが覆う部分にフォーカスが合います(LC MaskMaker の顔または人物マスク)。接続すると auto_focus より優先されます。"
+      }
+    }
+  },
+  "LCPhoneFilters": {
+    "description": "スマホアプリ風のプリセット 37種 (WAS Node Suite の Image Style Filter と同じセット)。look を選び、strength を調整し、ノード上のワイプをドラッグして比較します。",
+    "inputs": {
+      "preset": {
+        "tooltip": "WAS Node Suite の Image Style Filter と同じ37種類のルックです — 1977、Aden、Brooklyn、Xpro2 など。"
+      },
+      "strength": {
+        "tooltip": "グレード結果へのブレンド。1 = フルの look、0 = 元の画像。"
+      }
+    }
+  },
+  "LCImageRefPipeIn": {
+    "description": "最大16枚の参照画像を1本のワイヤーにまとめます。最後のソケットを埋めると新しいソケットが現れます。",
+    "inputs": {
+      "images": {
+        "tooltip": "リファレンス画像。空またはミュートされたスロットは、空のまま引き継がれます。"
+      }
+    }
+  },
+  "LCImageRefPipeOut": {
+    "description": "リファレンス画像を展開します。image_3 の入力は image_3 の出力になります。"
+  },
+  "LCImageBatchFromFolder": {
+    "description": "フォルダー内の画像を、アルファベット順(img2 が img10 より前)に1つのバッチとして読み込みます。対応:png、jpg、jpeg、webp、bmp、tif、tiff、gif(最初のフレーム)。start_index + max_images でフォルダーの範囲を指定します。count = 読み込んだ画像数、total_found = フォルダー内の画像数。",
+    "inputs": {
+      "folder_path": {
+        "tooltip": "フルパス、または ComfyUI/input 内のフォルダー名。引用符の有無、/ か \\ かを問わず、そのまま貼り付けられます。"
+      },
+      "start_index": {
+        "tooltip": "先頭からこの数の画像をスキップします（0 = 最初の1枚から開始）。"
+      },
+      "max_images": {
+        "tooltip": "読み込む最大数です。0 = すべて。メモリ不足になる場合は下げてください。"
+      },
+      "size_mode": {
+        "tooltip": "最初の画像とサイズが異なる画像：埋めるようにクロップ、黒でパディング、またはストレッチ。"
+      }
+    }
+  },
+  "LCShowAny": {
+    "description": "任意の値をノード上に表示し、同じ値をタイプを変えずにそのまま通します。INT は INT のまま、サンプラー名はサンプラー名のままなので、ワイヤーの途中に置けます。",
+    "inputs": {
+      "any": {
+        "tooltip": "任意のもの。数値、テキスト、ドロップダウンの値、ブール値はそのまま表示されます。画像、マスク、latent はサイズが表示されます。"
+      }
+    }
+  },
+  "LCWildcard": {
+    "description": "assets/wildcards/*.txt からランダムな1行を選びます。テキストを任意の STRING / プロンプト / Join Strings に接続します。",
+    "inputs": {
+      "wildcard": {
+        "tooltip": "assets/wildcards/ 内のリストファイル。ランダムに1行が選ばれます。"
+      },
+      "base_seed": {
+        "tooltip": "ベース seed。seed_mode が fixed / randomize / increment / decrement を決めます。"
+      },
+      "seed_mode": {
+        "tooltip": "fixed: base_seed を再利用します。randomize / increment / decrement: 毎回の実行で変化します (キュー全体またはこのノードのみ)。"
+      }
+    }
+  },
+  "LCSeed": {
+    "description": "ユーティリティ seed。固定の数値を入力するか、ノードの表示を使います：'Randomize Each Time'、'New Fixed Random'、手動入力、またはこのノードが実際に実行した直近10個の seed から選択します。",
+    "inputs": {
+      "base_seed": {
+        "tooltip": "数値 = その正確な固定 seed で、毎回再利用されます。-1 = 実行のたびに新しい乱数。-1 を手入力するのではなく、ノード自身のボタンを使ってください：'Randomize Each Time' はこれを -1 にし、'New Fixed Random' は今すぐ1つ数値を生成して、本物の固定 seed としてここに書き込みます。意図的に 2**64 未満に制限されています。モジュールの docstring を参照してください。"
+      }
+    }
+  },
+  "LCReferenceLatent": {
+    "description": "conditioning に最大8個の参照 latent を付加します (Klein の index 方式)。複数をチェーンすると参照が加算されます。latent 入力はすべて任意で、有効なものがなければ conditioning をそのまま通します。",
+    "inputs": {
+      "conditioning": {
+        "tooltip": "リファレンス latent を付加するテキスト conditioning です。"
+      },
+      "latent_1": {
+        "tooltip": "任意の参照 latent 1。未接続または無効なスロットは無視されます。"
+      },
+      "latent_2": {
+        "tooltip": "任意の参照 latent 2。未接続または無効なスロットは無視されます。"
+      },
+      "latent_3": {
+        "tooltip": "任意の参照 latent 3。未接続または無効なスロットは無視されます。"
+      },
+      "latent_4": {
+        "tooltip": "任意の参照 latent 4。未接続または無効なスロットは無視されます。"
+      },
+      "latent_5": {
+        "tooltip": "任意のリファレンス latent 5。未接続または無効なスロットは無視されます。"
+      },
+      "latent_6": {
+        "tooltip": "任意のリファレンス latent 6。未接続または無効なスロットは無視されます。"
+      },
+      "latent_7": {
+        "tooltip": "任意の参照 latent 7。未接続または無効なスロットは無視されます。"
+      },
+      "latent_8": {
+        "tooltip": "任意の参照 latent 8。未接続または無効なスロットは無視されます。"
+      }
+    }
+  },
+  "LCDenoise": {
+    "description": "noise_std = 1 - denoise による latent ノイズ注入。サンプラーで使っているのと同じ denoise の値を接続してください。",
+    "inputs": {
+      "samples": {
+        "tooltip": "ノイズを注入する latent。"
+      },
+      "denoise": {
+        "tooltip": "denoise の量です。使われるノイズの強さは (1 - denoise) です。1.0 = ノイズなし、0.0 = noise_std 1.0。"
+      }
+    }
+  },
+  "LCRelight": {
+    "description": "非推奨：LC Lighting Control V2 🔦 を使ってください。保存済みのワークフローでは引き続き動作します。",
+    "inputs": {
+      "normal_map": {
+        "tooltip": "ノーマルマップ（RGB）。画像と同じ被写体のフレーミング。"
+      },
+      "depth_map": {
+        "tooltip": "深度マップ。画像と同じ被写体のフレーミング。"
+      },
+      "ambient_light": {
+        "tooltip": "シャドウの下限。0 = 純粋なキー。"
+      },
+      "depth_scale": {
+        "tooltip": "遠いピクセルはビームの内側で減衰します(0 = depth による減衰なし)。"
+      },
+      "light1_x": {
+        "tooltip": "+X = フレームの右側から。"
+      },
+      "light1_y": {
+        "tooltip": "+Y = 上から。"
+      },
+      "light1_z": {
+        "tooltip": "0 = 側面、1 = 正面。マイナスは無視されます。"
+      },
+      "light1_size": {
+        "tooltip": "コーンの幅: 小さい = スポット、大きい = フラッド。"
+      },
+      "mask": {
+        "tooltip": "任意の被写体マスク。mask_enabled のときに仮想ドーム法線を有効にします。"
+      }
+    }
+  },
+  "LCLight": {
+    "description": "ブール値を表示するライト：true 用の色と false 用の色（または色なし）。色は歯車の中にあります。",
+    "inputs": {
+      "value": {
+        "tooltip": "表示するブール値。"
+      }
+    }
+  },
+  "LCNaturalLook": {
+    "description": "AI っぽさを取り除きます: 派手な色とオレンジがかった肌を落ち着かせ、ハイライトをなだらかにし、ツヤのあるグローを抑え、細かいテクスチャを持ち上げます。元の黒レベル、コントラスト、明るさは保たれます。ノード上でビフォー/アフターのワイプができます。",
+    "inputs": {
+      "strength": {
+        "tooltip": "AIっぽさをどれだけ取り除くか。ほとんどのレンダリングでは 0.6 - 1.2（1 = 1.53.15 より前の 0.5 に相当）。"
+      },
+      "skin": {
+        "tooltip": "オレンジ味やプラスチックのような肌をどれだけ落ち着かせるか、そして平坦な肌を細かいテクスチャの持ち上げからどれだけ外すかを、strength に加えて設定します。0 = 肌は触らず、他の部分と同じようにシャープになります(LC Skin Master の後は 0 にしてください)。"
+      },
+      "seed": {
+        "tooltip": "かすかなグレイン用の seed。"
+      }
+    }
+  }
+}
