@@ -170,11 +170,9 @@ function syncVisibility(node) {
   try {
     const sz = node.computeSize();
     const need = Math.max(sz[1], 120);
-    if (node._lcSavedH != null) {
-      node._lcUserTall = node._lcSavedH > need + 2;
-      node._lcSavedH = null;
-    }
-    const h = node._lcUserTall ? Math.max(need, node.size[1]) : need;
+    // only a height the user dragged by hand is kept (saved in the node's properties); a resize from a reload or a tab
+    // switch used to count as one, and every redraw then kept the inflated height (the node grew on every refresh)
+    const h = node.properties?.lc_user_tall ? Math.max(need, node._lcLoadH ?? node.size[1]) : need;
     node.__lcSyncing = true;
     try {
       node.setSize([node.size[0], h]);
@@ -520,7 +518,9 @@ app.registerExtension({
     const onConfigure = nodeType.prototype.onConfigure;
     nodeType.prototype.onConfigure = function (info) {
       const r = onConfigure?.apply(this, arguments);
-      if (Array.isArray(info?.size)) this._lcSavedH = info.size[1]; // the first sync decides whether it was dragged taller
+      // the dragged height as saved: the frontend inflates the node while it loads (all widgets still shown), and that
+      // inflated size must not become the kept height
+      if (Array.isArray(info?.size)) this._lcLoadH = info.size[1];
       setTimeout(() => this.__lcStageRedraw?.(), 30);
       setTimeout(() => this.__lcStageRedraw?.(), 300);
       return r;
@@ -529,9 +529,12 @@ app.registerExtension({
     const onResize = nodeType.prototype.onResize;
     nodeType.prototype.onResize = function (size) {
       const r = onResize?.apply(this, arguments);
-      if (!this.__lcSyncing && this._lcSavedH == null) {
+      // only while the user drags the node's corner (the canvas marks the node it is resizing)
+      if (!this.__lcSyncing && app.canvas?.resizing_node === this) {
         try {
-          this._lcUserTall = !!size && size[1] > Math.max(this.computeSize()[1], 120) + 2;
+          this.properties = this.properties || {};
+          this._lcLoadH = null;
+          this.properties.lc_user_tall = !!size && size[1] > Math.max(this.computeSize()[1], 120) + 2;
         } catch (_) {}
       }
       return r;
