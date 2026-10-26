@@ -1,6 +1,7 @@
-// LC Timer: times every run, scores the newest one against the 5 runs before it and lists the last 10.
-// Runs are timed from ComfyUI's own events (start -> success). Stopped runs and fully cached ones (under half a second)
-// are left out of the scoring. The history saves with the workflow (node.properties.lc_runs).
+// LC Timer: times every run, shows the time left while running (run average + current sampler steps), scores the
+// newest run against the 5 runs before it and lists the last 10. Timed from ComfyUI's own events (start -> success).
+// Stopped runs and fully cached ones (under half a second) are left out of the scoring. The history saves with the
+// workflow (node.properties.lc_runs).
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
 import { lcApplyLaunchColor } from "./lc_color.js";
@@ -13,6 +14,9 @@ const MIN_RUN = 0.5; // seconds; anything quicker was all cache
 const nodes = new Set();
 let runStart = 0;
 let ticker = null;
+// remaining time while running (idea from KRuins Render ETA, MIT): the run's average from this node's history, and the
+// current sampler's seconds per step from ComfyUI's progress events
+let samp = { node: null, value: 0, max: 0, t0: 0, v0: 0 };
 
 const secs = (s) => (s >= 60 ? `${Math.floor(s / 60)}:${(s % 60).toFixed(2).padStart(5, "0")}` : `${s.toFixed(2)} s`);
 const clock = () => new Date().toTimeString().slice(0, 5);
@@ -63,7 +67,9 @@ function render(node) {
   if (!runStart) ui.now.textContent = cur ? secs(cur.t) : "--";
   ui.now.classList.toggle("run", !!runStart);
   const before = done.slice(-KEEP, -1);
-  if (cur && before.length) {
+  if (runStart) {
+    ui.sum.innerHTML = remaining(node, (performance.now() - runStart) / 1000);
+  } else if (cur && before.length) {
     const avg = before.reduce((a, r) => a + r.t, 0) / before.length;
     const s = score(cur.t, avg);
     ui.sum.innerHTML = `vs the average of the last ${before.length}: <span class="${s.cls}">${s.text}</span>`;
@@ -83,12 +89,47 @@ function render(node) {
   }
 }
 
+const short = (s) => (s >= 60 ? `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}` : `${Math.max(1, Math.round(s))} s`);
+
+// "about 12 s left (done 20:31) · step 8/20" while a run is going. The longer of the two estimates wins: the run
+// average knows about decode and saving, the sampler's pace knows this run's settings.
+function remaining(node, t) {
+  const done = runs(node).filter((r) => r.ok).slice(-(KEEP - 1));
+  const avgLeft = done.length ? done.reduce((a, r) => a + r.t, 0) / done.length - t : null;
+  let sampLeft = null, step = "";
+  if (samp.max > 1 && samp.value < samp.max) {
+    const steps = samp.value - samp.v0;
+    if (steps > 0) sampLeft = ((performance.now() - samp.t0) / 1000 / steps) * (samp.max - samp.value);
+    step = `step ${samp.value}/${samp.max}`;
+  }
+  const left = Math.max(avgLeft ?? -Infinity, sampLeft ?? -Infinity);
+  let head = "";
+  if (left > 0) head = `about ${short(left)} left (done ${new Date(Date.now() + left * 1000).toTimeString().slice(0, 5)})`;
+  else if (avgLeft !== null) head = `<span class="down">${short(-avgLeft)} over the average</span>`;
+  return [head, step].filter(Boolean).join(" · ") || "running...";
+}
+
 function tick() {
   const t = (performance.now() - runStart) / 1000;
-  for (const n of nodes) if (n._lcRt) n._lcRt.now.textContent = secs(t);
+  for (const n of nodes) {
+    if (!n._lcRt) continue;
+    n._lcRt.now.textContent = secs(t);
+    const html = remaining(n, t);
+    if (n._lcRt.sum.innerHTML !== html) n._lcRt.sum.innerHTML = html;
+  }
+}
+
+function onProgress(e) {
+  const d = e?.detail || {};
+  const value = Number(d.value), max = Number(d.max);
+  if (!runStart || !(max > 0) || !Number.isFinite(value)) return;
+  // a new sampler (other node, other step count, or counting from the start again) starts its own clock
+  if (String(d.node) !== String(samp.node) || max !== samp.max || value < samp.value) samp = { node: d.node, value, max, t0: performance.now(), v0: value };
+  else samp.value = value;
 }
 
 function startRun() {
+  samp = { node: null, value: 0, max: 0, t0: 0, v0: 0 };
   runStart = performance.now();
   clearInterval(ticker);
   ticker = setInterval(tick, 30); // fast enough for the hundredths to roll
@@ -116,6 +157,7 @@ function bindEvents() {
   if (bound) return;
   bound = true;
   api.addEventListener("execution_start", startRun);
+  api.addEventListener("progress", onProgress);
   api.addEventListener("execution_success", () => endRun(true));
   api.addEventListener("execution_error", () => endRun(false));
   api.addEventListener("execution_interrupted", () => endRun(false));

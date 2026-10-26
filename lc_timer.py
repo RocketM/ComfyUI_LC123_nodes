@@ -1,5 +1,5 @@
 """LC Timer: times every run and scores the last one against the 5 before it. All of it happens in the browser
-(web/lc_timer.js); this class only puts the node in the menu. It has no sockets and never runs."""
+(web/lc_timer.js), including the time left while running; this class only puts the node in the menu. It has no sockets and never runs."""
 
 
 class LCTimer:
@@ -12,7 +12,8 @@ class LCTimer:
     CATEGORY = "LC123/utils"
     DESCRIPTION = ("Times every run and scores the last one against the 5 before it: faster in green, slower in red. "
                    "The last 10 runs are listed on the node, newest first, and saved with the workflow. "
-                   "Stopped runs and fully cached runs are left out. Right-click to clear the history.")
+                   "Stopped runs and fully cached runs are left out. Right-click to clear the history."
+                   " While a run is going it shows the time left: this workflow's average, or the sampler's pace when that is longer.")
 
     def noop(self):
         return ()
