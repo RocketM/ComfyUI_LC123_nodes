@@ -49,6 +49,7 @@ TE_EXPECTS = {
     "minimax_h3": ("Qwen3-VL 32B (H3)", 50, 5120, True), "minimax_h3_fl2va": ("Qwen3-VL 32B (H3)", 50, 5120, True), "qwen_image_21": ("Qwen3-VL 8B", 36, 4096, True),
     "z_image_turbo": ("Qwen3 4B", 36, 2560, False), "krea2_raw": ("Qwen3-VL 4B", 36, 2560, True),
     "moss_image": ("Qwen3.5 9B", 32, 4096, True), "moss_image_base": ("Qwen3.5 9B", 32, 4096, True),
+    "fibo2_edit_turbo": ("Qwen3-VL 4B", 36, 2560, True),
 }
 TE_NAMES = {(28, 1024, False): "Qwen3 0.6B", (36, 2560, False): "Qwen3 4B", (36, 4096, False): "Qwen3 8B",
             (36, 2560, True): "Qwen3-VL 4B", (36, 4096, True): "Qwen3-VL 8B", (50, 5120, True): "Qwen3-VL 32B (H3)",
@@ -57,7 +58,7 @@ TE_NAMES = {(28, 1024, False): "Qwen3 0.6B", (36, 2560, False): "Qwen3 4B", (36,
             (42, 2560, True): "Gemma 4 E4B"}
 VAE_EXPECTS = {"anima": (16, 5), "krea2": (16, 5), "z_image_turbo": (16, 4), "flux2_klein_9b": (32, 4), "flux2_klein_9b_distilled": (32, 4), "flux3_klein": (32, 4), "flux3_klein_base": (32, 4), "ideogram4": (32, 4),
                "qwen_image_21": (64, 5), "ltx25": (128, 2), "krea2_raw": (16, 5), "sdxl": (4, 4), "illustrious": (4, 4), "pony": (4, 4),
-               "moss_image": (32, 4), "moss_image_base": (32, 4)}
+               "moss_image": (32, 4), "moss_image_base": (32, 4), "fibo2_edit_turbo": (32, 4)}
 VAE_NAMES = {(16, 4): "16-channel 2D (Flux 1 / Z-Image)", (16, 5): "16-channel 3D (Wan / Qwen-Image)", (32, 4): "32-channel (Flux 2)",
              (64, 5): "64-channel (Qwen-Image 2.1)", (4, 4): "4-channel (SD / SDXL)", (128, 2): "128-channel (LTX)"}
 MODEL_CLASSES = {"anima": "Anima", "flux2_klein_9b": "Flux2", "flux2_klein_9b_distilled": "Flux2", "ideogram4": "Ideogram4", "krea2": "Krea2", "ltx23": "LTXAV",
@@ -1053,6 +1054,7 @@ VEDA_KEY = "veda_sparse_attention"  # Veda's own callback key
 # Every 3rd on Fast: MOSS 2.1x with a sign's lettering style changed; on Krea 2 Turbo it left a ghost pattern, so Turbo
 # stays at every 2nd on Fast too.
 IMAGE_SPECTRUM_PROFILES = {"moss_image", "moss_image_base", "krea2", "krea2_raw"}
+IMAGE_SPECTRUM_BY_HAND = {"fibo2_edit_turbo"}  # supported, but auto leaves it off until it is measured
 IMAGE_SPECTRUM_INTERVAL = {"Optimal": 2, "Fast": 3, "Quality": 2}
 IMAGE_SPECTRUM_EVERY_2ND = {"krea2"}
 IMAGE_SPECTRUM_GAIN = {"moss_image": "about 1.7x", "moss_image_base": "about 1.7x", "krea2": "about 1.35x at 10 steps",
@@ -1193,13 +1195,15 @@ def plan_speedups(profile_id, goal, manual=None):
                  else "Optimal and Fast goals only"))
             rows.append({"key": "spectrum", "label": "Spectrum (step forecast)", "state": "on" if on else "off", "value": bool(on), "why": why})
 
-    if profile_id in IMAGE_SPECTRUM_PROFILES:
+    if profile_id in IMAGE_SPECTRUM_PROFILES or profile_id in IMAGE_SPECTRUM_BY_HAND:
         want = (manual.get("spectrum") or "auto")
-        on = want == "on" or (want == "auto" and goal != "Quality")
+        on = want == "on" or (want == "auto" and goal != "Quality" and profile_id in IMAGE_SPECTRUM_PROFILES)
         every = 2 if profile_id in IMAGE_SPECTRUM_EVERY_2ND else IMAGE_SPECTRUM_INTERVAL.get(goal, 2)
         why = "set by hand" if want != "auto" else (
             (f"{IMAGE_SPECTRUM_GAIN.get(profile_id, 'faster')} ({'every 3rd' if every == 3 else 'every 2nd'} step after the "
-             f"warm-up forecast); sits out runs under 8 steps") if on else "Optimal and Fast goals only")
+             f"warm-up forecast); sits out runs under 8 steps") if on else (
+            "not on by default for this model yet: set it to on to try" if profile_id in IMAGE_SPECTRUM_BY_HAND
+            else "Optimal and Fast goals only"))
         rows.append({"key": "spectrum", "label": "Spectrum (step forecast)", "state": "on" if on else "off",
                      "value": ("img", every) if on else False, "why": why})
 
