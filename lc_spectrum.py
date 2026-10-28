@@ -35,6 +35,8 @@ def _kind(model):
         return "moss"
     if hasattr(dm, "last") and hasattr(dm, "tmlp") and hasattr(dm, "patch"):
         return "krea2"
+    if hasattr(dm, "perceiver") and hasattr(dm, "noise_refiner") and hasattr(dm, "final_layer"):
+        return "fibo2"
     return None
 
 
@@ -120,6 +122,31 @@ def apply(model, interval=2):
             return out.transpose(1, 2).reshape(B, dm.latent_channels, H, W)
 
         m.set_model_patch_replace(last_block, "dit", "single_block", len(m.model.diffusion_model.layers) - 1)
+    elif kind == "fibo2":
+        def wrapper(executor, x, timestep, context, transformer_options, **kwargs):
+            p = plan(transformer_options)
+            if p is None:
+                return executor(x, timestep, context, transformer_options, **kwargs)
+            step, n, real = p
+            tau = 2.0 * step / n - 1.0
+            B, C, H, W = x.shape
+            hist = run.hist.setdefault((B, H, W, tuple(transformer_options.get("cond_or_uncond", ()))), [])
+            dm = executor.class_obj
+            if real or len(hist) < DEGREE + 1:
+                cap = {}
+                hook = dm.final_layer.register_forward_pre_hook(lambda mod, inp: cap.__setitem__("c", inp[0]))
+                try:
+                    out = executor(x, timestep, context, transformer_options, **kwargs)
+                finally:
+                    hook.remove()
+                if "c" in cap:  # the image tokens going into the final layer (gist and references already cut off)
+                    hist.append((tau, cap["c"].detach().float()))
+                    del hist[:-WINDOW]
+                run.real += 1
+                return out
+            out = dm.final_layer(_forecast(hist, tau).to(x.dtype), dm.t_embedder(timestep * 1000, x.dtype))
+            run.forecast += 1
+            return out.transpose(1, 2).reshape(B, C, H, W)
     else:
         from einops import rearrange
 

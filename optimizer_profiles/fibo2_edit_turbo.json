@@ -1,0 +1,299 @@
+{
+ "id": "fibo2_edit_turbo",
+ "name": "FIBO 2.0 Edit Turbo",
+ "kind": "image",
+ "params_b": 8.2,
+ "notes": [
+  "Bria's 8-step model for generating and editing: 8 steps, cfg 1, euler / normal.",
+  "Needs ComfyUI with native FIBO 2.0 (text encoder type fibo2, the TextEncodeFibo2 node): the dev branch from 2026-10-22 on.",
+  "Use TextEncodeFibo2: it takes plain text or Bria's structured JSON caption, up to 16 images to edit, and gives the latent at the trained size.",
+  "Weights are CC BY-NC 4.0 (non-commercial). Use Comfy-Org's repacked files: diffusers-layout conversions (separate to_k / to_v) crash on load."
+ ],
+ "components": {
+  "diffusion": {
+   "label": "Image model",
+   "role": "diffusion",
+   "variants": [
+    {
+     "file": "fibo2_edit_turbo_bf16.safetensors",
+     "format": "bf16",
+     "gb": 16.45,
+     "bits": 16,
+     "repo": "Comfy-Org/Fibo-2.0",
+     "loader": "UNETLoader"
+    },
+    {
+     "file": "fibo2_edit_turbo_int8_convrot.safetensors",
+     "format": "int8_convrot",
+     "gb": 8.41,
+     "bits": 8,
+     "repo": "Comfy-Org/Fibo-2.0",
+     "loader": "UNETLoader",
+     "default": true
+    },
+    {
+     "file": "fibo2_edit_turbo_w6a8_convrot.safetensors",
+     "format": "w6a8_convrot",
+     "gb": 7.46,
+     "bits": 6,
+     "repo": "Winnougan/Fibo-2.0-w6a8-convrot",
+     "loader": "UNETLoader",
+     "community": true,
+     "also": [
+      "fibo2_edit_turbo-w6a8_convrot.safetensors"
+     ]
+    },
+    {
+     "file": "fibo2_edit_turbo_nvfp4.safetensors",
+     "format": "nvfp4",
+     "gb": 6.41,
+     "bits": 4,
+     "repo": "BennyDaBall/Fibo-2.0-edit-turbo-NVFP4",
+     "loader": "UNETLoader",
+     "community": true
+    },
+    {
+     "file": "fibo2_edit_turbo-Q8_0.gguf",
+     "format": "gguf_q8_0",
+     "gb": 9.35,
+     "bits": 8,
+     "repo": "vantagewithai/Fibo-2.0-Dev-and-Edit-Turbo-ComfyUI-GGUF",
+     "loader": "UnetLoaderGGUF",
+     "community": true
+    },
+    {
+     "file": "fibo2_edit_turbo-Q4_K_M.gguf",
+     "format": "gguf_q4_k_m",
+     "gb": 6.23,
+     "bits": 4,
+     "repo": "vantagewithai/Fibo-2.0-Dev-and-Edit-Turbo-ComfyUI-GGUF",
+     "loader": "UnetLoaderGGUF",
+     "community": true
+    }
+   ]
+  },
+  "text_encoder": {
+   "label": "Text encoder (Qwen3-VL-4B)",
+   "role": "text_encoder",
+   "clip_type": "fibo2",
+   "variants": [
+    {
+     "file": "qwen3vl_4b_bf16.safetensors",
+     "format": "bf16",
+     "gb": 8.88,
+     "bits": 16,
+     "repo": "Comfy-Org/Fibo-2.0",
+     "loader": "CLIPLoader"
+    },
+    {
+     "file": "qwen3vl_4b_int8_convrot.safetensors",
+     "format": "int8_convrot",
+     "gb": 4.86,
+     "bits": 8,
+     "repo": "Comfy-Org/Fibo-2.0",
+     "loader": "CLIPLoader",
+     "default": true
+    }
+   ]
+  },
+  "vae": {
+   "label": "VAE",
+   "role": "fixed",
+   "variants": [
+    {
+     "file": "flux2-vae.safetensors",
+     "format": "bf16",
+     "gb": 0.34,
+     "bits": 16,
+     "repo": "Comfy-Org/Fibo-2.0",
+     "loader": "VAELoader",
+     "default": true
+    }
+   ]
+  }
+ },
+ "source": "Hugging Face tree API sizes (Comfy-Org/Fibo-2.0, Winnougan/Fibo-2.0-w6a8-convrot, BennyDaBall/Fibo-2.0-edit-turbo-NVFP4, vantagewithai GGUF), Comfy-Org model card and ComfyUI's TextEncodeFibo2, 2026-10-26. | measured 2026-10-27 (Goliath 5090)",
+ "benchmarks": {
+  "workflow": "TextEncodeFibo2 t2i graph as API, 8 steps, euler/normal, cfg 1.0, TE qwen3vl_4b int8_convrot, 2026-10-27",
+  "references": [
+   {
+    "machine": {
+     "gpu": "NVIDIA GeForce RTX 5090",
+     "attention_sdpa_ms": 2.42,
+     "fp8_tflops": 399.8,
+     "note": "power limit 80% (460 W) during this bench"
+    },
+    "runs": [
+     {
+      "file": "fibo2_edit_turbo_bf16.safetensors",
+      "megapixels": 1.0,
+      "step_s": 0.39,
+      "peak_vram_mib": 17439
+     },
+     {
+      "file": "fibo2_edit_turbo_bf16.safetensors",
+      "megapixels": 2.0,
+      "step_s": 0.81,
+      "peak_vram_mib": 19639
+     },
+     {
+      "file": "fibo2_edit_turbo_int8_convrot.safetensors",
+      "megapixels": 1.0,
+      "step_s": 0.16,
+      "peak_vram_mib": 9801
+     },
+     {
+      "file": "fibo2_edit_turbo_int8_convrot.safetensors",
+      "megapixels": 2.0,
+      "step_s": 0.34,
+      "peak_vram_mib": 12793
+     },
+     {
+      "file": "fibo2_edit_turbo_w6a8_convrot.safetensors",
+      "megapixels": 1.0,
+      "step_s": 0.2,
+      "peak_vram_mib": 9025
+     },
+     {
+      "file": "fibo2_edit_turbo_w6a8_convrot.safetensors",
+      "megapixels": 2.0,
+      "step_s": 0.45,
+      "peak_vram_mib": 12185
+     },
+     {
+      "file": "fibo2_edit_turbo_nvfp4.safetensors",
+      "megapixels": 1.0,
+      "step_s": 0.14,
+      "peak_vram_mib": 7947
+     },
+     {
+      "file": "fibo2_edit_turbo_nvfp4.safetensors",
+      "megapixels": 2.0,
+      "step_s": 0.3,
+      "peak_vram_mib": 10651
+     },
+     {
+      "file": "fibo2_edit_turbo-Q8_0.gguf",
+      "megapixels": 1.0,
+      "step_s": 0.44,
+      "peak_vram_mib": 11283
+     },
+     {
+      "file": "fibo2_edit_turbo-Q8_0.gguf",
+      "megapixels": 2.0,
+      "step_s": 0.87,
+      "peak_vram_mib": 12219
+     },
+     {
+      "file": "fibo2_edit_turbo-Q4_K_M.gguf",
+      "megapixels": 1.0,
+      "step_s": 0.53,
+      "peak_vram_mib": 8629
+     },
+     {
+      "file": "fibo2_edit_turbo-Q4_K_M.gguf",
+      "megapixels": 2.0,
+      "step_s": 0.96,
+      "peak_vram_mib": 9693
+     }
+    ]
+   }
+  ]
+ },
+ "quality": {
+  "method": "single step from the same bf16 latent (steps 2, 4, 6 of 8), 3 prompts, LPIPS vs bf16; 0 = identical",
+  "reference": "fibo2_edit_turbo_bf16.safetensors",
+  "files": {
+   "fibo2_edit_turbo_int8_convrot.safetensors": {
+    "lpips_avg": 0.0018,
+    "k2": {
+     "lpips": 0.0047,
+     "ssim": 0.9932,
+     "psnr": 39.05
+    },
+    "k4": {
+     "lpips": 0.0006,
+     "ssim": 0.9981,
+     "psnr": 46.34
+    },
+    "k6": {
+     "lpips": 0.0001,
+     "ssim": 0.9993,
+     "psnr": 54.55
+    }
+   },
+   "fibo2_edit_turbo_w6a8_convrot.safetensors": {
+    "lpips_avg": 0.0025,
+    "k2": {
+     "lpips": 0.0062,
+     "ssim": 0.9901,
+     "psnr": 36.43
+    },
+    "k4": {
+     "lpips": 0.0011,
+     "ssim": 0.9974,
+     "psnr": 43.39
+    },
+    "k6": {
+     "lpips": 0.0002,
+     "ssim": 0.9992,
+     "psnr": 52.58
+    }
+   },
+   "fibo2_edit_turbo_nvfp4.safetensors": {
+    "lpips_avg": 0.0139,
+    "k2": {
+     "lpips": 0.0346,
+     "ssim": 0.9534,
+     "psnr": 26.38
+    },
+    "k4": {
+     "lpips": 0.0064,
+     "ssim": 0.9892,
+     "psnr": 35.28
+    },
+    "k6": {
+     "lpips": 0.0007,
+     "ssim": 0.9981,
+     "psnr": 45.34
+    }
+   },
+   "fibo2_edit_turbo-Q8_0.gguf": {
+    "lpips_avg": 0.0006,
+    "k2": {
+     "lpips": 0.0014,
+     "ssim": 0.9968,
+     "psnr": 44.22
+    },
+    "k4": {
+     "lpips": 0.0002,
+     "ssim": 0.9989,
+     "psnr": 51.24
+    },
+    "k6": {
+     "lpips": 0.0001,
+     "ssim": 0.9996,
+     "psnr": 57.58
+    }
+   },
+   "fibo2_edit_turbo-Q4_K_M.gguf": {
+    "lpips_avg": 0.012,
+    "k2": {
+     "lpips": 0.0303,
+     "ssim": 0.9609,
+     "psnr": 29.79
+    },
+    "k4": {
+     "lpips": 0.0051,
+     "ssim": 0.9917,
+     "psnr": 36.42
+    },
+    "k6": {
+     "lpips": 0.0005,
+     "ssim": 0.9985,
+     "psnr": 47.0
+    }
+   }
+  }
+ }
+}
