@@ -216,8 +216,7 @@
         "Animosity_Krea2_V1.0.safetensors",
         "animosity_krea2Ver10Turbo.safetensors"
       ],
-      "version": "Krea 2 V1.0",
-      "featured": true
+      "version": "Krea 2 V1.0"
     },
     {
       "family": "Animosity",
@@ -232,8 +231,7 @@
         "Animosity_Krea2_V1.0_int8_convrot.safetensors",
         "animosity_krea2V10Int8Convrot.safetensors"
       ],
-      "version": "Krea 2 V1.0",
-      "featured": true
+      "version": "Krea 2 V1.0"
     },
     {
       "family": "Animosity",
@@ -248,8 +246,7 @@
         "Animosity_krea2_V1.0-q8_0.gguf",
         "animosity_krea2Turbov10Q80Gguf.gguf"
       ],
-      "version": "Krea 2 V1.0",
-      "featured": true
+      "version": "Krea 2 V1.0"
     },
     {
       "family": "Animosity",
@@ -264,7 +261,36 @@
         "animosity_krea2Ver10FP8.safetensors",
         "Krea-Animosity_V1.0-fp8.safetensors"
       ],
-      "version": "Krea 2 V1.0",
+      "version": "Krea 2 V1.0"
+    },
+    {
+      "family": "Animosity",
+      "file": "Animosity_Krea2_V2.0_bf16.safetensors",
+      "repo": "Lonecatone23/Animosity",
+      "path": "krea2/Animosity_Krea2_V2.0_bf16.safetensors",
+      "gb": 26.28,
+      "sha256": "08018fbf85931ce39b0d0f799eb1ef5f2154557c78eff06774bb684b8b7bd11c",
+      "profile": "krea2",
+      "format": "bf16",
+      "names": [
+        "Animosity_Krea2_V2.0_bf16.safetensors"
+      ],
+      "version": "Krea 2 V2.0",
+      "featured": true
+    },
+    {
+      "family": "Animosity",
+      "file": "Animosity_Krea2_V2.0_int8_convrot.safetensors",
+      "repo": "Lonecatone23/Animosity",
+      "path": "krea2/Animosity_Krea2_V2.0_int8_convrot.safetensors",
+      "gb": 13.15,
+      "sha256": "7527a2515978238cc5af36b97ef2c31ce5f3d44b25bd0d8d715d24716162c4f5",
+      "profile": "krea2",
+      "format": "int8_convrot",
+      "names": [
+        "Animosity_Krea2_V2.0_int8_convrot.safetensors"
+      ],
+      "version": "Krea 2 V2.0",
       "featured": true
     },
     {
