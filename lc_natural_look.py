@@ -116,14 +116,14 @@ class LCNaturalLook(PreviewImage):
         return {
             "required": {
                 "image": ("IMAGE",),
-                "strength": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 2.0, "step": 0.01,
-                                       "tooltip": "How much of the AI look is taken out. 0.6 - 1.2 for most renders "
+                "strength": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 2.0, "step": 0.01,
+                                       "tooltip": "How much of the AI look is taken out. 0.4 - 0.75 for most renders "
                                                   "(1 = what 0.5 was before 1.53.15)."}),
-                "skin": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 2.0, "step": 0.01,
+                "skin": ("FLOAT", {"default": 0.7, "min": 0.0, "max": 2.0, "step": 0.01,
                                    "tooltip": "How much orange / plastic skin is calmed, and how much flat skin is left out of the "
                                               "fine-texture lift, on top of strength. 0 = skin untouched and sharpened like the "
                                               "rest (use 0 after LC Skin Master)."}),
-                "seed": ("INT", {"default": 0, "min": 0, "max": 0xFFFFFFFF,
+                "seed": ("INT", {"default": 8675309, "min": 0, "max": 0xFFFFFFFF, "control_after_generate": "fixed",
                                  "tooltip": "Seed for the faint grain."}),
             },
         }

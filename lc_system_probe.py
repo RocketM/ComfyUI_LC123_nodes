@@ -472,6 +472,9 @@ def _test_import_run(mod, fn, sync):
         m = importlib.import_module(mod)
     except Exception as e:
         return _missing_or_broken(mod.split(".")[0], e)
+    root = sys.modules.get(mod.split(".")[0])
+    if root is not None and getattr(root, "__file__", None) is None and getattr(root, "__path__", None) is None:
+        return {"ok": None, "detail": "Not installed"}  # a stand-in another node pack put in sys.modules (SeedVR2 does this for flash_attn)
     try:
         fn(m)
         sync()
