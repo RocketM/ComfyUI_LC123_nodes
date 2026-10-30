@@ -473,8 +473,10 @@ def _test_import_run(mod, fn, sync):
     except Exception as e:
         return _missing_or_broken(mod.split(".")[0], e)
     root = sys.modules.get(mod.split(".")[0])
-    if root is not None and getattr(root, "__file__", None) is None and getattr(root, "__path__", None) is None:
-        return {"ok": None, "detail": "Not installed"}  # a stand-in another node pack put in sys.modules (SeedVR2 does this for flash_attn)
+    # a stand-in another node pack put in sys.modules: no file and no folder (SeedVR2 does this for flash_attn, with
+    # __path__ = [] and its functions set to None)
+    if root is not None and getattr(root, "__file__", None) is None and not list(getattr(root, "__path__", None) or []):
+        return {"ok": None, "detail": "Not installed"}
     try:
         fn(m)
         sync()

@@ -6,8 +6,9 @@ and lands in the box; the JS face (web/lc_weighted_prompt.js) shows it as words:
 phrase), move the slider. Above 1 the word gets more weight, below 1 less, below 0 it is taken out.
 
 Block (with the prompt socket wired): on change = the box takes the incoming prompt when it changes, and your edit
-in the box holds until then; always = the box holds; never = the incoming prompt always comes through. The prompt
-output is the one used, so an encoder wired from it encodes your edit.
+in the box holds until then; always = the box holds, and a new incoming prompt stops the run here so you can look
+and edit, then Run carries on with the same seeds (web/lc_continue.js); never = the incoming prompt always comes
+through. The prompt output is the one used, so an encoder wired from it encodes your edit.
 
 Krea 2: its Qwen3-VL encoder ignores ComfyUI's (word:1.2), so the weight is applied inside the model's attention
 through the block attn1_patch: a weight above 1 adds a bias to that word's attention logits (more of the picture
@@ -28,7 +29,9 @@ from __future__ import annotations
 import json
 import math
 import re
+import time
 
+import nodes
 import torch
 
 NODE_NAME = "LCWeightedPrompt"
@@ -210,8 +213,9 @@ class LCWeightedPrompt:
                                                                   "Wired, this conditioning comes out as the node's own."}),
                 "block": (BLOCK_MODES, {"default": "on change",
                                         "tooltip": "With the prompt socket wired. on change: the box takes the incoming prompt "
-                                                   "when it changes, your edit holds until then. always: the box holds. "
-                                                   "never: the incoming prompt always comes through."}),
+                                                   "when it changes, your edit holds until then. always: the box holds, and "
+                                                   "a new incoming prompt stops the run here: edit, then Run carries on "
+                                                   "with the same seeds. never: the incoming prompt always comes through."}),
                 "last_in": ("STRING", {"default": "", "tooltip": "The incoming prompt of the last run (set on the node)."}),
                 "prompt": ("STRING", {"forceInput": True, "tooltip": "Optional: a prompt from another node. It lands in the "
                                                                     "box, where you can edit and weight it (see block)."}),
@@ -232,19 +236,29 @@ class LCWeightedPrompt:
     def encode(self, clip, text, strength, weights, model=None, edit_conditioning=None, block="on change", last_in="",
                prompt=None):
         box = text or ""
+        hold = False
         if prompt is None:  # nothing wired: the box
             src, take = box, False
         else:
             incoming = str(prompt)
+            changed = incoming != (last_in or "")
             # the incoming prompt, unless Block keeps the box (an empty box always takes it)
-            take = block == "never" or not box.strip() or (block == "on change" and incoming != (last_in or ""))
+            take = block == "never" or not box.strip() or (block == "on change" and changed)
             src = incoming if take else box
+            # always: a new incoming prompt (not the first one this node sees) stops the run here
+            hold = block == "always" and not take and changed and bool(last_in)
         use_edit = prompt is not None and not take
         phrases = _phrases(weights)
         wtext = weighted_text(src, phrases)
         ui = {"lc_prompt": [src]}
         if prompt is not None:  # the face puts the incoming prompt in the box and remembers it for on change
             ui.update({"lc_in": [str(prompt)], "lc_take": [take]})
+        if hold:
+            # the face remembers the new prompt as seen, so the Continue run (same seeds, web/lc_continue.js) passes
+            nodes.interrupt_processing()
+            ui["lc_hold"] = [time.time()]
+            print("[LC Weighted Prompt] Block always: a new prompt came in, stopped here. Edit if you like, then Run.")
+            return {"ui": ui, "result": (model, None, src, wtext)}
         if model is not None and _is_krea2(model):
             tok = clip.tokenize(src)
             cond = clip.encode_from_tokens_scheduled(tok)

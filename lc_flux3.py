@@ -27,6 +27,8 @@ import comfy.utils
 import node_helpers
 import nodes
 
+from . import lc_hold
+
 KINDS = ["new", "change", "move", "remove"]
 KIND_COLORS = {"new": (90, 200, 120), "change": (90, 160, 240), "move": (240, 180, 60), "remove": (230, 80, 80)}
 
@@ -251,8 +253,10 @@ class LCBoundingBoxes:
                                    "tooltip": "Canvas height: with size on custom, or when no picture is connected."}),
                 "boxes": ("STRING", {"default": "[]", "multiline": False, "tooltip": "The boxes drawn on the canvas (kept by the node)."}),
                 "block": ("BOOLEAN", {"default": False, "label_on": "if_empty", "label_off": "never",
-                                      "tooltip": "if_empty: with no boxes drawn, everything after this node stops so you can draw them, "
-                                                 "then queue again (handy with a new picture). never: always passes on."}),
+                                      "tooltip": "if_empty: with no boxes drawn, or a new picture from a run, everything after this "
+                                                 "node stops so you can draw them on the picture shown, then Run: it carries on "
+                                                 "with the same seeds. A new picture in a Load Image shows here right away, so it "
+                                                 "doesn't stop. never: always passes on."}),
                 "keep_boxes": ("BOOLEAN", {"default": True, "label_on": "held", "label_off": "reset_after_run",
                                            "tooltip": "held: the boxes stay, run after run. reset_after_run: this run uses them, then the "
                                                       "canvas clears, so the next picture starts empty."}),
@@ -263,7 +267,12 @@ class LCBoundingBoxes:
                                                                     "Bounding Boxes or a layout JSON. They show here (dimmed, edit them where they "
                                                                     "were drawn) and come out first, followed by the boxes drawn here."}),
             },
+            "hidden": {"unique_id": "UNIQUE_ID", "prompt": "PROMPT"},
         }
+
+    @classmethod
+    def IS_CHANGED(cls, unique_id=None, **kwargs):
+        return lc_hold.changed(unique_id)
 
     RETURN_TYPES = ("IMAGE", "BOUNDING_BOX", "ARRAY")
     RETURN_NAMES = ("preview", "bboxes", "elements")
@@ -278,7 +287,10 @@ class LCBoundingBoxes:
                    "Each box gets a name, a description and what happens to it: new, change, move (drag its second box) "
                    "or remove. Works in the classic canvas and in Nodes 2.0.")
 
-    def run(self, width, height, boxes, size="use image size", block=False, keep_boxes=True, image=None, bboxes=None):
+    def run(self, width, height, boxes, size="use image size", block=False, keep_boxes=True, image=None, bboxes=None,
+            unique_id=None, prompt=None):
+        # the boxes were drawn on the last picture (a Load Image's new picture shows on the node before the run)
+        new_picture = image is not None and lc_hold.new_picture(unique_id, image, prompt)
         if image is not None:
             if size == "custom":
                 if (int(image.shape[1]), int(image.shape[2])) != (int(height), int(width)):
@@ -309,10 +321,13 @@ class LCBoundingBoxes:
         for e in elements:
             e["canvas"] = [width, height]  # LC MOSS Layout Prompt sizes itself from this
         out = (preview, [pixels] if pixels else [], elements)
-        if block and not drawn:
+        if block and (not drawn or new_picture):
             from comfy_execution.graph import ExecutionBlocker
 
             out = (ExecutionBlocker(None),) * 3
+            lc_hold.hold(unique_id, ui)
+            if drawn:
+                print("[LC Bounding Boxes] New picture: stopped so you can draw the boxes on it, then Run.")
         elif not keep_boxes and drawn:
             ui["lc_reset_after"] = [True]
         return {"ui": ui, "result": out}

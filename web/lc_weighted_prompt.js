@@ -177,7 +177,12 @@ function ensureFace(node) {
   editBtn.textContent = "✎";
   editBtn.title = "Edit the prompt (or double-click it)";
   editBtn.style.cssText = "flex:0 0 22px;width:22px;height:20px;line-height:18px;padding:0;background:#2a2a2a;color:#9cf;border:1px solid #444;border-radius:4px;cursor:pointer;";
-  hintRow.append(hint, editBtn);
+  // Block always stopped the run on a new incoming prompt: this puts that prompt in the box
+  const useBtn = document.createElement("button");
+  useBtn.textContent = "Use new";
+  useBtn.title = "Put the new incoming prompt in the box (your weights stay on the words still in it)";
+  useBtn.style.cssText = "display:none;flex:0 0 auto;height:20px;line-height:18px;padding:0 6px;background:#2a2a2a;color:#fc6;border:1px solid #444;border-radius:4px;cursor:pointer;font-size:11px;";
+  hintRow.append(hint, useBtn, editBtn);
   const rowsHost = document.createElement("div");
   rowsHost.style.cssText = "display:flex;flex-direction:column;";
   wrap.append(rowsHost, hintRow, words, editor);
@@ -187,7 +192,22 @@ function ensureFace(node) {
   });
   dom.serializeValue = () => undefined;
   Object.defineProperty(dom, "width", { get: () => undefined, set: () => {}, configurable: true });
-  node.__lcPW = { wrap, words, editor, hintRow, hint, editBtn, rowsHost, height: 60, anchor: null, sel: "", editing: false };
+  node.__lcPW = { wrap, words, editor, hintRow, hint, editBtn, useBtn, rowsHost, height: 60, anchor: null, sel: "", editing: false };
+  useBtn.addEventListener("pointerdown", (e) => e.stopPropagation());
+  useBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const t = widget(node, "text");
+    if (t && node.__lcHoldIn != null) {
+      t.value = node.__lcHoldIn;
+      t.callback?.(t.value);
+    }
+    node.__lcHoldIn = undefined;
+    node.__lcPW.sel = "";
+    render(node);
+    try {
+      app.extensionManager?.workflow?.activeWorkflow?.changeTracker?.checkState?.();
+    } catch (_) {}
+  });
   editBtn.addEventListener("click", (e) => {
     e.stopPropagation();
     if (node.__lcPW.editing) finishEdit(node, true);
@@ -464,7 +484,11 @@ function renderWords(node) {
     face.words.style.color = "#ddd";
   }
   face.editBtn.style.display = locked(node) ? "none" : "";
-  if (!face.editing)
+  const held = node.__lcHoldIn != null && !face.editing;
+  face.useBtn.style.display = held ? "" : "none";
+  face.hint.style.color = held ? "#fc6" : "#888";
+  if (held) face.hint.textContent = "Stopped: a new prompt came in. Edit if you like, then Run.";
+  else if (!face.editing)
     face.hint.textContent = text.trim()
       ? "Click a word, then move the slider. Shift-click a second word for a phrase." + (locked(node) ? "" : " Double-click to edit.")
       : "";
@@ -593,6 +617,7 @@ app.registerExtension({
       if (Array.isArray(message?.lc_in)) {
         const last = widget(this, "last_in");
         if (last) last.value = String(message.lc_in[0] ?? "");
+        this.__lcHoldIn = message.lc_hold ? String(message.lc_in[0] ?? "") : undefined;
         const t = widget(this, "text");
         if (message.lc_take?.[0] && t && t.value !== String(message.lc_prompt?.[0] ?? "")) {
           t.value = String(message.lc_prompt?.[0] ?? "");

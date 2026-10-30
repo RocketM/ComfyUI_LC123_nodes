@@ -24,6 +24,41 @@ import time
 RANDOMIZE = -1
 JS_SAFE_MAX = (1 << 53) - 1  # Number.MAX_SAFE_INTEGER -- see module docstring
 
+# The IS_CHANGED value each randomizing LC Seed gave on its last run, by node id. A Continue run (a hold's play
+# button, or Run after a hold stopped the last one: web/lc_continue.js) hands it back, so the seed comes from the
+# cache with the number it rolled last time and everything below it stays cached too.
+_LAST_CHANGE: dict[str, float] = {}
+
+
+def _continue_handler(json_data):
+    """On a Continue run (marked lc_continue in the workflow extra): give every randomizing LC Seed its last
+    IS_CHANGED value, so the run reuses its seed. The marker is taken out, so saved images never carry it."""
+    try:
+        wf = ((json_data.get("extra_data") or {}).get("extra_pnginfo") or {}).get("workflow") or {}
+        extra = wf.get("extra") if isinstance(wf, dict) else None
+        if not isinstance(extra, dict) or not extra.pop("lc_continue", False):
+            return json_data
+        for uid, node in (json_data.get("prompt") or {}).items():
+            if not isinstance(node, dict) or node.get("class_type") != "LCSeed":
+                continue
+            try:
+                randomizing = int((node.get("inputs") or {}).get("base_seed")) == RANDOMIZE
+            except (TypeError, ValueError):
+                randomizing = False
+            if randomizing and str(uid) in _LAST_CHANGE:
+                node["is_changed"] = [_LAST_CHANGE[str(uid)]]
+    except Exception as e:
+        print(f"[LC Seed] continue: {e}")
+    return json_data
+
+
+try:
+    from server import PromptServer
+
+    PromptServer.instance.add_on_prompt_handler(_continue_handler)
+except Exception as e:
+    print(f"[LC Seed] continue handler not registered: {e}")
+
 
 def _resolve_seed(base_seed: int) -> int:
     if int(base_seed) == RANDOMIZE:
@@ -66,7 +101,10 @@ class LCSeed:
     @classmethod
     def IS_CHANGED(cls, base_seed, prompt=None, extra_pnginfo=None, unique_id=None):
         if int(base_seed) == RANDOMIZE:
-            return time.time()
+            t = time.time()
+            if unique_id is not None:
+                _LAST_CHANGE[str(unique_id)] = t
+            return t
         return int(base_seed)
 
     def emit(self, base_seed, prompt=None, extra_pnginfo=None, unique_id=None):
