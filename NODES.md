@@ -18,13 +18,14 @@ Registered class IDs: 153 (152 in search, 1 deprecated but still loads in old wo
 
 - `Krea2RegionalCanvasInline`: LC Krea2 Regional Inline Canvas
 
-## LC123/conditioning (5)
+## LC123/conditioning (6)
 
 - `LCNegative`: LC Negative
 - `LCPositive`: Prompt
 - `LCPromptToConditioningZero`: LC Prompt to Conditioning + Zero
 - `LCReferenceLatent`: LC Reference Latent
 - `LCPromptToConditioning`: Prompt to Conditioning
+- `LCWeightedPrompt`: LC Weighted Prompt ⚖️
 
 ## LC123/image (49)
 

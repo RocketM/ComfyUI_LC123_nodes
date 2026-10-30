@@ -295,6 +295,21 @@
     },
     {
       "family": "Animosity",
+      "file": "Animosity_Krea2_V2.0_fp8.safetensors",
+      "repo": "Lonecatone23/Animosity",
+      "path": "krea2/Animosity_Krea2_V2.0_fp8.safetensors",
+      "gb": 13.15,
+      "sha256": "508550101751593aec605603614cd8532d5cafab9ae603f8b2144fce137ee9ec",
+      "profile": "krea2",
+      "format": "fp8_scaled",
+      "names": [
+        "Animosity_Krea2_V2.0_fp8.safetensors"
+      ],
+      "version": "Krea 2 V2.0",
+      "featured": true
+    },
+    {
+      "family": "Animosity",
       "file": "AniMOSSity_bf16.safetensors",
       "repo": "Lonecatone23/Animosity",
       "path": "moss/AniMOSSity_bf16.safetensors",

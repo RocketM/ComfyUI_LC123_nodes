@@ -1018,8 +1018,10 @@ def _sage_flag():
 # Optimal goal with Sage: 119 s -> 91 s, sharpness, lip sync and face match unchanged.
 SPECTRUM_PROFILES = {"minimax_h3", "minimax_h3_fl2va"}
 # auto only where it held up: on Ref2VA (minimax_h3) it smeared the picture and scrambled text in every test
-# (2026-10-21, desktop and laptop, with or without the sigma shift), so there it is on by hand only
-SPECTRUM_AUTO = {"minimax_h3_fl2va"}
+# (2026-10-21, desktop and laptop, with or without the sigma shift), so there it is on by hand only.
+# 2026-10-30: FL2VA too. At 1344x768 a busy wide two-shot (cafe, reference pictures) filled with floating blobs on
+# 2 of 2 seeds, gone with Spectrum off; close-ups looked fine, which is why the 10-21 bench missed it
+SPECTRUM_AUTO = set()
 SPECTRUM_NODE = "SpectrumApplyMiniMaxH3"
 SPECTRUM_SETTINGS = dict(
     enabled=True, blend_weight=0.5, degree=1, ridge_lambda=0.1, window_size=2.0, flex_window=0.75, warmup_steps=1,
@@ -1191,8 +1193,8 @@ def plan_speedups(profile_id, goal, manual=None):
             on = want == "on" or (want == "auto" and goal != "Quality" and auto_ok)
             why = "set by hand" if want != "auto" else (
                 f"about 1.3x faster; sits out runs over {SPECTRUM_MAX_STEPS} steps or under {SPECTRUM_MIN_MP} MP" if on else
-                ("off on Ref2VA: it smeared reference videos in our tests (set it to on to try)" if not auto_ok
-                 else "Optimal and Fast goals only"))
+                ("Auto leaves it off: it put floating blobs in busy wide shots in our tests (set it to on to try)"
+                 if not auto_ok else "Optimal and Fast goals only"))
             rows.append({"key": "spectrum", "label": "Spectrum (step forecast)", "state": "on" if on else "off", "value": bool(on), "why": why})
 
     if profile_id in IMAGE_SPECTRUM_PROFILES or profile_id in IMAGE_SPECTRUM_BY_HAND:

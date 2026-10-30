@@ -27,10 +27,9 @@ QWEN_TIP = ("Qwen-Image 2.1 only (Qwen Image 2.1 Cache): where the KV cache live
             "int8 on the Fast goal or cards under 16 GB. int8 halves the cache at about bf16 accuracy, int4 quarters it "
             "but roughly doubles the per-step error. RAM costs little speed. off = slowest.")
 SPECTRUM_TIP = ("MiniMax H3 only: Spectrum by xmarre (ComfyUI-Spectrum-MiniMax-H3, install it separately) forecasts some "
-                "steps instead of running them, about 1.3x faster. Step- and size-aware: it sits out runs over 12 steps or "
-                "under 0.9 MP, where it cost lip sync in our tests. auto = FL2VA on the Optimal and Fast goals (off on Ref2VA, "
-                "where it smeared reference videos in our tests). off = opt out (works with speed_ups on Auto too). "
-                "Replaces the step cache when on.")
+                "steps instead of running them, about 1.3x faster. auto = off: in our tests it put floating blobs in busy "
+                "wide shots. on = try it (it still sits out runs over 12 steps or under 0.9 MP). Replaces the step cache "
+                "when on.")
 MOSS_SPECTRUM_TIP = ("MOSS Image and Krea 2: Spectrum forecasts some steps instead of running them, with no visible change "
                      "in our tests (MOSS about 1.7x, Krea 2 Turbo about 1.35x, Raw about 1.6x). Built in, nothing to install. "
                      "auto = Optimal and Fast goals; the first 20% of the steps always run (the layout forms there) and it "

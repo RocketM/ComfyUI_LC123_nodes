@@ -89,6 +89,7 @@ const COLORS = {
     LCJoinStrings: { color: "#28281E", bgcolor: "#28281E" },
     LCPromptToConditioning: { color: "#28281E", bgcolor: "#28281E", size: [270, 50] },
     LCPromptToConditioningZero: { color: "#28281E", bgcolor: "#28281E", size: [270, 60] },
+    LCWeightedPrompt: { color: "#28281E", bgcolor: "#28281E" },
     LCSlider: { color: "#28281E", bgcolor: "#28281E" },
     LCLight: { color: "#000000", bgcolor: "#000000" },
     LCTimer: { color: "#000000", bgcolor: "#000000" },
