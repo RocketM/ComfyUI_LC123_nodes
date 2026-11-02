@@ -97,16 +97,12 @@ function data(node) {
 }
 
 // ---------------------------------------------------------------- titles
-// Original title alone when the original is on screen; "Original/ Translated" otherwise.
-// No translated title yet (or it doesn't translate) = the original twice, so it's clearly not an error.
+// Keep the original title regardless of the displayed language.
 const DEFAULT_TITLE = "LC Note 📝";
 
-function titleFor(node, code) {
+function titleFor(node) {
   const d = data(node);
-  const src = d.titles[d.source];
-  if (!src) return DEFAULT_TITLE;
-  if (code === d.source || status(node, code) === "missing") return src;
-  return `${src}/ ${d.titles[code] || src}`;
+  return d.titles[d.source] || DEFAULT_TITLE;
 }
 
 function setShownTitle(node, t) {
@@ -118,23 +114,16 @@ function setShownTitle(node, t) {
   }
 }
 
-/** Any rename changes the ORIGINAL title, whatever language is on screen. With a translation showing
- *  ("Original/ Translated") the part before the last "/" is the new original. Translations go ⚠️ until
- *  re-translated, same as editing the body. */
+/** Renames change the original title, whatever language is on screen. */
 function onTitleEdited(node, v) {
   const d = data(node);
-  const code = node._lcShown || d.source;
   v = String(v ?? "").trim();
   if (!v || v === DEFAULT_TITLE) {
     d.titles = {};
   } else {
-    let original = v;
-    const showingPair = code !== d.source && status(node, code) !== "missing";
-    const i = v.lastIndexOf("/");
-    if (showingPair && i > 0) original = v.slice(0, i).trim() || v;
-    d.titles[d.source] = original;
+    d.titles[d.source] = v;
   }
-  setShownTitle(node, titleFor(node, code));
+  setShownTitle(node, titleFor(node));
   refresh(node);
 }
 
@@ -143,10 +132,7 @@ function status(node, code) {
   if (code === d.source) return "source";
   const t = d.texts[code];
   if (!t) return "missing";
-  const bodyOk = t.src === hash(d.texts[d.source].text || "");
-  // translations made before titles were tracked have no srcTitle: judge those on the body only
-  const titleOk = t.srcTitle === undefined || t.srcTitle === (d.titles[d.source] || "");
-  return bodyOk && titleOk ? "ok" : "stale";
+  return t.src === hash(d.texts[d.source].text || "") ? "ok" : "stale";
 }
 
 function label(node, code) {
@@ -220,7 +206,7 @@ function show(node, code, skipSync = false) {
   node._lcText.value = text;
   node._lcLoading = false;
   applyDirection(node, st === "missing" ? d.source : code);
-  setShownTitle(node, titleFor(node, code));
+  setShownTitle(node, titleFor(node));
   refresh(node);
 }
 
@@ -248,7 +234,7 @@ async function translateNow(node, code, batch = null) {
     syncFromEditor(node); // keep anything typed while it was translating
     d.texts[code] = { text: j.text, src: hash(src), srcTitle: sentTitle };
     if (j.title) d.titles[code] = j.title;
-    else delete d.titles[code]; // no translated title: show the original twice rather than an old one
+    else delete d.titles[code];
     // the editor still holds the original text: don't sync it over the new translation
     if (node._lcShown === code) show(node, code, true);
     else refresh(node);
@@ -373,7 +359,7 @@ async function visionTask(node, task) {
     setSource(node, j.text);
     if (task === "spelling" && j.title) {
       d.titles[d.source] = j.title;
-      setShownTitle(node, titleFor(node, node._lcShown || d.source)); // show the corrected title now, not on the next refresh
+      setShownTitle(node, titleFor(node)); // show the corrected title now, not on the next refresh
     }
     toast("success", task === "write" ? "Draft written. Check it, then edit away. Undo is in the right-click menu." : "Spelling fixed. Undo is in the right-click menu.");
   } catch (e) {
@@ -570,7 +556,7 @@ app.registerExtension({
           if (this._lcText) this._lcText.value = d.texts[d.source].text || "";
           // notes saved before titles were per-language: adopt a custom title as the original
           if (!Object.keys(d.titles).length && info?.title && info.title !== DEFAULT_TITLE) {
-            const t = splitTitle(info.title);
+            const t = splitTitle(info.title, d.source);
             if (t[d.source]) d.titles[d.source] = t[d.source];
             else d.titles[d.source] = String(info.title).trim();
             for (const [k, v] of Object.entries(t)) if (k !== d.source && d.texts[k]) d.titles[k] = v;
@@ -593,7 +579,7 @@ app.registerExtension({
         }
       }
 
-      // renames go through onTitleEdited so each language keeps its own title
+      // Renames update the stored original title.
       get title() {
         return BASE_TITLE.get.call(this);
       }
@@ -620,10 +606,11 @@ app.registerExtension({
                 syncFromEditor(this);
                 const cur = this._lcShown || d.source;
                 const text = d.texts[cur]?.text ?? d.texts[d.source].text;
-                const title = d.titles[cur] || d.titles[d.source]; // a custom title stays with the note
+                const title = d.titles[d.source]; // a custom title stays with the note
                 d.source = item.lang;
                 d.texts[item.lang] = { text };
                 if (title) d.titles[item.lang] = title;
+                else delete d.titles[item.lang];
                 show(this, item.lang);
               },
             },
@@ -656,12 +643,13 @@ function cjkShare(s) {
 }
 
 /** "⚙️ Settings/ ⚙️ 设置" -> {en, zh}; a one-language title -> {en} or {zh}. */
-function splitTitle(title) {
+function splitTitle(title, source) {
   const t = String(title || "").trim();
   const i = t.lastIndexOf("/");
   if (i > 0) {
     const left = t.slice(0, i).trim();
     const right = t.slice(i + 1).trim();
+    if (left && left === right) return { [source]: left };
     if (left && right && cjkShare(left) < 0.05 && cjkShare(right) > 0.3) return { en: left, zh: right };
   }
   return cjkShare(t) > 0.3 ? { zh: t } : { en: t };
