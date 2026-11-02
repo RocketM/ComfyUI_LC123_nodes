@@ -1,5 +1,6 @@
 """Metadata regressions independent of GPU generation and model downloads."""
 
+import copy
 import json
 from pathlib import Path
 import tempfile
@@ -34,6 +35,35 @@ def switch_graph(kind):
 
 
 class MetadataContractTests(unittest.TestCase):
+    def test_cached_random_seed_is_written_to_png_without_changing_execution_inputs(self):
+        actual = 2**52 + 123
+        prompt = graph([])
+        prompt['seed'] = {'class_type': 'LCSeed', 'inputs': {'base_seed': -1}, 'is_changed': [123.0]}
+        prompt['unused'] = {'class_type': 'LCSeed', 'inputs': {'base_seed': -1}}
+        prompt['fixed'] = {'class_type': 'LCSeed', 'inputs': {'base_seed': 42}}
+        prompt['2']['inputs']['seed'] = ['seed', 0]
+        workflow = {'nodes': [
+            {'id': 'seed', 'type': 'LCSeed', 'widgets_values': [-1], 'widgets_values_named': {'base_seed': -1}},
+            {'id': 'unused', 'type': 'LCSeed', 'widgets_values': [-1]},
+            {'id': 'fixed', 'type': 'LCSeed', 'widgets_values': [42]},
+        ]}
+        extra = {'workflow': workflow}
+        snapshot = copy.deepcopy((prompt, extra))
+        execution = CachedExecution({'seed': [actual], 'fixed': [99]}, local_only=True)
+        with tempfile.TemporaryDirectory() as tmp:
+            with patch.object(folders, 'get_output_directory', return_value=tmp, create=True), patch.object(folders, 'get_save_image_path', return_value=(tmp, 'continued', 1, '', ''), create=True):
+                save.LCSaveImage().save(np.zeros((1, 16, 24, 3)), prompt=prompt, extra_pnginfo=extra, unique_id='3', execution_list=execution, hash_resources=False)
+            with Image.open(next(Path(tmp).glob('*.png'))) as image:
+                saved_prompt = json.loads(image.info['prompt'])
+                saved_workflow = json.loads(image.info['workflow'])
+        self.assertEqual(saved_prompt['seed']['inputs']['base_seed'], actual)
+        self.assertEqual(saved_workflow['nodes'][0]['widgets_values'], [actual])
+        self.assertEqual(saved_workflow['nodes'][0]['widgets_values_named']['base_seed'], actual)
+        self.assertEqual(saved_prompt['unused'], prompt['unused'])
+        self.assertEqual(saved_prompt['fixed'], prompt['fixed'])
+        self.assertEqual(saved_workflow['nodes'][1:], workflow['nodes'][1:])
+        self.assertEqual((prompt, extra), snapshot, 'Metadata must not change cache signatures or the queued workflow')
+
     def test_sampler_display_names_preserve_scheduler_and_source_metadata(self):
         for native, display in [('euler', 'Euler'), ('EULER', 'Euler'),
                                 ('euler_ancestral', 'Euler a'),

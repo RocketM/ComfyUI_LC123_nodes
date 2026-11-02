@@ -4,6 +4,8 @@ import importlib.util
 import io
 import json
 from pathlib import Path
+import sys
+import types
 import unittest
 from unittest.mock import patch
 
@@ -11,7 +13,10 @@ from PIL import Image, PngImagePlugin
 
 spec = importlib.util.spec_from_file_location("lc_seed_test", Path(__file__).resolve().parents[1] / "lc_seed.py")
 seed = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(seed)
+server = types.ModuleType("server")
+server.PromptServer = types.SimpleNamespace(instance=types.SimpleNamespace(add_on_prompt_handler=lambda handler: None))
+with patch.dict(sys.modules, {"server": server}):
+    spec.loader.exec_module(seed)
 
 
 class SeedTests(unittest.TestCase):
@@ -51,6 +56,19 @@ class SeedTests(unittest.TestCase):
             with patch.object(seed.random, "randint", side_effect=AssertionError("fixed")):
                 self.assertEqual(seed.LCSeed().emit(value)["result"], (value,))
                 self.assertEqual(seed.LCSeed.IS_CHANGED(value, {}, {}, "3761"), value)
+
+    def test_continue_reuses_random_cache_key_and_removes_saved_marker(self):
+        data = {"prompt": {
+            "3761": {"class_type": "LCSeed", "inputs": {"base_seed": -1}},
+            "fixed": {"class_type": "LCSeed", "inputs": {"base_seed": 42}},
+        }, "extra_data": {"extra_pnginfo": {"workflow": {"extra": {"lc_continue": True}}}}}
+        with patch.dict(seed._LAST_CHANGE, {}, clear=True), patch.object(seed.time, "time", return_value=123.0):
+            previous = seed.LCSeed.IS_CHANGED(-1, unique_id="3761")
+            self.assertIs(seed._continue_handler(data), data)
+        self.assertEqual(data["prompt"]["3761"]["is_changed"], [previous])
+        self.assertEqual(data["prompt"]["3761"]["inputs"]["base_seed"], -1)
+        self.assertNotIn("is_changed", data["prompt"]["fixed"])
+        self.assertNotIn("lc_continue", data["extra_data"]["extra_pnginfo"]["workflow"]["extra"])
 
     def test_missing_optional_metadata_and_legacy_workflow(self):
         self.assertEqual(seed.LCSeed().emit(42, unique_id="missing")["result"], (42,))

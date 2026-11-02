@@ -6,8 +6,11 @@ mxStop-style breakpoint with built-in enable/bypass.
   enable ON  (STOP)   → pass data through, then interrupt (same as mxStop)
   enable OFF (bypass) → pass data through, no interrupt
 
-Continue by clicking the play button on the node title bar, or Queue again.
+Continue by clicking the play button on the node title bar, or Run: either one reuses the last run's seeds
+(web/lc_continue.js), so everything above the stop comes from the cache and the run carries on from here.
 """
+
+import time
 
 import nodes
 
@@ -51,6 +54,8 @@ class LCStop:
         out = In
         if enable:
             nodes.interrupt_processing()
+            # a fresh stamp per stop: the face's next run continues (a cached replay of this message is ignored)
+            return {"ui": {"lc_hold": [time.time()]}, "result": (out,)}
         return (out,)
 
 

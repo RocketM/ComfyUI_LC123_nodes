@@ -1,7 +1,7 @@
 """
 System & Model Optimization Report probe: what this machine has, and what actually works on it.
 
-Used by the System & Model Optimization Report button (GET /lc123/syscheck/run) and saved as user/LC123/system_profile.json for the
+Used by the System & Model Optimization Report button (POST /lc123/syscheck/run) and saved as user/LC123/system_profile.json for the
 LC Optimizer node. It also runs on its own, without ComfyUI:  python lc_system_probe.py [out.json]
 Nothing is installed or changed. The live GPU tests are small (a few hundred MB, a few seconds).
 """
@@ -473,8 +473,10 @@ def _test_import_run(mod, fn, sync):
     except Exception as e:
         return _missing_or_broken(mod.split(".")[0], e)
     root = sys.modules.get(mod.split(".")[0])
-    if root is not None and getattr(root, "__file__", None) is None and getattr(root, "__path__", None) is None:
-        return {"ok": None, "detail": "Not installed"}  # a stand-in another node pack put in sys.modules (SeedVR2 does this for flash_attn)
+    # a stand-in another node pack put in sys.modules: no file and no folder (SeedVR2 does this for flash_attn, with
+    # __path__ = [] and its functions set to None)
+    if root is not None and getattr(root, "__file__", None) is None and not list(getattr(root, "__path__", None) or []):
+        return {"ok": None, "detail": "Not installed"}
     try:
         fn(m)
         sync()

@@ -4,6 +4,7 @@
  */
 
 import { app } from "../../scripts/app.js";
+import { lcContinue } from "./lc_continue.js";
 
 class LCStopUI {
     constructor(node) {
@@ -82,7 +83,7 @@ class LCStopUI {
             return r;
         };
 
-        // Click on the title-bar play button → queue again (continue past stop)
+        // Click on the title-bar play button → continue past the stop with the last run's seeds
         this.node.onMouseDown = function (e, pos, canvas) {
             let cWidth = this._collapsed_width || LiteGraph.NODE_COLLAPSED_WIDTH;
             // Only title bar
@@ -97,7 +98,7 @@ class LCStopUI {
         };
 
         this.node.onTmpMouseUp = function (e, pos, canvas) {
-            app.queuePrompt(0);
+            lcContinue();
         };
 
         this.node.onDrawForeground = function (ctx) {

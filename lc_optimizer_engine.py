@@ -178,8 +178,14 @@ def _list(folder):
         except Exception:
             pass
     elif folder in ("diffusion_models", "text_encoders"):  # no GGUF pack: list the .gguf files ourselves
+        seen = set()  # a junction pointing back up the tree would loop forever
         for root in folder_paths.get_folder_paths(folder):
-            for dp, _, fs in os.walk(root, followlinks=True):
+            for dp, ds, fs in os.walk(root, followlinks=True):
+                real = os.path.normcase(os.path.realpath(dp))
+                if real in seen:
+                    ds[:] = []
+                    continue
+                seen.add(real)
                 for f in fs:
                     if f.lower().endswith(".gguf"):
                         rel = os.path.relpath(os.path.join(dp, f), root)
@@ -230,6 +236,67 @@ def find_on_disk(filename, folders):
             if os.path.basename(n.replace("\\", "/")).lower() in names:
                 return folder, n
     return None
+
+
+_HASHES = {}  # path|mtime|size -> sha256, so a renamed copy is only hashed once per session
+
+
+def _sha256(path):
+    import hashlib
+
+    st = os.stat(path)
+    key = f"{path}|{st.st_mtime}|{st.st_size}"
+    if key not in _HASHES:
+        h = hashlib.sha256()
+        with open(path, "rb") as f:
+            for chunk in iter(lambda: f.read(16 << 20), b""):
+                h.update(chunk)
+        _HASHES[key] = h.hexdigest()
+    return _HASHES[key]
+
+
+def _hf_meta(repo, path):
+    """(size in bytes, sha256) of a Hugging Face file, read from its headers. (None, None) when offline."""
+    try:
+        from huggingface_hub import get_hf_file_metadata, hf_hub_url
+
+        meta = get_hf_file_metadata(hf_hub_url(repo, path))
+        sha = str(meta.etag or "").strip('"').lower()
+        return meta.size, (sha if re.fullmatch(r"[0-9a-f]{64}", sha) else None)
+    except Exception:
+        return None, None
+
+
+def locate(filename, folders, repo=None, path=None, sha=None):
+    """find_on_disk, then a renamed copy: a file of exactly the same size whose sha256 matches. (folder, name) or None."""
+    hit = find_on_disk(filename, folders)
+    if hit or not repo:
+        return hit
+    try:
+        size, etag = _hf_meta(repo, path or _repo_path(repo, filename))
+    except Exception:
+        return None
+    sha = (sha or etag or "").lower()
+    if not size or not sha:
+        return None
+    for folder in folders:
+        for n in _list(folder):
+            p = full_path(folder, n)
+            try:
+                if not p or os.path.getsize(p) != size or _sha256(p) != sha:
+                    continue
+            except OSError:
+                continue
+            print(f"[LC Optimizer] {filename} is on disk as {n} (the same file under another name): using it.")
+            return folder, n
+    return None
+
+
+def ask_download(filename, gb=None):
+    """Nothing downloads unless the user picks it: stop and say what to pick."""
+    size = f" ({gb} GB)" if gb else ""
+    return FileNotFoundError(f"[LC Optimizer] {filename}{size} isn't on disk. Nothing downloads on its own: open the picker and choose "
+                             f"⬇ Download: {filename}, or pick a file you have.")
 
 
 def full_path(folder, name):
@@ -518,7 +585,7 @@ def _stream(repo, path_in_repo, dest, label):
 def download(variant):
     """Download a profile file into the root of its ComfyUI model folder. Returns (folder, name)."""
     folder = FOLDER_BY_LOADER.get(variant["loader"], "diffusion_models")
-    hit = find_on_disk(variant["file"], [folder])
+    hit = locate(variant["file"], [folder], variant.get("repo"))
     if hit:
         return hit
     target = folder_paths.get_folder_paths(folder)[0]
@@ -582,6 +649,9 @@ def download_shipped(entry, value, folder="diffusion_models"):
     dest = os.path.join(root, value.replace("\\", "/"))
     if os.path.exists(dest):
         return folder, value
+    hit = locate(entry["file"], [folder], entry["repo"], entry["path"], entry.get("sha256"))
+    if hit:
+        return hit
     os.makedirs(os.path.dirname(dest), exist_ok=True)
     with _DL_LOCK:
         print(f"[LC Optimizer] The workflow uses {entry['family']} ({os.path.basename(dest)}, {entry['gb']} GB): downloading from "
@@ -673,15 +743,24 @@ def author_target(role, value):
 
 def download_author(role, value):
     file, link, hf, hit = author_target(role, value)
+    hit = hit or (locate(os.path.basename(file), ROLE_FOLDERS[role], hf[0], hf[1]) if hf and file else None)
     if hit:
         return hit
     if not hf:
         raise FileNotFoundError(f"[LC Optimizer] {file or 'The author file'} is not on disk and only downloads from a Hugging Face "
                                 f"link. Get it here: {link or '(no link given)'}")
+    name = os.path.basename(hf[1])
+    known = shipped(name) is not None or any(v["file"] == name for p in profiles().values() for v in variants(p, role))
+    if not (known or hf[0].lower().startswith("lonecatone23/")):
+        raise FileNotFoundError(f"[LC Optimizer] {name} comes from huggingface.co/{hf[0]}, which LC Model Optimizer doesn't download "
+                                f"from. Get it here and put it in your models folder: {link}")
+    if not name.lower().endswith((".safetensors", ".gguf")):
+        raise FileNotFoundError(f"[LC Optimizer] {name} isn't a .safetensors or .gguf model file: not downloaded.")
     folder = ROLE_FOLDERS[role][0]
     target = folder_paths.get_folder_paths(folder)[0]
     os.makedirs(target, exist_ok=True)
-    name = os.path.basename(hf[1])
+    if os.path.exists(os.path.join(target, name)):
+        return folder, name
     with _DL_LOCK:
         print(f"[LC Optimizer] The workflow's author picked {name}: downloading from https://huggingface.co/{hf[0]} ...")
         _stream(hf[0], hf[1], os.path.join(target, name), name)
@@ -727,20 +806,99 @@ def _family_version(name, entry=None):
     return fam, ver
 
 
-_CLASS_CACHE = {}
+# the format tags a release's files differ by: Animosity_Krea2_V2.0_nvfp4 is the same release as ..._V2.0_bf16
+_FORMAT_TAIL = re.compile(r"[_\-\s.]+(bf16|fp16|fp32|fp8(?:[_\-]?(?:scaled|e4m3fn|e5m2|mixed))?|int8(?:[_\-]?convrot)?|nvfp4|mxfp8|mxfp4|"
+                          r"w4a8|q\d(?:_k)?(?:_[msl0-9])*|gguf|scaled|convrot)$", re.I)
+_SIBLINGS = None
+
+
+def _release_key(name):
+    stem = os.path.splitext(os.path.basename(str(name).replace("\\", "/")))[0].lower()
+    while True:
+        cut = _FORMAT_TAIL.sub("", stem)
+        if cut == stem:
+            return stem
+        stem = cut
+
+
+def _sibling(name):
+    """The shipped entry of the same release in another format (a file made locally, or not published)."""
+    global _SIBLINGS
+    if _SIBLINGS is None:
+        shipped("")  # loads _SHIPPED
+        _SIBLINGS = {}
+        for n, m in (_SHIPPED or {}).items():
+            _SIBLINGS.setdefault(_release_key(n), m)
+    return _SIBLINGS.get(_release_key(name))
+
+
+# model class per file header, kept on disk (user/LC123) so the first picker after a restart doesn't read every
+# header again: path|mtime|size -> class name (None = not a model ComfyUI detects)
+_CLASS_CACHE = None
+_CLASS_LOCK = threading.Lock()
+_CLASS_DIRTY = False
+
+
+def _class_cache_path():
+    return os.path.join(folder_paths.get_user_directory(), "LC123", "optimizer_model_classes.json")
+
+
+def _class_cache():
+    global _CLASS_CACHE
+    if _CLASS_CACHE is None:
+        try:
+            with open(_class_cache_path(), encoding="utf-8") as f:
+                _CLASS_CACHE = json.load(f)
+        except Exception:
+            _CLASS_CACHE = {}
+    return _CLASS_CACHE
+
+
+def _save_class_cache():
+    global _CLASS_DIRTY
+    if not _CLASS_DIRTY:
+        return
+    try:
+        path = _class_cache_path()
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with _CLASS_LOCK:
+            data = dict(_class_cache())
+            _CLASS_DIRTY = False
+        with open(path + ".tmp", "w", encoding="utf-8") as f:
+            json.dump(data, f)
+        os.replace(path + ".tmp", path)
+    except Exception as e:
+        print(f"[LC Optimizer] could not save the model class cache: {e}")
 
 
 def _class_of(folder, name):
+    global _CLASS_DIRTY
     p = full_path(folder, name)
     if not p or p.lower().endswith(".gguf"):
         return None
     try:
-        key = (p, os.path.getmtime(p))
+        st = os.stat(p)
     except OSError:
         return None
-    if key not in _CLASS_CACHE:
-        _CLASS_CACHE[key] = model_class(p)
-    return _CLASS_CACHE[key]
+    key = f"{p}|{st.st_mtime}|{st.st_size}"
+    cache = _class_cache()
+    if key not in cache:
+        cls = model_class(p)
+        with _CLASS_LOCK:
+            cache[key] = cls
+            _CLASS_DIRTY = True
+    return cache[key]
+
+
+def warm_class_cache():
+    """Read the headers of every diffusion model not in the cache yet (run in the background after startup)."""
+    try:
+        for folder, name in local_files("model"):
+            if folder == "diffusion_models":
+                _class_of(folder, name)
+        _save_class_cache()
+    except Exception as e:
+        print(f"[LC Optimizer] model class warm-up: {e}")
 
 
 def on_disk_groups(profile_id, role):
@@ -754,7 +912,7 @@ def on_disk_groups(profile_id, role):
     tree = {}
     for folder, name in local_files(role):
         base = os.path.basename(name.replace("\\", "/"))
-        entry = shipped(base)
+        entry = shipped(base) or _sibling(base)
         own = own_profile(base)
         if base.lower() in official:
             fam, ver = prof["name"] + " (official)", ""
@@ -767,6 +925,7 @@ def on_disk_groups(profile_id, role):
         else:
             continue
         tree.setdefault(fam, {}).setdefault(ver, []).append(name)
+    _save_class_cache()
     return [{"family": f, "versions": [{"version": v, "files": sorted(fs, key=lambda n: os.path.basename(n).lower())}
                                        for v, fs in sorted(vs.items(), key=lambda x: x[0], reverse=True)]}
             for f, vs in sorted(tree.items(), key=lambda x: (not x[0].endswith(" (official)"), x[0].lower()))]  # the base model's own files first
@@ -777,18 +936,24 @@ def resolve(profile_id, role, value, goal):
     """Widget value -> (folder, name, variant or None). Downloads when needed. None for 'None' / From checkpoint."""
     if value in (NONE, FROM_CKPT, "", None):
         return None
-    if is_pick(value):
+    if is_pick(value):  # saved in the workflow, so on disk only: a download is always the user's own ⬇ pick
         if value.startswith(AUTHOR):
-            folder, name = download_author(role, value)
-            return folder, name, None
+            file, link, hf, hit = author_target(role, value)
+            hit = hit or (locate(os.path.basename(file), ROLE_FOLDERS[role], hf[0], hf[1]) if hf and file else None)
+            if hit:
+                return hit[0], hit[1], None
+            if not hf:
+                raise FileNotFoundError(f"[LC Optimizer] {file or 'The author file'} is not on disk. Get it here: {link or '(no link given)'}")
+            raise FileNotFoundError(f"[LC Optimizer] {file}, the workflow author's pick, isn't on disk. Nothing downloads on its own: "
+                                    f"open the picker and click it (★⬇) to download it, or pick a file you have.")
         got = release_pick(profile_id, value[2:], goal) if role == "model" else None
         if not got:
             raise FileNotFoundError(f"[LC Optimizer] {value[2:]} is not a release for this base model. Pick another file.")
         entry, hit = got
+        hit = hit or locate(entry["file"], ROLE_FOLDERS["model"], entry["repo"], entry["path"], entry.get("sha256"))
         if hit:
             return hit[0], hit[1], None
-        folder, name = download_shipped(entry, f"{entry['family']}/{entry['file']}", entry.get("folder", "diffusion_models"))
-        return folder, name, None
+        raise ask_download(entry["file"], entry.get("gb"))
     prof = profiles().get(profile_id)
     vs = variants(prof, role) if prof else []
     if value == RECOMMENDED:
@@ -800,6 +965,9 @@ def resolve(profile_id, role, value, goal):
         if is_custom(profile_id):
             raise FileNotFoundError(f"[LC Optimizer] Custom: downloads are {UNSUPPORTED}. Pick a file you have for the {role}.")
         fname = value[len(DOWNLOAD):]
+        if " | " in fname:  # the workflow author's file: "file | link"
+            folder, name = download_author(role, AUTHOR + fname)
+            return folder, name, None
         v = next((x for x in vs if x["file"] == fname), None)
         if v is None:
             for other in profiles().values():  # the base model changed after picking: still find it
@@ -809,7 +977,7 @@ def resolve(profile_id, role, value, goal):
         if v is None:
             entry = shipped(fname) if role == "model" else None
             if entry:  # one of Lonecat's models, offered as a featured download
-                hit = find_on_disk(entry["file"], ROLE_FOLDERS[role])
+                hit = locate(entry["file"], ROLE_FOLDERS[role], entry["repo"], entry["path"], entry.get("sha256"))
                 if hit:
                     return hit[0], hit[1], None
                 folder, name = download_shipped(entry, f"{entry['family']}/{entry['file']}", entry.get("folder", "diffusion_models"))
@@ -821,12 +989,19 @@ def resolve(profile_id, role, value, goal):
                 v = next((x for x in vs if x["file"] == os.path.basename(value.replace("\\", "/"))), None)
                 return folder, value, v
         entry = shipped(value) if role == "model" else None
-        if entry:
-            folder, name = download_shipped(entry, value, entry.get("folder", "diffusion_models"))  # checkpoints (SDXL family) go to checkpoints
-            return folder, name, None
+        if entry:  # one of Lonecat's models saved in the workflow: a renamed copy counts, a download is the user's pick
+            hit = locate(entry["file"], ROLE_FOLDERS[role], entry["repo"], entry["path"], entry.get("sha256"))
+            if hit:
+                return hit[0], hit[1], None
+            raise ask_download(entry["file"], entry.get("gb"))
         raise FileNotFoundError(f"[LC Optimizer] {value} was not found in the {'/'.join(ROLE_FOLDERS[role])} folders.")
     folder = FOLDER_BY_LOADER.get(v["loader"], ROLE_FOLDERS[role][0])
-    hit = find_on_disk(v["file"], [folder]) or download(v)
+    if value.startswith(DOWNLOAD):
+        hit = download(v)
+    else:  # ★ Recommended: on disk only
+        hit = locate(v["file"], [folder], v.get("repo"))
+        if not hit:
+            raise ask_download(v["file"], v.get("gb"))
     return hit[0], hit[1], v
 
 
@@ -1018,8 +1193,10 @@ def _sage_flag():
 # Optimal goal with Sage: 119 s -> 91 s, sharpness, lip sync and face match unchanged.
 SPECTRUM_PROFILES = {"minimax_h3", "minimax_h3_fl2va"}
 # auto only where it held up: on Ref2VA (minimax_h3) it smeared the picture and scrambled text in every test
-# (2026-10-21, desktop and laptop, with or without the sigma shift), so there it is on by hand only
-SPECTRUM_AUTO = {"minimax_h3_fl2va"}
+# (2026-10-21, desktop and laptop, with or without the sigma shift), so there it is on by hand only.
+# 2026-10-30: FL2VA too. At 1344x768 a busy wide two-shot (cafe, reference pictures) filled with floating blobs on
+# 2 of 2 seeds, gone with Spectrum off; close-ups looked fine, which is why the 10-21 bench missed it
+SPECTRUM_AUTO = set()
 SPECTRUM_NODE = "SpectrumApplyMiniMaxH3"
 SPECTRUM_SETTINGS = dict(
     enabled=True, blend_weight=0.5, degree=1, ridge_lambda=0.1, window_size=2.0, flex_window=0.75, warmup_steps=1,
@@ -1191,8 +1368,8 @@ def plan_speedups(profile_id, goal, manual=None):
             on = want == "on" or (want == "auto" and goal != "Quality" and auto_ok)
             why = "set by hand" if want != "auto" else (
                 f"about 1.3x faster; sits out runs over {SPECTRUM_MAX_STEPS} steps or under {SPECTRUM_MIN_MP} MP" if on else
-                ("off on Ref2VA: it smeared reference videos in our tests (set it to on to try)" if not auto_ok
-                 else "Optimal and Fast goals only"))
+                ("Auto leaves it off: it put floating blobs in busy wide shots in our tests (set it to on to try)"
+                 if not auto_ok else "Optimal and Fast goals only"))
             rows.append({"key": "spectrum", "label": "Spectrum (step forecast)", "state": "on" if on else "off", "value": bool(on), "why": why})
 
     if profile_id in IMAGE_SPECTRUM_PROFILES or profile_id in IMAGE_SPECTRUM_BY_HAND:
@@ -1350,10 +1527,10 @@ def plan(profile_id, goal, picks, manual=None):
             if is_pick(value):
                 if value.startswith(AUTHOR):
                     file, link, hf, hit = author_target(role, value)
-                    row.update(label=os.path.basename(file) or "the author's file", state="disk" if hit else ("download" if hf else "missing"))
+                    row.update(label=os.path.basename(file) or "the author's file", state="disk" if hit else ("pick" if hf else "missing"))
                     if not hit:
                         out["hints"].append(("ℹ️", f"The workflow's author picked {os.path.basename(file) or 'this file'}: "
-                                                   + (f"it downloads from huggingface.co/{hf[0]} on the first run." if hf else f"get it at {link or '(no link given)'}.")))
+                                                   + (f"pick it in the picker to download it from huggingface.co/{hf[0]}." if hf else f"get it at {link or '(no link given)'}.")))
                 else:
                     got = release_pick(profile_id, value[2:], goal) if role == "model" else None
                     if not got:
@@ -1362,9 +1539,9 @@ def plan(profile_id, goal, picks, manual=None):
                         out["files"].append(row)
                         continue
                     entry, hit = got
-                    row.update(label=entry["file"], gb=entry.get("gb"), state="disk" if hit else "download")
+                    row.update(label=entry["file"], gb=entry.get("gb"), state="disk" if hit else "pick")
                     if not hit:
-                        out["hints"].append(("ℹ️", f"{entry['family']} downloads from huggingface.co/{entry['repo']} on the first run."))
+                        out["hints"].append(("ℹ️", f"{entry['family']} isn't on disk: pick it in the picker to download it from huggingface.co/{entry['repo']}."))
                 if hit:
                     paths[role] = full_path(*hit)
                     ckpt = ckpt or (role == "model" and hit[0] == "checkpoints")
@@ -1390,7 +1567,8 @@ def plan(profile_id, goal, picks, manual=None):
                     continue
                 folder = FOLDER_BY_LOADER.get(v["loader"], ROLE_FOLDERS[role][0])
                 hit = find_on_disk(v["file"], [folder])
-                row.update(label=v.get("display") or v["file"], gb=v.get("gb"), state="disk" if hit else "download")
+                row.update(label=v.get("display") or v["file"], gb=v.get("gb"),
+                           state="disk" if hit else ("download" if value.startswith(DOWNLOAD) else "pick"))
                 ckpt = ckpt or (role == "model" and folder == "checkpoints")  # also before it is downloaded
                 if hit:
                     paths[role] = full_path(*hit)
@@ -1403,8 +1581,9 @@ def plan(profile_id, goal, picks, manual=None):
                 row.update(label=os.path.basename(value.replace("\\", "/")), state="disk" if folder else "missing")
                 entry = shipped(value) if (role == "model" and not folder) else None
                 if entry:
-                    row.update(state="download", gb=entry["gb"])
-                    out["hints"].append(("ℹ️", f"This workflow uses {entry['family']}: it downloads from huggingface.co/{entry['repo']} on the first run."))
+                    row.update(state="pick", gb=entry["gb"])
+                    out["hints"].append(("ℹ️", f"This workflow uses {entry['family']}, which isn't on disk: pick ⬇ Download: {entry['file']} "
+                                               f"to get it from huggingface.co/{entry['repo']}."))
                     if prof and entry.get("profile") and entry["profile"] != profile_id:
                         out["hints"].append(("⚠️", f"{entry['family']} is a {profiles().get(entry['profile'], {}).get('name', entry['profile'])} model: set the base model to match."))
                 if folder:

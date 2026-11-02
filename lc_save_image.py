@@ -22,7 +22,7 @@ import folder_paths
 
 from .lc_pipe_io import PIPE_TYPE
 from .lc_civitai_hashes import collect_hashes, format_hash_fields, civitai_resources_payload, lora_resources_payload
-from .lc_lora_metadata import collect_lora_metadata, _image_ancestors
+from .lc_lora_metadata import collect_lora_metadata, _image_ancestors, _cached_values
 
 
 META_TYPE = "LC_SAVE_META"
@@ -47,6 +47,36 @@ def _tensor_to_pil(image) -> Image.Image:
     if pixels.shape[-1] == 3:
         return Image.fromarray(pixels, mode="RGB")
     return Image.fromarray(pixels, mode="RGBA")
+
+
+def _cached_seed_metadata(prompt, extra_pnginfo, save_node_id, execution_list):
+    seeds = {}
+    for nid, node in (prompt or {}).items():
+        if node.get("class_type") != "LCSeed" or node.get("inputs", {}).get("base_seed") not in (-1, "-1"):
+            continue
+        values = _cached_values([nid, 0], save_node_id, execution_list)
+        if values and all(type(v) is int and v >= 0 and v == values[0] for v in values):
+            seeds[str(nid)] = values[0]
+    if not seeds:
+        return prompt, extra_pnginfo
+    # A Continue cache hit skips LCSeed.emit; copy resolved seeds into the saved
+    # metadata without changing the inputs used by execution and cache keys.
+    prompt = {nid: {**node, "inputs": {**node["inputs"], "base_seed": seeds[str(nid)]}}
+              if str(nid) in seeds else node for nid, node in prompt.items()}
+    workflow = (extra_pnginfo or {}).get("workflow")
+    if isinstance(workflow, dict):
+        nodes = []
+        for node in workflow.get("nodes", []):
+            used = seeds.get(str(node.get("id"))) if node.get("type") == "LCSeed" else None
+            if used is not None:
+                node = dict(node)
+                if node.get("widgets_values"):
+                    node["widgets_values"] = [used, *node["widgets_values"][1:]]
+                if isinstance(node.get("widgets_values_named"), dict):
+                    node["widgets_values_named"] = {**node["widgets_values_named"], "base_seed": used}
+            nodes.append(node)
+        extra_pnginfo = {**extra_pnginfo, "workflow": {**workflow, "nodes": nodes}}
+    return prompt, extra_pnginfo
 
 
 def _txt(v) -> str:
@@ -668,6 +698,10 @@ class LCSaveImage:
                 buckets = None
                 hash_bits = None
 
+        saved_prompt, saved_pnginfo = prompt, extra_pnginfo
+        if fmt == "png" and embed_workflow:
+            saved_prompt, saved_pnginfo = _cached_seed_metadata(prompt, extra_pnginfo, unique_id, execution_list)
+
         for i in range(n):
             pil = _tensor_to_pil(batch[i])
             width, height = pil.size
@@ -695,10 +729,10 @@ class LCSaveImage:
             if fmt == "png":
                 info = PngInfo()
                 if embed_workflow:
-                    if prompt is not None:
-                        info.add_text("prompt", json.dumps(prompt))
-                    if extra_pnginfo is not None:
-                        for k, v in extra_pnginfo.items():
+                    if saved_prompt is not None:
+                        info.add_text("prompt", json.dumps(saved_prompt))
+                    if saved_pnginfo is not None:
+                        for k, v in saved_pnginfo.items():
                             if v is None or k in {"parameters", "hashes", "civitaiResources", "civitai_air", "lora_metadata", "metadata_warnings", "prompt"}:
                                 continue
                             info.add_text(k, json.dumps(v) if not isinstance(v, str) else v)
